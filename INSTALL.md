@@ -55,6 +55,8 @@ npm run start-devel
 
 **This will start the server in development mode.**  This means that the server is in uber-verbose mode and that a new clean database is created each time the server starts (i.e. any custom data from a previous run is blown away).
 
+Running in development mode will create an admin account (testadmin:password) and regular user account (testuser:password). 
+
 ### Start the server in testing mode
 
 From a terminal run:
@@ -65,6 +67,8 @@ npm run start-test
 ```
 
 **This will start the server in testing mode.**  This means that the server is NOT in uber-verbose mode however a new clean database is created each time the server starts (i.e. any custom data from a previous run is blown away).
+
+Running in testing mode will create an admin account (testadmin:password) and regular user account (testuser:password). 
 
 ### Start the server in production mode
 
