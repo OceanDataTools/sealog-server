@@ -9,8 +9,8 @@
   "main": "server.js",
   "scripts": {
     "test": "./node_modules/lab/bin/lab -v --timeout 8000",
-    "start": "HOST=162.243.201.175 node server.js",
-    "start-test": "HOST=162.243.201.175 NODE_ENV=testing node server.js",
+    "start": "NODE_ENV=production node server.js",
+    "start-test": "NODE_ENV=testing node server.js",
     "start-devel": "NODE_ENV=development npm-run-all --parallel lint start:server",
     "start:server": "nodemon server.js",
     "lint": "eslint . --ext .js"

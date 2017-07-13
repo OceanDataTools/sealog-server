@@ -1,31 +1,33 @@
+const prod_host = '127.0.0.1';
+const prod_api_port = 8000;
+const prod_ws_port = 8001;
+
+const test_host = '127.0.0.1';
+const test_api_port = 8000;
+const test_ws_port = 8001;
+
+const devel_host = '127.0.0.1';
+const devel_api_port = 8000;
+const devel_ws_port = 8001;
+
 const envKey = key => {
   const env = process.env.NODE_ENV || 'development';
 
   const configuration = {
     development: {
-//      host: process.env.HOST,
-      host: 'localhost',
-      port: 8000,
-      chatPort: 8001
+      host: devel_host,
+      port: devel_api_port,
+      chatPort: devel_ws_port
     },
     testing: {
-      host: process.env.HOST,
-//      host: 'localhost',
-      port: 8000,
-      chatPort: 8001
+      host: test_host,
+      port: test_api_port,
+      chatPort: test_ws_port
     },
-    uat: {
-      host: 'localhost',
-      port: 8010,
-      chatPort: 8011
-    },
-    // These should match environment variables on hosted server
     production: {
-//      host: 'localhost',
-      port: 8080,
-      host: process.env.HOST,
-//      port: process.env.PORT,
-      chatPort: 8001
+      host: prod_host,
+      port: prod_api_port,
+      chatPort: prod_ws_port
     }
   };
 
