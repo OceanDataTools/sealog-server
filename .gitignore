@@ -2,3 +2,4 @@
 npm-debug.log
 .DS_Store
 /config/manifest.js
+package-lock.json
