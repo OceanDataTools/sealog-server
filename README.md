@@ -67,3 +67,9 @@ This will respond with:
 The value associated with the variable `"generated_keys"` is the UUID for the event.  Event UUIDs are unique and can be used to directly access the event for the purposes of reading/editing/deleting.
 
 Using this technique scripts can be developed to allow scripts, software or even hardware like Arduinos to submit events to the Sealog Server without the need to hard-code in usernames and passwords.
+
+## Subscribing to the eventlog stream
+
+The sealog server publishes updates to eventlog as a stream that can be subscribed to via websockets.  Because the server implements the pub/sub functionality using the [hapines websocket framework](https://github.com/hapijs/nes) there is some overhead that must be supported when trying to connect via the vanilla websockets libraries.
+
+Please take a look at [this python script](https://github.com/webbpinner/sealog-server/blob/master/misc/websocketsTest.py) for a quick-n-dirty example of how to connect to the eventlog stream from a python(v3.5) script.
