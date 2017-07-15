@@ -1,2 +1,69 @@
 # sealog-server
 Sealog event logging server
+
+Sealog is intended as a general purpose eventlogging framework that is independent of any particular user-interface.  This allows for users to develop their own user interfaces for adding, editing and exporting events.  There are mechanisms for associating ancilary data with events such as sensor data, navigation, etc.
+
+All interactions with the Sealog Server are done via the [Sealog Server's RESTful API](<http://162.243.201.175:8000/documentation>).  Almost all calls to the API require authentication via Java Web Tokens (JWT).  The only exceptions are the requests related to self-registration and obtaining a JWT using login creditionals.
+
+## API Documentation
+
+Please refer to the [Sealog Server's RESTful API](<http://162.243.201.175:8000/documentation>)
+
+## Installation
+
+For Sealog Server installation instruction please look at [INSTALL.md](https://github.com/webbpinner/sealog-server/blob/master/INSTALL.md).
+
+## An Example front-end client
+
+To view an example front-end client developed for use with Sealog Server please check out [sealog client](https://github.com/webbpinner/sealog-client).
+
+## Obtaining a JWT via the Command-line
+
+Most of the API calls require a JWT to be included with the request header.  Here's how to obtain the JWT for a particular user from the command-line.  This example assumes cURL is installed.
+
+From the terminal:
+```
+curl -H "Content-Type: application/json" -X POST -d '{"username":"testadmin","password":"password"}' http://162.243.175.201:8000/login
+```
+
+This will respond with:
+```
+{
+    "token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBjNDVkN2I0LTU4ODEtNGU2NC04ZmQzLTIwNTczMjVlMmFmZSIsInNjb3BlIjpbImV2ZW50X21hbmFnZXIiLCJldmVudF9sb2dnZXIiLCJldmVudF93YXRjaGVyIl0sImlhdCI6MTUwMDAzNTc1NX0.WoOLfXxCIxIZEswy1lsbjm7XxDcbfd_NuZsL2-NB_Qw",
+    "id":"0a44ce1a-2cb9-11e6-b67b-9e71128cae77"
+}
+```
+
+The value associated with the variable `"token"` is the JWT  Include this JWT in subsequent request to the API to interact with the Sealog Server.
+
+**NOTES:**
+
+- Sealog Server uses role-based permissions to limit what API calls a user can successfully make.  If an API request is made using a JWT who's associated user does not have permission to make the request the Sealog Server will respond with a status code of 400 (not authorized).
+
+- A new JWT must be requested anytime the role permissions associated with an account are altered.
+
+## Submitting an event to Sealog Server via the Command-line
+
+Submitting an event to the Sealog Server requires a JWT who's associated user includes the role of 'event_logger'.  Please refer to the previous section for instructions on obtaining the JWT for a particular user.  Here's how to submit an event to the Sealog Server from the command-line.  This example assumes cURL is installed.
+
+From the terminal:
+```
+curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' --header 'Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBjNDVkN2I0LTU4ODEtNGU2NC04ZmQzLTIwNTczMjVlMmFmZSIsInNjb3BlIjpbImV2ZW50X21hbmFnZXIiLCJldmVudF9sb2dnZXIiLCJldmVudF93YXRjaGVyIl0sImlhdCI6MTUwMDAzNTc1NX0.WoOLfXxCIxIZEswy1lsbjm7XxDcbfd_NuZsL2-NB_Qw' -d '{"event_value": "TEST"}' 'http://162.243.201.175:8000/api/v1/events'
+```
+
+This will respond with:
+```
+{
+    "deleted":0,
+    "errors":0,
+    "generated_keys":["6ad467be-b0f8-44c4-9dcc-5078e0423b03"],
+    "inserted":1,
+    "replaced":0,
+    "skipped":0,
+    "unchanged":0
+}
+```
+
+The value associated with the variable `"generated_keys"` is the UUID for the event.  Event UUIDs are unique and can be used to directly access the event for the purposes of reading/editing/deleting.
+
+Using this technique scripts can be developed to allow scripts, software or even hardware like Arduinos to submit events to the Sealog Server without the need to hard-code in usernames and passwords.
