@@ -83,3 +83,34 @@ npm start
 
 - **TODO** Still need to write a script for creating up a default production database.
 
+## Need to make everything available over port 80?
+
+Sometimes on vessel networks it's only possible to access web-services using the standard network ports (i.e. 80, 443).  To use sealog server on these types of networks the API and websocket services will need to be tunnelled through port 80... luckily Apache makes this relatively easy.
+
+### Prerequisites
+
+ - [mod_proxy](https://httpd.apache.org/docs/2.4/mod/mod_proxy.html)
+ - [mod_proxy_wstunnel](https://httpd.apache.org/docs/2.4/mod/mod_proxy_wstunnel.html)
+ 
+ Make sure these modules have been enabled within Apache and that Apache has been restarted since the modules were enabled.
+ 
+ ### Update the Apache site configuration
+ 
+ Add the following code block to the apache site configuration (on Ubuntu this is located at: `/etc/apache2/sites-available/000-default.conf`)
+ 
+```
+ProxyPreserveHost On
+ProxyRequests Off
+ServerName <serverIP>
+ProxyPass /sealog-server/ http://<serverIP>:8000/sealog-server/
+ProxyPassReverse /sealog-server/ http://<serverIP>:8000/sealog-server/
+ProxyPass /ws ws://<serverIP>:8001/
+ProxyPassReverse /ws ws://<serverIP>:8001/
+```
+
+You will need to reload Apache for the changes to take affect.
+```
+service apache2 restart
+```
+
+If everything went correctly you should not be able to access the sealog-server API at `http://<serverIP>/sealog-server/` and the sealog websocket service at `ws://<serverIP>/ws`
