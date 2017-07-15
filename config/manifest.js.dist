@@ -1,14 +1,17 @@
 const prod_host = '127.0.0.1';
 const prod_api_port = 8000;
 const prod_ws_port = 8001;
+const prod_prefix = '/sealog-server';
 
 const test_host = '127.0.0.1';
 const test_api_port = 8000;
 const test_ws_port = 8001;
+const test_prefix = '/sealog-server';
 
 const devel_host = '127.0.0.1';
 const devel_api_port = 8000;
 const devel_ws_port = 8001;
+const devel_prefix = '/sealog-server';
 
 const envKey = key => {
   const env = process.env.NODE_ENV || 'development';
@@ -17,17 +20,20 @@ const envKey = key => {
     development: {
       host: devel_host,
       port: devel_api_port,
-      chatPort: devel_ws_port
+      chatPort: devel_ws_port,
+      prefix: devel_prefix
     },
     testing: {
       host: test_host,
       port: test_api_port,
-      chatPort: test_ws_port
+      chatPort: test_ws_port,
+      prefix: test_prefix
     },
     production: {
       host: prod_host,
       port: prod_api_port,
-      chatPort: prod_ws_port
+      chatPort: prod_ws_port,
+      prefix: prod_prefix
     }
   };
 
@@ -87,6 +93,9 @@ const manifest = {
     {
       plugin: './routes/auth',
       options: {
+        routes: {
+          prefix: envKey('prefix')
+        },
         select: ['api']
       }
     },
@@ -96,7 +105,7 @@ const manifest = {
       },
       options: {
         routes: {
-          prefix: '/api/v1'
+          prefix: envKey('prefix') + '/api/v1'
         },
         select: ['api']
       }
@@ -107,7 +116,7 @@ const manifest = {
       },
       options: {
         routes: {
-          prefix: '/api/v1',
+          prefix: envKey('prefix') + '/api/v1',
         },
         select: ['api']
       }
@@ -118,7 +127,7 @@ const manifest = {
       },
       options: {
         routes: {
-          prefix: '/api/v1'
+          prefix: envKey('prefix') + '/api/v1'
         },
         select: ['api']
       }
@@ -129,7 +138,7 @@ const manifest = {
       },
       options: {
         routes: {
-          prefix: '/api/v1'
+          prefix: envKey('prefix') + '/api/v1'
         },
         select: ['api']
       }
@@ -140,7 +149,7 @@ const manifest = {
       },
       options: {
         routes: {
-          prefix: '/api/v1'
+          prefix: envKey('prefix') + '/api/v1'
         },
         select: ['api']
       }
@@ -151,7 +160,7 @@ const manifest = {
       },
       options: {
         routes: {
-          prefix: '/api/v1'
+          prefix: envKey('prefix') + '/api/v1'
         },
         select: ['api']
       }
@@ -162,7 +171,7 @@ const manifest = {
       },
       options: {
         routes: {
-          prefix: '/api/v1'
+          prefix: envKey('prefix') + '/api/v1'
         },
         select: ['api']
       }
@@ -172,12 +181,18 @@ const manifest = {
         register: './routes/default'
       },
       options: {
+        routes: {
+          prefix: envKey('prefix') 
+        },
         select: ['api']
       }
     },
     {
       plugin: './routes/chat/chat',
       options: {
+        routes: {
+          prefix: envKey('prefix') 
+        },
         select: ['chat']
       }
     },
@@ -196,6 +211,9 @@ const manifest = {
     {
       plugin: 'hapi-swagger',
       options: {
+        routes: {
+          prefix: envKey('prefix')
+        },
         select: ['api'],
       }
     },
