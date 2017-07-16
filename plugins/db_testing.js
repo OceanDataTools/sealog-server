@@ -1,5 +1,4 @@
 'use strict';
-//const Bcrypt = require('bcrypt');
 
 exports.register = function (server, options, next) {
 

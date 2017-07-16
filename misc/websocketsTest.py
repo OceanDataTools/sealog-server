@@ -4,15 +4,23 @@ import asyncio
 import websockets
 import json
 
-serverIP = '162.243.201.175'
+serverIP = '127.0.0.1'
 serverWSPort = '8001'
+serverPath = ''
+
+token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInNjb3BlIjpbImFkbWluIiwiZXZlbnRfbWFuYWdlciIsImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTAwMjEwMDkyfQ.YJHgoOT1trlduZ70pGAoNlmsLpvN1o8HNhoXfWYniYM'
 
 async def eventlog():
-    async with websockets.connect('ws://' + serverIP + ':' + serverWSPort) as websocket:
+    async with websockets.connect('ws://' + serverIP + ':' + serverWSPort + serverPath) as websocket:
 
         hello = {
             'type': 'hello',
             'id': 'abcdefg',
+            'auth': {
+                'headers': {
+                    'authorization': token
+                }
+            },
             'version': '2',
             'subs': ['/chat/updates']
         }

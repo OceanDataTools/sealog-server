@@ -73,12 +73,6 @@ const manifest = {
       }
     },
     {
-      plugin: 'nes',
-      options: {
-        select: ['chat']
-      }
-    },
-    {
       plugin: './plugins/db',
       options: {
         select: ['api', 'chat']
@@ -97,6 +91,20 @@ const manifest = {
           prefix: envKey('prefix')
         },
         select: ['api']
+      }
+    },
+    {
+      plugin: {
+        register: 'nes',
+        options: {
+          auth: {
+            route: 'jwt',
+            type: 'direct'
+          }
+        }
+      },
+      options: {
+        select: ['chat']
       }
     },
     {

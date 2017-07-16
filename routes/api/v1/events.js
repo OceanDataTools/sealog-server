@@ -463,7 +463,7 @@ exports.register = function (server, options, next) {
 
           event.user_name = results.username;
 
-          db.table('events').insert(event).run().then((result) => {
+          return db.table('events').insert(event).run().then((result) => {
             return reply(result).code(201);
           }).catch((err) => {
             throw err;
@@ -475,7 +475,7 @@ exports.register = function (server, options, next) {
 
       } else {
 
-        db.table('events').insert(event).run().then((result) => {
+        return db.table('events').insert(event).run().then((result) => {
           return reply(result).code(201);
         }).catch((err) => {
           throw err;
