@@ -11,6 +11,7 @@ Almost all calls to the API are authenticated using Java Web Tokens (JWT).  The 
  - 100% of functionality accessable via RESTful API, completely indenpendent of any graphical/CLI front-end.
  - Ad-hoc association of ancilary data with events such as sensor data, navigation, etc. 
  - Ability to filter events based on user, value, keywords and time spans
+ - Ability to subscribe to the live eventlog feed (using websockets).
  - Simple exporting of all or a filtered list of events merged with ancilary data
  - Defining event templates for quick event submission
  - role-based authentication using Java Web Tokens (JWT)
