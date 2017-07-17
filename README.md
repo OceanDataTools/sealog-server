@@ -25,9 +25,10 @@ Please refer to the [Sealog Server's RESTful API](<http://162.243.201.175/sealog
 For Sealog Server installation instruction please look at [INSTALL.md](https://github.com/webbpinner/sealog-server/blob/master/INSTALL.md).
 
 ## Examples
-### An Example front-end client
 
-To view an example front-end client developed for use with Sealog Server please check out [sealog client](https://github.com/webbpinner/sealog-client).
+### React/Redux front-end client
+
+[sealog client](https://github.com/webbpinner/sealog-client) is a react/redux-based web-client developed for use with sealogserver.
 
 ### Obtaining a JWT via the Command-line
 
