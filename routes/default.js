@@ -7,7 +7,7 @@ exports.register = function (server, options, next) {
     method: 'GET',
     path: '/',
     handler: function (request, reply) {
-      return reply({ result: 'Hello hapi!' });
+      return reply({ result: 'Welcome to sealog-server!' });
     },
     config: {
       description: 'This is default route for the API.',
@@ -18,7 +18,7 @@ exports.register = function (server, options, next) {
       response: {
         status: {
           200: Joi.object({
-            result: "Hello hapi!"
+            result: "Welcome to sealog-server!"
           })
         }
       },
