@@ -98,7 +98,7 @@ payload = {
 r = requests.post(root_url + api_path, headers=headers, data=payload)
 ```
 
-The JWT will only change when the roles associated with the coresponding users change.  Therefore scripts only need to include the JWT string and not the username/password.  The JWT remains constant for the user as long as the roles for that user do not change. If a user's roles are changed or a user is deleted, the server will evaluate the JWT as invalid.
+The JWT string (`token`) remains constant for a user as long as the roles for that user do not change. If a user's roles are changed or a user is deleted, the server will reject the JWT.  Therefore scripts only need to include a valid JWT string (`token`) and not the username/password to authenticate API requests to the server.
 
 ## Subscribing to the eventlog stream using python
 
