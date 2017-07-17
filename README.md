@@ -1,13 +1,23 @@
 # sealog-server
 Sealog event logging server
 
-Sealog is intended as a general purpose eventlogging framework that is independent of any particular user-interface.  This allows for users to develop their own user interfaces for adding, editing and exporting events.  There are mechanisms for associating ancilary data with events such as sensor data, navigation, etc.
+Sealog is intended as a general purpose eventlogging framework that is independent of any particular user-interface.  All interactions with the Sealog Server are done via the [Sealog Server's RESTful API](<http://162.243.201.175/sealog-server/documentation>).
 
-All interactions with the Sealog Server are done via the [Sealog Server's RESTful API](<http://162.243.201.175:8000/documentation>).  Almost all calls to the API require authentication via Java Web Tokens (JWT).  The only exceptions are the requests related to self-registration and obtaining a JWT using login creditionals.
+This allows for users to develop their own user interfaces for adding, editing and exporting events or extend the functionality of other systems to dynamically submit events.  It's even possible to develop hardware-based clients (physical buttons) using cheap network-aware microcontrollers (i.e Ardinuo w/Ethernet Shield).
+
+Almost all calls to the API are authenticated using Java Web Tokens (JWT).  The only exceptions are the requests related to self-registration of new users and requests to obtaining JWTs (using standard user/pass login creditionals).
+
+### Short-list of features
+ - 100% of functionality accessable via RESTful API, completely indenpendent of any graphical/CLI front-end.
+ - Ad-hoc association of ancilary data with events such as sensor data, navigation, etc. 
+ - Ability to filter events based on user, value, keywords and time spans
+ - Simple exporting of all or a filtered list of events merged with ancilary data
+ - Defining event templates for quick event submission
+ - role-based authentication using Java Web Tokens (JWT)
 
 ## API Documentation
 
-Please refer to the [Sealog Server's RESTful API](<http://162.243.201.175:8000/documentation>)
+Please refer to the [Sealog Server's RESTful API](<http://162.243.201.175/sealog-server/documentation>)
 
 ## Installation
 
