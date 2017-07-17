@@ -23,7 +23,7 @@ Most of the API calls require a JWT to be included with the request header.  Her
 
 From the terminal:
 ```
-curl -H "Content-Type: application/json" -X POST -d '{"username":"testadmin","password":"password"}' http://162.243.175.201:8000/login
+curl -H "Content-Type: application/json" -X POST -d '{"username":"testadmin","password":"password"}' http://162.243.175.201/sealog-server/login
 ```
 
 This will respond with:
@@ -48,7 +48,7 @@ Submitting an event to the Sealog Server requires a JWT who's associated user in
 
 From the terminal:
 ```
-curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' --header 'Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBjNDVkN2I0LTU4ODEtNGU2NC04ZmQzLTIwNTczMjVlMmFmZSIsInNjb3BlIjpbImV2ZW50X21hbmFnZXIiLCJldmVudF9sb2dnZXIiLCJldmVudF93YXRjaGVyIl0sImlhdCI6MTUwMDAzNTc1NX0.WoOLfXxCIxIZEswy1lsbjm7XxDcbfd_NuZsL2-NB_Qw' -d '{"event_value": "TEST"}' 'http://162.243.201.175:8000/api/v1/events'
+curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' --header 'Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBjNDVkN2I0LTU4ODEtNGU2NC04ZmQzLTIwNTczMjVlMmFmZSIsInNjb3BlIjpbImV2ZW50X21hbmFnZXIiLCJldmVudF9sb2dnZXIiLCJldmVudF93YXRjaGVyIl0sImlhdCI6MTUwMDAzNTc1NX0.WoOLfXxCIxIZEswy1lsbjm7XxDcbfd_NuZsL2-NB_Qw' -d '{"event_value": "TEST"}' 'http://162.243.201.175/sealog-server/api/v1/events'
 ```
 
 This will respond with:
@@ -68,7 +68,39 @@ The value associated with the variable `"generated_keys"` is the UUID for the ev
 
 Using this technique scripts can be developed to allow scripts, software or even hardware like Arduinos to submit events to the Sealog Server without the need to hard-code in usernames and passwords.
 
-## Subscribing to the eventlog stream
+## Submitting an event using python
+
+Submitting an event to sealog using python is very similar to the way it's done via the command-line.  First a JWT must be obtained, then the JWT is used to authenticate the event submission request.
+
+```
+import requests
+import json
+
+root_url = 'http://162.243.201.175/sealog-server'
+api_path = '/login'
+
+payload = {
+  "username": "testuser",
+  "password": "password"
+}
+
+r = requests.post(root_url + api_path, data=payload)
+
+token = json.loads(r.text)['token']
+
+api_path = '/api/v1/events'
+headers = {'authorization': token}
+
+payload = {
+  "event_value": "HELLO_WORLD"
+}
+
+r = requests.post(root_url + api_path, headers=headers, data=payload)
+```
+
+The JWT will only change when the roles associated with the coresponding users change.  Therefore scripts only need to include the JWT string and not the username/password.  The JWT remains constant for the user as long as the roles for that user do not change. If a user's roles are changed or a user is deleted, the server will evaluate the JWT as invalid.
+
+## Subscribing to the eventlog stream using python
 
 The sealog server publishes updates to eventlog as a stream that can be subscribed to via websockets.  Because the server implements the pub/sub functionality using the [hapines websocket framework](https://github.com/hapijs/nes) there is some overhead that must be supported when trying to connect via the vanilla websockets libraries.
 
