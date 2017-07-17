@@ -15,6 +15,11 @@ Almost all calls to the API are authenticated using Java Web Tokens (JWT).  The 
  - Simple exporting of all or a filtered list of events merged with ancilary data
  - Defining event templates for quick event submission
  - role-based authentication using Java Web Tokens (JWT)
+ 
+## Contribute
+My intention with sealog-server was to create a production quality eventlogging framework for any one to use... but I don't need to do this alone.  Any and all help is appreciated.  This include helping with the server code, fleshing out the documantation, creating some code examples, identifying bugs and making logical feature requests.  Please contact me at oceandatarat at gmail dot com if you want in on the action.
+
+I've also setup a Slack channel for sealog, please contact me at oceandatarat at gmail dot com if you would like to join the channel.
 
 ## API Documentation
 
