@@ -4,7 +4,7 @@ import asyncio
 import websockets
 import json
 
-serverIP = '127.0.0.1'
+serverIP = '162.243.201.175'
 serverWSPort = '8001'
 serverPath = ''
 

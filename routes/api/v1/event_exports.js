@@ -152,7 +152,7 @@ exports.register = function (server, options, next) {
         }
 
         query = query.map((row) => {
-          return r.db("eventlogger").table("events").get(row('event_id'));
+          return db.table("events").get(row('event_id'));
         });
       }
 
@@ -268,10 +268,10 @@ exports.register = function (server, options, next) {
       //console.log(query.toString());
 
       query = query.merge((row) => {
-        return {'aux_data': r.db('eventlogger').table('event_aux_data').filter({'event_id': row('id')}).without('event_id').coerceTo('array')};
+        return {'aux_data': db.table('event_aux_data').filter({'event_id': row('id')}).without('event_id').coerceTo('array')};
       });
 
-      query.run().then((result) =>{
+      return query.run().then((result) =>{
 
         if (result.length > 0) {
           return reply(result).code(200);
@@ -359,16 +359,16 @@ exports.register = function (server, options, next) {
 
       let query = db.table('events').get(request.params.id);
 
-      query.run().then((result) => {
+      return query.run().then((result) => {
         if (!result) {
           return reply({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
         }
 
         query = query.merge((row) => {
-          return {'aux_data': r.db('eventlogger').table('event_aux_data').filter({'event_id': row('id')}).without('event_id').coerceTo('array')};
+          return {'aux_data': db.table('event_aux_data').filter({'event_id': row('id')}).without('event_id').coerceTo('array')};
         });
 
-        query.run().then((result) => {
+        return query.run().then((result) => {
           return reply(result).code(200);
         }).catch((err) => {
           throw err;
