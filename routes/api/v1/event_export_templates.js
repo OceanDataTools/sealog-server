@@ -216,7 +216,7 @@ exports.register = function (server, options, next) {
 
           if (typeof query !== 'undefined') {
             query = query.map((row) => {
-              return r.db("eventlogger").table("events").get(row('event_id'));
+              return db.table("events").get(row('event_id'));
             });
           }
         }
@@ -332,13 +332,13 @@ exports.register = function (server, options, next) {
 
         if (result.event_export_template_include_aux_data) {
           query = query.merge((row) => {
-            return {'aux_data': r.db('eventlogger').table('event_aux_data').filter({'event_id': row('id')}).without('event_id').coerceTo('array')};
+            return {'aux_data': db.table('event_aux_data').filter({'event_id': row('id')}).without('event_id').coerceTo('array')};
           });
         }
 
-        console.log(query.toString());
+        //console.log(query.toString());
 
-        query.run().then((result) =>{
+        return query.run().then((result) =>{
 
           if (result.length > 0) {
             return reply(result).code(200);

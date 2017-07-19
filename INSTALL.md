@@ -24,7 +24,7 @@ cp ./config/manifest.js.dist ./config/manifest.js
 
 ### Modify the configuration file
 
-Set the `*_host`, `*_api_port` and `*_ws_port` values in the `./sealog-server/config/manifest.js` file to meet your specific installation requirements.
+Set the `*_host`, `*_api_port`, `*_ws_port`, `*_prefix` values in the `./sealog-server/config/manifest.js` file to meet your specific installation requirements.
 
 ### Install the nodeJS modules
 
@@ -42,7 +42,7 @@ From a terminal run:
 rethinkdb
 ```
 
-RethinkDB stores the database in the directory in whatever directory you're in when you run this command.  This is important when you don't what access data already in a rethinkDB.
+RethinkDB stores the database in the directory in whatever directory you're in when you run this command.  This is important when you want access to data already in a rethinkDB.
 
 ### Start the server in development mode
 
@@ -53,7 +53,7 @@ cd ./sealog-server
 npm run start-devel
 ```
 
-**This will start the server in development mode.**  This means that the server is in uber-verbose mode and that a new clean database is created each time the server starts (i.e. any custom data from a previous run is blown away).
+**This will start the server in development mode.**  This means that the server is in uber-verbose mode and that a new clean database is created each time the server starts (i.e. any data added from a previous run is blown away).
 
 Running in development mode will create an admin account (testadmin:password) and regular user account (testuser:password). 
 
@@ -79,9 +79,9 @@ cd ./sealog-server
 npm start
 ```
 
-**This will start the server in production mode.**  This mode will connect to a rethinkdb database that was already setup for use with sealog.
+**This will start the server in production mode.**  This mode will connect to a rethinkdb database that was already setup for use with sealog-server.
 
-- **TODO** Still need to write a script for creating up a default production database.
+- **TODO** Still need to write a stand-alone script for creating a default production database.
 
 ## Need to make everything available over port 80?
 
