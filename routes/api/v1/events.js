@@ -164,7 +164,7 @@ exports.register = function (server, options, next) {
       if ((request.query.startTS) || (request.query.stopTS)) {
         let startTS = r.time(1970, 1, 1, 'Z');
         let stopTS = r.now();
-        
+
         if (request.query.startTS) {
           startTS = request.query.startTS;
         }
