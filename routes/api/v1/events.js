@@ -166,11 +166,11 @@ exports.register = function (server, options, next) {
         let stopTS = r.now();
 
         if (request.query.startTS) {
-          startTS = request.query.startTS;
+          startTS = r.ISO8601(request.query.startTS);
         }
 
         if (request.query.stopTS) {
-          stopTS = request.query.stopTS;
+          stopTS = r.ISO8601(request.query.stopTS);
         }
 
         query = query.filter((event) => {

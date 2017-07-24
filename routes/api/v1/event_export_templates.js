@@ -231,11 +231,11 @@ exports.register = function (server, options, next) {
           let stopTS = r.now();
           
           if (result.event_export_template_startTS) {
-            startTS = result.event_export_template_startTS;
+            startTS = r.ISO8601(result.event_export_template_startTS);
           }
 
           if (result.event_export_template_stopTS) {
-            stopTS = result.event_export_template_stopTS;
+            stopTS = r.ISO8601(result.event_export_template_stopTS);
           }
 
           query = query.filter((event) => {
