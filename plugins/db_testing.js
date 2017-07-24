@@ -28,7 +28,7 @@ exports.register = function (server, options, next) {
           username: 'testadmin',
           fullname: 'Test Admin',
           email: 'notmyemail@gmail.com',
-          password: '$2a$10$O1ISz3tliTL59qKvQu.0FuduuoK6PAaAz3XBvGkRxB6pRxrdbtgpG', // Bcrypt.hashSync('password', Bcrypt.genSaltSync()),
+          password: '$2a$10$O1ISz3tliTL59qKvQu.0FuduuoK6PAaAz3XBvGkRxB6pRxrdbtgpG', // node -e "console.log(require('bcryptjs').hashSync('password', require('bcryptjs').genSaltSync()))"
           last_login: new Date().toISOString(),
           roles: ['admin', 'event_manager', 'event_logger', 'event_watcher'],
           favorites: []
@@ -37,7 +37,7 @@ exports.register = function (server, options, next) {
           username: 'testuser',
           fullname: 'Test User',
           email: 'alsonotmyemail@gmail.com',
-          password: '$2a$10$O1ISz3tliTL59qKvQu.0FuduuoK6PAaAz3XBvGkRxB6pRxrdbtgpG', // Bcrypt.hashSync('password', Bcrypt.genSaltSync()),
+          password: '$2a$10$O1ISz3tliTL59qKvQu.0FuduuoK6PAaAz3XBvGkRxB6pRxrdbtgpG', // node -e "console.log(require('bcryptjs').hashSync('password', require('bcryptjs').genSaltSync()))"
           last_login: new Date().toISOString(),
           roles: ['event_manager', 'event_logger', 'event_watcher'],
           favorites: []
