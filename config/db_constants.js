@@ -16,4 +16,4 @@ module.exports = {
   eventDefinitionTable,
   eventTemplateTable,
   eventExportTemplateTable
-}
+};

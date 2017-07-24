@@ -227,15 +227,15 @@ exports.register = function (server, options, next) {
 
         //Time filtering
         if ((result.event_export_template_startTS) || (result.event_export_template_stopTS)) {
-          let startTS = r.ISO8601("1970-01-01T00:00:00.000Z");
+          let startTS = r.time(1970, 1, 1, 'Z');
           let stopTS = r.now();
           
           if (result.event_export_template_startTS) {
-            startTS = r.ISO8601(result.event_export_template_startTS);
+            startTS = result.event_export_template_startTS;
           }
 
           if (result.event_export_template_stopTS) {
-            stopTS = r.ISO8601(result.event_export_template_stopTS);
+            stopTS = result.event_export_template_stopTS;
           }
 
           query = query.filter((event) => {

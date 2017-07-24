@@ -54,7 +54,7 @@ exports.register = function (server, options, next) {
             const events_data = [{
               id: '2c24f096-0977-11e7-93ae-92361f002671',
               user_name: 'testadmin',
-              ts: r.now().toISO8601(),
+              ts: r.now(),
               event_value: "FISH",
               event_options: [{
                 event_option_name: "status",
@@ -64,7 +64,7 @@ exports.register = function (server, options, next) {
             }, {
               id: '3cd1c5fe-0977-11e7-93ae-92361f002671',
               user_name: 'testuser',
-              ts: r.now().toISO8601(),
+              ts: r.now(),
               event_value: "CORAL",
               event_options: [{
                 event_option_name: "status",
@@ -74,7 +74,7 @@ exports.register = function (server, options, next) {
             }, {
               id: '53d5d4a2-0977-11e7-93ae-92361f002671',
               user_name: 'testuser',
-              ts: r.now().toISO8601(),
+              ts: r.now(),
               event_value: "FISH",
               event_options: [{
                 event_option_name: "status",
@@ -84,7 +84,7 @@ exports.register = function (server, options, next) {
             }, {
               id: '5b8dd1f4-0977-11e7-93ae-92361f002671',
               user_name: 'testadmin',
-              ts: r.now().toISO8601(),
+              ts: r.now(),
               event_value: "FISH",
               event_options: [{
                 event_option_name: "status",
@@ -94,7 +94,7 @@ exports.register = function (server, options, next) {
             }, {
               id: '69bf7188-0977-11e7-93ae-92361f002671',
               user_name: 'testadmin',
-              ts: r.now().toISO8601(),
+              ts: r.now(),
               event_value: "FISH",
               event_options: [{
                 event_option_name: "status",
