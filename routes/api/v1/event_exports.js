@@ -174,7 +174,7 @@ exports.register = function (server, options, next) {
         }
 
         query = query.filter((event) => {
-          return event('ts').during(startTS, stopTS);
+          return event('ts').during(startTS, stopTS, {rightBound:'closed'});
         });
       }
 
