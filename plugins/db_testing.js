@@ -363,7 +363,7 @@ exports.register = function (server, options, next) {
                       event_options: []
                     },
                     {
-                      id:"df3372b1-6218-469f-aa7c-ecd083a8a931"
+                      id:"df3372b1-6218-469f-aa7c-ecd083a8a931",
                       event_name: "super_event_btn",
                       event_value: "SUPER_EVENT",
                       event_free_text_required: false,
