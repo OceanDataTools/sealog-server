@@ -287,7 +287,7 @@ exports.register = function (server, options, next) {
                         event_option_name: "Status",
                         event_option_type: "dropdown",
                         event_option_default_value: "",
-                        event_option_values: ["alive", "dead", "undead"],
+                        event_option_values: ["alive","dead","undead"],
                         event_option_allow_freeform: false,
                         event_option_required: false
                       }]
@@ -301,7 +301,7 @@ exports.register = function (server, options, next) {
                         event_option_name: "Color",
                         event_option_type: "dropdown",
                         event_option_default_value: "",
-                        event_option_values: ["black", "red", "green"],
+                        event_option_values: ["black","red","green"],
                         event_option_allow_freeform: false,
                         event_option_required: false
                       }]
@@ -315,7 +315,7 @@ exports.register = function (server, options, next) {
                         event_option_name: "Color",
                         event_option_type: "dropdown",
                         event_option_default_value: "",
-                        event_option_values: ["black", "red", "purple"],
+                        event_option_values: ["black","red","purple"],
                         event_option_allow_freeform: false,
                         event_option_required: false
                       }]
@@ -329,7 +329,7 @@ exports.register = function (server, options, next) {
                         event_option_name: "Color",
                         event_option_type: "dropdown",
                         event_option_default_value: "",
-                        event_option_values: ["blue", "red", "green"],
+                        event_option_values: ["blue","red","green"],
                         event_option_allow_freeform: false,
                         event_option_required: false
                       }]
@@ -343,7 +343,7 @@ exports.register = function (server, options, next) {
                         event_option_name: "Color",
                         event_option_type: "dropdown",
                         event_option_default_value: "",
-                        event_option_values: ["purple", "red", "pink"],
+                        event_option_values: ["purple","red","pink"],
                         event_option_allow_freeform: false,
                         event_option_required: false
                       }]
