@@ -361,7 +361,58 @@ exports.register = function (server, options, next) {
                       event_value: 'PROBLEM',
                       event_free_text_required: false,
                       event_options: []
-                    }];
+                    },
+                    {
+                      id:"df3372b1-6218-469f-aa7c-ecd083a8a931"
+                      event_name: "super_event_btn",
+                      event_value: "SUPER_EVENT",
+                      event_free_text_required: false,
+                      event_options:[
+                        {
+                          event_option_allow_freeform: false,
+                          event_option_name: "first text option",
+                          event_option_required: false,
+                          event_option_type: "text",
+                          event_option_values: []
+                        },
+                        {
+                          event_option_allow_freeform: false,
+                          event_option_name: "second text option",
+                          event_option_required: true,
+                          event_option_type: "text",
+                          event_option_values: []
+                        },
+                        {
+                          event_option_allow_freeform:false,
+                          event_option_name: "first select option",
+                          event_option_required: false,
+                          event_option_type: "dropdown",
+                          event_option_values: ["1","2","3","4"]
+                        },
+                        {
+                          event_option_allow_freeform: false,
+                          event_option_default_value: "1",
+                          event_option_name: "second select option",
+                          event_option_required: false,
+                          event_option_type: "dropdown",
+                          event_option_values: ["1","2","3","4"]
+                        },
+                        {
+                          event_option_allow_freeform: false,
+                          event_option_name: "third select option",
+                          event_option_required: true,
+                          event_option_type: "dropdown",
+                          event_option_values: ["1","2","3","4"]
+                        },
+                        {
+                          event_option_allow_freeform: false,
+                          event_option_default_value: "1",
+                          event_option_name: "fourth select option",
+                          event_option_required: true,
+                          event_option_type: "dropdown",
+                          event_option_values: ["1","2","3","4"]
+                        }
+                      ];
 
                     console.log("Populating Table: event_definitions");
                     return r.db(eventloggerDB).table(eventDefinitionTable).insert(events_definition_data).run().then(() => {
