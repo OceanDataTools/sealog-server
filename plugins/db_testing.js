@@ -412,7 +412,8 @@ exports.register = function (server, options, next) {
                           event_option_type: "dropdown",
                           event_option_values: ["1","2","3","4"]
                         }
-                      ];
+                      ]
+                    }];
 
                     console.log("Populating Table: event_definitions");
                     return r.db(eventloggerDB).table(eventDefinitionTable).insert(events_definition_data).run().then(() => {
