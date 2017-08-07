@@ -294,7 +294,7 @@ exports.register = function (server, options, next) {
             event_option_name: Joi.string().required(),
             event_option_type: Joi.string().required(),
             event_option_default_value: Joi.string().allow('').optional(),
-            event_option_values: Joi.array().items(Joi.string()).required().min(1),
+            event_option_values: Joi.array().items(Joi.string()).required(),
             event_option_allow_freeform: Joi.boolean().required(),
             event_option_required: Joi.boolean().required(),
           })).optional(),
