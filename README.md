@@ -113,6 +113,72 @@ r = requests.post(root_url + api_path, headers=headers, data=payload)
 
 The JWT string (`token`) remains constant for a user as long as the roles for that user do not change. If a user's roles are changed or a user is deleted, the server will reject the JWT.  Therefore scripts only need to include a valid JWT string (`token`) and not the username/password to authenticate API requests to the server.
 
+### Submitting an event using .NET
+
+I don't do .NET.  It's nothing personnal, I just haven't had a need to use it and thus I have never learned it.  However the following codeblock should get a .NET developer fairly close to a working solution.  If someone reading this is a .NET developer can you please test this code block and provide some feedback?
+
+```
+Imports System  
+Imports System.IO  
+Imports System.Net  
+Imports System.Text  
+Namespace Examples.System.Net  
+    Public Class WebRequestPostExample  
+
+            Public Shared Sub Main()  
+            Dim uriString As String
+            uriString = "http://162.243.201.175/sealog-server"
+
+            Dim loginPath As String
+            loginPath = "/login"
+
+            Dim submitPath As String
+            submitPath = "/api/v1/events"
+
+            Dim loginPostParms As New Specialized.NameValueCollection
+            loginPostParms.Add("username", "testuser")
+            loginPostParms.Add("password", "password")
+
+            Dim eventSubmitPostParams As New Specialized.NameValueCollection
+            eventSubmitPostParams.Add("event_value", "HELLO_WORLD")
+
+            ' Create a request using a URL that can receive a post.
+            Dim request As WebRequest = WebRequest.Create(uriString + loginPath)  
+            ' Set the Method property of the request to POST.  
+            request.Method = "POST"  
+            ' Create POST data and convert it to a byte array.  
+            Dim postData As String = "username:testuser password:password"  
+            Dim byteArray As Byte() = Encoding.UTF8.GetBytes(postData)  
+            ' Set the ContentType property of the WebRequest.  
+            request.ContentType = "application/form-data"  
+            ' Set the ContentLength property of the WebRequest.  
+            request.ContentLength = byteArray.Length  
+            ' Get the request stream.  
+            Dim dataStream As Stream = request.GetRequestStream()  
+            ' Write the data to the request stream.  
+            dataStream.Write(byteArray, 0, byteArray.Length)  
+            ' Close the Stream object.  
+            dataStream.Close()  
+            ' Get the response.  
+            Dim response As WebResponse = request.GetResponse()  
+            ' Display the status.  
+            Console.WriteLine(CType(response, HttpWebResponse).StatusDescription)  
+            ' Get the stream containing content returned by the server.  
+            dataStream = response.GetResponseStream()  
+            ' Open the stream using a StreamReader for easy access.  
+            Dim reader As New StreamReader(dataStream)  
+            ' Read the content.  
+            Dim responseFromServer As String = reader.ReadToEnd()  
+            ' Display the content.  
+            Console.WriteLine(responseFromServer)  
+            ' Clean up the streams.  
+            reader.Close()  
+            dataStream.Close()  
+            response.Close()  
+        End Sub  
+    End Class  
+End Namespace
+
 ### Subscribing to the eventlog stream using python
 
 The sealog server publishes updates to eventlog as a stream that can be subscribed to via websockets.  Because the server implements the pub/sub functionality using the [hapines websocket framework](https://github.com/hapijs/nes) there is some overhead that must be supported when trying to connect via the vanilla websockets libraries.
