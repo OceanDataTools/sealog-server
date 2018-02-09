@@ -1,19 +1,19 @@
-const eventloggerDB = 'eventlogger';
-const eventloggerDB_devel = 'eventlogger_devel';
+const sealogDB = 'sealogDB';
+const sealogDB_devel = 'sealogDB_devel';
 const usersTable = 'users';
 const eventsTable = 'events';
-const auxDataTable = 'event_aux_data';
-const eventDefinitionTable = 'event_definitions';
-const eventTemplateTable = 'event_templates';
-const eventExportTemplateTable = 'event_export_templates';
+const eventAuxDataTable = 'event_aux_data';
+const eventTemplatesTable = 'event_templates';
+const eventTemplateSetsTable = 'event_template_sets';
+const eventExportTemplatesTable = 'event_export_templates';
 
 module.exports = {
-  eventloggerDB,
-  eventloggerDB_devel,
+  sealogDB,
+  sealogDB_devel,
   usersTable,
   eventsTable,
-  auxDataTable,
-  eventDefinitionTable,
-  eventTemplateTable,
-  eventExportTemplateTable
+  eventAuxDataTable,
+  eventTemplatesTable,
+  eventTemplateSetsTable,
+  eventExportTemplatesTable
 };

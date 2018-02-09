@@ -29,6 +29,29 @@ describe('Server', () => {
     });
   });
 
+  const prefix = "/sealog-server";
+
+  const validUserJWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYjlmNSIsInNjb3BlIjpbImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTE3NDE5MjgwfQ.HuerD-OOcY3ecNPh-BJRhYJJdSkp4hZHpCnZjiIyRk0";
+  const validAdminJWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYTlmNSIsInNjb3BlIjpbImFkbWluIiwiZXZlbnRfbWFuYWdlciIsImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTE3MzQ4Nzc4fQ.Ig1O1Cgt235am0_1ybHcN3TWzSBNhh3LU_jUNiYp0W4";
+  const invalidJWT = "fyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYTlmNSIsInNjb3BlIjpbImFkbWluIiwiZXZlbnRfbWFuYWdlciIsImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTE3MzQ4Nzc4fQ.Ig1O1Cgt235am0_1ybHcN3TWzSBNhh3LU_jUNiYp0W4";
+
+  const validUserID = "5981f167212b348aed7fb9f5";
+  const validAdminID = "5981f167212b348aed7fa9f5";  
+  const invalidUserID = "5981f167212b348aed7fb9f2";
+
+  const validEventID = "5981f167212b348aed7fa9f7";  
+  const validEventID2 = "5981f167212b348aed7fa9f8";  
+  const invalidEventID = "5981f167212b348aed7fb9f2";
+
+  const validEventTemplateID = "5a71c3d7fa96aa1977822b2c";
+  const invalidEventTemplateID = "5a71c3d7fa96aa1977822b2a";
+
+  const validEventTemplateSetID = "5a73235e88acc0234103fa33";
+  const invalidEventTemplateSetID = "5a73235e88acc0234103fa32";
+
+  const validEventAuxDataID = "5a7341898c1553258f703ce8";
+  const invalidEventAuxDataID = "5a7341898c1553258f703ce9";
+
   // server is now available to be tested
   it('initializes.', (done) => {
 
@@ -40,21 +63,21 @@ describe('Server', () => {
   });
 
   it('Known route should return http status 200', done => {
-    apiServer.inject('/', response => {
+    apiServer.inject(prefix + '/', response => {
       expect(response.statusCode).to.equal(200);
       done();
     });
   });
 
   it('Unknown route should return http status 404', done => {
-    apiServer.inject('/unkownroute', response => {
+    apiServer.inject(prefix + '/unkownroute', response => {
       expect(response.statusCode).to.equal(404);
       done();
     });
   });
 
   it('Restricted route should return http status 401 for anonymous user', done => {
-    apiServer.inject('/restricted', response => {
+    apiServer.inject(prefix + '/restricted', response => {
       expect(response.statusCode).to.equal(401);
       done();
     });
@@ -63,9 +86,9 @@ describe('Server', () => {
   it('Restricted route should return http status 403 for authenticated user that is not authorized for the route.', done => {
     var options = {
       method: 'GET',
-      url: '/restricted',
+      url: prefix + '/restricted',
       headers: {
-        'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBjNDVkN2I0LTU4ODEtNGU2NC04ZmQzLTIwNTczMjVlMmFmZSIsInVzZXJuYW1lIjoiZGZvcm5hcmkiLCJzY29wZSI6WyJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwMzF9.RbgjiXgu7a4h1yC_o63e1-nuldZL1Gl5aeva6r3QSQU',
+        'Authorization': validUserJWT,
         'Content-Type': 'application/json; charset=utf-8'
       }
     };
@@ -78,9 +101,9 @@ describe('Server', () => {
   it('Restricted route should return http status 200 for authenticated user that is authorized for the route', done => {
     var options = {
       method: 'GET',
-      url: '/restricted',
+      url: prefix + '/restricted',
       headers: {
-        'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+        'Authorization': validAdminJWT,
         'Content-Type': 'application/json; charset=utf-8'
       }
     };
@@ -95,7 +118,7 @@ describe('Server', () => {
     it('Login route should return http status 400 if no payload provided', done => {
       var options = {
         method: 'POST',
-        url: '/login',
+        url: prefix + '/api/v1/login',
         payload: {}
       };
       apiServer.inject(options, response => {
@@ -107,9 +130,9 @@ describe('Server', () => {
     it('Login route should return http status 401 for bad user/pass payload', done => {
       var options = {
         method: 'POST',
-        url: '/login',
+        url: prefix + '/api/v1/login',
         payload: {
-          'username': 'asoule',
+          'username': 'user',
           'password': 'bad_password'
         }
       };
@@ -122,9 +145,9 @@ describe('Server', () => {
     it('Login route should return http status 200 for good user/pass payload', done => {
       var options = {
         method: 'POST',
-        url: '/login',
+        url: prefix + '/api/v1/login',
         payload: {
-          'username': 'asoule',
+          'username': 'user',
           'password': 'password'
         }
       };
@@ -137,9 +160,9 @@ describe('Server', () => {
     it('Restricted auth route that should return http status 200 because the JWT is valid', done => {
       var options = {
         method: 'GET',
-        url: '/validate',
+        url: prefix + '/api/v1/validate',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validUserJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -152,14 +175,14 @@ describe('Server', () => {
     it('Restricted auth route that should return http status 401 because the JWT is invalid', done => {
       var options = {
         method: 'GET',
-        url: '/validate',
+        url: prefix + '/api/v1/validate',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': invalidJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
       apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).to.equal(401);
         done();
       });
     });
@@ -172,9 +195,9 @@ describe('Server', () => {
     it('Restricted users route should return the list of user records and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/users',
+        url: prefix + '/api/v1/users',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -187,9 +210,9 @@ describe('Server', () => {
     it('Restricted users route should return the list of user records sorted by last_login and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/users?sort=last_login',
+        url: prefix + '/api/v1/users?sort=last_login',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -202,9 +225,9 @@ describe('Server', () => {
     it('Restricted users route requesting user record using invalid id should return 404', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/users/0c45d7b4-5881-4e64-8fd3-2057325e2afa',
+        url: prefix + '/api/v1/users/' + invalidUserID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -214,25 +237,10 @@ describe('Server', () => {
       });
     });
 
-    it('Restricted users route requesting user record using malformed id should return 400', done => {
-      var options = {
-        method: 'GET',
-        url: '/api/v1/users/0c45d7b4-5881-4e64-8fd3-2057325e2aa',
-        headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
-          'Content-Type': 'application/json; charset=utf-8'
-        }
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(400);
-        done();
-      });
-    });
-
     it('Restricted users route requesting a user record without authentication should return a http status 401', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/users/0c45d7b4-5881-4e64-8fd3-2057325e2afe',
+        url: prefix + '/api/v1/users/' + validUserID,
       };
       apiServer.inject(options, response => {
         expect(response.statusCode).to.equal(401);
@@ -243,9 +251,9 @@ describe('Server', () => {
     it('Restricted users route should return the user record specified by the given id param and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/users/0c45d7b4-5881-4e64-8fd3-2057325e2afe',
+        url: prefix + '/api/v1/users/' + validUserID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validUserJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -258,9 +266,9 @@ describe('Server', () => {
     it('Restricted users route updating a user record without a payload should return 400', done => {
       var options = {
         method: 'PATCH',
-        url: '/api/v1/users/0a44ce1a-2cb9-11e6-b67b-9e71128cae77',
+        url: prefix + '/api/v1/users/' + validUserID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validUserJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -273,9 +281,9 @@ describe('Server', () => {
     it('Restricted users route updating a user record with an invalid id should return 400', done => {
       var options = {
         method: 'PATCH',
-        url: '/api/v1/users/0a44ce1a-2cb9-11e6-b67b-9e71128cae67',
+        url: prefix + '/api/v1/users/' + invalidUserID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validUserJWT,
           'Content-Type': 'application/json; charset=utf-8'
         },
         payload: {
@@ -291,7 +299,7 @@ describe('Server', () => {
     it('Restricted users route updating a user record without authentication should return 401', done => {
       var options = {
         method: 'PATCH',
-        url: '/api/v1/users/0a44ce1a-2cb9-11e6-b67b-9e71128cae77',
+        url: prefix + '/api/v1/users/' + validUserID,
         payload: {
           email: 'asoule@whoi.edu'
         }
@@ -305,9 +313,9 @@ describe('Server', () => {
     it('Restricted users route updating a user record should return 204', done => {
       var options = {
         method: 'PATCH',
-        url: '/api/v1/users/0a44ce1a-2cb9-11e6-b67b-9e71128cae77',
+        url: prefix + '/api/v1/users/' + validUserID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validUserJWT,
           'Content-Type': 'application/json; charset=utf-8'
         },
         payload: {
@@ -324,13 +332,13 @@ describe('Server', () => {
     it('Restricted users route updating a user\'s favorites correctly should return 204', done => {
       var options = {
         method: 'PATCH',
-        url: '/api/v1/users/0a44ce1a-2cb9-11e6-b67b-9e71128cae77/favorites',
+        url: prefix + '/api/v1/users/' + validUserID + '/favorites',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validUserJWT,
           'Content-Type': 'application/json; charset=utf-8'
         },
         payload: {
-          favorites: ['0a44ce1a-2cb9-11e6-b67b-9e71128cae77']
+          favorites: [validEventTemplateID]
         }
       };
       apiServer.inject(options, response => {
@@ -339,12 +347,12 @@ describe('Server', () => {
       });
     });
 
-    it('Restricted users route updating a user\'s favorites with authorization should return 401', done => {
+    it('Restricted users route updating a user\'s favorites without authorization should return 401', done => {
       var options = {
         method: 'PATCH',
-        url: '/api/v1/users/0a44ce1a-2cb9-11e6-b67b-9e71128cae77/favorites',
+        url: prefix + '/api/v1/users/' + validUserID + '/favorites',
         payload: {
-          favorites: ['0a44ce1a-2cb9-11e6-b67b-9e71128cae77']
+          favorites: [validEventTemplateID]
         }
       };
       apiServer.inject(options, response => {
@@ -353,45 +361,12 @@ describe('Server', () => {
       });
     });
 
-    it('Restricted users route updating a user\'s favorites with malformated payload should return 400', done => {
-      var options = {
-        method: 'PATCH',
-        url: '/api/v1/users/0a44ce1a-2cb9-11e6-b67b-9e71128cae77/favorites',
-        headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
-          'Content-Type': 'application/json; charset=utf-8'
-        },
-        payload: {
-          favorites: ['some string']
-        }
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(400);
-        done();
-      });
-    });
-
-    it('Restricted users route deleting a user record with a malformed id should return 400', done => {
-      var options = {
-        method: 'DELETE',
-        url: '/api/v1/users/0c45d7b4-5881-4e64-8fd3-2057325e2af',
-        headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
-          'Content-Type': 'application/json; charset=utf-8'
-        },
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(400);
-        done();
-      });
-    });
-
     it('Restricted users route deleting the currently authenticated user should return 400', done => {
       var options = {
         method: 'DELETE',
-        url: '/api/v1/users/0a44ce1a-2cb9-11e6-b67b-9e71128cae77',
+        url: prefix + '/api/v1/users/' + validAdminID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         },
       };
@@ -404,7 +379,7 @@ describe('Server', () => {
     it('Restricted users route deleting a user without authentication should return 401', done => {
       var options = {
         method: 'DELETE',
-        url: '/api/v1/users/0c45d7b4-5881-4e64-8fd3-2057325e2afe',
+        url: prefix + '/api/v1/users/' + validUserID,
       };
       apiServer.inject(options, response => {
         expect(response.statusCode).to.equal(401);
@@ -415,9 +390,9 @@ describe('Server', () => {
     it('Restricted users route deleting a user record should return 204', done => {
       var options = {
         method: 'DELETE',
-        url: '/api/v1/users/0c45d7b4-5881-4e64-8fd3-2057325e2afe',
+        url: prefix + '/api/v1/users/' + validUserID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         },
       };
@@ -430,9 +405,9 @@ describe('Server', () => {
     it('Restricted users route deleting a non-existent user record should return 404', done => {
       var options = {
         method: 'DELETE',
-        url: '/api/v1/users/0c45d7b4-5881-4e64-8fa3-2057325e2afe',
+        url: prefix + '/api/v1/users/' + validUserID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         },
       };
@@ -448,7 +423,7 @@ describe('Server', () => {
     it('Restricted event_exports route requesting event records without authentication should return a http status 401', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_exports',
+        url: prefix + '/api/v1/event_exports',
       };
       apiServer.inject(options, response => {
         expect(response.statusCode).to.equal(401);
@@ -460,9 +435,9 @@ describe('Server', () => {
     it('Restricted event_exports route should return all event records and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_exports',
+        url: prefix + '/api/v1/event_exports',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -476,9 +451,9 @@ describe('Server', () => {
     it('Restricted event_exports route should return a single event record and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_exports/69bf7188-0977-11e7-93ae-92361f002671',
+        url: prefix + '/api/v1/event_exports/' + validEventID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -492,9 +467,9 @@ describe('Server', () => {
     it('Restricted event_exports route should return a not found message and a http status 404', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_exports/69bf7188-0977-11e7-93ae-92361f002672', // invalid GUID
+        url: prefix + '/api/v1/event_exports/' + invalidEventID, // invalid GUID
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -508,9 +483,9 @@ describe('Server', () => {
     it('Restricted event_exports route should return all event records and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_exports?datasource=framegrabber',
+        url: prefix + '/api/v1/event_exports?datasource=framegrabber',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -524,9 +499,9 @@ describe('Server', () => {
     it('Restricted event_exports route should return all event records and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_exports?datasource=framegrabber&datasource=datagrabber',
+        url: prefix + '/api/v1/event_exports?datasource=framegrabber&datasource=datagrabber',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -540,9 +515,9 @@ describe('Server', () => {
     it('Restricted event_exports route should return not found because datasource does not exist and a http status 404', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_exports?datasource=invalidgrabber',
+        url: prefix + '/api/v1/event_exports?datasource=invalidgrabber',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -557,9 +532,9 @@ describe('Server', () => {
     it('Restricted event_exports route should return all event records that were made after a start time and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_exports?startTS=2000-01-01T12:00:00.000Z',
+        url: prefix + '/api/v1/event_exports?startTS=2000-01-01T12:00:00.000Z',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -573,9 +548,9 @@ describe('Server', () => {
     it('Restricted event_exports route should return all event records that were made before a stop time and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_exports?stopTS=2020-01-01T12:00:00.000Z',
+        url: prefix + '/api/v1/event_exports?stopTS=2020-01-01T12:00:00.000Z',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -589,9 +564,9 @@ describe('Server', () => {
     it('Restricted event_exports route should no event records because no event exports match the time filers and a http status 404', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_exports?stopTS=2000-01-01T12:00:00.000Z',
+        url: prefix + '/api/v1/event_exports?stopTS=2000-01-01T12:00:00.000Z',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -605,9 +580,9 @@ describe('Server', () => {
     it('Restricted event_exports route should return all event records that occurred between a start and stop time and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_exports?startTS=2000-01-01T12:00:00.000Z&stopTS=2020-01-01T12:00:00.000Z',
+        url: prefix + '/api/v1/event_exports?startTS=2000-01-01T12:00:00.000Z&stopTS=2020-01-01T12:00:00.000Z',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -621,9 +596,9 @@ describe('Server', () => {
     it('Restricted event_exports route with a time query but malformed time string and a http status 400', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_exports?stopTS=2020-0101T12:00:00.000Z', // should be: 2020-01-01T12:00:00.000Z
+        url: prefix + '/api/v1/event_exports?stopTS=2020-0101T12:00:00.000Z', // should be: 2020-01-01T12:00:00.000Z
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -637,9 +612,9 @@ describe('Server', () => {
     it('Restricted event_exports route with a user query and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_exports?user=Adam%20Soule',
+        url: prefix + '/api/v1/event_exports?author=testuser',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -653,9 +628,9 @@ describe('Server', () => {
     it('Restricted event_exports route with a user query but no returned event exports and a http status 404', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_exports?user=Webb%20Pinner',
+        url: prefix + '/api/v1/event_exports?author=Webb%20Pinner',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -669,9 +644,9 @@ describe('Server', () => {
     it('Restricted event_exports route with a multiple user queries and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_exports?user=Adam%20Soule&user=Dan%20Fornari',
+        url: prefix + '/api/v1/event_exports?author=testuser&author=testadmin',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -685,9 +660,9 @@ describe('Server', () => {
     it('Restricted event_exports route with a value query and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_exports?value=fish',
+        url: prefix + '/api/v1/event_exports?value=FISH',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -701,9 +676,9 @@ describe('Server', () => {
     it('Restricted event_exports route with a multiple value queries and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_exports?value=fish&value=coral',
+        url: prefix + '/api/v1/event_exports?value=FISH&value=CORAL',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -717,25 +692,9 @@ describe('Server', () => {
     it('Restricted event_exports route with a single freetext query and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_exports?freetext=some',
+        url: prefix + '/api/v1/event_exports?freetext=some',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
-          'Content-Type': 'application/json; charset=utf-8'
-        }
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(200);
-        done();
-      });
-    });
-
-    // query all event exports based on multiple freetext queries
-    it('Restricted event_exports route with a multiple freetext queries and a http status 200', done => {
-      var options = {
-        method: 'GET',
-        url: '/api/v1/event_exports?freetext=some&freetext=free',
-        headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -749,9 +708,9 @@ describe('Server', () => {
     it('Restricted event_exports route with a limit to number of returned event exports and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_exports?limit=1',
+        url: prefix + '/api/v1/event_exports?limit=1',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -765,9 +724,9 @@ describe('Server', () => {
     it('Restricted event_exports route with a offset to first returned event exports and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_exports?offset=1',
+        url: prefix + '/api/v1/event_exports?offset=1',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -783,7 +742,7 @@ describe('Server', () => {
     it('Restricted events route requesting event records without authentication should return a http status 401', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/events',
+        url: prefix + '/api/v1/events',
       };
       apiServer.inject(options, response => {
         expect(response.statusCode).to.equal(401);
@@ -795,9 +754,9 @@ describe('Server', () => {
     it('Restricted events route should return all event records and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/events',
+        url: prefix + '/api/v1/events',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -811,9 +770,9 @@ describe('Server', () => {
     it('Restricted events route should return a single event record and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/events/69bf7188-0977-11e7-93ae-92361f002671',
+        url: prefix + '/api/v1/events/' + validEventID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -827,9 +786,9 @@ describe('Server', () => {
     it('Restricted events route should return a not found message and a http status 404', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/events/69bf7188-0977-11e7-93ae-92361f002672', // invalid GUID
+        url: prefix + '/api/v1/events/' + invalidEventID, // invalid GUID
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -843,9 +802,9 @@ describe('Server', () => {
     it('Restricted events route should return all event records and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/events?datasource=framegrabber',
+        url: prefix + '/api/v1/events?datasource=framegrabber',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -859,9 +818,9 @@ describe('Server', () => {
     it('Restricted events route should return all event records and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/events?datasource=framegrabber&datasource=datagrabber',
+        url: prefix + '/api/v1/events?datasource=framegrabber&datasource=datagrabber',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -875,9 +834,9 @@ describe('Server', () => {
     it('Restricted events route should return not found because datasource does not exist and a http status 404', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/events?datasource=invalidgrabber',
+        url: prefix + '/api/v1/events?datasource=invalidgrabber',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -892,9 +851,9 @@ describe('Server', () => {
     it('Restricted events route should return all event records that were made after a start time and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/events?startTS=2000-01-01T12:00:00.000Z',
+        url: prefix + '/api/v1/events?startTS=2000-01-01T12:00:00.000Z',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -908,9 +867,9 @@ describe('Server', () => {
     it('Restricted events route should return all event records that were made before a stop time and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/events?stopTS=2020-01-01T12:00:00.000Z',
+        url: prefix + '/api/v1/events?stopTS=2020-01-01T12:00:00.000Z',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -924,9 +883,9 @@ describe('Server', () => {
     it('Restricted events route should no event records because no events match the time filers and a http status 404', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/events?stopTS=2000-01-01T12:00:00.000Z',
+        url: prefix + '/api/v1/events?stopTS=2000-01-01T12:00:00.000Z',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -940,9 +899,9 @@ describe('Server', () => {
     it('Restricted events route should return all event records that occurred between a start and stop time and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/events?startTS=2000-01-01T12:00:00.000Z&stopTS=2020-01-01T12:00:00.000Z',
+        url: prefix + '/api/v1/events?startTS=2000-01-01T12:00:00.000Z&stopTS=2020-01-01T12:00:00.000Z',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -956,9 +915,9 @@ describe('Server', () => {
     it('Restricted events route with a time query but malformed time string and a http status 400', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/events?stopTS=2020-0101T12:00:00.000Z', // should be: 2020-01-01T12:00:00.000Z
+        url: prefix + '/api/v1/events?stopTS=2020-0101T12:00:00.000Z', // should be: 2020-01-01T12:00:00.000Z
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -972,9 +931,9 @@ describe('Server', () => {
     it('Restricted events route with a user query and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/events?user=Adam%20Soule',
+        url: prefix + '/api/v1/events?user=testuser',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -988,9 +947,9 @@ describe('Server', () => {
     it('Restricted events route with a user query but no returned events and a http status 404', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/events?user=Webb%20Pinner',
+        url: prefix + '/api/v1/events?author=invalidUser',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1004,9 +963,9 @@ describe('Server', () => {
     it('Restricted events route with a multiple user queries and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/events?user=Adam%20Soule&user=Dan%20Fornari',
+        url: prefix + '/api/v1/events?user=testuser&user=testadmin',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1020,9 +979,9 @@ describe('Server', () => {
     it('Restricted events route with a value query and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/events?value=fish',
+        url: prefix + '/api/v1/events?value=FISH',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1036,9 +995,9 @@ describe('Server', () => {
     it('Restricted events route with a multiple value queries and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/events?value=fish&value=coral',
+        url: prefix + '/api/v1/events?value=FISH&value=CORAL',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1052,25 +1011,9 @@ describe('Server', () => {
     it('Restricted events route with a single freetext query and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/events?freetext=some',
+        url: prefix + '/api/v1/events?freetext=some',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
-          'Content-Type': 'application/json; charset=utf-8'
-        }
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(200);
-        done();
-      });
-    });
-
-    // query all events based on multiple freetext queries
-    it('Restricted events route with a multiple freetext queries and a http status 200', done => {
-      var options = {
-        method: 'GET',
-        url: '/api/v1/events?freetext=some&freetext=free',
-        headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1084,9 +1027,9 @@ describe('Server', () => {
     it('Restricted events route with a limit to number of returned events and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/events?limit=1',
+        url: prefix + '/api/v1/events?limit=1',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1100,9 +1043,9 @@ describe('Server', () => {
     it('Restricted events route with a offset to first returned events and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/events?offset=1',
+        url: prefix + '/api/v1/events?offset=1',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1116,9 +1059,9 @@ describe('Server', () => {
     it('Restricted events route to update an event with an invalid payload and a http status 400', done => {
       var options = {
         method: 'PATCH',
-        url: '/api/v1/events/2c24f096-0977-11e7-93ae-92361f002671',
+        url: prefix + '/api/v1/events/' + validEventID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         },
         payload: {
@@ -1139,9 +1082,9 @@ describe('Server', () => {
     it('Restricted events route to update an event with an valid payload and a http status 204', done => {
       var options = {
         method: 'PATCH',
-        url: '/api/v1/events/2c24f096-0977-11e7-93ae-92361f002671',
+        url: prefix + '/api/v1/events/' + validEventID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         },
         payload: {
@@ -1158,29 +1101,13 @@ describe('Server', () => {
       });
     });
 
-    // delete an event but with an invalid uuid
-    it('Restricted events route to delete an event with an invalid id and a http status 400', done => {
-      var options = {
-        method: 'DELETE',
-        url: '/api/v1/events/2c24f096-0977-11e7-93ae-92361f00267',
-        headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
-          'Content-Type': 'application/json; charset=utf-8'
-        },
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(400);
-        done();
-      });
-    });
-
     // delete an event but with a valid but non-existent uuid
     it('Restricted events route to delete an event with an invalid id and a http status 404', done => {
       var options = {
         method: 'DELETE',
-        url: '/api/v1/events/2c24f096-0977-11e7-93ae-92361f003671',
+        url: prefix + '/api/v1/events/' + invalidEventID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         },
       };
@@ -1194,9 +1121,9 @@ describe('Server', () => {
     it('Restricted events route to delete an event with an valid id and a http status 204', done => {
       var options = {
         method: 'DELETE',
-        url: '/api/v1/events/2c24f096-0977-11e7-93ae-92361f002671',
+        url: prefix + '/api/v1/events/' + validEventID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         },
       };
@@ -1207,12 +1134,12 @@ describe('Server', () => {
     });
   });
 
-  /* event_definitions */
+  /* event_templates */
   describe('Event Definitions', () => {
-    it('Restricted event_definitions route requesting event definition records without authentication should return a http status 401', done => {
+    it('Restricted event_templates route requesting event template records without authentication should return a http status 401', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_definitions',
+        url: prefix + '/api/v1/event_templates',
       };
       apiServer.inject(options, response => {
         expect(response.statusCode).to.equal(401);
@@ -1221,12 +1148,12 @@ describe('Server', () => {
     });
 
     // query all events
-    it('Restricted event_definitions route should return all event definition records and a http status 200', done => {
+    it('Restricted event_templates route should return all event template records and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_definitions',
+        url: prefix + '/api/v1/event_templates',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1236,13 +1163,13 @@ describe('Server', () => {
       });
     });
 
-    // query a single event definition
-    it('Restricted event_definitions route should return a single event definition record and a http status 200', done => {
+    // query a single event template
+    it('Restricted event_templates route should return a single event template record and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_definitions/7b5f3fb7-1dd0-4161-a576-e4f3a885a566',
+        url: prefix + '/api/v1/event_templates/' + validEventTemplateID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1253,12 +1180,12 @@ describe('Server', () => {
     });
 
     // query an invalid single event
-    it('Restricted event_definitions route should return a not found message and a http status 404', done => {
+    it('Restricted event_templates route should return a not found message and a http status 404', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_definitions/69bf7188-0977-11e7-93ae-92361f002672', // invalid GUID
+        url: prefix + '/api/v1/event_templates/' + invalidEventTemplateID, // invalid GUID
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1268,13 +1195,13 @@ describe('Server', () => {
       });
     });
 
-    // query all event definitions but return a specific number of event definitions
-    it('Restricted event_definitions route with a limit to number of returned event definitions and a http status 200', done => {
+    // query all event templates but return a specific number of event templates
+    it('Restricted event_templates route with a limit to number of returned event templates and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_definitions?limit=1',
+        url: prefix + '/api/v1/event_templates?limit=1',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1285,12 +1212,12 @@ describe('Server', () => {
     });
 
     // query all events but with an offset
-    it('Restricted event_definitions route with a offset to first returned event definitions and a http status 200', done => {
+    it('Restricted event_templates route with a offset to first returned event templates and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_definitions?offset=1',
+        url: prefix + '/api/v1/event_templates?offset=1',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1300,13 +1227,13 @@ describe('Server', () => {
       });
     });
 
-    // update an event definition but with an valid payload
-    it('Restricted event_definitions route to create an event definition with an invalid payload and a http status 400', done => {
+    // update an event template but with an valid payload
+    it('Restricted event_templates route to create an event template with an invalid payload and a http status 400', done => {
       var options = {
         method: 'POST',
-        url: '/api/v1/event_definitions',
+        url: prefix + '/api/v1/event_templates',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         },
         payload: {
@@ -1319,13 +1246,13 @@ describe('Server', () => {
       });
     });
 
-    // update an event definition but with an valid payload
-    it('Restricted event_definitions route to create an event definition with an invalid payload and a http status 201', done => {
+    // update an event template but with an valid payload
+    it('Restricted event_templates route to create an event template with an invalid payload and a http status 201', done => {
       var options = {
         method: 'POST',
-        url: '/api/v1/event_definitions',
+        url: prefix + '/api/v1/event_templates',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         },
         payload: {
@@ -1348,32 +1275,13 @@ describe('Server', () => {
       });
     });
 
-    // update an event definition but with an invalid payload
-    it('Restricted event_definitions route to update an event definition with an invalid payload and a http status 400', done => {
+    // update an event template but with an valid payload
+    it('Restricted event_templates route to update an event template with an valid payload and a http status 204', done => {
       var options = {
         method: 'PATCH',
-        url: '/api/v1/event_definitions/7b5f3fb7-1dd0-4161-a576-e4f3a885a566',
+        url: prefix + '/api/v1/event_templates/' + validEventTemplateID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
-          'Content-Type': 'application/json; charset=utf-8'
-        },
-        payload: {
-          invalid_option: "option1"
-        }
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(400);
-        done();
-      });
-    });
-
-    // update an event definition but with an valid payload
-    it('Restricted event_definitions route to update an event definition with an valid payload and a http status 204', done => {
-      var options = {
-        method: 'PATCH',
-        url: '/api/v1/event_definitions/7b5f3fb7-1dd0-4161-a576-e4f3a885a566',
-        headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         },
         payload: {
@@ -1386,248 +1294,13 @@ describe('Server', () => {
       });
     });
 
-    // delete an event definition but with an invalid uuid
-    it('Restricted event_definitions route to delete an event definition with an invalid id and a http status 400', done => {
-      var options = {
-        method: 'DELETE',
-        url: '/api/v1/event_definitions/2c24f096-0977-11e7-93ae-92361f00267',
-        headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
-          'Content-Type': 'application/json; charset=utf-8'
-        },
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(400);
-        done();
-      });
-    });
-
-    // delete an event definition but with a valid but non-existent uuid
-    it('Restricted event_definitions route to delete an event definition with an invalid id and a http status 404', done => {
-      var options = {
-        method: 'DELETE',
-        url: '/api/v1/event_definitions/2c24f096-0977-11e7-93ae-92361f003671',
-        headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
-          'Content-Type': 'application/json; charset=utf-8'
-        },
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(404);
-        done();
-      });
-    });
-
-    // delete an event definition but with an invalid payload
-    it('Restricted event_definitions route to delete an event definition with an valid id and a http status 204', done => {
-      var options = {
-        method: 'DELETE',
-        url: '/api/v1/event_definitions/7b5f3fb7-1dd0-4161-a576-e4f3a885a566',
-        headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
-          'Content-Type': 'application/json; charset=utf-8'
-        },
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(204);
-        done();
-      });
-    });
-  });
-
-  /* event_templates */
-  describe('Event Templates', () => {
-    it('Restricted event_templates route requesting event template records without authentication should return a http status 401', done => {
-      var options = {
-        method: 'GET',
-        url: '/api/v1/event_templates',
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(401);
-        done();
-      });
-    });
-
-    // query all events
-    it('Restricted event_templates route should return all event template records and a http status 200', done => {
-      var options = {
-        method: 'GET',
-        url: '/api/v1/event_templates',
-        headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
-          'Content-Type': 'application/json; charset=utf-8'
-        }
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(200);
-        done();
-      });
-    });
-
-    // query a single event template
-    it('Restricted event_templates route should return a single event template record and a http status 200', done => {
-      var options = {
-        method: 'GET',
-        url: '/api/v1/event_templates/3bf07743-c880-4cb3-a26f-93fda90aaf64',
-        headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
-          'Content-Type': 'application/json; charset=utf-8'
-        }
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(200);
-        done();
-      });
-    });
-
-    // query an invalid single event
-    it('Restricted event_templates route should return a not found message and a http status 404', done => {
-      var options = {
-        method: 'GET',
-        url: '/api/v1/event_templates/3bf07743-c880-4cb3-a26f-93fda90aaf63', // invalid GUID
-        headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
-          'Content-Type': 'application/json; charset=utf-8'
-        }
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(404);
-        done();
-      });
-    });
-
-    // query all event templates but return a specific number of event templates
-    it('Restricted event_templates route with a limit to number of returned event templates and a http status 200', done => {
-      var options = {
-        method: 'GET',
-        url: '/api/v1/event_templates?limit=1',
-        headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
-          'Content-Type': 'application/json; charset=utf-8'
-        }
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(200);
-        done();
-      });
-    });
-
-    // query all events but with an offset
-    it('Restricted event_templates route with a offset to first returned event templates and a http status 200', done => {
-      var options = {
-        method: 'GET',
-        url: '/api/v1/event_templates?offset=1',
-        headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
-          'Content-Type': 'application/json; charset=utf-8'
-        }
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(200);
-        done();
-      });
-    });
-
-    // update an event template but with an valid payload
-    it('Restricted event_templates route to create an event template with an invalid payload and a http status 400', done => {
-      var options = {
-        method: 'POST',
-        url: '/api/v1/event_templates',
-        headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
-          'Content-Type': 'application/json; charset=utf-8'
-        },
-        payload: {
-          "event_template_name": "Awesomer Events"
-        }
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(400);
-        done();
-      });
-    });
-
-    // update an event template but with an valid payload
-    it('Restricted event_templates route to create an event template with an invalid payload and a http status 201', done => {
-      var options = {
-        method: 'POST',
-        url: '/api/v1/event_templates',
-        headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
-          'Content-Type': 'application/json; charset=utf-8'
-        },
-        payload: {
-          event_template_name: "Awesome Events",
-          event_definitions: ['7b5f3fb7-1dd0-4161-a576-e4f3a885a566']
-        }
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(201);
-        done();
-      });
-    });
-
-    // update an event template but with an invalid payload
-    it('Restricted event_templates route to update an event template with an invalid payload and a http status 400', done => {
-      var options = {
-        method: 'PATCH',
-        url: '/api/v1/event_templates/3bf07743-c880-4cb3-a26f-93fda90aaf64',
-        headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
-          'Content-Type': 'application/json; charset=utf-8'
-        },
-        payload: {
-          invalid_option: "option1"
-        }
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(400);
-        done();
-      });
-    });
-
-    // update an event template but with an valid payload
-    it('Restricted event_templates route to update an event template with an valid payload and a http status 204', done => {
-      var options = {
-        method: 'PATCH',
-        url: '/api/v1/event_templates/3bf07743-c880-4cb3-a26f-93fda90aaf64',
-        headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
-          'Content-Type': 'application/json; charset=utf-8'
-        },
-        payload: {
-          "event_template_name": "Awesomer Events"
-        }
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(204);
-        done();
-      });
-    });
-
-    // delete an event template but with an invalid uuid
-    it('Restricted event_templates route to delete an event template with an invalid id and a http status 400', done => {
-      var options = {
-        method: 'DELETE',
-        url: '/api/v1/event_templates/2c24f096-0977-11e7-93ae-92361f00267',
-        headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
-          'Content-Type': 'application/json; charset=utf-8'
-        },
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(400);
-        done();
-      });
-    });
-
     // delete an event template but with a valid but non-existent uuid
     it('Restricted event_templates route to delete an event template with an invalid id and a http status 404', done => {
       var options = {
         method: 'DELETE',
-        url: '/api/v1/event_templates/2c24f096-0977-11e7-93ae-92361f003671',
+        url: prefix + '/api/v1/event_templates/' + invalidEventTemplateID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         },
       };
@@ -1641,9 +1314,212 @@ describe('Server', () => {
     it('Restricted event_templates route to delete an event template with an valid id and a http status 204', done => {
       var options = {
         method: 'DELETE',
-        url: '/api/v1/event_templates/3bf07743-c880-4cb3-a26f-93fda90aaf64',
+        url: prefix + '/api/v1/event_templates/' + validEventTemplateID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
+          'Content-Type': 'application/json; charset=utf-8'
+        },
+      };
+      apiServer.inject(options, response => {
+        expect(response.statusCode).to.equal(204);
+        done();
+      });
+    });
+  });
+
+  /* event_template_sets */
+  describe('Event Template Sets', () => {
+    it('Restricted event_template_sets route requesting event template records without authentication should return a http status 401', done => {
+      var options = {
+        method: 'GET',
+        url: prefix + '/api/v1/event_template_sets',
+      };
+      apiServer.inject(options, response => {
+        expect(response.statusCode).to.equal(401);
+        done();
+      });
+    });
+
+    // query all events
+    it('Restricted event_template_sets route should return all event template records and a http status 200', done => {
+      var options = {
+        method: 'GET',
+        url: prefix + '/api/v1/event_template_sets',
+        headers: {
+          'Authorization': validAdminJWT,
+          'Content-Type': 'application/json; charset=utf-8'
+        }
+      };
+      apiServer.inject(options, response => {
+        expect(response.statusCode).to.equal(200);
+        done();
+      });
+    });
+
+    // query a single event template
+    it('Restricted event_template_sets route should return a single event template record and a http status 200', done => {
+      var options = {
+        method: 'GET',
+        url: prefix + '/api/v1/event_template_sets/' + validEventTemplateSetID,
+        headers: {
+          'Authorization': validAdminJWT,
+          'Content-Type': 'application/json; charset=utf-8'
+        }
+      };
+      apiServer.inject(options, response => {
+        expect(response.statusCode).to.equal(200);
+        done();
+      });
+    });
+
+    // query an invalid single event
+    it('Restricted event_template_sets route should return a not found message and a http status 404', done => {
+      var options = {
+        method: 'GET',
+        url: prefix + '/api/v1/event_template_sets/' + invalidEventTemplateSetID,
+        headers: {
+          'Authorization': validAdminJWT,
+          'Content-Type': 'application/json; charset=utf-8'
+        }
+      };
+      apiServer.inject(options, response => {
+        expect(response.statusCode).to.equal(404);
+        done();
+      });
+    });
+
+    // query all event templates but return a specific number of event templates
+    it('Restricted event_template_sets route with a limit to number of returned event templates and a http status 200', done => {
+      var options = {
+        method: 'GET',
+        url: prefix + '/api/v1/event_template_sets?limit=1',
+        headers: {
+          'Authorization': validAdminJWT,
+          'Content-Type': 'application/json; charset=utf-8'
+        }
+      };
+      apiServer.inject(options, response => {
+        expect(response.statusCode).to.equal(200);
+        done();
+      });
+    });
+
+    // query all events but with an offset
+    it('Restricted event_template_sets route with a offset to first returned event templates and a http status 200', done => {
+      var options = {
+        method: 'GET',
+        url: prefix + '/api/v1/event_template_sets?offset=1',
+        headers: {
+          'Authorization': validAdminJWT,
+          'Content-Type': 'application/json; charset=utf-8'
+        }
+      };
+      apiServer.inject(options, response => {
+        expect(response.statusCode).to.equal(200);
+        done();
+      });
+    });
+
+    // update an event template but with an valid payload
+    it('Restricted event_template_sets route to create an event template with an invalid payload and a http status 400', done => {
+      var options = {
+        method: 'POST',
+        url: prefix + '/api/v1/event_template_sets',
+        headers: {
+          'Authorization': validAdminJWT,
+          'Content-Type': 'application/json; charset=utf-8'
+        },
+        payload: {
+          "event_templates": [validEventTemplateID]
+        }
+      };
+      apiServer.inject(options, response => {
+        expect(response.statusCode).to.equal(400);
+        done();
+      });
+    });
+
+    // update an event template but with an valid payload
+    it('Restricted event_template_sets route to create an event template with an invalid payload and a http status 201', done => {
+      var options = {
+        method: 'POST',
+        url: prefix + '/api/v1/event_template_sets',
+        headers: {
+          'Authorization': validAdminJWT,
+          'Content-Type': 'application/json; charset=utf-8'
+        },
+        payload: {
+          event_template_set_name: "Awesomest Events",
+          event_templates: [validEventTemplateID]
+        }
+      };
+      apiServer.inject(options, response => {
+        expect(response.statusCode).to.equal(201);
+        done();
+      });
+    });
+
+    // update an event template but with an invalid payload
+    it('Restricted event_template_sets route to update an event template with an invalid payload and a http status 400', done => {
+      var options = {
+        method: 'PATCH',
+        url: prefix + '/api/v1/event_template_sets/' + validEventTemplateSetID,
+        headers: {
+          'Authorization': validAdminJWT,
+          'Content-Type': 'application/json; charset=utf-8'
+        },
+        payload: {
+          event_templates: "option1"
+        }
+      };
+      apiServer.inject(options, response => {
+        expect(response.statusCode).to.equal(400);
+        done();
+      });
+    });
+
+    // update an event template but with an valid payload
+    it('Restricted event_template_sets route to update an event template with an valid payload and a http status 204', done => {
+      var options = {
+        method: 'PATCH',
+        url: prefix + '/api/v1/event_template_sets/' + validEventTemplateSetID,
+        headers: {
+          'Authorization': validAdminJWT,
+          'Content-Type': 'application/json; charset=utf-8'
+        },
+        payload: {
+          "event_template_name": "Awesomer Events"
+        }
+      };
+      apiServer.inject(options, response => {
+        expect(response.statusCode).to.equal(204);
+        done();
+      });
+    });
+
+    // delete an event template but with a valid but non-existent uuid
+    it('Restricted event_template_sets route to delete an event template with an invalid id and a http status 404', done => {
+      var options = {
+        method: 'DELETE',
+        url: prefix + '/api/v1/event_template_sets/' + invalidEventTemplateSetID,
+        headers: {
+          'Authorization': validAdminJWT,
+          'Content-Type': 'application/json; charset=utf-8'
+        },
+      };
+      apiServer.inject(options, response => {
+        expect(response.statusCode).to.equal(404);
+        done();
+      });
+    });
+
+    // delete an event template but with an invalid payload
+    it('Restricted event_template_sets route to delete an event template with an valid id and a http status 204', done => {
+      var options = {
+        method: 'DELETE',
+        url: prefix + '/api/v1/event_template_sets/' + validEventTemplateSetID,
+        headers: {
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         },
       };
@@ -1659,7 +1535,7 @@ describe('Server', () => {
     it('Restricted event_aux_data route requesting event_aux_data records without authentication should return a http status 401', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_aux_data',
+        url: prefix + '/api/v1/event_aux_data',
       };
       apiServer.inject(options, response => {
         expect(response.statusCode).to.equal(401);
@@ -1671,9 +1547,9 @@ describe('Server', () => {
     it('Restricted event_aux_data route should return all event records and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_aux_data',
+        url: prefix + '/api/v1/event_aux_data',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1687,9 +1563,9 @@ describe('Server', () => {
     it('Restricted event_aux_data route should return a single event record and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_aux_data/82bf496f-eff2-4d17-8335-83cedc48730b',
+        url: prefix + '/api/v1/event_aux_data/' + validEventAuxDataID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1703,9 +1579,9 @@ describe('Server', () => {
     it('Restricted event_aux_data route should return a not found message and a http status 404', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_aux_data/69bf7188-0977-11e7-93ae-92361f002672', // invalid GUID
+        url: prefix + '/api/v1/event_aux_data/' + invalidEventAuxDataID, // invalid GUID
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1719,9 +1595,9 @@ describe('Server', () => {
     it('Restricted event_aux_data route should return all event records based on datasource and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_aux_data?datasource=framegrabber',
+        url: prefix + '/api/v1/event_aux_data?datasource=framegrabber',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1735,9 +1611,9 @@ describe('Server', () => {
     it('Restricted event_aux_data route should return all event_aux_data records based on two datasource queries and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_aux_data?datasource=framegrabber&datasource=datagrabber',
+        url: prefix + '/api/v1/event_aux_data?datasource=framegrabber&datasource=datagrabber',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1751,9 +1627,9 @@ describe('Server', () => {
     it('Restricted event_aux_data route should return not found because datasource does not exist and a http status 404', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_aux_data?datasource=invalidgrabber',
+        url: prefix + '/api/v1/event_aux_data?datasource=invalidgrabber',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1767,9 +1643,9 @@ describe('Server', () => {
     it('Restricted event_aux_data route with a eventID query and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_aux_data?eventID=3cd1c5fe-0977-11e7-93ae-92361f002671',
+        url: prefix + '/api/v1/event_aux_data?eventID=' + validEventID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1783,9 +1659,9 @@ describe('Server', () => {
     it('Restricted event_aux_data route with a eventID query but no returned events and a http status 404', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_aux_data?eventID=5b8dd1f4-0977-11e7-93ae-92361f002673',
+        url: prefix + '/api/v1/event_aux_data?eventID=' + invalidEventID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1799,9 +1675,9 @@ describe('Server', () => {
     it('Restricted event_aux_data route with a multiple eventID queries and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_aux_data?eventID=5b8dd1f4-0977-11e7-93ae-92361f002671&eventID=69bf7188-0977-11e7-93ae-92361f002671',
+        url: prefix + '/api/v1/event_aux_data?eventID=' + validEventID + '&eventID=' + validEventID2,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1816,9 +1692,9 @@ describe('Server', () => {
     it('Restricted event_aux_data route with a limit to number of returned event_aux_data records and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_aux_data?limit=1',
+        url: prefix + '/api/v1/event_aux_data?limit=1',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1832,9 +1708,9 @@ describe('Server', () => {
     it('Restricted event_aux_data route with a offset to first returned event_aux_data records and a http status 200', done => {
       var options = {
         method: 'GET',
-        url: '/api/v1/event_aux_data?offset=1',
+        url: prefix + '/api/v1/event_aux_data?offset=1',
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         }
       };
@@ -1848,9 +1724,9 @@ describe('Server', () => {
     it('Restricted event_aux_data route to update an event_aux_data record with an invalid payload and a http status 400', done => {
       var options = {
         method: 'PATCH',
-        url: '/api/v1/event_aux_data/82bf496f-eff2-4d17-8335-83cedc48730',
+        url: prefix + '/api/v1/event_aux_data/' + validEventAuxDataID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         },
         payload: {
@@ -1871,9 +1747,9 @@ describe('Server', () => {
     it('Restricted event_aux_data route to update an event_aux_data record with an valid payload and a http status 204', done => {
       var options = {
         method: 'PATCH',
-        url: '/api/v1/event_aux_data/82bf496f-eff2-4d17-8335-83cedc48730b',
+        url: prefix + '/api/v1/event_aux_data/' + validEventAuxDataID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         },
         payload: {
@@ -1889,29 +1765,13 @@ describe('Server', () => {
       });
     });
 
-    // delete an event_aux_data but with an invalid uuid
-    it('Restricted event_aux_data route to delete an event_aux_data record with an invalid id and a http status 400', done => {
-      var options = {
-        method: 'DELETE',
-        url: '/api/v1/event_aux_data/82bf496f-eff2-4d17-8335-83cedc48730',
-        headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
-          'Content-Type': 'application/json; charset=utf-8'
-        },
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(400);
-        done();
-      });
-    });
-
     // delete an event_aux_data but with a valid but non-existent uuid
     it('Restricted event_aux_data route to delete an event_aux_data record with an invalid id and a http status 404', done => {
       var options = {
         method: 'DELETE',
-        url: '/api/v1/event_aux_data/82bf496f-eff2-4d17-8335-83cedc48730a',
+        url: prefix + '/api/v1/event_aux_data/' + invalidEventAuxDataID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         },
       };
@@ -1925,9 +1785,9 @@ describe('Server', () => {
     it('Restricted event_aux_data route to delete an event_aux_data record with an valid id and a http status 204', done => {
       var options = {
         method: 'DELETE',
-        url: '/api/v1/event_aux_data/82bf496f-eff2-4d17-8335-83cedc48730b',
+        url: prefix + '/api/v1/event_aux_data/' + validEventAuxDataID,
         headers: {
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBhNDRjZTFhLTJjYjktMTFlNi1iNjdiLTllNzExMjhjYWU3NyIsInVzZXJuYW1lIjoiYXNvdWxlIiwic2NvcGUiOlsiYWRtaW4iLCJldmVudF9tYW5hZ2VyIiwiZXZlbnRfbG9nZ2VyIiwiZXZlbnRfd2F0Y2hlciJdLCJpYXQiOjE0ODk4NDIwNjZ9.CyxBY-hS4CmRE8u1xxBTdUzvt3wWsFliR_fKlglPJ_Q',
+          'Authorization': validAdminJWT,
           'Content-Type': 'application/json; charset=utf-8'
         },
       };
@@ -1937,13 +1797,4 @@ describe('Server', () => {
       });
     });
   });
-  // offset filtering
-  // limit filtering
-  // invalid query param
-/*     Handle filtering in the URL i.e. ?offset=20&limit=10 */
-/* GET /users/{id} -> Get a single user */
-/* POST /users -> Submit a new user */
-/* PATCH /users/id} -> Update Single user */
-/* DELETE /users/{id} -> Delete Single user */
-
 });

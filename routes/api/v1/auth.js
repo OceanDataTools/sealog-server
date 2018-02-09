@@ -1,28 +1,36 @@
 'use strict';
-const SECRET_KEY = require('../config/secret');
+const SECRET_KEY = require('../../../config/secret');
 
 //const Boom = require('boom');
 const Bcrypt = require('bcryptjs');
 const Joi = require('joi');
 const Jwt = require('jsonwebtoken');
 
+const {
+  usersTable,
+} = require('../../../config/db_constants');
+
 const saltRounds = 10;
 
 exports.register = function (server, options, next) {
 
-  const db = server.app.db;
+  const db = server.mongo.db;
+  const ObjectID = server.mongo.ObjectID;
 
   // Need to add a register route
   server.route({
     method: 'POST',
     path: '/register',
     handler: function (request, reply) {
+    
+      db.collection(usersTable).findOne({ username: request.payload.username }, (err, result) => {
 
-      db.table('users').filter({
-        username: request.payload.username
-      }).run().then((users) => {
+        if (err) {
+          console.log("ERROR:", err);
+          return reply().code(503);
+        }
 
-        if (users.length) {
+        if (result) {
           return reply({message: 'username already exists'}).code(422);
         }
 
@@ -34,20 +42,26 @@ exports.register = function (server, options, next) {
 
         let password = request.payload.password;
 
-        Bcrypt.genSalt(saltRounds, function(err, salt) {
-          Bcrypt.hash(password, salt, function(err, hash) {
+        Bcrypt.genSalt(saltRounds, (err, salt) => {
+          Bcrypt.hash(password, salt, (err, hash) => {
 
             user.password = hash;
 
-            db.table('users').insert(user).run().then((result) => {
-              return reply(result).code(201);
-            }).catch((err) => {
-              throw err;
+            db.collection(usersTable).insertOne(user, (err, result) => {
+
+              if (err) {
+                console.log("ERROR:", err);
+                return reply().code(503);
+              }
+
+              if (!result) {
+                return reply({ "statusCode": 400, 'message': 'Bad request'}).code(400);
+              }
+
+              return reply({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
             });
           });
         });
-      }).catch((err) => {
-        throw err;
       });
     },
     config: {
@@ -62,13 +76,10 @@ exports.register = function (server, options, next) {
       response: {
         status: {
           201: Joi.object({
-            deleted: Joi.number().integer(),
-            errors: Joi.number().integer(),
-            generated_keys: Joi.array().items(Joi.string().uuid()),
-            inserted: Joi.number().integer(),
-            replaced: Joi.number().integer(),
-            skipped: Joi.number().integer(),
-            unchanged: Joi.number().integer(),
+            n: Joi.number().integer(),
+            ok: Joi.number().integer(),
+            insertedCount: Joi.number().integer(),
+            insertedId: Joi.object()
           }),
           400: Joi.object({
             statusCode: Joi.number().integer(),
@@ -94,7 +105,7 @@ exports.register = function (server, options, next) {
         <div class="panel-heading"><strong>Status Code: 422</strong> - user already exists</div>\
         <div class="panel-body">Returns JSON object explaining error</div>\
       </div>',
-      tags: ['register', 'auth']
+      tags: ['register', 'auth', 'api']
     }
   });
 
@@ -103,40 +114,47 @@ exports.register = function (server, options, next) {
     path: '/login',
     handler: function (request, reply) {
 
-      db.table('users').filter({
-        username: request.payload.username
-      }).run().then((users) => {
+      db.collection(usersTable).findOne({ username: request.payload.username }, (err, result) => {
 
-        if (!users.length) {
+        if (err) {
+          console.log("ERROR:", err);
+          return reply().code(503);
+        }
+
+        if (!result) {
           return reply().code(401);
         }
 
-        let user = users[0];
+        let user = result;
         
-        Bcrypt.compare(request.payload.password, user.password, (err, res) => {
+        Bcrypt.compare(request.payload.password, user.password, (err, result) => {
 
           if (err) {
-            throw err;
+            console.log("ERROR:", err);
+            return reply().code(503);
           }
 
-          if (!res) {
+          if (!result) {
             return reply().code(401);
           }
 
-          user.last_login = new Date().toISOString();
+          user.last_login = new Date();
 
-          db.table('users').get(user.id).update(user).run().then((result) => {
+          db.collection(usersTable).update( { _id: new ObjectID(user._id) }, {$set: user}, (err, result) => {
 
-            return result;
-          });
+            if (err) {
+              console.log("ERROR:", err);
+              return reply().code(503);
+            }
 
-          return reply({
-            token: Jwt.sign({id:user.id, scope: user.roles}, SECRET_KEY),
-            id: user.id
+            if (!result) {
+              console.log("ERROR:", err);
+              return reply().code(503);
+            }
+
+            return reply({ token: Jwt.sign( { id:user._id, scope: user.roles}, SECRET_KEY), id: user._id.toString() }).code(200);
           });
         });
-      }).catch((err) => {
-        throw err;
       });
     },
     config: {
@@ -150,7 +168,7 @@ exports.register = function (server, options, next) {
         status: {
           200: Joi.object({
             token: Joi.string().regex(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_.+/=]*$/),
-            id: Joi.string().uuid()
+            id: Joi.string()
           }),
         }
       },
@@ -163,7 +181,7 @@ exports.register = function (server, options, next) {
         <div class="panel-heading"><strong>Status Code: 401</strong> - authenication failed</div>\
         <div class="panel-body">Returns nothing</div>\
       </div>',
-      tags: ['login', 'auth']
+      tags: ['login', 'auth', 'api']
     }
   });
 
@@ -177,6 +195,14 @@ exports.register = function (server, options, next) {
       auth: {
         strategy: 'jwt',
       },
+      validate: {
+        headers: {
+          authorization: Joi.string().required()
+        },
+        options: {
+          allowUnknown: true
+        }
+      },
       description: 'This is the route used for verifying the JWT is current.',
       notes: '<div class="panel panel-default">\
         <div class="panel-heading"><strong>Status Code: 200</strong> - authenication successful</div>\
@@ -186,7 +212,7 @@ exports.register = function (server, options, next) {
         <div class="panel-heading"><strong>Status Code: 401</strong> - authenication failed</div>\
         <div class="panel-body">Returns nothing</div>\
       </div>',
-      tags: ['login', 'auth']
+      tags: ['login', 'auth', 'api']
     }
   });
 
@@ -195,5 +221,5 @@ exports.register = function (server, options, next) {
 
 exports.register.attributes = {
   name: 'routes-auth',
-  dependencies: ['db']
+  dependencies: ['hapi-mongodb']
 };

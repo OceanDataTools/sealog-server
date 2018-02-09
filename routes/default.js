@@ -30,6 +30,7 @@ exports.register = function (server, options, next) {
     method: 'GET',
     path: '/restricted',
     handler: function (request, reply) {
+
       //if(request.auth.isAuthenticated){
       //  console.log("       User associated with JWT is:", request.auth.credentials.name);
       //}
@@ -39,6 +40,14 @@ exports.register = function (server, options, next) {
       auth: {
         strategy: 'jwt',
         scope: 'admin'
+      },
+      validate: {
+        headers: {
+          authorization: Joi.string().required()
+        },
+        options: {
+          allowUnknown: true
+        }
       },
       description: 'This is a default route used for testing the jwt authentication.',
       notes: '<div class="panel panel-default">\

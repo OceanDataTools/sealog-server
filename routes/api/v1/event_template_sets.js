@@ -3,8 +3,7 @@
 const Joi = require('joi');
 
 const {
-  eventAuxDataTable,
-  eventsTable,
+  eventTemplateSetsTable,
 } = require('../../../config/db_constants');
 
 exports.register = function (server, options, next) {
@@ -23,59 +22,17 @@ exports.register = function (server, options, next) {
 
   server.route({
     method: 'GET',
-    path: '/event_aux_data',
+    path: '/event_template_sets',
     handler: function (request, reply) {
 
-      let query = {};
-
-      // EventID Filtering
-      if(request.query.eventID) {
-        if(Array.isArray(request.query.eventID)) {
-          let eventIDs = request.query.eventID.map((id) => {
-            return new ObjectID(id);
-          });
-          query.event_id  = { $in: eventIDs };
-        } else {
-          query.event_id  = new ObjectID(request.query.eventID);
-        }
-      }
-
-      // Datasource Filtering
-      if(request.query.datasource) {
-        if(Array.isArray(request.query.datasource)) {
-          query.data_source  = { $in: request.query.datasource };
-        } else {
-          query.data_source  = request.query.datasource;
-        }
-      }
-
-      //Time filtering
-      if ((request.query.startTS) || (request.query.stopTS)) {
-        let startTS = new Date("1970-01-01T00:00:00.000Z");
-        let stopTS = new Date();
-
-        if (request.query.startTS) {
-          startTS = new Date(request.query.startTS);
-        }
-
-        if (request.query.stopTS) {
-          stopTS = new Date(request.query.stopTS);
-        }
-
-        query.ts = {"$gte": startTS , "$lt": stopTS };
-      }
-
-      // Limiting & Offset
       let limit = (request.query.limit)? request.query.limit : 0;
       let offset = (request.query.offset)? request.query.offset : 0;
 
-      console.log("query:", query);
-
-      db.collection(eventAuxDataTable).find(query).skip(offset).limit(limit).toArray().then((results) => {
+      db.collection(eventTemplateSetsTable).find().skip(offset).limit(limit).toArray().then((results) => {
+        // console.log("results:", results);
 
         if (results.length > 0) {
           results.forEach(_renameAndClearFields);
-
           return reply(results).code(200);
         } else {
           return reply({ "statusCode": 404, 'message': 'No records found'}).code(404);
@@ -83,7 +40,7 @@ exports.register = function (server, options, next) {
       }).catch((err) => {
         console.log("ERROR:", err);
         return reply().code(503);
-      });
+      });      
     },
     config: {
       auth: {
@@ -97,14 +54,6 @@ exports.register = function (server, options, next) {
         query: Joi.object({
           offset: Joi.number().integer().min(0).optional(),
           limit: Joi.number().integer().min(1).optional(),
-          datasource: Joi.alternatives().try(
-            Joi.string(),
-            Joi.array().items(Joi.string()).optional()
-          ),
-          eventID: Joi.alternatives().try(
-            Joi.string(),
-            Joi.array().items(Joi.string()).optional()
-          ),
         }).optional(),
         options: {
           allowUnknown: true
@@ -114,13 +63,8 @@ exports.register = function (server, options, next) {
         status: {
           200: Joi.array().items(Joi.object({
             id: Joi.object(),
-            event_id: Joi.object(),
-            data_source: Joi.string(),
-            data_array: Joi.array().items(Joi.object({
-              data_name: Joi.string(),
-              data_value: Joi.any(),
-              data_uom: Joi.string()
-            }))
+            event_template_set_name: Joi.string(),
+            event_templates: Joi.array().items(Joi.string()),
           })),
           400: Joi.object({
             statusCode: Joi.number().integer(),
@@ -134,27 +78,28 @@ exports.register = function (server, options, next) {
           })
         }
       },
-      description: 'Return the event_aux_data record based on query parameters',
+      description: 'Return the event template sets based on query parameters',
       notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
         <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-      tags: ['event_aux_data','auth','api'],
+      tags: ['event_templates','auth','api'],
     }
   });
 
   server.route({
     method: 'GET',
-    path: '/event_aux_data/{id}',
+    path: '/event_template_sets/{id}',
     handler: function (request, reply) {
 
       let query = { _id: new ObjectID(request.params.id) };
 
-      db.collection(eventAuxDataTable).findOne(query).then((result) => {
-        if (!result) {
+      db.collection(eventTemplateSetsTable).findOne(query).then((result) => {
+        if(!result) {
           return reply({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
         }
 
         result = _renameAndClearFields(result);
         return reply(result).code(200);
+
       }).catch((err) => {
         console.log("ERROR:", err);
         return reply().code(503);
@@ -180,13 +125,8 @@ exports.register = function (server, options, next) {
         status: {
           200: Joi.object({
             id: Joi.object(),
-            event_id: Joi.object(),
-            data_source: Joi.string(),
-            data_array: Joi.array().items(Joi.object({
-              data_name: Joi.string(),
-              data_value: Joi.string(),
-              data_uom: Joi.string()
-            }))
+            event_template_set_name: Joi.string(),
+            event_templates: Joi.array().items(Joi.string()),
           }),
           400: Joi.object({
             statusCode: Joi.number().integer(),
@@ -204,41 +144,34 @@ exports.register = function (server, options, next) {
           })
         }
       },
-      description: 'Return the event_aux_data record based on event id',
+      description: 'Return the event template sets based on template id',
       notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
         <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-      tags: ['event_aux_data','auth', 'api'],
+      tags: ['event_templates','auth','api'],
     }
   });
 
   server.route({
     method: 'POST',
-    path: '/event_aux_data',
+    path: '/event_template_sets',
     handler: function (request, reply) {
 
-      let event_aux_data = request.payload;
+      let event_template_set = request.payload;
 
-      let query = {_id: new ObjectID(event_aux_data.event_id)};
+      event_template_set.event_templates = (event_template_set.event_templates)? event_template_set.event_templates : [];
 
-      db.collection(eventsTable).findOne(query).then((queryResult) => {
+      db.collection(eventTemplateSetsTable).insertOne(event_template_set, (err, result) => {
 
-        if(!queryResult){
-          return reply({statusCode:'400', error: 'invalid event_id', message: 'event not found'}).code(400);
-        }
-
-        event_aux_data.event_id = new ObjectID(event_aux_data.event_id);
-        
-        db.collection(eventAuxDataTable).insertOne(event_aux_data).then((result) => {
-        
-          return reply({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
-
-        }).catch((err) => {
+        if (err) {
           console.log("ERROR:", err);
           return reply().code(503);
-        });
-      }).catch((err) => {
-        console.log("ERROR:", err);
-        return reply().code(503);
+        }
+
+        if (!result) {
+          return reply({ "statusCode": 400, 'message': 'Bad request'}).code(400);
+        }
+
+        return reply({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
       });
     },
     config: {
@@ -251,16 +184,8 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         payload: {
-          event_id: Joi.string().required(),
-          data_source: Joi.string().min(1).max(100).required(),
-          data_array: Joi.array().items(Joi.object({
-            data_name: Joi.string().required(),
-            data_value: Joi.alternatives().try(
-              Joi.string(),
-              Joi.number()
-            ).required(),
-            data_uom:Joi.string().optional()
-          })).required().min(1),
+          event_template_set_name: Joi.string().required(),
+          event_templates: Joi.array().items(Joi.string()).min(1).optional(),
         },
         options: {
           allowUnknown: true
@@ -286,52 +211,29 @@ exports.register = function (server, options, next) {
           })
         }
       },
-      description: 'Create a new event_aux_data record',
+
+      description: 'Create a new event template set',
       notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
         <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-      tags: ['event_aux_data','auth','api'],
+      tags: ['event_template_sets','auth','api'],
     }
   });
 
   server.route({
     method: 'PATCH',
-    path: '/event_aux_data/{id}',
+    path: '/event_template_sets/{id}',
     handler: function (request, reply) {
 
       let query = { _id: new ObjectID(request.params.id) };
 
-      db.collection(eventAuxDataTable).findOne(query).then((result) => {
-
+      db.collection(eventTemplateSetsTable).findOne(query).then((result) => {
         if(!result) {
           return reply({ "statusCode": 400, "error": "Bad request", 'message': 'No record found for id: ' + request.params.id }).code(400);
         }
 
-        let event_aux_data = request.payload;
-        if(event_aux_data.data_array) {
-          result.data_array.forEach((resultOption) => {
-            let foundit = false;
-            
-            event_aux_data.data_array.forEach((requestOption) => {
-            
-              if(requestOption.data_name == resultOption.data_name) {
-                requestOption.data_value = resultOption.data_value;
-                
-                if(resultOption.data_uom) {
-                  requestOption.data_uom = resultOption.data_uom;
-                }
+        let event_template_set = request.payload;
 
-                foundit = true;
-              }
-            });
-
-            if (!foundit) {
-              event_aux_data.data_array.push(resultOption);
-            }
-          });
-        }
-
-
-        db.collection(eventAuxDataTable).updateOne( query, { $set: event_aux_data} ).then((result) => {
+        db.collection(eventTemplateSetsTable).updateOne( query, { $set: event_template_set} ).then((result) => {
           return reply(result).code(204);
         }).catch((err) => {
           console.log("ERROR:", err);
@@ -345,7 +247,7 @@ exports.register = function (server, options, next) {
     config: {
       auth: {
         strategy: 'jwt',
-        scope: ['admin', 'event_manager', 'event_logger', 'api']
+        scope: ['admin', 'event_manager', 'event_logger']
       },
       validate: {
         headers: {
@@ -355,13 +257,8 @@ exports.register = function (server, options, next) {
           id: Joi.string().required()
         }),
         payload: Joi.object({
-          event_id: Joi.string().optional(),
-          data_source: Joi.string().min(1).max(100).optional(),
-          data_array: Joi.array().items(Joi.object({
-            data_name:Joi.string().required(),
-            data_value:Joi.string().required(),
-            data_uom:Joi.string().optional(),
-          })).optional(),
+          event_template_set_name: Joi.string().optional(),
+          event_templates: Joi.array().items(Joi.string()).optional(),
         }).required().min(1),
         options: {
           allowUnknown: true
@@ -381,26 +278,26 @@ exports.register = function (server, options, next) {
           })
         }
       },
-      description: 'Update a event_aux_data record',
+      description: 'Update a event template set record',
       notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
         <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-      tags: ['event_aux_data','auth','api'],
+      tags: ['event_template_sets','auth','api'],
     }
   });
 
   server.route({
     method: 'DELETE',
-    path: '/event_aux_data/{id}',
+    path: '/event_template_sets/{id}',
     handler: function (request, reply) {
 
-      let query = { _id: new ObjectID(request.params.id)};
+      let query = { _id: new ObjectID(request.params.id) };
 
-      db.collection(eventAuxDataTable).findOne(query).then((result) => {
+      db.collection(eventTemplateSetsTable).findOne(query).then((result) => {
         if(!result) {
           return reply({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
         }
 
-        db.collection(eventAuxDataTable).deleteOne(query).then((result) => {
+        db.collection(eventTemplateSetsTable).deleteOne(query).then((result) => {
           return reply(result).code(204);
         }).catch((err) => {
           console.log("ERROR:", err);
@@ -418,9 +315,15 @@ exports.register = function (server, options, next) {
         scope: ['admin', 'event_manager', 'event_logger']
       },
       validate: {
+        headers: {
+          authorization: Joi.string().required()
+        },
         params: Joi.object({
           id: Joi.string().required()
-        })
+        }),
+        options: {
+          allowUnknown: true
+        }
       },
       response: {
         status: {
@@ -433,18 +336,13 @@ exports.register = function (server, options, next) {
             statusCode: Joi.number().integer(),
             error: Joi.string(),
             message: Joi.string()
-          }),
-          404: Joi.object({
-            statusCode: Joi.number().integer(),
-            message: Joi.string()
           })
-
         }
       },
-      description: 'Delete an event_aux_data record',
+      description: 'Delete an event template sets record',
       notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
         <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-      tags: [ 'event_aux_data','auth','api'],
+      tags: [ 'event_templates','auth','api'],
     }
   });
 
@@ -452,6 +350,6 @@ exports.register = function (server, options, next) {
 };
 
 exports.register.attributes = {
-  name: 'routes-api-event_aux_data',
+  name: 'routes-api-event_template_sets',
   dependencies: ['hapi-mongodb']
 };

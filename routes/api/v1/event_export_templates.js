@@ -1,67 +1,56 @@
-// Event Record
-// {
-//  "id": "uuid",
-//  "user_name": "user_name",
-//  "ts": "timestamp",
-//   "event_value": "string"
-//   "event_options": [{
-//     "event_option_name": "option_name",
-//     "event_option_value": "option_value"
-//   }],
-//   "event_free_text": "string",
-// }
-
-// Event Templates Record
-// {
-//   id: uuid, // id of the event template
-//   event_template_name: string, // name of the event template
-//   event_templates: [
-//     event_template_id (uuid),
-//     ...
-//   ]
-// }
-
 'use strict';
 
-//const uuid = require('uuid');
 const Joi = require('joi');
-//const Boom = require('boom');
+
+const {
+  eventExportTemplatesTable,
+  eventsTable,
+  eventAuxDataTable
+} = require('../../../config/db_constants');
 
 exports.register = function (server, options, next) {
 
-  const db = server.app.db;
-  const r = server.app.r;
+  const db = server.mongo.db;
+  const ObjectID = server.mongo.ObjectID;
+
+  const _renameAndClearFields = (doc) => {
+
+    //rename id
+    doc.id = doc._id;
+    delete doc._id;
+    delete doc.event_id;
+
+    if(doc.aux_data && doc.aux_data.length > 0) {
+      doc.aux_data.forEach(_renameAndClearFields);
+    }
+
+    return doc;
+  };
 
   server.route({
     method: 'GET',
     path: '/event_export_templates',
     handler: function (request, reply) {
 
-      let query = db.table('event_export_templates');
+      let query = {};
 
-      //console.log(request.query);
+      let limit = (request.query.limit)? request.query.limit : 0;
+      let offset = (request.query.offset)? request.query.offset : 0;
 
-      //Offset filtering
-      if (request.query.offset) {
-        query = query.skip(request.query.offset);
-      } 
+      // console.log("query:", query);
 
-      //Limit filtering
-      if (request.query.limit) {
-        query = query.limit(request.query.limit);
-      } 
+      db.collection(eventExportTemplatesTable).find(query).skip(offset).limit(limit).toArray().then((results) => {
+        // console.log("results:", results);
 
-      //console.log(query.toString());
-
-      query.run().then((result) =>{
-
-        if (result.length > 0) {
-          return reply(result).code(200);
+        if (results.length > 0) {
+          results.forEach(_renameAndClearFields);
+          return reply(results).code(200);
         } else {
           return reply({ "statusCode": 404, 'message': 'No records found'}).code(404);
         }
       }).catch((err) => {
-        throw err;
+        console.log("ERROR:", err);
+        return reply().code(503);
       });
     },
     config: {
@@ -70,22 +59,28 @@ exports.register = function (server, options, next) {
         scope: ['admin', 'event_manager', 'event_logger']
       },
       validate: {
+        headers: {
+          authorization: Joi.string().required()
+        },
         query: Joi.object({
           offset: Joi.number().integer().min(0).optional(),
           limit: Joi.number().integer().min(1).optional(),
-        }).optional()
+        }).optional(),
+        options: {
+          allowUnknown: true
+        }
       },
       response: {
         status: {
           200: Joi.array().items(Joi.object({
-            id: Joi.string().uuid(),
+            id: Joi.object(),
             event_export_template_name: Joi.string(),
             event_export_template_eventvalue_filter: Joi.array().items(Joi.string()),
             event_export_template_offset: Joi.number().integer().min(0),
             event_export_template_limit: Joi.number().integer().min(0),
             event_export_template_startTS: Joi.date().iso().allow(''),
             event_export_template_stopTS: Joi.date().iso().allow(''),
-            event_export_template_user_filter: Joi.array().items(Joi.string()),
+            event_export_template_author_filter: Joi.array().items(Joi.string()),
             event_export_template_datasource_filter: Joi.array().items(Joi.string()),
             event_export_template_freetext_filter: Joi.string().allow(''),
             event_export_template_include_aux_data: Joi.bool()
@@ -114,16 +109,20 @@ exports.register = function (server, options, next) {
     path: '/event_export_templates/{id}',
     handler: function (request, reply) {
 
-      let query = db.table('event_export_templates').get(request.params.id);
+      let query = { _id: ObjectID(request.params.id) };
 
-      query.run().then((result) => {
+      // console.log(query);
+
+      db.collection(eventExportTemplatesTable).findOne(query).then((result) => {
         if (!result) {
           return reply({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
         }
 
+        result = _renameAndClearFields(result);
         return reply(result).code(200);
       }).catch((err) => {
-        throw err;
+        console.log("ERROR:", err);
+        return reply().code(503);
       });
     },
     config: {
@@ -132,21 +131,27 @@ exports.register = function (server, options, next) {
         scope: ['admin', 'event_manager', 'event_logger']
       },
       validate: {
+        headers: {
+          authorization: Joi.string().required()
+        },
         params: Joi.object({
-          id: Joi.string().uuid().required()
-        })
+          id: Joi.string().required()
+        }),
+        options: {
+          allowUnknown: true
+        }
       },
       response: {
         status: {
           200: Joi.object({
-            id: Joi.string().uuid(),
+            id: Joi.object(),
             event_export_template_name: Joi.string(),
             event_export_template_eventvalue_filter: Joi.array().items(Joi.string()),
             event_export_template_offset: Joi.number().integer().min(0),
             event_export_template_limit: Joi.number().integer().min(0),
             event_export_template_startTS: Joi.date().iso().allow(''),
             event_export_template_stopTS: Joi.date().iso().allow(''),
-            event_export_template_user_filter: Joi.array().items(Joi.string()),
+            event_export_template_author_filter: Joi.array().items(Joi.string()),
             event_export_template_datasource_filter: Joi.array().items(Joi.string()),
             event_export_template_freetext_filter: Joi.string().allow(''),
             event_export_template_include_aux_data: Joi.bool()
@@ -179,178 +184,167 @@ exports.register = function (server, options, next) {
     path: '/event_export_templates/{id}/run',
     handler: function (request, reply) {
 
-      let query = db.table('event_export_templates').get(request.params.id);
+      let templateQuery = { _id: ObjectID(request.params.id) };
 
-      query.run().then((result) => {
-        if (!result) {
+      // console.log(query);
+
+      db.collection(eventExportTemplatesTable).findOne(templateQuery).then((templateResult) => {
+        if (!templateResult) {
           return reply({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
         }
 
-        query = undefined;
+        let query = {};
 
+        // console.log(templateResult);
         //Data source filtering
-        if (result.event_export_template_datasource_filter) {
+        if (templateResult.event_export_template_datasource_filter.length > 0) {
 
-          if(Array.isArray(result.event_export_template_datasource_filter) && result.event_export_template_datasource_filter.length > 0) {
-
-            query = db.table('event_aux_data');
-            query = query.filter(((datasourceArray) => {
-
-              let condition;
-
-              datasourceArray.forEach((datasource) => {
-
-                if (typeof condition === 'undefined') {
-                  condition = r.row('data_source').eq(datasource);
-                } else {
-                  condition = condition.or(r.row('data_source').eq(datasource));
-                }
-              });
-            
-              return condition;
-            })(result.event_export_template_datasource_filter));
-          } else if (!Array.isArray(result.event_export_template_datasource_filter)) {
-            query = db.table('event_aux_data');
-            query = query.filter({'data_source': result.event_export_template_datasource_filter});
-          }
-
-          if (typeof query !== 'undefined') {
-            query = query.map((row) => {
-              return db.table("events").get(row('event_id'));
-            });
-          }
-        }
-
-        if (typeof query === 'undefined') {
-          query = db.table('events');
-        }
-
-        //Time filtering
-        if ((result.event_export_template_startTS) || (result.event_export_template_stopTS)) {
-          let startTS = r.time(1970, 1, 1, 'Z');
-          let stopTS = r.now();
+          let datasource_query = {};
+          datasource_query.data_source  = { $in: templateResult.event_export_template_datasource_filter };
           
-          if (result.event_export_template_startTS) {
-            startTS = result.event_export_template_startTS;
-          }
+          db.collection(eventAuxDataTable).find(datasource_query, {_id: 0, event_id: 1}).toArray().then((collection) => {
 
-          if (result.event_export_template_stopTS) {
-            stopTS = result.event_export_template_stopTS;
-          }
+            let eventIDs = collection.map(x => x.event_id);
 
-          query = query.filter((event) => {
-            return event('ts').during(startTS, stopTS, {rightBound:'closed'});
-          });
-        }
+            // console.log("collection:", eventIDs);
 
-        //User filtering
-        if (result.event_export_template_user_filter) {
+            query._id = { $in: eventIDs};
 
-          if(Array.isArray(result.event_export_template_user_filter) && result.event_export_template_user_filter.length > 0) {
+            if(templateResult.event_export_template_author_filter.length > 0) {
+              // console.log("event_author filtering");
+              query.event_author  = { $in: templateResult.event_export_template_author_filter };
+            }
 
-            query = query.filter(((userArray) => {
+            if(templateResult.event_export_template_eventvalue_filter.length > 0) {
+              query.event_value  = { $in: templateResult.event_export_template_eventvalue_filter };
+            }
 
-              let condition;
+            if(templateResult.event_export_template_freetext_filter) {
 
-              userArray.forEach((user) => {
+              query.event_free_text = { $regex: `${templateResult.event_export_template_freetext_filter}`};
+            }
 
-                if (typeof condition === 'undefined') {
-                  condition = r.row('user_name').eq(user);
-                } else {
-                  condition = condition.or(r.row('user_name').eq(user));
-                }
-              });
-            
-              return condition;
-            })(result.event_export_template_user_filter));
-          } else if (!Array.isArray(result.event_export_template_user_filter)){
-            query = query.filter({'user_name': result.event_export_template_user_filter});
-          }
-        }
+            //Time filtering
+            if ((templateResult.event_export_template_startTS) || (templateResult.event_export_template_stopTS)) {
+              // console.log("ts filtering");
 
-        //value filtering
-        if (result.event_export_template_eventvalue_filter) {
+              let startTS = new Date("1970-01-01T00:00:00.000Z");
+              let stopTS = new Date();
 
-          if(Array.isArray(result.event_export_template_eventvalue_filter) && result.event_export_template_eventvalue_filter.length > 0) {
+              if (templateResult.event_export_template_startTS) {
+                startTS = new Date(templateResult.event_export_template_startTS);
+              }
 
-            query = query.filter(((valueArray) => {
+              if (templateResult.event_export_template_stopTS) {
+                stopTS = new Date(templateResult.event_export_template_stopTS);
+              }
 
-              let condition;
+              query.ts = {"$gte": startTS , "$lt": stopTS };
+            }
 
-              valueArray.forEach((value) => {
+            let offset = (templateResult.event_export_template_offset)? templateResult.event_export_template_offset : 0;
 
-                if (typeof condition === 'undefined') {
-                  condition = r.row('event_value').eq(value);
-                } else {
-                  condition = condition.or(r.row('event_value').eq(value));
-                }
-              });
-            
-              return condition;
-            })(result.event_export_template_eventvalue_filter));
-          } else if (!Array.isArray(result.event_export_template_eventvalue_filter)) {
-            query = query.filter({'event_value': result.event_export_template_eventvalue_filter});
-          }
-        }
+            let lookup = {
+              from: eventAuxDataTable,
+              localField: "_id",
+              foreignField: "event_id",
+              as: "aux_data"
+            };
 
-        //freetext filtering
-        if (result.event_export_template_freetext_filter) {
+            let aggregate = [];
+            aggregate.push({ $lookup: lookup });
+            aggregate.push({ $match: query});
+            if(request.query.limit) { 
+              aggregate.push({ $limit: request.query.limit});
+            }
 
-          if(Array.isArray(result.event_export_template_freetext_filter) && result.event_export_template_freetext_filter.length > 0) {
+            // console.log("aggregate:", aggregate);
 
-            query = query.filter(((freetextArray) => {
+            db.collection(eventsTable).aggregate(aggregate).skip(offset).toArray().then((results) => {
 
-              let condition;
-
-              freetextArray.forEach((freetext) => {
-
-                if (typeof condition === 'undefined') {
-                  condition = r.row('event_free_text').match(freetext);
-                } else {
-                  condition = condition.or(r.row('event_free_text').match(freetext));
-                }
-              });
-            
-              return condition;
-            })(result.event_export_template_freetext_filter));
-          } else {
-            query = query.filter((event) => {
-              return event('event_free_text').match(result.event_export_template_freetext_filter);
+              if (results.length > 0) {
+                results.forEach(_renameAndClearFields);
+                return reply(results).code(200);
+              } else {
+                return reply([]).code(200);
+              }
+            }).catch((err) => {
+              console.log("ERROR:", err);
+              return reply().code(503);
             });
+          }).catch((err) => {
+            console.log("ERROR:", err);
+            return reply().code(503);
+          });
+        } else {
+
+          if(templateResult.event_export_template_author_filter.length > 0) {
+            // console.log("event_author filtering");
+            query.event_author  = { $in: templateResult.event_export_template_author_filter };
           }
-        }
 
-        //Offset filtering
-        if (result.event_export_template_offset) {
-          query = query.skip(result.event_export_template_offset);
-        } 
+          if(templateResult.event_export_template_eventvalue_filter.length > 0) {
+            // console.log("event_value filtering");
+            query.event_value  = { $in: templateResult.event_export_template_eventvalue_filter };
+          }
 
-        //Limit filtering
-        if (result.event_export_template_limit) {
-          query = query.limit(result.event_export_template_limit);
-        } 
+          if(templateResult.event_export_template_freetext_filter) {
+            // console.log("event_free_text filtering");
+            query.event_free_text = { $regex: `${templateResult.event_export_template_freetext_filter}`};
+          }
 
-        if (result.event_export_template_include_aux_data) {
-          query = query.merge((row) => {
-            return {'aux_data': db.table('event_aux_data').filter({'event_id': row('id')}).without('event_id').coerceTo('array')};
+          //Time filtering
+          if ((templateResult.event_export_template_startTS) || (templateResult.event_export_template_stopTS)) {
+            // console.log("ts filtering");
+
+            let startTS = new Date("1970-01-01T00:00:00.000Z");
+            let stopTS = new Date();
+
+            if (templateResult.event_export_template_startTS) {
+              startTS = new Date(templateResult.event_export_template_startTS);
+            }
+
+            if (templateResult.event_export_template_stopTS) {
+              stopTS = new Date(templateResult.event_export_template_stopTS);
+            }
+
+            query.ts = {"$gte": startTS , "$lt": stopTS };
+          }
+
+          let offset = (templateResult.event_export_template_offset)? templateResult.event_export_template_offset : 0;
+
+          let lookup = {
+            from: eventAuxDataTable,
+            localField: "_id",
+            foreignField: "event_id",
+            as: "aux_data"
+          };
+
+          let aggregate = [];
+          aggregate.push({ $lookup: lookup });
+          aggregate.push({ $match: query});
+          if(request.query.limit) { 
+            aggregate.push({ $limit: request.query.limit});
+          }
+
+          console.log("aggregate:", aggregate);
+
+          db.collection(eventsTable).aggregate(aggregate).skip(offset).toArray().then((results) => {
+
+            if (results.length > 0) {
+              results.forEach(_renameAndClearFields);
+              return reply(results).code(200);
+            } else {
+              return reply([]).code(200);
+            }
+          }).catch((err) => {
+            console.log("ERROR:", err);
+            return reply().code(503);
           });
         }
-
-        //console.log(query.toString());
-
-        return query.run().then((result) =>{
-
-          if (result.length > 0) {
-            return reply(result).code(200);
-          } else {
-            return reply({ "statusCode": 404, 'message': 'No records found'}).code(404);
-          }
-        }).catch((err) => {
-          throw err;
-        });
-
       }).catch((err) => {
-        throw err;
+        console.log("ERROR:", err);
+        return reply().code(503);
       });
     },
     config: {
@@ -359,9 +353,15 @@ exports.register = function (server, options, next) {
         scope: ['admin', 'event_manager', 'event_logger']
       },
       validate: {
+        headers: {
+          authorization: Joi.string().required()
+        },
         params: Joi.object({
-          id: Joi.string().uuid().required()
-        })
+          id: Joi.string().required()
+        }),
+        options: {
+          allowUnknown: true
+        }
       },
       response: {
         status: {
@@ -401,12 +401,18 @@ exports.register = function (server, options, next) {
 
       let event_template = request.payload;
 
-      //console.log(event);
+      db.collection(eventExportTemplatesTable).insertOne(event_template, (err, result) => {
 
-      db.table('event_export_templates').insert(event_template).run().then((result) => {
-        return reply(result).code(201);
-      }).catch((err) => {
-        throw err;
+        if (err) {
+          console.log("ERROR:", err);
+          return reply().code(503);
+        }
+
+        if (!result) {
+          return reply({ "statusCode": 400, 'message': 'Bad request'}).code(400);
+        }
+
+        return reply({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
       });
     },
     config: {
@@ -415,30 +421,33 @@ exports.register = function (server, options, next) {
         scope: ['admin', 'event_manager', 'event_logger']
       },
       validate: {
+        headers: {
+          authorization: Joi.string().required()
+        },
         payload: Joi.object({
-          id: Joi.string().uuid(),
+          id: Joi.string(),
           event_export_template_name: Joi.string(),
           event_export_template_eventvalue_filter: Joi.array().items(Joi.string()),
           event_export_template_offset: Joi.number().integer().min(0),
           event_export_template_limit: Joi.number().integer().min(0),
           event_export_template_startTS: Joi.date().iso().allow(''),
           event_export_template_stopTS: Joi.date().iso().allow(''),
-          event_export_template_user_filter: Joi.array().items(Joi.string()),
+          event_export_template_author_filter: Joi.array().items(Joi.string()),
           event_export_template_datasource_filter: Joi.array().items(Joi.string()),
           event_export_template_freetext_filter: Joi.string().allow(''),
           event_export_template_include_aux_data: Joi.bool()
-        })
+        }),
+        options: {
+          allowUnknown: true
+        }
       },
       response: {
         status: {
           201: Joi.object({
-            deleted: Joi.number().integer(),
-            errors: Joi.number().integer(),
-            generated_keys: Joi.array().items(Joi.string().uuid()),
-            inserted: Joi.number().integer(),
-            replaced: Joi.number().integer(),
-            skipped: Joi.number().integer(),
-            unchanged: Joi.number().integer(),
+            n: Joi.number().integer(),
+            ok: Joi.number().integer(),
+            insertedCount: Joi.number().integer(),
+            insertedId: Joi.object()
           }),
           400: Joi.object({
             statusCode: Joi.number().integer(),
@@ -465,20 +474,24 @@ exports.register = function (server, options, next) {
     path: '/event_export_templates/{id}',
     handler: function (request, reply) {
 
-      db.table('event_export_templates').get(request.params.id).run().then((result) => {
+      let query = { _id: new ObjectID(request.params.id) };
+
+      db.collection(eventExportTemplatesTable).findOne(query).then((result) => {
         if(!result) {
           return reply({ "statusCode": 400, "error": "Bad request", 'message': 'No record found for id: ' + request.params.id }).code(400);
         }
 
-        let event_template = request.payload;
+        let event_export_template = request.payload;
 
-        db.table("event_export_templates").get(request.params.id).update(event_template).run().then(() => {
+        db.collection(eventExportTemplatesTable).updateOne( query, { $set: event_export_template} ).then(() => {
           return reply().code(204);
         }).catch((err) => {
-          throw err;
+          console.log("ERROR:", err);
+          return reply().code(503);
         });
       }).catch((err) => {
-        throw err;
+        console.log("ERROR:", err);
+        return reply().code(503);
       });
     },
     config: {
@@ -487,22 +500,28 @@ exports.register = function (server, options, next) {
         scope: ['admin', 'event_manager', 'event_logger']
       },
       validate: {
+        headers: {
+          authorization: Joi.string().required()
+        },
         params: Joi.object({
-          id: Joi.string().uuid().required()
+          id: Joi.string().required()
         }),
         payload: Joi.object({
-          id: Joi.string().uuid(),
+          id: Joi.string(),
           event_export_template_name: Joi.string(),
           event_export_template_eventvalue_filter: Joi.array().items(Joi.string()),
           event_export_template_offset: Joi.number().integer().min(0),
           event_export_template_limit: Joi.number().integer().min(0),
           event_export_template_startTS: Joi.date().iso().allow(''),
           event_export_template_stopTS: Joi.date().iso().allow(''),
-          event_export_template_user_filter: Joi.array().items(Joi.string()),
+          event_export_template_author_filter: Joi.array().items(Joi.string()),
           event_export_template_datasource_filter: Joi.array().items(Joi.string()),
           event_export_template_freetext_filter: Joi.string().allow(''),
           event_export_template_include_aux_data: Joi.bool()
-        }).required().min(1)
+        }).required().min(1),
+        options: {
+          allowUnknown: true
+        }
       },
       response: {
         status: {
@@ -530,27 +549,23 @@ exports.register = function (server, options, next) {
     path: '/event_export_templates/{id}',
     handler: function (request, reply) {
 
-      db.table('event_export_templates').get(request.params.id).run().then((result) => {
+      let query = { _id: new ObjectID(request.params.id) };
+      // console.log(query);
+
+      db.collection(eventExportTemplatesTable).findOne(query).then((result) => {
         if(!result) {
           return reply({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
         }
 
-        db.table('event_export_templates').get(request.params.id).delete().run().then(() => {
-
-          db.table('event_aux_data').filter({'event_id': request.params.id}).delete().run().then(() => {
-      
-            return reply().code(204);
-      
-          }).catch((err) => {
-            throw err;
-          });
-        
+        db.collection(eventExportTemplatesTable).deleteOne(query).then((result) => {
+          return reply(result).code(204);
         }).catch((err) => {
-          throw err;
+          console.log("ERROR:", err);
+          return reply().code(503);
         });
-
       }).catch((err) => {
-        throw err;
+        console.log("ERROR:", err);
+        return reply().code(503);
       });
     },
     config: {
@@ -559,9 +574,15 @@ exports.register = function (server, options, next) {
         scope: ['admin', 'event_manager', 'event_logger']
       },
       validate: {
+        headers: {
+          authorization: Joi.string().required()
+        },
         params: Joi.object({
-          id: Joi.string().uuid().required()
-        })
+          id: Joi.string().required()
+        }),
+        options: {
+          allowUnknown: true
+        }
       },
       response: {
         status: {
@@ -588,6 +609,6 @@ exports.register = function (server, options, next) {
 };
 
 exports.register.attributes = {
-  name: 'routes-api-event_export_template',
-  dependencies: ['db']
+  name: 'routes-api-event_export_templates',
+  dependencies: ['hapi-mongodb']
 };

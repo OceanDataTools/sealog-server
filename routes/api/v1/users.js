@@ -1,38 +1,31 @@
-/* GET /users -> Get all users */
-/*     Handle filtering in the URL i.e. ?offset=20&limit=10 */
-/* GET /users/{id} -> Get a single user */
-/* POST /users -> Submit a new user */
-/* PATCH /users/id} -> Update Single user */
-/* DELETE /users/{id} -> Delete Single user */
-
-//roles
-// manage users
-// | manage event definitions
-// | | event logger
-// | | | event watcher
-// | | | |
-// 1 1 1 1 = 15 => admin
-// 0 1 1 1 = 7  => event_manager
-// 0 0 1 1 = 3  => event_logger
-// 0 0 0 1 = 1  => event_watcher
-
-
 'use strict';
+
 const Bcrypt = require('bcryptjs');
 const Joi = require('joi');
 
 const saltRounds = 10;
 
+const {
+  usersTable,
+} = require('../../../config/db_constants');
+
+
 exports.register = function (server, options, next) {
 
-  const db = server.app.db;
-  const r = server.app.r;
+  const db = server.mongo.db;
+  const ObjectID = server.mongo.ObjectID;
 
   const _renameAndClearFields = (doc) => {
+
+    //rename id
+    doc.id = doc._id;
+    delete doc._id;
 
     //remove fields entirely
     delete doc.favorites;
     delete doc.password;
+
+    return doc;
   };
 
   server.route({
@@ -40,27 +33,18 @@ exports.register = function (server, options, next) {
     path: '/users',
     handler: function (request, reply) {
 
-      let query = db.table('users');
+      let query = {};
 
-      if (request.query.sort === 'username') {
-        query = query.orderBy(r.asc('username'));
-      } else { // last_login
-        query = query.orderBy(r.desc('last_login'));
-      }
+      let limit = (request.query.limit)? request.query.limit : 0;
+      let offset = (request.query.offset)? request.query.offset : 0;
+      let sort = (request.query.sort)? { [request.query.sort]: -1 } : { username: -1 };
 
-      if (request.query.offset) {
-        query = query.skip(request.query.offset);
-      } 
-
-      if (request.query.limit) {
-        query = query.limit(request.query.limit);
-      } 
-
-      query.run().then((results) =>{
+      db.collection(usersTable).find(query).skip(offset).limit(limit).sort(sort).toArray().then((results) => {
         results.forEach(_renameAndClearFields);
         return reply(results);
       }).catch((err) => {
-        throw err;
+        console.log("ERROR:", err);
+        return reply().code(503);
       });
     },
     config: {
@@ -69,18 +53,24 @@ exports.register = function (server, options, next) {
         scope: 'admin'
       },
       validate: {
+        headers: {
+          authorization: Joi.string().required()
+        },
         query: Joi.object({
           offset: Joi.number().integer().min(0).optional(),
           limit: Joi.number().integer().min(1).optional(),
           sort: Joi.string().valid('username', 'last_login').default('username').optional()
-        })
+        }),
+        options: {
+          allowUnknown: true
+        }
       },
       response: {
         status: {
           200: Joi.array().items(Joi.object({
-            id: Joi.string().uuid(),
+            id: Joi.object(),
             email: Joi.string().email(),
-            last_login: Joi.string().allow('').isoDate(),
+            last_login: Joi.date(),
             fullname: Joi.string(),
             username: Joi.string(),
             roles: Joi.array().items(Joi.string()),
@@ -111,34 +101,44 @@ exports.register = function (server, options, next) {
 
       //TODO - add code so that only admins and the user can do this.
 
-      db.table('users').get(request.params.id).run().then((results) => {
-        if (!results) {
+      let query = { _id: new ObjectID(request.params.id) };
+
+      db.collection(usersTable).findOne(query).then((result) => {
+        
+        if(!result) {
           return reply({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
         }
 
-        _renameAndClearFields(results);
+        result = _renameAndClearFields(result);
+        return reply(result);
 
-        return reply(results).code(200);
       }).catch((err) => {
-        throw err;
+        console.log("ERROR:", err);
+        return reply().code(503);
       });
     },
     config: {
       auth:{
         strategy: 'jwt',
-//        scope: ''
+        // scope: 'admin'
       },
       validate: {
+        headers: {
+          authorization: Joi.string().required()
+        },
         params: Joi.object({
-          id: Joi.string().uuid().required()
-        })
+          id: Joi.string().required()
+        }),
+        options: {
+          allowUnknown: true
+        }
       },
       response: {
         status: {
           200: Joi.object({
-            id: Joi.string().uuid(),
+            id: Joi.object(),
             email: Joi.string().email(),
-            last_login: Joi.string().allow('').isoDate(),
+            last_login: Joi.date(),
             fullname: Joi.string(),
             username: Joi.string(),
             roles: Joi.array().items(Joi.string()),
@@ -173,14 +173,18 @@ exports.register = function (server, options, next) {
 
       //TODO - add code so that only admins and the user can do this.
 
-      db.table('users').get(request.params.id).pluck('id','favorites').run().then((results) => {
+      let query = { _id: request.params.id };
+      let fields = { favorites: 1 };
+
+      db.collection(usersTable).find(query, fields).toArray().then((results) => {
         if (!results) {
           return reply({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
         }
 
         return reply(results).code(200);
       }).catch((err) => {
-        throw err;
+        console.log("ERROR:", err);
+        return reply().code(503);
       });
     },
     config: {
@@ -189,15 +193,21 @@ exports.register = function (server, options, next) {
 //        scope: ''
       },
       validate: {
+        headers: {
+          authorization: Joi.string().required()
+        },
         params: Joi.object({
-          id: Joi.string().uuid().required()
-        })
+          id: Joi.string().required()
+        }),
+        options: {
+          allowUnknown: true
+        }
       },
       response: {
         status: {
           200: Joi.object({
-            id: Joi.string().uuid(),
-            favorites: Joi.array().items(Joi.string().uuid())
+            id: Joi.object(),
+            favorites: Joi.array().items(Joi.string())
           }),
           400: Joi.object({
             statusCode: Joi.number().integer(),
@@ -227,12 +237,9 @@ exports.register = function (server, options, next) {
     path: '/users',
     handler: function (request, reply) {
 
-      //check if username already exists
-      db.table('users').filter({
-        username: request.payload.username
-      }).run().then((userList) => {
+      db.collection(usersTable).findOne(request.payload.username, (err, result) => {
 
-        if (userList.length) {
+        if (result) {
           return reply({ "statusCode": 422, 'message': 'Username already exists' }).code(422);
         }
 
@@ -243,21 +250,26 @@ exports.register = function (server, options, next) {
 
         let password = request.payload.password;
 
-        Bcrypt.genSalt(saltRounds, function(err, salt) {
-          Bcrypt.hash(password, salt, function(err, hash) {
+        Bcrypt.genSalt(saltRounds, (err, salt) => {
+          Bcrypt.hash(password, salt, (err, hash) => {
         
             user.password = hash;
 
-            db.table('users').insert(user).run().then((result) => {
-              return reply(result).code(201);
-            }).catch((err) => {
-              throw err;
+            db.collection(usersTable).insertOne(user, (err, result) => {
+
+              if (err) {
+                console.log("ERROR:", err);
+                return reply().code(503);
+              }
+
+              if (!result) {
+                return reply({ "statusCode": 400, 'message': 'Bad request'}).code(400);
+              }
+
+              return reply({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
             });
           });
         });
-
-      }).catch((err) => {
-        throw err;
       });
     },
     config: {
@@ -270,24 +282,27 @@ exports.register = function (server, options, next) {
       //   additionalHeaders: ['cache-control', 'x-requested-with']
       // },
       validate: {
+        headers: {
+          authorization: Joi.string().required()
+        },
         payload: {
           username: Joi.string().min(1).max(100).required(),
           fullname: Joi.string().min(1).max(100).required(),
           email: Joi.string().email().required(),
           password: Joi.string().allow('').max(50).required(),
           roles: Joi.array().items(Joi.string()).min(1).required()
+        },
+        options: {
+          allowUnknown: true
         }
       },
       response: {
         status: {
           201: Joi.object({
-            deleted: Joi.number().integer(),
-            errors: Joi.number().integer(),
-            generated_keys: Joi.array().items(Joi.string().uuid()),
-            inserted: Joi.number().integer(),
-            replaced: Joi.number().integer(),
-            skipped: Joi.number().integer(),
-            unchanged: Joi.number().integer(),
+            n: Joi.number().integer(),
+            ok: Joi.number().integer(),
+            insertedCount: Joi.number().integer(),
+            insertedId: Joi.object()
           }),
           401: Joi.object({
             statusCode: Joi.number().integer(),
@@ -314,18 +329,21 @@ exports.register = function (server, options, next) {
 
       //TODO - add code so that only admins and the user can do this.
 
-      db.table('users').get(request.params.id).run().then((result) => {
+      let query = { _id: new ObjectID(request.params.id) };
+
+      db.collection(usersTable).findOne(query).then((result) => {
         if(!result) {
           return reply({ "statusCode": 400, "error": "Bad request", 'message': 'No record found for id: ' + request.params.id }).code(400);
         }
 
-        if (request.payload.username) {
-          //check if username already exists for a different account
-          db.table('users').filter(
-            r.row('username').eq(request.payload.username).and(r.row('id').ne(request.params.id))
-          ).run().then((userList) => {
+        //Trying to change the username?
+        if (request.payload.username != result.username) {
 
-            if (userList.length) {
+          let usernameQuery = { username: request.payload.username};
+          //check if username already exists for a different account
+          db.collection(usersTable).findOne(usernameQuery).then((usernameResult) => {
+
+            if (usernameResult) {
               return reply({ "statusCode": 422, 'message': 'Username already exists' }).code(422);
             }
 
@@ -334,28 +352,29 @@ exports.register = function (server, options, next) {
             if(request.payload.password) {
               let password = request.payload.password;
 
-              Bcrypt.genSalt(saltRounds, function(err, salt) {
-                Bcrypt.hash(password, salt, function(err, hash) {
+              Bcrypt.genSalt(saltRounds, (err, salt) => {
+                Bcrypt.hash(password, salt, (err, hash) => {
                   user.password = hash;
 
-                  //console.log(user);
-                  db.table("users").get(request.params.id).update(user).run().then(() => {
+                  db.collection(usersTable).update(query, { $set: user }).then(() => {
                     return reply().code(204);
                   }).catch((err) => {
-                    throw err;
+                    console.log("ERROR:", err);
+                    return reply().code(503);
                   });
-
                 });
               });
             } else {
-              db.table("users").get(request.params.id).update(user).run().then(() => {
+              db.collection(usersTable).update(query, { $set: user }).then(() => {
                 return reply().code(204);
               }).catch((err) => {
-                throw err;
+                console.log("ERROR:", err);
+                return reply().code(503);
               });
             }
           }).catch((err) => {
-            throw err;
+            console.log("ERROR:", err);
+            return reply().code(503);
           });
         } else {
 
@@ -364,24 +383,24 @@ exports.register = function (server, options, next) {
           if(request.payload.password) {
             let password = request.payload.password;
 
-            Bcrypt.genSalt(saltRounds, function(err, salt) {
-              Bcrypt.hash(password, salt, function(err, hash) {
+            Bcrypt.genSalt(saltRounds, (err, salt) => {
+              Bcrypt.hash(password, salt, (err, hash) => {
                 user.password = hash;
 
-                //console.log(user);
-                db.table("users").get(request.params.id).update(user).run().then(() => {
+                db.collection(usersTable).update(query, { $set: user }).then(() => {
                   return reply().code(204);
                 }).catch((err) => {
-                  throw err;
+                  console.log("ERROR:", err);
+                  return reply().code(503);
                 });
-
               });
             });
           } else {
-            db.table("users").get(request.params.id).update(user).run().then(() => {
+            db.collection(usersTable).update(query, { $set: user }).then(() => {
               return reply().code(204);
             }).catch((err) => {
-              throw err;
+              console.log("ERROR:", err);
+              return reply().code(503);
             });
           }
         }  
@@ -392,11 +411,14 @@ exports.register = function (server, options, next) {
     config: {
       auth: {
         strategy: 'jwt',
-        scope: 'admin'
+        // scope: 'admin'
       },
       validate: {
+        headers: {
+          authorization: Joi.string().required()
+        },
         params: Joi.object({
-          id: Joi.string().uuid().required()
+          id: Joi.string().required()
         }),
         payload: Joi.object({
           username: Joi.string().min(1).max(100).optional(),
@@ -404,7 +426,10 @@ exports.register = function (server, options, next) {
           email: Joi.string().email().optional(),
           password: Joi.string().allow('').max(50).optional(),
           roles: Joi.array().items(Joi.string()).min(1).optional(),
-        }).required().min(1)
+        }).required().min(1),
+        options: {
+          allowUnknown: true
+        }
       },
       response: {
         status: {
@@ -434,32 +459,44 @@ exports.register = function (server, options, next) {
 
       //TODO - add code so that only admins and the user can do this.
 
-      db.table('users').get(request.params.id).run().then((result) => {
+      let query = { _id: new ObjectID(request.params.id) };
+
+      db.collection(usersTable).findOne(query).then((result) => {
         if(!result) {
           return reply({ "statusCode": 400, "error": "Bad request", 'message': 'No record found for id: ' + request.params.id }).code(400);
         }
 
-        db.table("users").get(request.params.id).update(request.payload).run().then(() => {
+        let user = request.payload;
+
+        db.collection(usersTable).updateOne( query, { $set: user} ).then(() => {
           return reply().code(204);
         }).catch((err) => {
-          throw err;
+          console.log("ERROR:", err);
+          return reply().code(503);
         });
       }).catch((err) => {
-        throw err;
+        console.log("ERROR:", err);
+        return reply().code(503);
       });
     },
     config: {
       auth: {
         strategy: 'jwt',
-//        scope: ''
+//        scope: 'admin'
       },
       validate: {
+        headers: {
+          authorization: Joi.string().required()
+        },
         params: Joi.object({
-          id: Joi.string().uuid().required()
+          id: Joi.string().required()
         }),
         payload: Joi.object({
-          favorites: Joi.array().items(Joi.string().uuid())
-        }).required().min(1)
+          favorites: Joi.array().items(Joi.string())
+        }).required().min(1),
+        options: {
+          allowUnknown: true
+        }
       },
       response: {
         status: {
@@ -492,18 +529,22 @@ exports.register = function (server, options, next) {
         return reply({ "statusCode": 400, "error": "Bad request", 'message': 'Cannot delete yourself' }).code(400);
       }
 
-      db.table('users').get(request.params.id).run().then((result) => {
+      let query = { _id: new ObjectID(request.params.id) };
+
+      db.collection(usersTable).findOne(query).then((result) => {
         if(!result) {
           return reply({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
         }
 
-        db.table('users').get(request.params.id).delete().run().then(() => {
-          return reply().code(204);
+        db.collection(usersTable).deleteOne(query).then((result) => {
+          return reply(result).code(204);
         }).catch((err) => {
-          throw err;
+          console.log("ERROR:", err);
+          return reply().code(503);
         });
       }).catch((err) => {
-        throw err;
+        console.log("ERROR:", err);
+        return reply().code(503);
       });
     },
     config: {
@@ -512,9 +553,15 @@ exports.register = function (server, options, next) {
         scope: 'admin'
       },
       validate: {
+        headers: {
+          authorization: Joi.string().required()
+        },
         params: Joi.object({
-          id: Joi.string().uuid().required()
-        })
+          id: Joi.string().required()
+        }),
+        options: {
+          allowUnknown: true
+        }
       },
       description: 'Delete a user record',
       notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
@@ -528,5 +575,5 @@ exports.register = function (server, options, next) {
 
 exports.register.attributes = {
   name: 'routes-api-users',
-  dependencies: ['db']
+  dependencies: ['hapi-mongodb']
 };
