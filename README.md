@@ -178,6 +178,7 @@ Namespace Examples.System.Net
         End Sub  
     End Class  
 End Namespace
+```
 
 ### Subscribing to the eventlog stream using python
 
