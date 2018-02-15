@@ -187,7 +187,7 @@ The sealog server publishes updates to eventlog as a stream that can be subscrib
 Please take a look at [this python script](https://github.com/webbpinner/sealog-server/blob/master/misc/websocketsTest.py) for a quick-n-dirty example of how to connect to the eventlog stream from a python(v3.5) script.
 
 ## Want to Contribute?
-My intention with sealog-server was to create a production quality eventlogging framework for any one to use... but I don't need to do this alone.  Any and all help is appreciated.  This include helping with the server code, fleshing out the documantation, creating some code examples, identifying bugs and making logical feature requests.  Please contact me at oceandatarat at gmail dot com if you want in on the action.
+My intention with sealog-server was to create a production quality eventlogging framework for any one to use... but I don't need to do this alone.  Any and all help is appreciated.  This include helping with the server code, fleshing out the documentation, creating some code examples, identifying bugs and making logical feature requests.  Please contact me at oceandatarat at gmail dot com if you want in on the action.
 
-I've also setup a Slack channel for sealog, please contact me at oceandatarat at gmail dot com if you would like to join the channel.
+I've also setup a Slack channel for sealog, please contact me at oceandatarat at gmail dot com if you would like an invitation.
 
