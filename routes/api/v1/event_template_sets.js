@@ -115,7 +115,7 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         params: Joi.object({
-          id: Joi.string().required()
+          id: Joi.string().length(24).required()
         }),
         options: {
           allowUnknown: true
@@ -254,7 +254,7 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         params: Joi.object({
-          id: Joi.string().required()
+          id: Joi.string().length(24).required()
         }),
         payload: Joi.object({
           event_template_set_name: Joi.string().optional(),
@@ -319,7 +319,7 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         params: Joi.object({
-          id: Joi.string().required()
+          id: Joi.string().length(24).required()
         }),
         options: {
           allowUnknown: true

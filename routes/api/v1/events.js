@@ -85,7 +85,7 @@ exports.register = function (server, options, next) {
               stopTS = new Date(request.query.stopTS);
             }
 
-            query.ts = {"$gte": startTS , "$lt": stopTS };
+            query.ts = {"$gte": startTS , "$lte": stopTS };
           }
 
           let limit = (request.query.limit)? request.query.limit : 0;
@@ -146,7 +146,7 @@ exports.register = function (server, options, next) {
             stopTS = new Date(request.query.stopTS);
           }
 
-          query.ts = {"$gte": startTS , "$lt": stopTS };
+          query.ts = {"$gte": startTS , "$lte": stopTS };
         }
 
         let limit = (request.query.limit)? request.query.limit : 0;
@@ -245,8 +245,6 @@ exports.register = function (server, options, next) {
 
       let query = { _id: ObjectID(request.params.id) };
 
-      // console.log(query);
-
       db.collection(eventsTable).findOne(query).then((result) => {
         if (!result) {
           return reply({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
@@ -269,7 +267,7 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         params: Joi.object({
-          id: Joi.string().required()
+          id: Joi.string().length(24).required()
         }),
         options: {
           allowUnknown: true
@@ -318,6 +316,16 @@ exports.register = function (server, options, next) {
     handler: function (request, reply) {
 
       let event = request.payload;
+
+      if(request.payload.id) {
+        try {
+          event._id = new ObjectID(request.payload.id)
+          delete event.id
+        } catch(err) {
+          console.log("invalid ObjectID")
+          return reply({statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters"}).code(400)
+        }
+      }
 
       if(!event.ts) {
         event.ts = new Date();
@@ -389,6 +397,7 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         payload: {
+          id: Joi.string().length(24).optional(),
           event_author: Joi.string().min(1).max(100).optional(),
           ts: Joi.date().iso().optional(),
           event_value: Joi.string().min(1).max(100).required(),
@@ -482,7 +491,7 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         params: Joi.object({
-          id: Joi.string().required()
+          id: Joi.string().length(24).required()
         }),
         payload: Joi.object({
           event_author: Joi.string().min(1).max(100).optional(),
@@ -553,7 +562,7 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         params: Joi.object({
-          id: Joi.string().required()
+          id: Joi.string().length(24).required()
         }),
         options: {
           allowUnknown: true

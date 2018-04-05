@@ -127,7 +127,7 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         params: Joi.object({
-          id: Joi.string().required()
+          id: Joi.string().length(24).required()
         }),
         options: {
           allowUnknown: true
@@ -197,7 +197,7 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         params: Joi.object({
-          id: Joi.string().required()
+          id: Joi.string().length(24).required()
         }),
         options: {
           allowUnknown: true
@@ -237,7 +237,9 @@ exports.register = function (server, options, next) {
     path: '/users',
     handler: function (request, reply) {
 
-      db.collection(usersTable).findOne(request.payload.username, (err, result) => {
+      let query = { username: request.payload.username };
+
+      db.collection(usersTable).findOne(query, (err, result) => {
 
         if (result) {
           return reply({ "statusCode": 422, 'message': 'Username already exists' }).code(422);
@@ -245,7 +247,19 @@ exports.register = function (server, options, next) {
 
         let user = request.payload;
 
-        user.last_login = '';
+        if(request.payload.id) {
+          try {
+            user._id = new ObjectID(request.payload.id)
+            delete user.id
+          } catch(err) {
+            console.log("invalid ObjectID")
+            return reply({statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters"}).code(400)
+          }
+        }
+
+        // console.log("request.payload:", request.payload);
+
+        user.last_login = new Date("1970-01-01T00:00:00.000Z");
         user.favorites = [];
 
         let password = request.payload.password;
@@ -277,15 +291,12 @@ exports.register = function (server, options, next) {
         strategy: 'jwt',
         scope: 'admin'
       },
-      // cors: {
-      //   origin: ['*'],
-      //   additionalHeaders: ['cache-control', 'x-requested-with']
-      // },
       validate: {
         headers: {
           authorization: Joi.string().required()
         },
         payload: {
+          id: Joi.string().length(24).optional(),
           username: Joi.string().min(1).max(100).required(),
           fullname: Joi.string().min(1).max(100).required(),
           email: Joi.string().email().required(),
@@ -418,7 +429,7 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         params: Joi.object({
-          id: Joi.string().required()
+          id: Joi.string().length(24).required()
         }),
         payload: Joi.object({
           username: Joi.string().min(1).max(100).optional(),
@@ -489,7 +500,7 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         params: Joi.object({
-          id: Joi.string().required()
+          id: Joi.string().length(24).required()
         }),
         payload: Joi.object({
           favorites: Joi.array().items(Joi.string())
@@ -557,7 +568,7 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         params: Joi.object({
-          id: Joi.string().required()
+          id: Joi.string().length(24).required()
         }),
         options: {
           allowUnknown: true

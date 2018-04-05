@@ -87,7 +87,7 @@ exports.register = function (server, options, next) {
               stopTS = new Date(request.query.stopTS);
             }
 
-            query.ts = {"$gte": startTS , "$lt": stopTS };
+            query.ts = {"$gte": startTS , "$lte": stopTS };
           }
 
           let offset = (request.query.offset)? request.query.offset : 0;
@@ -160,7 +160,7 @@ exports.register = function (server, options, next) {
             stopTS = new Date(request.query.stopTS);
           }
 
-          query.ts = {"$gte": startTS , "$lt": stopTS };
+          query.ts = {"$gte": startTS , "$lte": stopTS };
         }
 
         let offset = (request.query.offset)? request.query.offset : 0;
@@ -239,7 +239,7 @@ exports.register = function (server, options, next) {
               event_option_name: Joi.string(),
               event_option_value: Joi.string()
             })),
-            event_free_text: Joi.string(),
+            event_free_text: Joi.string().allow(''),
             aux_data: Joi.array().items(Joi.object({
               id: Joi.object(),
               data_source: Joi.string(),
@@ -310,7 +310,7 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         params: Joi.object({
-          id: Joi.string().required()
+          id: Joi.string().length(24).required()
         }),
         options: {
           allowUnknown: true
@@ -327,7 +327,7 @@ exports.register = function (server, options, next) {
               event_option_name: Joi.string(),
               event_option_value: Joi.string()
             })),
-            event_free_text: Joi.string(),
+            event_free_text: Joi.string().allow(''),
             aux_data: Joi.array().items(Joi.object({
               id: Joi.object(),
               data_source: Joi.string(),

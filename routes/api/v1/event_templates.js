@@ -16,11 +16,6 @@ exports.register = function (server, options, next) {
     //rename id
     doc.id = doc._id;
     delete doc._id;
-    delete doc.event_id;
-
-    if(doc.aux_data && doc.aux_data.length > 0) {
-      doc.aux_data.forEach(_renameAndClearFields);
-    }
 
     return doc;
   };
@@ -128,7 +123,7 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         params: Joi.object({
-          id: Joi.string().required()
+          id: Joi.string().length(24).required()
         }),
         options: {
           allowUnknown: true
@@ -180,6 +175,16 @@ exports.register = function (server, options, next) {
 
       let event_template = request.payload;
 
+      if(request.payload.id) {
+        try {
+          event_template._id = new ObjectID(request.payload.id)
+          delete event_template.id
+        } catch(err) {
+          console.log("invalid ObjectID")
+          return reply({statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters"}).code(400)
+        }
+      }
+
       if(!event_template.event_options) {
         event_template.event_options = [];
       }
@@ -188,7 +193,7 @@ exports.register = function (server, options, next) {
         event_template.event_free_text_required = false;
       }
 
-      //console.log(event);
+      //console.log(event_template);
 
       db.collection(eventTemplatesTable).insertOne(event_template, (err, result) => {
 
@@ -214,6 +219,7 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         payload: {
+          id: Joi.string().length(24).optional(),
           event_name: Joi.string().required(),
           event_value: Joi.string().required(),
           event_free_text_required: Joi.boolean().required(),
@@ -294,7 +300,7 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         params: Joi.object({
-          id: Joi.string().required()
+          id: Joi.string().length(24).required()
         }),
         payload: Joi.object({
           event_name: Joi.string().optional(),
@@ -368,7 +374,7 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         params: Joi.object({
-          id: Joi.string().required()
+          id: Joi.string().length(24).required()
         }),
         options: {
           allowUnknown: true

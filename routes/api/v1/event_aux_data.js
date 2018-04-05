@@ -28,62 +28,145 @@ exports.register = function (server, options, next) {
 
       let query = {};
 
-      // EventID Filtering
-      if(request.query.eventID) {
-        if(Array.isArray(request.query.eventID)) {
-          let eventIDs = request.query.eventID.map((id) => {
-            return new ObjectID(id);
-          });
-          query.event_id  = { $in: eventIDs };
-        } else {
-          query.event_id  = new ObjectID(request.query.eventID);
+      if(request.query.author || request.query.value || request.query.freetext || request.query.startTS || request.query.stopTS) {
+
+        if(request.query.eventID) {
+          return reply({ "statusCode": 400, "error": 'malformed query', "message": 'Cannot include param eventID when using author, value, freetext, startTS or stopTS'}).code(400);          
         }
+
+        let eventQuery = {};
+
+        if(request.query.author) {
+          if(Array.isArray(request.query.author)) {
+            eventQuery.event_author  = { $in: request.query.author };
+          } else {
+            eventQuery.event_author  = request.query.author;
+          }
+        }
+
+        if(request.query.value) {
+          if(Array.isArray(request.query.value)) {
+            eventQuery.event_value  = { $in: request.query.value };
+          } else {
+            eventQuery.event_value  = request.query.value;
+          }
+        }
+
+        if(request.query.freetext) {
+
+          eventQuery.event_free_text = { $regex: `${request.query.freetext}`};
+        }
+
+        //Time filtering
+        if ((request.query.startTS) || (request.query.stopTS)) {
+          let startTS = new Date("1970-01-01T00:00:00.000Z");
+          let stopTS = new Date();
+
+          if (request.query.startTS) {
+            startTS = new Date(request.query.startTS);
+          }
+
+          if (request.query.stopTS) {
+            stopTS = new Date(request.query.stopTS);
+          }
+
+          eventQuery.ts = {"$gte": startTS , "$lt": stopTS };
+        }
+
+        let limit = (request.query.limit)? request.query.limit : 0;
+        let offset = (request.query.offset)? request.query.offset : 0;
+
+        // console.log("eventQuery:", eventQuery);
+
+        db.collection(eventsTable).find(eventQuery, { _id: 1 }).skip(offset).limit(limit).toArray().then((results) => {
+
+          // EventID Filtering
+          if(results.length > 0) {
+            console.log("results:", results)
+            let eventIDs = results.map((event) => {
+              console.log(event._id)
+              return new ObjectID(event._id);
+            });
+            query.event_id  = { $in: eventIDs };
+
+            // Datasource Filtering
+            if(request.query.datasource) {
+              if(Array.isArray(request.query.datasource)) {
+                query.data_source  = { $in: request.query.datasource };
+              } else {
+                query.data_source  = request.query.datasource;
+              }
+            }
+
+            // Limiting & Offset
+            let limit = (request.query.limit)? request.query.limit : 0;
+            let offset = (request.query.offset)? request.query.offset : 0;
+
+            console.log("query:", query);
+
+            db.collection(eventAuxDataTable).find(query).skip(offset).limit(limit).toArray().then((results) => {
+
+              if (results.length > 0) {
+                results.forEach(_renameAndClearFields);
+
+                return reply(results).code(200);
+              } else {
+                return reply({ "statusCode": 404, 'message': 'No records found'}).code(404);
+              }
+            }).catch((err) => {
+              console.log("ERROR:", err);
+              return reply().code(503);
+            });
+          } else {
+            return reply({ "statusCode": 404, 'message': 'No records found'}).code(404);
+          }
+        }).catch((err) => {
+          console.log("ERROR:", err);
+          return reply().code(503);
+        });
+      } else {
+
+        // EventID Filtering
+        if(request.query.eventID) {
+          if(Array.isArray(request.query.eventID)) {
+            let eventIDs = request.query.eventID.map((id) => {
+              return new ObjectID(id);
+            });
+            query.event_id  = { $in: eventIDs };
+          } else {
+            query.event_id  = new ObjectID(request.query.eventID);
+          }
+        }
+
+        // Datasource Filtering
+        if(request.query.datasource) {
+          if(Array.isArray(request.query.datasource)) {
+            query.data_source  = { $in: request.query.datasource };
+          } else {
+            query.data_source  = request.query.datasource;
+          }
+        }
+
+        // Limiting & Offset
+        let limit = (request.query.limit)? request.query.limit : 0;
+        let offset = (request.query.offset)? request.query.offset : 0;
+
+        console.log("query:", query);
+
+        db.collection(eventAuxDataTable).find(query).skip(offset).limit(limit).toArray().then((results) => {
+
+          if (results.length > 0) {
+            results.forEach(_renameAndClearFields);
+
+            return reply(results).code(200);
+          } else {
+            return reply({ "statusCode": 404, 'message': 'No records found'}).code(404);
+          }
+        }).catch((err) => {
+          console.log("ERROR:", err);
+          return reply().code(503);
+        });
       }
-
-      // Datasource Filtering
-      if(request.query.datasource) {
-        if(Array.isArray(request.query.datasource)) {
-          query.data_source  = { $in: request.query.datasource };
-        } else {
-          query.data_source  = request.query.datasource;
-        }
-      }
-
-      //Time filtering
-      if ((request.query.startTS) || (request.query.stopTS)) {
-        let startTS = new Date("1970-01-01T00:00:00.000Z");
-        let stopTS = new Date();
-
-        if (request.query.startTS) {
-          startTS = new Date(request.query.startTS);
-        }
-
-        if (request.query.stopTS) {
-          stopTS = new Date(request.query.stopTS);
-        }
-
-        query.ts = {"$gte": startTS , "$lt": stopTS };
-      }
-
-      // Limiting & Offset
-      let limit = (request.query.limit)? request.query.limit : 0;
-      let offset = (request.query.offset)? request.query.offset : 0;
-
-      console.log("query:", query);
-
-      db.collection(eventAuxDataTable).find(query).skip(offset).limit(limit).toArray().then((results) => {
-
-        if (results.length > 0) {
-          results.forEach(_renameAndClearFields);
-
-          return reply(results).code(200);
-        } else {
-          return reply({ "statusCode": 404, 'message': 'No records found'}).code(404);
-        }
-      }).catch((err) => {
-        console.log("ERROR:", err);
-        return reply().code(503);
-      });
     },
     config: {
       auth: {
@@ -97,11 +180,25 @@ exports.register = function (server, options, next) {
         query: Joi.object({
           offset: Joi.number().integer().min(0).optional(),
           limit: Joi.number().integer().min(1).optional(),
+          author: Joi.alternatives().try(
+            Joi.string(),
+            Joi.array().items(Joi.string()).optional()
+          ),
+          startTS: Joi.date().iso(),
+          stopTS: Joi.date().iso(),
           datasource: Joi.alternatives().try(
             Joi.string(),
             Joi.array().items(Joi.string()).optional()
           ),
           eventID: Joi.alternatives().try(
+            Joi.string(),
+            Joi.array().items(Joi.string()).optional()
+          ),
+          value: Joi.alternatives().try(
+            Joi.string(),
+            Joi.array().items(Joi.string()).optional()
+          ),
+          freetext: Joi.alternatives().try(
             Joi.string(),
             Joi.array().items(Joi.string()).optional()
           ),
@@ -170,7 +267,7 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         params: Joi.object({
-          id: Joi.string().required()
+          id: Joi.string().length(24).required()
         }),
         options: {
           allowUnknown: true
@@ -218,6 +315,16 @@ exports.register = function (server, options, next) {
 
       let event_aux_data = request.payload;
 
+      if(request.payload.id) {
+        try {
+          event_aux_data._id = new ObjectID(request.payload.id)
+          delete event_aux_data.id
+        } catch(err) {
+          console.log("invalid ObjectID")
+          return reply({statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters"}).code(400)
+        }
+      }
+
       let query = {_id: new ObjectID(event_aux_data.event_id)};
 
       db.collection(eventsTable).findOne(query).then((queryResult) => {
@@ -251,7 +358,8 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         payload: {
-          event_id: Joi.string().required(),
+          id: Joi.string().length(24).optional(),
+          event_id: Joi.string().length(24).required(),
           data_source: Joi.string().min(1).max(100).required(),
           data_array: Joi.array().items(Joi.object({
             data_name: Joi.string().required(),
@@ -352,7 +460,7 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         params: Joi.object({
-          id: Joi.string().required()
+          id: Joi.string().length(24).required()
         }),
         payload: Joi.object({
           event_id: Joi.string().optional(),
@@ -418,8 +526,11 @@ exports.register = function (server, options, next) {
         scope: ['admin', 'event_manager', 'event_logger']
       },
       validate: {
+        headers: {
+          authorization: Joi.string().required()
+        },
         params: Joi.object({
-          id: Joi.string().required()
+          id: Joi.string().length(24).required()
         })
       },
       response: {
