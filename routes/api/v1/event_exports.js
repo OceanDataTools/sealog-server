@@ -102,6 +102,8 @@ exports.register = function (server, options, next) {
           let aggregate = [];
           aggregate.push({ $lookup: lookup });
           aggregate.push({ $match: query});
+          aggregate.push({ $sort : { ts : 1 }});
+
           if(request.query.limit) { 
             aggregate.push({ $limit: request.query.limit});
           }
@@ -175,6 +177,7 @@ exports.register = function (server, options, next) {
         let aggregate = [];
         aggregate.push({ $lookup: lookup });
         aggregate.push({ $match: query});
+        aggregate.push({ $sort : { ts : 1 }});
 
         if(request.query.limit) {
           aggregate.push({ $limit: request.query.limit});
