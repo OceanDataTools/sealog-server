@@ -154,7 +154,7 @@ exports.register = function (server, options, next) {
 
         // console.log("query:", query);
 
-        db.collection(eventsTable).find(query).sort( { ts: 1 } ).skip(offset).limit(limit).toArray().then((results) => {
+        db.collection(eventsTable).find(query).sort( { ts: 1  } ).skip(offset).limit(limit).toArray().then((results) => {
           // console.log("results:", results);
 
           if (results.length > 0) {
