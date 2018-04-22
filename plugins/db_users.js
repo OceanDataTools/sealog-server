@@ -14,6 +14,7 @@ exports.register = function (server, options, next) {
     {
       _id: ObjectID("5981f167212b348aed7fa9f5"),
       username: "admin",
+      fullname: "Administrator",
       email: "notreal@notarealserver.com",
       password: "$2a$10$XXtpkkegXzqsCj1pN.Y5sus81F9/pvaLxmMjUc401.DZL3oZbh11i",
       last_login: new Date(),
