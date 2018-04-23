@@ -28,7 +28,7 @@ For Sealog Server installation instruction please look at [INSTALL.md](https://g
 
 ### React/Redux front-end client
 
-[sealog client](https://github.com/webbpinner/sealog-client) is a react/redux-based web-client developed for use with sealogserver.
+[sealog client](https://github.com/webbpinner/sealog-client) is a react/redux-based web-client developed for use with sealog-server.
 
 ### Obtaining a JWT via the Command-line
 
