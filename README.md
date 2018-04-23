@@ -28,7 +28,7 @@ For Sealog Server installation instruction please look at [INSTALL.md](https://g
 
 ### React/Redux front-end client
 
-[sealog client](https://github.com/webbpinner/sealog-client) is a react/redux-based web-client developed for use with sealogserver.
+[sealog client](https://github.com/webbpinner/sealog-client) is a react/redux-based web-client developed for use with sealog-server.
 
 ### Obtaining a JWT via the Command-line
 
@@ -36,7 +36,7 @@ Most of the API calls require a JWT to be included with the request header.  Her
 
 From the terminal:
 ```
-curl -H "Content-Type: application/json" -X POST -d '{"username":"testadmin","password":"password"}' http://162.243.175.201/sealog-server/login
+curl -H "Content-Type: application/json" -X POST -d '{"username":"admin","password":"password"}' http://162.243.175.201/sealog-server/login
 ```
 
 This will respond with:
@@ -69,15 +69,13 @@ This will respond with:
 {
     "deleted":0,
     "errors":0,
-    "generated_keys":["6ad467be-b0f8-44c4-9dcc-5078e0423b03"],
+    "insertedIds":["6ad467beb0f844c49dcc5078"],
     "inserted":1,
-    "replaced":0,
-    "skipped":0,
-    "unchanged":0
+    "modified":0
 }
 ```
 
-The value associated with the variable `"generated_keys"` is the UUID for the event.  Event UUIDs are unique and can be used to directly access the event for the purposes of reading/editing/deleting.
+The value associated with the variable `"insertedIds"` is the UID for the event.  Event UIDs are unique and can be used to directly access the event for the purposes of reading/editing/deleting.
 
 Using this technique scripts can be developed to allow scripts, software or even hardware like Arduinos to submit events to the Sealog Server without the need to hard-code in usernames and passwords.
 
@@ -93,7 +91,7 @@ root_url = 'http://162.243.201.175/sealog-server'
 api_path = '/login'
 
 payload = {
-  "username": "testuser",
+  "username": "admin",
   "password": "password"
 }
 
@@ -136,7 +134,7 @@ Namespace Examples.System.Net
             submitPath = "/api/v1/events"
 
             Dim loginPostParms As New Specialized.NameValueCollection
-            loginPostParms.Add("username", "testuser")
+            loginPostParms.Add("username", "admin")
             loginPostParms.Add("password", "password")
 
             Dim eventSubmitPostParams As New Specialized.NameValueCollection
