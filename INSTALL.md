@@ -2,23 +2,20 @@
 
 ### Prerequisites
 
- - [MongoDB](https://www.mongodb.com)
- - [nodeJS](https://nodejs.org)
- - [npm](https://www.npmjs.com)
+ - [MongoDB](https://www.mongodb.com) >=v3.4.x
+ - [nodeJS](https://nodejs.org) >=8.x.x
+ - [npm](https://www.npmjs.com) >=5.7.x
  - [git](https://git-scm.com)
  
-#### Installing NodeJS/npm on Ubuntu 16.04LTS
-The standard Ubuntu repositories for Ubuntu 16.04 only provide install packages for NodeJS v4.  Sealog-Server (and Sealog-Client) require nodeJS >= v8.7
  
-To install nodeJS v8.7 on Ubuntu 16.04LTS run the following commands:
- ```
-sudo apt-get install curl build-essential
-cd ~
-curl -sL https://deb.nodesource.com/setup_8.x -o nodesource_setup.sh
-sudo bash nodesource_setup.sh
-sudo apt-get install nodejs
+#### Installing MongoDB 3.4 on Ubuntu 16.04
 
- ```
+Recommend using these instuctions up through part one:
+https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-mongodb-on-ubuntu-16-04
+ 
+#### Installing NodeJS/npm on Ubuntu 16.04LTS
+Recommend using these instuctions, skipping the distro-version section and following the section on “How to install Using a PPA":
+https://www.digitalocean.com/community/tutorials/how-to-install-node-js-on-ubuntu-16-04#how-to-install-using-a-ppa
 
 ### Clone the repository
 
@@ -47,20 +44,9 @@ cd ./sealog-server
 npm install
 ```
 
-### Start rethinkDB
+### Starting the sealog-server in development mode
 
 From a terminal run:
-
-```
-rethinkdb
-```
-
-RethinkDB stores the database in the directory in whatever directory you're in when you run this command.  This is important when you want access to data already in a rethinkDB.
-
-### Start the server in development mode
-
-From a terminal run:
-
 ```
 cd ./sealog-server
 npm run start-devel
@@ -92,9 +78,7 @@ cd ./sealog-server
 npm start
 ```
 
-**This will start the server in production mode.**  This mode will connect to a rethinkdb database that was already setup for use with sealog-server.
-
-- **TODO** Still need to write a stand-alone script for creating a default production database.
+**This will start the server in production mode.**  This mode will connect to a mongo database that was already setup for use with sealog-server.  If no database is found, sealog-server will attempt to create it.  In this case, sealog-server will create an administrator account (user:admin, pass:password)
 
 ## Need to make everything available over port 80?
 
@@ -102,6 +86,7 @@ Sometimes on vessel networks it's only possible to access web-services using the
 
 ### Prerequisites
 
+ - apache via `apt-get install apache2`
  - [mod_proxy](https://httpd.apache.org/docs/2.4/mod/mod_proxy.html)
  - [mod_proxy_wstunnel](https://httpd.apache.org/docs/2.4/mod/mod_proxy_wstunnel.html)
  
