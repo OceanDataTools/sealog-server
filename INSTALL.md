@@ -8,12 +8,12 @@
  - [git](https://git-scm.com)
  
  
-#### Installing MongoDB 3.4 on Ubuntu 16.04
+#### Installing MongoDB 3.4 on Ubuntu 16.04 LTS
 
 Recommend using these instuctions up through part one:
 https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-mongodb-on-ubuntu-16-04
  
-#### Installing NodeJS/npm on Ubuntu 16.04LTS
+#### Installing NodeJS/npm on Ubuntu 16.04 LTS
 Recommend using these instuctions, skipping the distro-version section and following the section on “How to install Using a PPA":
 https://www.digitalocean.com/community/tutorials/how-to-install-node-js-on-ubuntu-16-04#how-to-install-using-a-ppa
 
