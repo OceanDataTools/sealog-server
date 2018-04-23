@@ -3,6 +3,8 @@
 import json
 import requests
 import time
+import sys
+import os
 
 serverIP = '0.0.0.0'
 serverAPIPort = '8000'
@@ -42,11 +44,31 @@ eventTemplate = {
   "event_free_text": ""
 }
 
-while True:
-    try:
-        r = requests.post('http://' + serverIP + ':' + serverAPIPort + serverPath + eventAPIPath, headers=headers, data = json.dumps(eventTemplate))
-        print(r.text)
-    except Exception as error:
-        print(error)
+def main():
+    """
+    This is the main function for the script.  It creates a new event request at the specified interval
+    """
+    while True:
+        try:
+            r = requests.post('http://' + serverIP + ':' + serverAPIPort + serverPath + eventAPIPath, headers=headers, data = json.dumps(eventTemplate))
+            print(r.text)
+        except Exception as error:
+            print(error)
 
-    time.sleep(interval)
+        time.sleep(interval)
+
+if __name__ == '__main__':
+    """
+    This script creates a new event request at the specified interval
+    """
+  
+    try:
+        main()
+    except KeyboardInterrupt:
+        print('Interrupted')
+        try:
+            sys.exit(0)
+        except SystemExit:
+            os._exit(0)
+
+

@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-
 import asyncio
 import websockets
 import json
 import requests
 import logging
+import time
+import sys
+import os
 from pymongo import MongoClient
 
 serverIP = '0.0.0.0'
@@ -70,44 +72,84 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 async def eventlog():
+    """
+    Attempts to connect to websocket, listen for the arrival of new events, 
+    build auxData data objects for those events and insert those objects 
+    into the Sealog via the Sealog API.
+    """
+
+    while(True):
+        try:
+            async with websockets.connect('ws://' + serverIP + ':' + serverWSPort) as websocket:
+
+                await websocket.send(json.dumps(hello))
+
+                while(True):
+
+                    event = await websocket.recv()
+                    eventObj = json.loads(event)
+
+                    if eventObj['type'] and eventObj['type'] == 'ping':
+                        await websocket.send(json.dumps(ping))
+                    elif eventObj['type'] and eventObj['type'] == 'pub':
+
+                        record = collection.find_one({'label':'CSV'})
+                        
+                        auxData = auxDataTemplate
+
+                        auxData['event_id'] = eventObj['message']['id']
+                        auxData['data_source'] = "alvinRealtimeNavData"
+                        auxData['data_array'] = []
+
+                        auxData['data_array'].append({ 'data_name': "latitude",'data_value': record['data']['latitude'], 'data_uom': 'ddeg' })
+                        auxData['data_array'].append({ 'data_name': "longitude",'data_value': record['data']['longitude'], 'data_uom': 'ddeg' })
+                        auxData['data_array'].append({ 'data_name': "depth",'data_value': record['data']['depth'], 'data_uom': 'meters' })
+                        auxData['data_array'].append({ 'data_name': "heading",'data_value': record['data']['heading'], 'data_uom': 'deg' })
+                        auxData['data_array'].append({ 'data_name': "pitch",'data_value': record['data']['pitch'], 'data_uom': 'deg' })
+                        auxData['data_array'].append({ 'data_name': "roll",'data_value': record['data']['roll'], 'data_uom': 'deg' })
+                        auxData['data_array'].append({ 'data_name': "altitude",'data_value': record['data']['altitude'], 'data_uom': 'meters' })
+
+                        logger.debug("Adding Record: " + json.dumps(auxData))
+
+                        r = requests.post('http://' + serverIP + ':' + serverAPIPort + serverPath + auxDataAPIPath, headers=headers, data = json.dumps(auxData))
+                        logger.debug("Response: " + r.text)
+
+                        ### end of repeat
+
+        except Exception as error:
+            logging.error(str(error))
+
+        time.sleep(10)
+
+if __name__ == '__main__':
+
+    """
+    Main loop of script.  Attempts to connect to websocket, listen for the 
+    arrival of new events, build auxData data objects for those events and 
+    insert those objects into the Sealog via the Sealog API.
+    """
+
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Alvin Data auxData Inserter')
+    parser.add_argument('-d', '--debug', action='store_true', help=' display debug messages')
+
+    args = parser.parse_args()
+
+    # Turn on debug mode
+    if args.debug:
+        logger.info("Setting log level to DEBUG")
+        logging.getLogger().setLevel(logging.DEBUG)
+
+    
+        for handler in logger.handlers:
+            handler.setLevel(logging.DEBUG)
+
     try:
-        async with websockets.connect('ws://' + serverIP + ':' + serverWSPort) as websocket:
-
-            await websocket.send(json.dumps(hello))
-
-            while(True):
-
-                event = await websocket.recv()
-                eventObj = json.loads(event)
-
-                if eventObj['type'] and eventObj['type'] == 'ping':
-                    await websocket.send(json.dumps(ping))
-                elif eventObj['type'] and eventObj['type'] == 'pub':
-
-                    record = collection.find_one({'label':'CSV'})
-                    
-                    auxData = auxDataTemplate
-
-                    auxData['event_id'] = eventObj['message']['id']
-                    auxData['data_source'] = "alvinRealtimeNavData"
-                    auxData['data_array'] = []
-
-                    auxData['data_array'].append({ 'data_name': "latitude",'data_value': record['data']['latitude'], 'data_uom': 'ddeg' })
-                    auxData['data_array'].append({ 'data_name': "longitude",'data_value': record['data']['longitude'], 'data_uom': 'ddeg' })
-                    auxData['data_array'].append({ 'data_name': "depth",'data_value': record['data']['depth'], 'data_uom': 'meters' })
-                    auxData['data_array'].append({ 'data_name': "heading",'data_value': record['data']['heading'], 'data_uom': 'deg' })
-                    auxData['data_array'].append({ 'data_name': "pitch",'data_value': record['data']['pitch'], 'data_uom': 'deg' })
-                    auxData['data_array'].append({ 'data_name': "roll",'data_value': record['data']['roll'], 'data_uom': 'deg' })
-                    auxData['data_array'].append({ 'data_name': "altitude",'data_value': record['data']['altitude'], 'data_uom': 'meters' })
-
-                    logger.debug("Adding Record: " + json.dumps(auxData))
-
-                    r = requests.post('http://' + serverIP + ':' + serverAPIPort + serverPath + auxDataAPIPath, headers=headers, data = json.dumps(auxData))
-                    logger.debug("Response: " + r.text)
-
-                    ### end of repeat
-
-    except Exception as error:
-        logging.error(str(error))
-
-asyncio.get_event_loop().run_until_complete(eventlog())
+        asyncio.get_event_loop().run_until_complete(eventlog())
+    except KeyboardInterrupt:
+        print('Interrupted')
+        try:
+            sys.exit(0)
+        except SystemExit:
+            os._exit(0)
