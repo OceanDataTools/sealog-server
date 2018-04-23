@@ -86,7 +86,7 @@ Sometimes on vessel networks it's only possible to access web-services using the
 
 ### Prerequisites
 
- - apache via `apt-get install apache2`
+ - [apache](https://httpd.apache.org)
  - [mod_proxy](https://httpd.apache.org/docs/2.4/mod/mod_proxy.html)
  - [mod_proxy_wstunnel](https://httpd.apache.org/docs/2.4/mod/mod_proxy_wstunnel.html)
  
