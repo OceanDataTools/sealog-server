@@ -372,19 +372,51 @@ exports.register = function (server, options, next) {
         });
       } else {
 
-        db.collection(eventsTable).insertOne(event, (err, result) => {
+        if(!event.id) {
+          db.collection(eventsTable).insertOne(event, (err, result) => {
 
-          if (err) {
-            console.log("ERROR:", err);
-            return reply().code(503);
-          }
+            if (err) {
+              console.log("ERROR:", err);
+              return reply().code(503);
+            }
 
-          if (!result) {
-            return reply({ "statusCode": 400, 'message': 'Bad request'}).code(400);
-          }
+            if (!result) {
+              return reply({ "statusCode": 400, 'message': 'Bad request'}).code(400);
+            }
 
-          return reply({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
-        });
+            event = _renameAndClearFields(event);
+            server.methods.publishNewEvent(event);
+            return reply({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
+          });
+        } else {
+          db.collection(eventsTable).findOne({_id: new ObjectID(event.id)}, (err, result) => {
+
+            if (err) {
+              console.log("ERROR:", err);
+              return reply().code(503);
+            }
+
+            if (!result) {
+              db.collection(eventsTable).insertOne(event, (err, result) => {
+
+                if (err) {
+                  console.log("ERROR:", err);
+                  return reply().code(503);
+                }
+
+                if (!result) {
+                  return reply({ "statusCode": 400, 'message': 'Bad request'}).code(400);
+                }
+
+                event = _renameAndClearFields(event);
+                server.methods.publishNewEvent(event);
+                return reply({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
+              });
+            }
+
+            return reply({ n: result.result.n, ok: result.result.ok, insertedCount: 0, insertedId: 0 }).code(201);
+          });
+        }
       }
     },
     config: {

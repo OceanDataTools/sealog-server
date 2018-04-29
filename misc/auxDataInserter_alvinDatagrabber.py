@@ -16,13 +16,15 @@ serverPath = '/sealog-server'
 auxDataAPIPath = '/api/v1/event_aux_data'
 
 token_devel = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYjlmNSIsInNjb3BlIjpbImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTE3ODM5NjYyfQ.YCLG0TcDUuLtaYVgnfxC7R-y3kWZcZGtyMcvI2xYFYA"
-token_prod =  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYTlmNSIsInNjb3BlIjpbImFkbWluIiwiZXZlbnRfbWFuYWdlciIsImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTI0MTc4NTE4fQ.DGy2i2lyBbCyuao56YZqP0w5moJEROqQQeVVI6rRDgQ"
+token_prod =  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVhZTQ0ZGUwNjczMTI2MDY2NDZlZmJkYyIsInNjb3BlIjpbImFkbWluIl0sImlhdCI6MTUyNDkxMTY0MH0.3q0Wg_kKRkThzW5JFNhbBImn7LGk4TFT40lwl-CZ4_8"
 
-token = token_devel
+token = token_prod
+
+clientWSID = 'alvinData'
 
 hello = {
     'type': 'hello',
-    'id': 'abcdefg',
+    'id': clientWSID,
     'auth': {
         'headers': {
             'authorization': token
@@ -34,7 +36,7 @@ hello = {
 
 ping = {
     'type':'ping',
-    'id':'abcdefg'
+    'id':clientWSID
 }
 
 headers = {'authorization': token}
@@ -94,7 +96,7 @@ async def eventlog():
                     elif eventObj['type'] and eventObj['type'] == 'pub':
 
                         record = collection.find_one({'label':'CSV'})
-                        
+
                         auxData = auxDataTemplate
 
                         auxData['event_id'] = eventObj['message']['id']
