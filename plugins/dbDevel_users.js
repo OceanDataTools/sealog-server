@@ -23,6 +23,16 @@ exports.register = function (server, options, next) {
     },
     {
       _id: ObjectID("5981f167212b348aed7fb9f5"),
+      username: "manager",
+      fullname: "Event Manager",
+      email: "notrealeither@notarealserver.com",
+      password: "$2a$10$XXtpkkegXzqsCj1pN.Y5sus81F9/pvaLxmMjUc401.DZL3oZbh11i",
+      last_login: new Date(),
+      roles: ['event_manager', 'event_logger', 'event_watcher'],
+      favorites: []
+    },
+    {
+      _id: ObjectID("5981f167212b348aed7fc9f5"),
       username: "user",
       fullname: "Standard User",
       email: "notrealeither@notarealserver.com",

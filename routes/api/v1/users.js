@@ -9,6 +9,8 @@ const {
   usersTable,
 } = require('../../../config/db_constants');
 
+const SECRET_KEY = require('../../../config/secret');
+const Jwt = require('jsonwebtoken');
 
 exports.register = function (server, options, next) {
 
@@ -578,6 +580,57 @@ exports.register = function (server, options, next) {
       notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
         <p>Available to: <strong>admin</strong></p>',
       tags: ['user','auth','api'],
+    }
+  });
+
+  server.route({
+    method: 'GET',
+    path: '/users/{id}/token',
+    handler: function (request, reply) {
+
+      db.collection(usersTable).findOne({ _id: request.params.id }, (err, result) => {
+
+        if (err) {
+          console.log("ERROR:", err);
+          return reply().code(503);
+        }
+
+        if (!result) {
+          return reply().code(401);
+        }
+
+        let user = result;
+
+        return reply({ token: Jwt.sign( { id:user._id, scope: user.roles}, SECRET_KEY ) }).code(200);
+      });
+    },
+    config: {
+      auth: {
+        strategy: 'jwt',
+        scope: 'admin'
+      },
+      validate: {
+        params: {
+          id: Joi.string().length(24).required()
+        }
+      },
+      response: {
+        status: {
+          200: Joi.object({
+            token: Joi.string().regex(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_.+/=]*$/),
+          }),
+        }
+      },
+      description: 'This is the route used for retrieving a user\'s JWT based on the user\'s ID.',
+      notes: '<div class="panel panel-default">\
+        <div class="panel-heading"><strong>Status Code: 200</strong> - authenication successful</div>\
+        <div class="panel-body">Returns JSON object conatining user information</div>\
+      </div>\
+      <div class="panel panel-default">\
+        <div class="panel-heading"><strong>Status Code: 401</strong> - authenication failed</div>\
+        <div class="panel-body">Returns nothing</div>\
+      </div>',
+      tags: ['login', 'auth', 'api']
     }
   });
 
