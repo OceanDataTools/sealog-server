@@ -573,7 +573,14 @@ exports.register = function (server, options, next) {
         }
 
         db.collection(eventsTable).deleteOne(query).then((result) => {
-          return reply(result).code(204);
+
+          db.collection(eventAuxDataTable).deleteMany({ event_id: new ObjectID(request.params.id) }).then(() => {
+            return reply(result).code(204);
+          }).catch((err) => {
+            console.log("ERROR:", err);
+            return reply().code(503);
+          });
+          // return reply(result).code(204);
         }).catch((err) => {
           console.log("ERROR:", err);
           return reply().code(503);
@@ -587,7 +594,7 @@ exports.register = function (server, options, next) {
     config: {
       auth: {
         strategy: 'jwt',
-        scope: ['admin', 'event_manager', 'event_logger']
+        scope: ['admin']
       },
       validate: {
         headers: {
@@ -615,6 +622,61 @@ exports.register = function (server, options, next) {
         }
       },
       description: 'Delete an events record',
+      notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+        <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
+      tags: [ 'events','auth','api'],
+    }
+  });
+
+  server.route({
+    method: 'DELETE',
+    path: '/events/all',
+    handler: function (request, reply) {
+
+      let query = {};
+
+      db.collection(eventsTable).deleteMany().then((result) => {
+
+        db.collection(eventAuxDataTable).deleteMany().then(() => {
+          return reply(result).code(204);
+        }).catch((err) => {
+          console.log("ERROR:", err);
+          return reply().code(503);
+        });
+
+      }).catch((err) => {
+        console.log("ERROR:", err);
+        return reply().code(503);
+      });
+    },
+    config: {
+      auth: {
+        strategy: 'jwt',
+        scope: ['admin']
+      },
+      validate: {
+        headers: {
+          authorization: Joi.string().required()
+        },
+        options: {
+          allowUnknown: true
+        }
+      },
+      response: {
+        status: {
+          400: Joi.object({
+            statusCode: Joi.number().integer(),
+            error: Joi.string(),
+            message: Joi.string()
+          }),
+          401: Joi.object({
+            statusCode: Joi.number().integer(),
+            error: Joi.string(),
+            message: Joi.string()
+          })
+        }
+      },
+      description: 'Delete ALL the event records',
       notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
         <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
       tags: [ 'events','auth','api'],

@@ -24,7 +24,6 @@ exports.register = function (server, options, next) {
     delete doc._id;
 
     //remove fields entirely
-    delete doc.favorites;
     delete doc.password;
 
     return doc;
@@ -169,72 +168,6 @@ exports.register = function (server, options, next) {
   });
 
   server.route({
-    method: 'GET',
-    path: '/users/{id}/favorites',
-    handler: function (request, reply) {
-
-      //TODO - add code so that only admins and the user can do this.
-
-      let query = { _id: request.params.id };
-      let fields = { favorites: 1 };
-
-      db.collection(usersTable).find(query, fields).toArray().then((results) => {
-        if (!results) {
-          return reply({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
-        }
-
-        return reply(results).code(200);
-      }).catch((err) => {
-        console.log("ERROR:", err);
-        return reply().code(503);
-      });
-    },
-    config: {
-      auth: {
-        strategy: 'jwt',
-//        scope: ''
-      },
-      validate: {
-        headers: {
-          authorization: Joi.string().required()
-        },
-        params: Joi.object({
-          id: Joi.string().length(24).required()
-        }),
-        options: {
-          allowUnknown: true
-        }
-      },
-      response: {
-        status: {
-          200: Joi.object({
-            id: Joi.object(),
-            favorites: Joi.array().items(Joi.string())
-          }),
-          400: Joi.object({
-            statusCode: Joi.number().integer(),
-            error: Joi.string(),
-            message: Joi.string()
-          }),
-          401: Joi.object({
-            statusCode: Joi.number().integer(),
-            error: Joi.string(),
-            message: Joi.string()
-          }),
-          404: Joi.object({
-            statusCode: Joi.number().integer(),
-            message: Joi.string()
-          })
-        }
-      },
-      description: 'Return the favorites for a single user based on user\'s id',
-      notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
-        <p>Available to: <strong>admin</strong></p>',
-      tags: ['user','auth','api'],
-    }
-  });
-
-  server.route({
     method: 'POST',
     path: '/users',
     handler: function (request, reply) {
@@ -262,7 +195,6 @@ exports.register = function (server, options, next) {
         // console.log("request.payload:", request.payload);
 
         user.last_login = new Date("1970-01-01T00:00:00.000Z");
-        user.favorites = [];
 
         let password = request.payload.password;
 
@@ -466,73 +398,6 @@ exports.register = function (server, options, next) {
   });
 
   server.route({
-    method: 'PATCH',
-    path: '/users/{id}/favorites',
-    handler: function (request, reply) {
-
-      //TODO - add code so that only admins and the user can do this.
-
-      let query = { _id: new ObjectID(request.params.id) };
-
-      db.collection(usersTable).findOne(query).then((result) => {
-        if(!result) {
-          return reply({ "statusCode": 400, "error": "Bad request", 'message': 'No record found for id: ' + request.params.id }).code(400);
-        }
-
-        let user = request.payload;
-
-        db.collection(usersTable).updateOne( query, { $set: user} ).then(() => {
-          return reply().code(204);
-        }).catch((err) => {
-          console.log("ERROR:", err);
-          return reply().code(503);
-        });
-      }).catch((err) => {
-        console.log("ERROR:", err);
-        return reply().code(503);
-      });
-    },
-    config: {
-      auth: {
-        strategy: 'jwt',
-//        scope: 'admin'
-      },
-      validate: {
-        headers: {
-          authorization: Joi.string().required()
-        },
-        params: Joi.object({
-          id: Joi.string().length(24).required()
-        }),
-        payload: Joi.object({
-          favorites: Joi.array().items(Joi.string())
-        }).required().min(1),
-        options: {
-          allowUnknown: true
-        }
-      },
-      response: {
-        status: {
-          400: Joi.object({
-            statusCode: Joi.number().integer(),
-            error: Joi.string(),
-            message: Joi.string()
-          }),
-          401: Joi.object({
-            statusCode: Joi.number().integer(),
-            error: Joi.string(),
-            message: Joi.string()
-          })
-        }
-      },
-      description: 'Update a user\'s favorites record',
-      notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
-        <p>Available to: <strong>admin</strong></p>',
-      tags: ['user','auth','api'],
-    }
-  });
-
-  server.route({
     method: 'DELETE',
     path: '/users/{id}',
     handler: function (request, reply) {
@@ -588,26 +453,33 @@ exports.register = function (server, options, next) {
     path: '/users/{id}/token',
     handler: function (request, reply) {
 
-      db.collection(usersTable).findOne({ _id: request.params.id }, (err, result) => {
+      // console.log("credentials:", request.auth.credentials)
 
-        if (err) {
-          console.log("ERROR:", err);
-          return reply().code(503);
-        }
+      if(request.auth.credentials.id == request.params.id || request.auth.credentials.scope.includes('admin')) {
 
-        if (!result) {
-          return reply().code(401);
-        }
+        db.collection(usersTable).findOne({ _id: new ObjectID(request.params.id) }, (err, result) => {
 
-        let user = result;
+          if (err) {
+            console.log("ERROR:", err);
+            return reply().code(503);
+          }
 
-        return reply({ token: Jwt.sign( { id:user._id, scope: user.roles}, SECRET_KEY ) }).code(200);
-      });
+          if (!result) {
+            return reply().code(401);
+          }
+
+          let user = result;
+
+          return reply({ token: Jwt.sign( { id:user._id, scope: user.roles}, SECRET_KEY ) }).code(200);
+        });
+      } else {
+        return reply({"statusCode":403,"error":"Forbidden","message":"Insufficient scope"}).code(403);
+      }
     },
     config: {
       auth: {
         strategy: 'jwt',
-        scope: 'admin'
+        //scope: ['admin']
       },
       validate: {
         params: {
