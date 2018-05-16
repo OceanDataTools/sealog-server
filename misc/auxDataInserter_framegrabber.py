@@ -9,6 +9,7 @@ import logging
 import time
 import sys
 import os
+from datetime import datetime
 
 from urllib.request import urlretrieve
 
@@ -22,8 +23,8 @@ framegrabberAPIPath = '/cgi-bin/snapshot.cgi?force=1'
 
 destDir = '/home/alvin/framegrabs'
 
-token_devel = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYjlmNSIsInNjb3BlIjpbImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTE3ODM5NjYyfQ.YCLG0TcDUuLtaYVgnfxC7R-y3kWZcZGtyMcvI2xYFYA"
-token_prod =  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVhZTQ0ZGUwNjczMTI2MDY2NDZlZmJkYyIsInNjb3BlIjpbImFkbWluIl0sImlhdCI6MTUyNDkxMTY0MH0.3q0Wg_kKRkThzW5JFNhbBImn7LGk4TFT40lwl-CZ4_8"
+token_devel = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYTlmNSIsInNjb3BlIjpbImFkbWluIiwiZXZlbnRfbWFuYWdlciIsImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTI1NDUxNTU4fQ.0fECi7gajFt9gCq--2edkURN36O2ryGbydUxudRAAiU"
+token_prod = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYTlmNSIsInNjb3BlIjpbImFkbWluIiwiZXZlbnRfbWFuYWdlciIsImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTI1NjIyMTYwfQ.v05UDVHDUgnFfyhucPdfrTGaSJJSVxQTJ-pDnRJPPbo"
 
 token = token_prod
 
@@ -54,31 +55,31 @@ auxDataTemplate = {
     'data_array': []
 }
 
-cameras = [
+framegrabbers = [
     {
-        'name': "Camera 1",
+        'name': "Framegrabber 1",
         'ip': "199.92.162.124",
-        'prefix': "cam01_",
-        'suffix': ".jpg"
+        'prefix': "",
+        'suffix': ".framegrab01.jpg"
 
     },
     {
-        'name': "Camera 2",
+        'name': "Framegrabber 2",
         'ip': "199.92.162.125",
-        'prefix': "cam02_",
-        'suffix': ".jpg"
+        'prefix': "",
+        'suffix': ".framegrab02.jpg"
 
     },
     {
-        'name': "Camera 3",
+        'name': "Framegrabber 3",
         'ip': "199.92.162.127",
-        'prefix': "cam03_",
-        'suffix': ".jpg"
+        'prefix': "",
+        'suffix': ".framegrab03.jpg"
 
     }
 ]
 
-LOG_LEVEL = logging.DEBUG
+LOG_LEVEL = logging.ERROR
 
 # Valid line headers to process
 validLineLabels = ['CSV']
@@ -103,17 +104,21 @@ logger.addHandler(ch)
 async def eventlog():
     while(True):
         try:
-            print("Connect to websockets:", 'ws://' + serverIP + ':' + serverWSPort)
+            logger.info("Connect to websockets: ws://" + serverIP + ":" + serverWSPort)
             async with websockets.connect('ws://' + serverIP + ':' + serverWSPort) as websocket:
 
                 # logger.debug("Send Hello")
                 await websocket.send(json.dumps(hello))
+                event = await websocket.recv()
+                eventObj = json.loads(event)
+                if 'statusCode' in eventObj:
+                    logger.error(event)
 
                 while(True):
 
                     event = await websocket.recv()
                     eventObj = json.loads(event)
-                    # logger.debug("Event", event)
+                    logger.debug("Event:" + event)
 
                     if eventObj['type'] and eventObj['type'] == 'ping':
                         await websocket.send(json.dumps(ping))
@@ -127,15 +132,19 @@ async def eventlog():
                         auxData['event_id'] = eventObj['message']['id']
                         auxData['data_source'] = "framegrabber"
 
-                        ### repeat for multiple cameras
-                        for camera in cameras:
+                        ### repeat for multiple framegrabbers
+                        for framegrabber in framegrabbers:
 
-                            #logger.debug("camera:" + camera)
+                            #logger.debug("framegrabber:" + framegrabber)
 
-                            url = 'http://' + camera['ip'] + framegrabberAPIPath
-                            dst = destDir + '/' + camera['prefix'] + eventObj['message']['id'] + camera['suffix']
+                            filename_date = datetime.date(datetime.strptime(eventObj['message']['ts'], '%Y-%m-%dT%H:%M:%S.%fZ'))
+                            filename_time = datetime.time(datetime.strptime(eventObj['message']['ts'], '%Y-%m-%dT%H:%M:%S.%fZ')) 
+                            filename_middle = datetime.combine(filename_date, filename_time).strftime("%Y%m%d_%H%M%S%f")[:-3]
+
+                            url = 'http://' + framegrabber['ip'] + framegrabberAPIPath
+                            dst = destDir + '/' + framegrabber['prefix'] + filename_middle + framegrabber['suffix']
                             # logger.debug("url:" + url)
-                            # logger.debug("dst:" + dst)
+                            logger.debug("dst:" + dst)
 
                             try:
                                 # urlretrieve(url, dst)
@@ -143,10 +152,10 @@ async def eventlog():
                                 with open(dst, 'wb') as f:
                                     f.write(r.content)
 
-                                auxData['data_array'].append({ 'data_name': "camera_name",'data_value': camera['name'] })
+                                auxData['data_array'].append({ 'data_name': "camera_name",'data_value': framegrabber['name'] })
                                 auxData['data_array'].append({ 'data_name': "filename",'data_value': dst })
                             except Exception as error:
-                                logger.error("Unable to get image from framegrabber:" + camera['ip'])
+                                logger.error("Unable to get image from framegrabber:" + framegrabber['ip'])
 
                             # print(json.dumps(auxData, indent=2))
                             ### end of repeat

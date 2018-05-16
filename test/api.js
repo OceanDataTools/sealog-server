@@ -329,37 +329,37 @@ describe('Server', () => {
     });
 
 
-    it('Restricted users route updating a user\'s favorites correctly should return 204', done => {
-      var options = {
-        method: 'PATCH',
-        url: prefix + '/api/v1/users/' + validUserID + '/favorites',
-        headers: {
-          'Authorization': validUserJWT,
-          'Content-Type': 'application/json; charset=utf-8'
-        },
-        payload: {
-          favorites: [validEventTemplateID]
-        }
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(204);
-        done();
-      });
-    });
+    // it('Restricted users route updating a user\'s favorites correctly should return 204', done => {
+    //   var options = {
+    //     method: 'PATCH',
+    //     url: prefix + '/api/v1/users/' + validUserID + '/favorites',
+    //     headers: {
+    //       'Authorization': validUserJWT,
+    //       'Content-Type': 'application/json; charset=utf-8'
+    //     },
+    //     payload: {
+    //       favorites: [validEventTemplateID]
+    //     }
+    //   };
+    //   apiServer.inject(options, response => {
+    //     expect(response.statusCode).to.equal(204);
+    //     done();
+    //   });
+    // });
 
-    it('Restricted users route updating a user\'s favorites without authorization should return 401', done => {
-      var options = {
-        method: 'PATCH',
-        url: prefix + '/api/v1/users/' + validUserID + '/favorites',
-        payload: {
-          favorites: [validEventTemplateID]
-        }
-      };
-      apiServer.inject(options, response => {
-        expect(response.statusCode).to.equal(401);
-        done();
-      });
-    });
+    // it('Restricted users route updating a user\'s favorites without authorization should return 401', done => {
+    //   var options = {
+    //     method: 'PATCH',
+    //     url: prefix + '/api/v1/users/' + validUserID + '/favorites',
+    //     payload: {
+    //       favorites: [validEventTemplateID]
+    //     }
+    //   };
+    //   apiServer.inject(options, response => {
+    //     expect(response.statusCode).to.equal(401);
+    //     done();
+    //   });
+    // });
 
     it('Restricted users route deleting the currently authenticated user should return 400', done => {
       var options = {

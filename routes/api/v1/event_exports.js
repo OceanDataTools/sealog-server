@@ -1,12 +1,53 @@
 'use strict';
 
 const Joi = require('joi');
+const converter = require('json-2-csv');
+const extend = require('jquery-extend');
+
+const options = {
+  checkSchemaDifferences: false
+}
 
 const {
   eventsTable,
   eventAuxDataTable
 } = require('../../../config/db_constants');
 
+function flattenJSON(json) {
+  // console.log("Pre-Export:", this.props.event_export.events)
+  let exportData = json.map((event) => {
+    let copiedEvent = extend(true, {}, event);
+    if(copiedEvent.aux_data) {
+      copiedEvent.aux_data.map((data) => {
+        data.data_array.map((data2) => {
+
+          let elementName = `${data.data_source}_${data2.data_name}_value`
+          let elementUOM = `${data.data_source}_${data2.data_name}_uom`
+         // console.log(elementName, data2.data_value, elementUOM, data2.data_uom)
+          copiedEvent[elementName] = data2.data_value
+          copiedEvent[elementUOM] = data2.data_uom
+        })  
+      })
+      delete copiedEvent.aux_data
+    }
+
+    copiedEvent.event_options.map((data) => {
+      let elementName = `event_option_${data.event_option_name}`
+     // console.log(elementName, data.event_option_value)
+      copiedEvent[elementName] = data.event_option_value
+    })
+
+    delete copiedEvent.event_options
+
+    copiedEvent.ts = copiedEvent.ts.toISOString()
+    copiedEvent.id = copiedEvent.id.toString()
+    return copiedEvent
+
+  })
+
+  return exportData
+
+}
 
 exports.register = function (server, options, next) {
 
@@ -189,7 +230,17 @@ exports.register = function (server, options, next) {
 
           if (results.length > 0) {
             results.forEach(_renameAndClearFields);
-            return reply(results).code(200);
+
+            if(request.query.format && request.query.format == "csv") {
+              converter.json2csv(flattenJSON(results), (err, csv) => {
+                if(err) {
+                  throw err;
+                }
+                return reply(csv).code(200)
+              }, options);
+            } else {
+              return reply(results).code(200);
+            }
           } else {
             return reply({ "statusCode": 404, 'message': 'No records found'}).code(404);
           }
@@ -209,6 +260,7 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         query: Joi.object({
+          format: Joi.string().optional(),
           offset: Joi.number().integer().min(0).optional(),
           limit: Joi.number().integer().min(1).optional(),
           author: Joi.alternatives().try(
@@ -233,26 +285,7 @@ exports.register = function (server, options, next) {
       },
       response: {
         status: {
-          200: Joi.array().items(Joi.object({
-            id: Joi.object(),
-            event_author: Joi.string(),
-            ts: Joi.date().iso(),
-            event_value: Joi.string(),
-            event_options: Joi.array().items(Joi.object({
-              event_option_name: Joi.string(),
-              event_option_value: Joi.string()
-            })),
-            event_free_text: Joi.string().allow(''),
-            aux_data: Joi.array().items(Joi.object({
-              id: Joi.object(),
-              data_source: Joi.string(),
-              data_array: Joi.array().items(Joi.object({
-                data_name: Joi.string(),
-                data_value: Joi.string(),
-                data_uom: Joi.string()
-              }))
-            }))
-          })),
+          200: Joi.any(),
           400: Joi.object({
             statusCode: Joi.number().integer(),
             error: Joi.string(),

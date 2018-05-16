@@ -22,7 +22,7 @@ remoteServerIP = '162.243.201.175'
 remoteServerAPIPort = '80'
 remoteServerWSPort = '80'
 remoteServerPath = '/sealog-server'
-remoteToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYjlmNSIsInNjb3BlIjpbImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTE3ODM5NjYyfQ.YCLG0TcDUuLtaYVgnfxC7R-y3kWZcZGtyMcvI2xYFYA"
+remoteToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYTlmNSIsInNjb3BlIjpbImFkbWluIiwiZXZlbnRfbWFuYWdlciIsImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTI1MDE5Mzk3fQ.Sxk1GJ2qYmxFxfJsKr8NC5-WFfvN22FXPqZaoXPK_1o"
 remoteClientWSID = 'remoteSealogReceive'
 
 hello = {

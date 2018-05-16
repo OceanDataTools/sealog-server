@@ -16,7 +16,7 @@ serverPath = '/sealog-server'
 auxDataAPIPath = '/api/v1/event_aux_data'
 
 token_devel = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYjlmNSIsInNjb3BlIjpbImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTE3ODM5NjYyfQ.YCLG0TcDUuLtaYVgnfxC7R-y3kWZcZGtyMcvI2xYFYA"
-token_prod =  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVhZTQ0ZGUwNjczMTI2MDY2NDZlZmJkYyIsInNjb3BlIjpbImFkbWluIl0sImlhdCI6MTUyNDkxMTY0MH0.3q0Wg_kKRkThzW5JFNhbBImn7LGk4TFT40lwl-CZ4_8"
+token_prod = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYTlmNSIsInNjb3BlIjpbImFkbWluIiwiZXZlbnRfbWFuYWdlciIsImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTI1NjIyMTYwfQ.v05UDVHDUgnFfyhucPdfrTGaSJJSVxQTJ-pDnRJPPbo"
 
 token = token_prod
 
@@ -51,7 +51,7 @@ client = MongoClient()
 db = client.datagrabberDB
 collection = db.datagrabberCOLL
 
-LOG_LEVEL = logging.DEBUG
+LOG_LEVEL = logging.ERROR
 
 # Valid line headers to process
 validLineLabels = ['CSV']
@@ -84,8 +84,13 @@ async def eventlog():
         try:
             async with websockets.connect('ws://' + serverIP + ':' + serverWSPort) as websocket:
 
+                # logger.debug("Send Hello")
                 await websocket.send(json.dumps(hello))
-
+                event = await websocket.recv()
+                eventObj = json.loads(event)
+                if 'statusCode' in eventObj:
+                    logger.error(event)
+                
                 while(True):
 
                     event = await websocket.recv()
@@ -105,6 +110,8 @@ async def eventlog():
 
                         auxData['data_array'].append({ 'data_name': "latitude",'data_value': record['data']['latitude'], 'data_uom': 'ddeg' })
                         auxData['data_array'].append({ 'data_name': "longitude",'data_value': record['data']['longitude'], 'data_uom': 'ddeg' })
+                        auxData['data_array'].append({ 'data_name': "alvin_x",'data_value': record['data']['alvin_x'], 'data_uom': 'meters' })
+                        auxData['data_array'].append({ 'data_name': "alvin_y",'data_value': record['data']['alvin_y'], 'data_uom': 'meters' })
                         auxData['data_array'].append({ 'data_name': "depth",'data_value': record['data']['depth'], 'data_uom': 'meters' })
                         auxData['data_array'].append({ 'data_name': "heading",'data_value': record['data']['heading'], 'data_uom': 'deg' })
                         auxData['data_array'].append({ 'data_name': "pitch",'data_value': record['data']['pitch'], 'data_uom': 'deg' })

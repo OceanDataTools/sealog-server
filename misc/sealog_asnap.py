@@ -18,10 +18,9 @@ interval = 10 #seconds
 
 clientWSID = "asnap"
 
-token_devel = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYjlmNSIsInNjb3BlIjpbImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTE3ODM5NjYyfQ.YCLG0TcDUuLtaYVgnfxC7R-y3kWZcZGtyMcvI2xYFYA"
-token_prod =  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVhZTQ0ZGUwNjczMTI2MDY2NDZlZmJkYyIsInNjb3BlIjpbImFkbWluIl0sImlhdCI6MTUyNDkxMTY0MH0.3q0Wg_kKRkThzW5JFNhbBImn7LGk4TFT40lwl-CZ4_8"
-
-token = token_devel
+token_devel = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYTlmNSIsInNjb3BlIjpbImFkbWluIiwiZXZlbnRfbWFuYWdlciIsImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTI1NDQxNTc1fQ.GezBXG-D43F-GfYlHTl_5igZyL1LQieEsk-tDwzMzzo"
+token_prod = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYTlmNSIsInNjb3BlIjpbImFkbWluIiwiZXZlbnRfbWFuYWdlciIsImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTI1NjIyMTYwfQ.v05UDVHDUgnFfyhucPdfrTGaSJJSVxQTJ-pDnRJPPbo"
+token = token_prod
 
 hello = {
     'type': 'hello',
@@ -57,11 +56,13 @@ def main():
     while True:
         try:
             r = requests.get('http://' + serverIP + ':' + serverAPIPort + serverPath + customVarAPIPath + '?name=' + asnapStatusVarName, headers=headers )
-            print("text", r.text)
+            #print("text", r.text)
             response = json.loads(r.text)
-            print("response:", response)
-            if len(response) > 0:
-                print("status:", response[0]['custom_var_value'])
+            #print("response:", response)
+            if type(response) != type([]):
+                print("response:", response)
+            else:
+                #print("status:", response[0]['custom_var_value'])
                 if response[0]['custom_var_value'] == 'On':
                     runFlag = True
                 elif response[0]['custom_var_value'] == 'Off':
@@ -72,7 +73,7 @@ def main():
         if runFlag:
             try:
                 r = requests.post('http://' + serverIP + ':' + serverAPIPort + serverPath + eventAPIPath, headers=headers, data = json.dumps(eventTemplate))
-                print(r.text)
+                #print(r.text)
             except Exception as error:
                 print(error)
 

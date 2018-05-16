@@ -10,7 +10,7 @@ from pymongo import MongoClient
 UDP_IP_ADDRESS = "127.0.0.1"
 UDP_PORT_NO = 10600
 
-LOG_LEVEL = logging.DEBUG
+LOG_LEVEL = logging.ERROR
 
 # Valid line headers to process
 validLineLabels = ['CSV']
@@ -43,6 +43,8 @@ def parseCSV(message):
       "vehicle_name": <string>,
       "latitude": <string>,
       "longitude": <string>,
+      "alvin_x": <string>,
+      "alvin_y": <string>,
       "depth": <string>,
       "heading": <string>,
       "pitch": <string>,
@@ -62,11 +64,13 @@ def parseCSV(message):
       "vehicle_name": msg_array[2],
       "latitude": msg_array[3],
       "longitude": msg_array[4],
-      "depth": msg_array[5],
-      "heading": msg_array[6],
-      "pitch": msg_array[7],
-      "roll": msg_array[8],
-      "altitude": msg_array[9]
+      "alvin_x": msg_array[5],
+      "alvin_y": msg_array[6],
+      "depth": msg_array[7],
+      "heading": msg_array[8],
+      "pitch": msg_array[9],
+      "roll": msg_array[10],
+      "altitude": msg_array[11]
     }
   }
 

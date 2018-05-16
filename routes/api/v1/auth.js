@@ -38,7 +38,6 @@ exports.register = function (server, options, next) {
 
         user.last_login = new Date().toISOString();
         user.roles = ['event_logger', 'event_watcher'];
-        user.favorites = [];
 
         let password = request.payload.password;
 
@@ -127,6 +126,7 @@ exports.register = function (server, options, next) {
 
         let user = result;
         
+        //console.log("Password:", user.password)
         Bcrypt.compare(request.payload.password, user.password, (err, result) => {
 
           if (err) {

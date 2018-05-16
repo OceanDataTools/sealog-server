@@ -1,0 +1,136 @@
+*** Sealog Server Data Management ***
+Author: Webb Pinner, webbpinner@gmail.com
+Written: May 2, 2018
+Updated: May 4, 2018
+
+**** Pre-Dive ****
++ Verify the ASNAP service is working correctly
+  - login to sealog client as pilot
+  - Look at the ASNAP status in the lowering-left of the UI
+  - If the ASNAP service is "Off"
+    - Use the top navbar and select System Maintenance --> Toggle ASNAP.  This should change the status to "On"
+    - Click "SeaLog" in the upper-left of the UI to return to the main window
+  - Wait upto 10 seconds and look for new "ASNAP" events to appear in the event history window.
+  - If events do not appear then try the following:
+    - Goto http://199.92.162.100:9001
+    - Click the "Restart" link next to "sealog_alvinASNAP"
+  - Use the top navbar and select System Maintenance --> Toggle ASNAP.  This should change the status to "Off"
+
++ Wipe Sealog Database
+  + Wiping the database can be done in one of 2 ways:
+    + from the sealog-client web-interface
+      - login to sealog client as alvin (admin).
+      - Use the top navbar to select System Maintenance --> Tasks.
+      - From the list of tasks select "Wipe Database".
+      - Click the "Yup!" button when ask to confirm the wipe command. 
+    + using the sealog-server API from the command-line
+      From the command line enter the following command replacing:
+        - <token> with the JWT token for the alvin (admin) account
+        - <sealog server IP> with the IP address of the c+c machine:
+
+      curl -X DELETE --header 'Accept: application/json' --header 'authorization: <token>' 'http://<sealog server IP>:8000/sealog-server/api/v1/events/all'
+
++ Wipe frame capture directory from c+c machine
+  - The frame captures are stored in the /home/alvin/framegrabs directory.  Simply empty this directory
+
+      ssh alvin@199.92.162.100
+      rm -r /home/alvin/framegrabs/*
+
++ Enable Auto-snap in sealog
+  + Enabling auto-snap can be done in one of 2 ways:
+    + from the sealog-client web-interface
+      - login to sealog client as alvin (admin).
+      - Take note of the ASNAP status in the footer.  Initially it make read "Unknown" but within a few seconds it should switch to either "Off" or "On".  If it switches to "On" then ASNAP is already enabled and you're done.  If it reads "Off" then please continue with these instructions.
+      - Use the top navbar to select System Maintenance --> Toggle ASNAP Status.
+      - This should toggle the message in the footer from "Off" to "On"
+    + using the sealog-server API from the command-line
+      From the command line enter the following command replacing:
+        - <token> with the JWT token for the alvin (admin) account
+        - <sealog server IP> with the IP address of the c+c machine:
+
+      curl -X PATCH --header 'Content-Type: application/json' --header 'Accept: application/json' --header 'authorization: <token>' -d '{
+        "custom_var_name": "asnapStatus",
+        "custom_var_value": "On"
+      }' 'http://<sealog server IP>:8000/sealog-server/api/v1/custom_vars/59810167212b348aed7fa9f5'
+
+
+**** During the Dive ****
+- Observers/Pilot makes events ad-hoc
+- Autosnap makes an event every 10 seconds
+
+**** Post-Dive ****
++ Disable Auto-snap in sealog
+  + Disabling auto-snap can be done in one of 2 ways:
+    + from the sealog-client web-interface
+      - login to sealog client as alvin (admin).
+      - Take note of the ASNAP status in the footer.  Initially it make read "Unknown" but within a few seconds it should switch to either "Off" or "On".  If it switches to "Off" then ASNAP is already disabled and you're done.  If it reads "On" then please continue with these instructions.
+      - Use the top navbar to select System Maintenance --> Toggle ASNAP Status.
+      - This should toggle the message in the footer from "On" to "Off"
+    + using the sealog-server API from the command-line
+      From the command line enter the following command replacing:
+        - <token> with the JWT token for the alvin (admin) account
+        - <sealog server IP> with the IP address of the c+c machine
+
+      curl -X PATCH --header 'Content-Type: application/json' --header 'Accept: application/json' --header 'authorization: <token>' -d '{
+        "custom_var_name": "asnapStatus",
+        "custom_var_value": "Off"
+      }' 'http://<sealog server IP>:8000/sealog-server/api/v1/custom_vars/59810167212b348aed7fa9f5'
+
++ Export Event data from sealog
+  + Exporting the event data can be done in one of 2 ways:
+    + from the sealog-client web-interface
+      - login to sealog client as alvin (admin).
+      - Select "Event Review/Export" from the top nav bar.
+      - In the "Filtered Events" Panel, click the download icon and select the top "Events Only" option.
+      - Save the file when prompted.
+      - rename the file to <loweringID>_eventOnlyExport.json replacing <loweringID> with the appropriate dive number.
+      - move the file to the appropriate locatation on the archive machine.
+    + using the sealog-server API from the command-line
+      From the command line enter the following command replacing:
+        - <token> with the JWT token for the alvin (admin) account
+        - <sealog server IP> with the IP address of the c+c machine
+        - <output_path> with the appropriate destnation directory for the export file
+        - <loweringID> with the appropriate dive ID
+
+      curl -X GET --header 'Accept: application/json' --header 'authorization: <token>' --output '<output_path>/<loweringID>__eventOnlyExport.json' 'http://<sealog server IP>:8000/sealog-server/api/v1/events'
+
++ Export Aux data from sealog
+  + Exporting the aux data can be done in one of 2 ways:
+    + from the sealog-client web-interface
+      - login to sealog client as alvin (admin).
+      - Select "Event Review/Export" from the top nav bar.
+      - In the "Filtered Events" Panel, click the download icon and select the top "Aux Data Only" option.
+      - Save the file when prompted.
+      - rename the file to <loweringID>_auxDataOnlyExport.json replacing <loweringID> with the appropriate dive number.
+      - move the file to the appropriate locatation on the archive machine.
+    + using the sealog-server API from the command-line
+      From the command line enter the following command replacing:
+        - <token> with the JWT token for the alvin (admin) account
+        - <sealog server IP> with the IP address of the c+c machine
+        - <output_path> with the appropriate destnation directory for the export file
+        - <loweringID> with the appropriate dive ID
+
+      curl -X GET --header 'Accept: application/json' --header 'authorization: <token>' --output '<output_path>/<loweringID>__auxDataOnlyExport.json' 'http://<sealog server IP>:8000/sealog-server/api/v1/event_aux_data'
+
++ Export events with the aux data from sealog as a csv
+  + Exporting the data can be done in one of 2 ways:
+    + from the sealog-client web-interface
+      - login to sealog client as alvin (admin).
+      - Select "Event Review/Export" from the top nav bar.
+      - In the "Filtered Events" Panel, click the download icon and select the bottom "Events w/aux data" option.
+      - Save the file when prompted.
+      - rename the file to <loweringID>.sealog_export.json replacing <loweringID> with the appropriate dive number.
+      - move the file to the appropriate locatation on the archive machine.
+    + using the sealog-server API from the command-line
+      From the command line enter the following command replacing:
+        - <token> with the JWT token for the alvin (admin) account
+        - <sealog server IP> with the IP address of the c+c machine
+        - <output_path> with the appropriate destnation directory for the export file
+        - <loweringID> with the appropriate dive ID
+
+      curl -X GET --header 'Accept: application/json' --header 'authorization: <token>' --output '<output_path>/<loweringID>.sealog_export.json' 'http://<sealog server IP>:8000/sealog-server/api/v1/event_exports?format=csv'
+
++ Copy frame captures from c+c machine
+  - Simply copy the framegrab files from the sealog machine to the appropriate data archive server
+
+    rsync -avi alvin@199.92.162.100:/home/alvin/framegrabs/* <destDir>
