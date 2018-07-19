@@ -82,9 +82,9 @@ exports.register = function (server, options, next) {
 
           // EventID Filtering
           if(results.length > 0) {
-            console.log("results:", results)
+            console.log("results:", results);
             let eventIDs = results.map((event) => {
-              console.log(event._id)
+              console.log(event._id);
               return new ObjectID(event._id);
             });
             query.event_id  = { $in: eventIDs };
@@ -317,11 +317,11 @@ exports.register = function (server, options, next) {
 
       if(request.payload.id) {
         try {
-          event_aux_data._id = new ObjectID(request.payload.id)
-          delete event_aux_data.id
+          event_aux_data._id = new ObjectID(request.payload.id);
+          delete event_aux_data.id;
         } catch(err) {
-          console.log("invalid ObjectID")
-          return reply({statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters"}).code(400)
+          console.log("invalid ObjectID");
+          return reply({statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters"}).code(400);
         }
       }
 

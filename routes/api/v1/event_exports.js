@@ -4,9 +4,10 @@ const Joi = require('joi');
 const converter = require('json-2-csv');
 const extend = require('jquery-extend');
 
-const options = {
-  checkSchemaDifferences: false
-}
+const json2csvOptions = {
+  checkSchemaDifferences: false,
+  emptyFieldValue: ''
+};
 
 const {
   eventsTable,
@@ -21,31 +22,31 @@ function flattenJSON(json) {
       copiedEvent.aux_data.map((data) => {
         data.data_array.map((data2) => {
 
-          let elementName = `${data.data_source}_${data2.data_name}_value`
-          let elementUOM = `${data.data_source}_${data2.data_name}_uom`
+          let elementName = `${data.data_source}_${data2.data_name}_value`;
+          let elementUOM = `${data.data_source}_${data2.data_name}_uom`;
          // console.log(elementName, data2.data_value, elementUOM, data2.data_uom)
-          copiedEvent[elementName] = data2.data_value
-          copiedEvent[elementUOM] = data2.data_uom
-        })  
-      })
-      delete copiedEvent.aux_data
+          copiedEvent[elementName] = data2.data_value;
+          copiedEvent[elementUOM] = data2.data_uom;
+        });  
+      });
+      delete copiedEvent.aux_data;
     }
 
     copiedEvent.event_options.map((data) => {
-      let elementName = `event_option_${data.event_option_name}`
+      let elementName = `event_option_${data.event_option_name}`;
      // console.log(elementName, data.event_option_value)
-      copiedEvent[elementName] = data.event_option_value
-    })
+      copiedEvent[elementName] = data.event_option_value;
+    });
 
-    delete copiedEvent.event_options
+    delete copiedEvent.event_options;
 
-    copiedEvent.ts = copiedEvent.ts.toISOString()
-    copiedEvent.id = copiedEvent.id.toString()
-    return copiedEvent
+    copiedEvent.ts = copiedEvent.ts.toISOString();
+    copiedEvent.id = copiedEvent.id.toString();
+    return copiedEvent;
 
-  })
+  });
 
-  return exportData
+  return exportData;
 
 }
 
@@ -104,9 +105,32 @@ exports.register = function (server, options, next) {
 
           if(request.query.value) {
             if(Array.isArray(request.query.value)) {
-              query.event_value  = { $in: request.query.value };
+
+              let inList = [];
+              let ninList = [];
+
+              for( let value of request.query.value ) {
+                if(value.startsWith("!")) {
+                  ninList.push(value.substr(1));
+                } else {
+                  inList.push(value);
+                }
+              }
+              
+              if( inList.length > 0 && ninList.length > 0) {
+                query.event_value  = { $in: inList, $nin: ninList };
+              } else if (inList.length > 0) {
+                query.event_value  = { $in: inList };
+              } else {
+                query.event_value  = { $nin: ninList };
+              }
+
             } else {
-              query.event_value  = request.query.value;
+              if(request.query.value.startsWith("!")) {
+                query.event_value  = { $ne: request.query.value.substr(1) };
+              } else {
+                query.event_value  = request.query.value;
+              }
             }
           }
 
@@ -179,9 +203,32 @@ exports.register = function (server, options, next) {
 
         if(request.query.value) {
           if(Array.isArray(request.query.value)) {
-            query.event_value  = { $in: request.query.value };
+
+            let inList = [];
+            let ninList = [];
+
+            for( let value of request.query.value ) {
+              if(value.startsWith("!")) {
+                ninList.push(value.substr(1));
+              } else {
+                inList.push(value);
+              }
+            }
+            
+            if( inList.length > 0 && ninList.length > 0) {
+              query.event_value  = { $in: inList, $nin: ninList };
+            } else if (inList.length > 0) {
+              query.event_value  = { $in: inList };
+            } else {
+              query.event_value  = { $nin: ninList };
+            }
+
           } else {
-            query.event_value  = request.query.value;
+            if(request.query.value.startsWith("!")) {
+              query.event_value  = { $ne: request.query.value.substr(1) };
+            } else {
+              query.event_value  = request.query.value;
+            }
           }
         }
 
@@ -236,8 +283,8 @@ exports.register = function (server, options, next) {
                 if(err) {
                   throw err;
                 }
-                return reply(csv).code(200)
-              }, options);
+                return reply(csv).code(200);
+              }, json2csvOptions);
             } else {
               return reply(results).code(200);
             }

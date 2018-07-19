@@ -1,12 +1,41 @@
 'use strict';
 
 const Joi = require('joi');
+const converter = require('json-2-csv');
+const extend = require('jquery-extend');
+
+const json2csvOptions = {
+  checkSchemaDifferences: false,
+  emptyFieldValue: ''
+};
 
 const {
   eventsTable,
   usersTable,
   eventAuxDataTable
 } = require('../../../config/db_constants');
+
+
+function flattenJSON(json) {
+  // console.log("Pre-Export:", this.props.event_export.events)
+  let exportData = json.map((event) => {
+    let copiedEvent = extend(true, {}, event);
+
+    copiedEvent.event_options.map((data) => {
+      let elementName = `event_option_${data.event_option_name}`;
+     // console.log(elementName, data.event_option_value);
+      copiedEvent[elementName] = data.event_option_value;
+    });
+
+    delete copiedEvent.event_options;
+
+    copiedEvent.ts = copiedEvent.ts.toISOString();
+    copiedEvent.id = copiedEvent.id.toString();
+    return copiedEvent;
+  });
+
+  return exportData;
+}
 
 exports.register = function (server, options, next) {
 
@@ -61,9 +90,32 @@ exports.register = function (server, options, next) {
 
           if(request.query.value) {
             if(Array.isArray(request.query.value)) {
-              query.event_value  = { $in: request.query.value };
+
+              let inList = [];
+              let ninList = [];
+
+              for( let value of request.query.value ) {
+                if(value.startsWith("!")) {
+                  ninList.push(value.substr(1));
+                } else {
+                  inList.push(value);
+                }
+              }
+              
+              if( inList.length > 0 && ninList.length > 0) {
+                query.event_value  = { $in: inList, $nin: ninList };
+              } else if (inList.length > 0) {
+                query.event_value  = { $in: inList };
+              } else {
+                query.event_value  = { $nin: ninList };
+              }
+
             } else {
-              query.event_value  = request.query.value;
+              if(request.query.value.startsWith("!")) {
+                query.event_value  = { $ne: request.query.value.substr(1) };
+              } else {
+                query.event_value  = request.query.value;
+              }
             }
           }
 
@@ -122,9 +174,32 @@ exports.register = function (server, options, next) {
 
         if(request.query.value) {
           if(Array.isArray(request.query.value)) {
-            query.event_value  = { $in: request.query.value };
+
+            let inList = [];
+            let ninList = [];
+
+            for( let value of request.query.value ) {
+              if(value.startsWith("!")) {
+                ninList.push(value.substr(1));
+              } else {
+                inList.push(value);
+              }
+            }
+
+            if( inList.length > 0 && ninList.length > 0) {
+              query.event_value  = { $in: inList, $nin: ninList };
+            } else if (inList.length > 0) {
+              query.event_value  = { $in: inList };
+            } else {
+              query.event_value  = { $nin: ninList };
+            }
+
           } else {
-            query.event_value  = request.query.value;
+            if(request.query.value.startsWith("!")) {
+              query.event_value  = { $ne: request.query.value.substr(1) };
+            } else {
+              query.event_value  = request.query.value;
+            }
           }
         }
 
@@ -161,7 +236,16 @@ exports.register = function (server, options, next) {
 
             results.forEach(_renameAndClearFields);
 
-            return reply(results).code(200);
+            if(request.query.format && request.query.format == "csv") {
+              converter.json2csv(flattenJSON(results), (err, csv) => {
+                if(err) {
+                  throw err;
+                }
+                return reply(csv).code(200);
+              }, json2csvOptions);
+            } else {
+              return reply(results).code(200);
+            }
           } else {
             return reply({ "statusCode": 404, 'message': 'No records found'}).code(404);
           }
@@ -181,6 +265,7 @@ exports.register = function (server, options, next) {
           authorization: Joi.string().required()
         },
         query: Joi.object({
+          format: Joi.string().optional(),
           offset: Joi.number().integer().min(0).optional(),
           limit: Joi.number().integer().min(1).optional(),
           author: Joi.alternatives().try(
@@ -208,17 +293,20 @@ exports.register = function (server, options, next) {
       },
       response: {
         status: {
-          200: Joi.array().items(Joi.object({
-            id: Joi.object(),
-            event_author: Joi.string(),
-            ts: Joi.date().iso(),
-            event_value: Joi.string(),
-            event_options: Joi.array().items(Joi.object({
-              event_option_name: Joi.string(),
-              event_option_value: Joi.string()
-            })),
-            event_free_text: Joi.string().allow(''),
-          })),
+          200: Joi.alternatives().try(
+            Joi.string(),
+            Joi.array().items(Joi.object({
+              id: Joi.object(),
+              event_author: Joi.string(),
+              ts: Joi.date().iso(),
+              event_value: Joi.string(),
+              event_options: Joi.array().items(Joi.object({
+                event_option_name: Joi.string(),
+                event_option_value: Joi.string()
+              })),
+              event_free_text: Joi.string().allow(''),
+            }))
+          ),
           400: Joi.object({
             statusCode: Joi.number().integer(),
             error: Joi.string(),
@@ -319,11 +407,11 @@ exports.register = function (server, options, next) {
 
       if(request.payload.id) {
         try {
-          event._id = new ObjectID(request.payload.id)
-          delete event.id
+          event._id = new ObjectID(request.payload.id);
+          delete event.id;
         } catch(err) {
-          console.log("invalid ObjectID")
-          return reply({statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters"}).code(400)
+          console.log("invalid ObjectID");
+          return reply({statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters"}).code(400);
         }
       }
 
@@ -633,7 +721,7 @@ exports.register = function (server, options, next) {
     path: '/events/all',
     handler: function (request, reply) {
 
-      let query = {};
+      // let query = {};
 
       db.collection(eventsTable).deleteMany().then((result) => {
 

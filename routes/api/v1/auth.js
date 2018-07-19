@@ -37,7 +37,8 @@ exports.register = function (server, options, next) {
         let user = request.payload;
 
         user.last_login = new Date().toISOString();
-        user.roles = ['event_logger', 'event_watcher'];
+        user.roles = ['event_logger', 'event_watcher', 'event_manager'];
+        user.system_user = false;
 
         let password = request.payload.password;
 

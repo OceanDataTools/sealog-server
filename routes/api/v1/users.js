@@ -36,6 +36,9 @@ exports.register = function (server, options, next) {
 
       let query = {};
 
+      if(!request.auth.credentials.scope.includes('admin'))
+        query.system_user = false;
+
       let limit = (request.query.limit)? request.query.limit : 0;
       let offset = (request.query.offset)? request.query.offset : 0;
       let sort = (request.query.sort)? { [request.query.sort]: -1 } : { username: -1 };
@@ -51,7 +54,7 @@ exports.register = function (server, options, next) {
     config: {
       auth: {
         strategy: 'jwt',
-        scope: 'admin'
+        scope: ['admin', 'event_manager']
       },
       validate: {
         headers: {
@@ -71,6 +74,7 @@ exports.register = function (server, options, next) {
           200: Joi.array().items(Joi.object({
             id: Joi.object(),
             email: Joi.string().email(),
+            system_user: Joi.boolean(),
             last_login: Joi.date(),
             fullname: Joi.string(),
             username: Joi.string(),
@@ -110,6 +114,11 @@ exports.register = function (server, options, next) {
           return reply({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
         }
 
+        //if the request is for a system user but the requestor is not and admin AND if the requested user is not the requested user 
+        if(result.system_user && !request.auth.credentials.scope.includes('admin') && result._id != request.params.id ) {
+          return reply({statusCode: 400, error: "Unauthorized", message: "The requesting user is unauthorized to make that request"}).code(400);
+        }
+
         result = _renameAndClearFields(result);
         return reply(result);
 
@@ -139,6 +148,7 @@ exports.register = function (server, options, next) {
           200: Joi.object({
             id: Joi.object(),
             email: Joi.string().email(),
+            system_user: Joi.boolean(),
             last_login: Joi.date(),
             fullname: Joi.string(),
             username: Joi.string(),
@@ -184,17 +194,22 @@ exports.register = function (server, options, next) {
 
         if(request.payload.id) {
           try {
-            user._id = new ObjectID(request.payload.id)
-            delete user.id
+            user._id = new ObjectID(request.payload.id);
+            delete user.id;
           } catch(err) {
-            console.log("invalid ObjectID")
-            return reply({statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters"}).code(400)
+            console.log("invalid ObjectID");
+            return reply({statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters"}).code(400);
           }
         }
 
         // console.log("request.payload:", request.payload);
 
         user.last_login = new Date("1970-01-01T00:00:00.000Z");
+
+        // If the requesting users is not an admin OR the system_user param is undefined...
+        if(!(request.auth.credentials.scope.includes('admin')) || !(request.payload.system_user)) {
+          user.system_user = false;
+        }
 
         let password = request.payload.password;
 
@@ -223,7 +238,7 @@ exports.register = function (server, options, next) {
     config: {
       auth: {
         strategy: 'jwt',
-        scope: 'admin'
+        scope: ['admin', 'event_manager']
       },
       validate: {
         headers: {
@@ -233,6 +248,7 @@ exports.register = function (server, options, next) {
           id: Joi.string().length(24).optional(),
           username: Joi.string().min(1).max(100).required(),
           fullname: Joi.string().min(1).max(100).required(),
+          system_user: Joi.boolean().optional(),
           email: Joi.string().email().required(),
           password: Joi.string().allow('').max(50).required(),
           roles: Joi.array().items(Joi.string()).min(1).required()
@@ -368,6 +384,7 @@ exports.register = function (server, options, next) {
         payload: Joi.object({
           username: Joi.string().min(1).max(100).optional(),
           fullname: Joi.string().min(1).max(100).optional(),
+          system_user: Joi.boolean(),
           email: Joi.string().email().optional(),
           password: Joi.string().allow('').max(50).optional(),
           roles: Joi.array().items(Joi.string()).min(1).optional(),
@@ -414,6 +431,10 @@ exports.register = function (server, options, next) {
           return reply({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
         }
 
+        if(result.system_user && !request.auth.credentials.scope.includes('admin')) {
+          return reply({ 'statusCode': 422, 'error': 'Forbidden', 'message': 'User does not have privledges to delete system accounts' }).code(404); 
+        }
+
         db.collection(usersTable).deleteOne(query).then((result) => {
           return reply(result).code(204);
         }).catch((err) => {
@@ -428,7 +449,7 @@ exports.register = function (server, options, next) {
     config: {
       auth: {
         strategy: 'jwt',
-        scope: 'admin'
+        scope: ['admin', 'event_manager']
       },
       validate: {
         headers: {
@@ -452,8 +473,6 @@ exports.register = function (server, options, next) {
     method: 'GET',
     path: '/users/{id}/token',
     handler: function (request, reply) {
-
-      // console.log("credentials:", request.auth.credentials)
 
       if(request.auth.credentials.id == request.params.id || request.auth.credentials.scope.includes('admin')) {
 
