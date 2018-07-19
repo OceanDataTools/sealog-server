@@ -19,6 +19,7 @@ exports.register = function (server, options, next) {
       password: "$2a$10$smSa1wENOBcRGgnXrTsJxOm4UMsPFbaJHauDba13eJPWurO9OI/v6",
       last_login: new Date(),
       roles: ['admin', 'event_manager', 'event_logger', 'event_watcher'],
+      system_user: true,
     },
     {
       _id: ObjectID("5981f167212b348aed7fb9f5"),
@@ -28,6 +29,7 @@ exports.register = function (server, options, next) {
       password: "$2a$10$wIHRZ1Fo3ny/SoJM/UqQ2utOrBQQu9CXUz/oYkdlHw2fv15wM0t7m",
       last_login: new Date(),
       roles: ['event_manager', 'event_logger', 'event_watcher'],
+      system_user: true,
     },
     {
       _id: ObjectID("5981f167212b348aed7fc9f5"),
@@ -37,6 +39,7 @@ exports.register = function (server, options, next) {
       password: "$2a$10$wIHRZ1Fo3ny/SoJM/UqQ2utOrBQQu9CXUz/oYkdlHw2fv15wM0t7m",
       last_login: new Date(),
       roles: ['event_manager', 'event_logger', 'event_watcher'],
+      system_user: true,
     },
     {
       _id: ObjectID("5981f167212b348aed7fd9f5"),
@@ -46,15 +49,7 @@ exports.register = function (server, options, next) {
       password: "$2a$10$wIHRZ1Fo3ny/SoJM/UqQ2utOrBQQu9CXUz/oYkdlHw2fv15wM0t7m",
       last_login: new Date(),
       roles: ['event_manager', 'event_logger', 'event_watcher'],
-    },
-    {
-      _id: ObjectID("5981f167212b348aed7fe9f5"),
-      username: "manager",
-      fullname: "Event Manager",
-      email: "notrealeither@notarealserver.com",
-      password: "$2a$10$XXtpkkegXzqsCj1pN.Y5sus81F9/pvaLxmMjUc401.DZL3oZbh11i",
-      last_login: new Date(),
-      roles: ['event_manager', 'event_logger', 'event_watcher'],
+      system_user: true,
     },
     {
       _id: ObjectID("5981f167212b348aed7ff9f5"),
@@ -63,7 +58,8 @@ exports.register = function (server, options, next) {
       email: "notrealeither@notarealserver.com",
       password: "$2a$10$XXtpkkegXzqsCj1pN.Y5sus81F9/pvaLxmMjUc401.DZL3oZbh11i",
       last_login: new Date(),
-      roles: ['event_logger', 'event_watcher'],
+      roles: ['event_manager', 'event_logger', 'event_watcher'],
+      system_user: false,
     }
   ];
 

@@ -177,11 +177,11 @@ exports.register = function (server, options, next) {
 
       if(request.payload.id) {
         try {
-          event_template._id = new ObjectID(request.payload.id)
-          delete event_template.id
+          event_template._id = new ObjectID(request.payload.id);
+          delete event_template.id;
         } catch(err) {
-          console.log("invalid ObjectID")
-          return reply({statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters"}).code(400)
+          console.log("invalid ObjectID");
+          return reply({statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters"}).code(400);
         }
       }
 

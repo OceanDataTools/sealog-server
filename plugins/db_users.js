@@ -19,6 +19,7 @@ exports.register = function (server, options, next) {
       password: "$2a$10$smSa1wENOBcRGgnXrTsJxOm4UMsPFbaJHauDba13eJPWurO9OI/v6",
       last_login: new Date(),
       roles: ['admin', 'event_manager', 'event_logger', 'event_watcher'],
+      system_user: true,
     },
     {
       _id: ObjectID("5981f167212b348aed7fb9f5"),
@@ -28,6 +29,7 @@ exports.register = function (server, options, next) {
       password: "$2a$10$wIHRZ1Fo3ny/SoJM/UqQ2utOrBQQu9CXUz/oYkdlHw2fv15wM0t7m",
       last_login: new Date(),
       roles: ['event_manager', 'event_logger', 'event_watcher'],
+      system_user: true,
     },
     {
       _id: ObjectID("5981f167212b348aed7fc9f5"),
@@ -37,6 +39,7 @@ exports.register = function (server, options, next) {
       password: "$2a$10$wIHRZ1Fo3ny/SoJM/UqQ2utOrBQQu9CXUz/oYkdlHw2fv15wM0t7m",
       last_login: new Date(),
       roles: ['event_manager', 'event_logger', 'event_watcher'],
+      system_user: true,
     },
     {
       _id: ObjectID("5981f167212b348aed7fd9f5"),
@@ -46,6 +49,7 @@ exports.register = function (server, options, next) {
       password: "$2a$10$wIHRZ1Fo3ny/SoJM/UqQ2utOrBQQu9CXUz/oYkdlHw2fv15wM0t7m",
       last_login: new Date(),
       roles: ['event_manager', 'event_logger', 'event_watcher'],
+      system_user: true,
     }
   ];
 

@@ -7,7 +7,7 @@ import sys
 import os
 
 serverIP = '0.0.0.0'
-serverAPIPort = '8000'
+serverAPIPort = '8010'
 serverWSPort = '8001'
 serverPath = '/sealog-server'
 eventAPIPath = '/api/v1/events'
@@ -20,7 +20,7 @@ clientWSID = "asnap"
 
 token_devel = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYTlmNSIsInNjb3BlIjpbImFkbWluIiwiZXZlbnRfbWFuYWdlciIsImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTI1NDQxNTc1fQ.GezBXG-D43F-GfYlHTl_5igZyL1LQieEsk-tDwzMzzo"
 token_prod = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYTlmNSIsInNjb3BlIjpbImFkbWluIiwiZXZlbnRfbWFuYWdlciIsImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTI1NjIyMTYwfQ.v05UDVHDUgnFfyhucPdfrTGaSJJSVxQTJ-pDnRJPPbo"
-token = token_prod
+token = token_devel
 
 hello = {
     'type': 'hello',
@@ -56,7 +56,7 @@ def main():
     while True:
         try:
             r = requests.get('http://' + serverIP + ':' + serverAPIPort + serverPath + customVarAPIPath + '?name=' + asnapStatusVarName, headers=headers )
-            #print("text", r.text)
+            print("text", r.text)
             response = json.loads(r.text)
             #print("response:", response)
             if type(response) != type([]):

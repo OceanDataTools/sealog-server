@@ -75,7 +75,7 @@ exports.register = function (server, options, next) {
           200: Joi.array().items(Joi.object({
             id: Joi.object(),
             custom_var_name: Joi.string(),
-            custom_var_value: Joi.string(),
+            custom_var_value: Joi.string().allow(''),
           })),
           400: Joi.object({
             statusCode: Joi.number().integer(),
@@ -136,7 +136,7 @@ exports.register = function (server, options, next) {
           200: Joi.object({
             id: Joi.object(),
             custom_var_name: Joi.string(),
-            custom_var_value: Joi.string(),
+            custom_var_value: Joi.string().allow(''),
           }),
           400: Joi.object({
             statusCode: Joi.number().integer(),
@@ -202,7 +202,7 @@ exports.register = function (server, options, next) {
         }),
         payload: Joi.object({
           custom_var_name: Joi.string().optional(),
-          custom_var_value: Joi.string().optional(),
+          custom_var_value: Joi.string().allow('').optional(),
         }).required().min(1),
         options: {
           allowUnknown: true
