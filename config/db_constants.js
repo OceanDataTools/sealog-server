@@ -3,6 +3,7 @@ const sealogDB_devel = 'sealogDB_devel';
 const usersTable = 'users';
 const customVarsTable = 'custom_vars';
 const eventsTable = 'events';
+const loweringsTable = 'lowerings';
 const eventAuxDataTable = 'event_aux_data';
 const eventTemplatesTable = 'event_templates';
 const eventTemplateSetsTable = 'event_template_sets';
@@ -14,6 +15,7 @@ module.exports = {
   usersTable,
   customVarsTable,
   eventsTable,
+  loweringsTable,
   eventAuxDataTable,
   eventTemplatesTable,
   eventTemplateSetsTable,

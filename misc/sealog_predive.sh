@@ -14,26 +14,7 @@ curl -X PATCH --header 'Content-Type: application/json' --header 'Accept: applic
 }' 'http://localhost:8000/sealog-server/api/v1/custom_vars/59810167212b348aed7fa9f5'
 
 echo "Wipe local database"
-curl -X PATCH --header 'Content-Type: application/json' --header 'Accept: application/json' --header 'authorization: '${token} -d '{
-  "custom_var_name": "pilot",
-  "custom_var_value": ""
-}' 'http://localhost:8000/sealog-server/api/v1/custom_vars/59810166212b348aed7fa9f5'
-
-curl -X PATCH --header 'Content-Type: application/json' --header 'Accept: application/json' --header 'authorization: '${token} -d '{
-  "custom_var_name": "observers",
-  "custom_var_value": ""
-}' 'http://localhost:8000/sealog-server/api/v1/custom_vars/59810165212b348aed7fa9f5'
-
-curl -X PATCH --header 'Content-Type: application/json' --header 'Accept: application/json' --header 'authorization: '${token} -d '{
-  "custom_var_name": "location",
-  "custom_var_value": ""
-}' 'http://localhost:8000/sealog-server/api/v1/custom_vars/59810164212b348aed7fa9f5'
-
-curl -X PATCH --header 'Content-Type: application/json' --header 'Accept: application/json' --header 'authorization: '${token} -d '{
-  "custom_var_name": "summary",
-  "custom_var_value": ""
-}' 'http://localhost:8000/sealog-server/api/v1/custom_vars/59810163212b348aed7fa9f5'
-
+curl -X DELETE --header 'Accept: application/json' --header 'authorization: '${token} 'http://localhost:8000/sealog-server/api/v1/lowerings/all'
 curl -X DELETE --header 'Accept: application/json' --header 'authorization: '${token} 'http://localhost:8000/sealog-server/api/v1/events/all'
 
 echo "Remove any junk framegrabs collected since the end of the last dive"
