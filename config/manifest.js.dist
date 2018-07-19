@@ -195,17 +195,6 @@ const manifest = {
     },
     {
       plugin: {
-        register: './routes/api/v1/event_export_templates'
-      },
-      options: {
-        routes: {
-          prefix: envKey('prefix') + '/api/v1'
-        },
-        select: ['api']
-      }
-    },
-    {
-      plugin: {
         register: './routes/api/v1/event_aux_data'
       },
       options: {
@@ -313,13 +302,6 @@ if(env == 'development') { // DEVELOPMENT
 
   manifest.registrations.push({
     "plugin": {
-      "register": "./plugins/dbDevel_event_export_templates",
-      "options": {}
-    }
-  });
-
-  manifest.registrations.push({
-    "plugin": {
       "register": "./plugins/dbDevel_lowerings",
       "options": {}
     }
@@ -388,13 +370,6 @@ if(env == 'development') { // DEVELOPMENT
   manifest.registrations.push({
     "plugin": {
       "register": "./plugins/db_event_aux_data",
-      "options": {}
-    }
-  });
-
-  manifest.registrations.push({
-    "plugin": {
-      "register": "./plugins/db_event_export_templates",
       "options": {}
     }
   });
