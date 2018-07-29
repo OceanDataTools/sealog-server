@@ -28,7 +28,7 @@ exports.register = function (server, options, next) {
       email: "pilot@alvin.whoi.com",
       password: "$2a$10$wIHRZ1Fo3ny/SoJM/UqQ2utOrBQQu9CXUz/oYkdlHw2fv15wM0t7m",
       last_login: new Date(),
-      roles: ['event_manager', 'event_logger', 'event_watcher'],
+      roles: ['event_manager', 'event_logger', 'event_watcher', 'cruise_manager'],
       system_user: true,
     },
     {
@@ -38,7 +38,7 @@ exports.register = function (server, options, next) {
       email: "stbd_obs@alvin.whoi.com",
       password: "$2a$10$wIHRZ1Fo3ny/SoJM/UqQ2utOrBQQu9CXUz/oYkdlHw2fv15wM0t7m",
       last_login: new Date(),
-      roles: ['event_manager', 'event_logger', 'event_watcher'],
+      roles: ['event_manager', 'event_logger', 'event_watcher', 'cruise_manager'],
       system_user: true,
     },
     {
@@ -48,7 +48,7 @@ exports.register = function (server, options, next) {
       email: "port_obs@alvin.whoi.com",
       password: "$2a$10$wIHRZ1Fo3ny/SoJM/UqQ2utOrBQQu9CXUz/oYkdlHw2fv15wM0t7m",
       last_login: new Date(),
-      roles: ['event_manager', 'event_logger', 'event_watcher'],
+      roles: ['event_manager', 'event_logger', 'event_watcher', 'cruise_manager'],
       system_user: true,
     },
     {
@@ -58,7 +58,7 @@ exports.register = function (server, options, next) {
       email: "notrealeither@notarealserver.com",
       password: "$2a$10$XXtpkkegXzqsCj1pN.Y5sus81F9/pvaLxmMjUc401.DZL3oZbh11i",
       last_login: new Date(),
-      roles: ['event_manager', 'event_logger', 'event_watcher'],
+      roles: ['event_logger', 'event_watcher'],
       system_user: false,
     }
   ];
