@@ -2,7 +2,7 @@
 var test = require('assert');
 
 const {
-  eventExportTemplatesTable,
+  loweringsTable,
 } = require('../config/db_constants');
 
 exports.register = function (server, options, next) {
@@ -12,16 +12,16 @@ exports.register = function (server, options, next) {
 
   // const init_data = [];
 
-  console.log("Searching for Event Export Templates Collection");
-  db.listCollections({name:eventExportTemplatesTable}).toArray().then(function(names) {
+  console.log("Searching for Lowerings Collection");
+  db.listCollections({name:loweringsTable}).toArray().then(function(names) {
     test.equal(0, names.length);
 
-    console.log("Creating Event Export Templates Collection");
-    db.createCollection(eventExportTemplatesTable, function(err, collection) {
+    console.log("Creating Lowerings Collection");
+    db.createCollection(loweringsTable, function(err, collection) {
       test.equal(null, err);
 
-      // // Insert a document in the capped collection
-      // console.log("Populating Event Export Templates Collection");
+      // Insert a document in the capped collection
+      // console.log("Populating Lowerings Collection");
       // collection.insertMany(init_data, function(err, result) {
       //   test.equal(null, err);
 
@@ -36,6 +36,6 @@ exports.register = function (server, options, next) {
 };
 
 exports.register.attributes = {
-  name: 'db_populate_event_export_templates',
+  name: 'db_populate_lowerings',
   dependencies: ['hapi-mongodb']
 };
