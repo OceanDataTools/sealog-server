@@ -23,7 +23,7 @@ function flattenJSON(json) {
 
     copiedEvent.event_options.map((data) => {
       let elementName = `event_option_${data.event_option_name}`;
-     // console.log(elementName, data.event_option_value);
+      // console.log(elementName, data.event_option_value);
       copiedEvent[elementName] = data.event_option_value;
     });
 

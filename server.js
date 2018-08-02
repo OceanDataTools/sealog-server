@@ -32,7 +32,7 @@ Glue.compose(manifest, { relativeTo: __dirname }, (err, server) => {
         throw err;
       }
 
-//      console.log(server);
+      // console.log(server);
       console.log('✅  API Server is listening on ' + server.select('api').info.uri.toLowerCase());
       console.log('✅  WS Server is listening on ' + server.select('ws').info.uri.toLowerCase());
     });

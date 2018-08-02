@@ -74,7 +74,7 @@ exports.register = function (server, options, next) {
 
       // Insert a document in the capped collection
       console.log("Populating Events Collection");
-      collection.insertMany(test_data, function(err, result) {
+      collection.insertMany(test_data, function(err) {
         test.equal(null, err);
 
         collection.ensureIndex({event_free_text:"text"}).then(() => {
@@ -84,7 +84,7 @@ exports.register = function (server, options, next) {
     });
   }).catch(function () {
     console.log("Events Collection is present... dropping it");
-    db.dropCollection(eventsTable).then(function(result) {
+    db.dropCollection(eventsTable).then(function() {
 
       console.log("Creating Events Collection");
       db.createCollection(eventsTable, function(err, collection) {
@@ -92,7 +92,7 @@ exports.register = function (server, options, next) {
 
         // Insert a document in the capped collection
         console.log("Populating Events Collection");
-        collection.insertMany(test_data, function(err, result) {
+        collection.insertMany(test_data, function(err) {
           test.equal(null, err);
 
           collection.ensureIndex({event_free_text:"text"}).then(() => {

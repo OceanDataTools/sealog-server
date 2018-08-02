@@ -13,40 +13,20 @@ exports.register = function (server, options, next) {
   const init_data = [
     {
       _id: ObjectID("5981f167212b348aed7fa9f5"),
-      username: "alvin",
-      fullname: "Alvin",
-      email: "alvin@alvin.whoi.edu",
-      password: "$2a$10$smSa1wENOBcRGgnXrTsJxOm4UMsPFbaJHauDba13eJPWurO9OI/v6",
+      username: "admin",
+      fullname: "Admin",
+      email: "admin@notarealserver.com",
+      password: "$2a$10$XXtpkkegXzqsCj1pN.Y5sus81F9/pvaLxmMjUc401.DZL3oZbh11i",
       last_login: new Date(),
       roles: ['admin', 'event_manager', 'event_logger', 'event_watcher'],
       system_user: true,
     },
     {
       _id: ObjectID("5981f167212b348aed7fb9f5"),
-      username: "pilot",
-      fullname: "Pilot",
-      email: "pilot@alvin.whoi.com",
-      password: "$2a$10$wIHRZ1Fo3ny/SoJM/UqQ2utOrBQQu9CXUz/oYkdlHw2fv15wM0t7m",
-      last_login: new Date(),
-      roles: ['event_manager', 'event_logger', 'event_watcher'],
-      system_user: true,
-    },
-    {
-      _id: ObjectID("5981f167212b348aed7fc9f5"),
-      username: "stbd_obs",
-      fullname: "Starboard Obs",
-      email: "stbd_obs@alvin.whoi.com",
-      password: "$2a$10$wIHRZ1Fo3ny/SoJM/UqQ2utOrBQQu9CXUz/oYkdlHw2fv15wM0t7m",
-      last_login: new Date(),
-      roles: ['event_manager', 'event_logger', 'event_watcher'],
-      system_user: true,
-    },
-    {
-      _id: ObjectID("5981f167212b348aed7fd9f5"),
-      username: "port_obs",
-      fullname: "Port Obs",
-      email: "port_obs@alvin.whoi.com",
-      password: "$2a$10$wIHRZ1Fo3ny/SoJM/UqQ2utOrBQQu9CXUz/oYkdlHw2fv15wM0t7m",
+      username: "guest",
+      fullname: "Guest",
+      email: "guest@notarealserver.com",
+      password: "$2a$10$oTRayeYC2sOAuW9vapp3Ze6zVFsGyj40cc1XgWv.NL/hGLNi82Whq",
       last_login: new Date(),
       roles: ['event_manager', 'event_logger', 'event_watcher'],
       system_user: true,
@@ -63,7 +43,7 @@ exports.register = function (server, options, next) {
 
       // Insert a document in the capped collection
       console.log("Populating Users Collection");
-      collection.insertMany(init_data, function(err, result) {
+      collection.insertMany(init_data, function(err) {
         test.equal(null, err);
 
         return next();

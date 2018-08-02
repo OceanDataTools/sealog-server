@@ -28,14 +28,14 @@ exports.register = function (server, options, next) {
 
       // Insert a document in the capped collection
       console.log("Populating Custom Vars Collection");
-      collection.insertMany(test_data, function(err, result) {
+      collection.insertMany(test_data, function(err) {
         test.equal(null, err);
         return next();
       });
     });
   }).catch(function () {
     console.log("Custom Vars Collection is present... dropping it");
-    db.dropCollection(customVarsTable).then(function(result) {
+    db.dropCollection(customVarsTable).then(function() {
 
       console.log("Creating Custom Vars Collection");
       db.createCollection(customVarsTable, function(err, collection) {
@@ -43,7 +43,7 @@ exports.register = function (server, options, next) {
 
         // Insert a document in the capped collection
         console.log("Populating Custom Vars Collection");
-        collection.insertMany(test_data, function(err, result) {
+        collection.insertMany(test_data, function(err) {
           test.equal(null, err);
           return next();
         });

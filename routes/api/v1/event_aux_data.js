@@ -46,9 +46,32 @@ exports.register = function (server, options, next) {
 
         if(request.query.value) {
           if(Array.isArray(request.query.value)) {
-            eventQuery.event_value  = { $in: request.query.value };
+
+            let inList = [];
+            let ninList = [];
+
+            for( let value of request.query.value ) {
+              if(value.startsWith("!")) {
+                ninList.push(value.substr(1));
+              } else {
+                inList.push(value);
+              }
+            }
+            
+            if( inList.length > 0 && ninList.length > 0) {
+              query.event_value  = { $in: inList, $nin: ninList };
+            } else if (inList.length > 0) {
+              query.event_value  = { $in: inList };
+            } else {
+              query.event_value  = { $nin: ninList };
+            }
+
           } else {
-            eventQuery.event_value  = request.query.value;
+            if(request.query.value.startsWith("!")) {
+              query.event_value  = { $ne: request.query.value.substr(1) };
+            } else {
+              query.event_value  = request.query.value;
+            }
           }
         }
 

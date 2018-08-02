@@ -6,11 +6,9 @@ exports.register = function (server, options, next) {
   const usersTable = 'users';
   const eventsTable = 'events';
   const auxDataTable = 'event_aux_data';
-  const eventDefinitionTable = 'event_definitions';
   const eventTemplateTable = 'event_templates';
-  const eventExportTemplateTable = 'event_export_templates';
 
-//  const db = server.app.db;
+  // const db = server.app.db;
   const r = server.app.r;
 
   console.log("Dropping DB");
@@ -260,25 +258,26 @@ exports.register = function (server, options, next) {
                 console.log("Populating Table: events_data");
                 return r.db(eventloggerDB).table(auxDataTable).insert(event_aux_data_data).run().then(() => {
 
-                  console.log("Creating Table: event_definitions");
-                  return r.db(eventloggerDB).tableCreate(eventDefinitionTable).run().then(() => {
+                  console.log("Creating Table: event_templates");
+                  return r.db(eventloggerDB).tableCreate(eventTemplateTable).run().then(() => {
 
-// {
-//   id: uuid, // id of the event definition
-//   event_name: string, // name of the event definition
-//   event_value: string, // value of the event text
-//   event_free_text_required: bool, // whether to require user to add free text
-//   event_options: {
-//     event_option_name: string, // name of the event option
-//     event_option_type: string, // the type of the event option (dropdown, scale, etc)
-//     event_option_default_value: string, // default value for the option
-//     event_option_values: [ string ], // list of acceptable values
-//     event_option_freeform_value: bool, // whether to allow the option to be manually entered (vs require text to be selected from a strict list)
-//     event_option_required: bool // whether completing this option is requried for submission.
-//   }
-// }
+                    // {
+                    //   id: uuid, // id of the event definition
+                    //   event_name: string, // name of the event definition
+                    //   event_value: string, // value of the event text
+                    //   event_free_text_required: bool, // whether to require user to add free text
+                    //   event_options: {
+                    //     event_option_name: string, // name of the event option
+                    //     event_option_type: string, // the type of the event option (dropdown, scale, etc)
+                    //     event_option_default_value: string, // default value for the option
+                    //     event_option_values: [ string ], // list of acceptable values
+                    //     event_option_freeform_value: bool, // whether to allow the option to be manually entered (vs require text to be selected from a strict list)
+                    //     event_option_required: bool // whether completing this option is requried for submission.
+                    //   }
+                    // }
+
                     //Insert users into db on startup
-                    const events_definition_data = [{
+                    const event_templates_data = [{
                       id: '7b5f3fb7-1dd0-4161-a576-e4f3a885a566',
                       event_name: 'Fish_btn',
                       event_value: 'FISH',
@@ -415,59 +414,9 @@ exports.register = function (server, options, next) {
                       ]
                     }];
 
-                    console.log("Populating Table: event_definitions");
-                    return r.db(eventloggerDB).table(eventDefinitionTable).insert(events_definition_data).run().then(() => {
-
-                      console.log("Creating Table: event_templates");
-                      return r.db(eventloggerDB).tableCreate(eventTemplateTable).run().then(() => {
-
-                        //Insert template data into db on startup
-                        const events_template_data = [{
-                          id: "3bf07743-c880-4cb3-a26f-93fda90aaf64",
-                          event_template_name: "Awesome Events",
-                          event_definitions: ['7b5f3fb7-1dd0-4161-a576-e4f3a885a566']
-                        },{
-                          id: "3bf07743-c880-4cb3-a26f-93fda90aaf54",
-                          event_template_name: "Awesomest Events",
-                          event_definitions: ['7b5f3fb7-1dd0-4161-a576-e4f3a885a566']
-                        }];
-
-                        console.log("Populating Table: event_templates");
-                        return r.db(eventloggerDB).table(eventTemplateTable).insert(events_template_data).run().then(() => {
-
-                          console.log("Creating Table: event_export_templates");
-                          return r.db(eventloggerDB).tableCreate(eventExportTemplateTable).run().then(() => {
-
-                            //Insert template data into db on startup
-                            const event_exports_template_data = [{
-                              id: "3bf07743-c430-4cb3-a26f-93fda90aaf64",
-                              event_export_template_name: "All Events",
-                              event_export_template_eventvalue_filter: ["FISH"],
-                              event_export_template_offset: 0,
-                              event_export_template_limit: 0,
-                              event_export_template_startTS: '',
-                              event_export_template_stopTS: r.ISO8601('2017-12-31T23:59:59.999Z'),
-                              event_export_template_user_filter: [],
-                              event_export_template_datasource_filter: [],
-                              event_export_template_freetext_filter: '',
-                              event_export_template_include_aux_data: true
-                            }];
-
-                            console.log("Populating Table: event_export_templates");
-                            return r.db(eventloggerDB).table(eventExportTemplateTable).insert(event_exports_template_data).run().then(() => {
-                              return next();
-                            }).catch((err) => {
-                              throw err;
-                            });
-                          }).catch((err) => {
-                            throw err;
-                          });
-                        }).catch((err) => {
-                          throw err;
-                        });
-                      }).catch((err) => {
-                        throw err;
-                      });
+                    console.log("Populating Table: event_templates");
+                    return r.db(eventloggerDB).table(eventTemplateTable).insert(event_templates_data).run().then(() => {
+                      return next();
                     }).catch((err) => {
                       throw err;
                     });

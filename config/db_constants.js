@@ -5,8 +5,8 @@ const customVarsTable = 'custom_vars';
 const eventsTable = 'events';
 const eventAuxDataTable = 'event_aux_data';
 const eventTemplatesTable = 'event_templates';
-const eventTemplateSetsTable = 'event_template_sets';
-const eventExportTemplatesTable = 'event_export_templates';
+//const eventTemplateSetsTable = 'event_template_sets';
+//const eventExportTemplatesTable = 'event_export_templates';
 
 module.exports = {
   sealogDB,
@@ -16,6 +16,6 @@ module.exports = {
   eventsTable,
   eventAuxDataTable,
   eventTemplatesTable,
-  eventTemplateSetsTable,
-  eventExportTemplatesTable
+//  eventTemplateSetsTable,
+//  eventExportTemplatesTable
 };

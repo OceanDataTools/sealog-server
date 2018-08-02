@@ -169,7 +169,7 @@ exports.register = function (server, options, next) {
 
       // Insert a document in the capped collection
       console.log("Populating Event Aux Data Collection");
-      collection.insertMany(test_data, function(err, result) {
+      collection.insertMany(test_data, function(err) {
         test.equal(null, err);
 
         return next();
@@ -178,7 +178,7 @@ exports.register = function (server, options, next) {
     });
   }).catch(function () {
     console.log("Event Aux Data Collection is present... dropping it");
-    db.dropCollection(eventAuxDataTable).then(function(result) {
+    db.dropCollection(eventAuxDataTable).then(function() {
 
       console.log("Creating Event Aux Data Collection");
       db.createCollection(eventAuxDataTable, function(err, collection) {
@@ -186,7 +186,7 @@ exports.register = function (server, options, next) {
 
         // Insert a document in the capped collection
         console.log("Populating Event Aux Data Collection");
-        collection.insertMany(test_data, function(err, result) {
+        collection.insertMany(test_data, function(err) {
           test.equal(null, err);
 
           return next();

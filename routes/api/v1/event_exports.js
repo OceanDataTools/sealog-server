@@ -24,7 +24,7 @@ function flattenJSON(json) {
 
           let elementName = `${data.data_source}_${data2.data_name}_value`;
           let elementUOM = `${data.data_source}_${data2.data_name}_uom`;
-         // console.log(elementName, data2.data_value, elementUOM, data2.data_uom)
+          // console.log(elementName, data2.data_value, elementUOM, data2.data_uom)
           copiedEvent[elementName] = data2.data_value;
           copiedEvent[elementUOM] = data2.data_uom;
         });  
@@ -34,7 +34,7 @@ function flattenJSON(json) {
 
     copiedEvent.event_options.map((data) => {
       let elementName = `event_option_${data.event_option_name}`;
-     // console.log(elementName, data.event_option_value)
+      // console.log(elementName, data.event_option_value)
       copiedEvent[elementName] = data.event_option_value;
     });
 
@@ -345,7 +345,7 @@ exports.register = function (server, options, next) {
           })
         }
       },
-      description: 'Return the event exports based on query parameters',
+      description: 'Export events merged with their aux_data based on the query parameters',
       notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
         <p>Available to: <strong>admin</strong>, <strong>event_manager</strong>, <strong>event_logger</strong> or <strong>event_watcher</strong></p>',
       tags: ['events','auth','api'],
@@ -438,7 +438,7 @@ exports.register = function (server, options, next) {
 
         }
       },
-      description: 'Return the event exports based on event id',
+      description: 'Export an event merged with its aux_data based on event id',
       notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
         <p>Available to: <strong>admin</strong>, <strong>event_manager</strong>, <strong>event_logger</strong> or <strong>event_watcher</strong></p>',
       tags: ['events','auth','api'],

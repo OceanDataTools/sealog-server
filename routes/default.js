@@ -81,7 +81,7 @@ exports.register = function (server, options, next) {
       return reply({ message: 'Oops, 404 Page!' }).code(404);
     },
     config: {
-      description: 'This is a default route used for testing invalid routes.',
+      description: 'This is the route used for handling invalid routes.',
       notes: '<div class="panel panel-default">\
         <div class="panel-heading"><strong>Status Code: 404</strong> - file not found</div>\
         <div class="panel-body">Returns JSON object explaining error</div>\

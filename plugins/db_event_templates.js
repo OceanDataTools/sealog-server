@@ -17,7 +17,7 @@ exports.register = function (server, options, next) {
     test.equal(0, names.length);
 
     console.log("Creating Event Templates Collection");
-    db.createCollection(eventsTable, function(err, collection) {
+    db.createCollection(eventsTable, function(err) {
       test.equal(null, err);
 
       // // Insert a document in the capped collection

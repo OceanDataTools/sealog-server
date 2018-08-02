@@ -17,7 +17,7 @@ exports.register = function (server, options, next) {
     test.equal(0, names.length);
 
     console.log("Creating Event Aux Data Collection");
-    db.createCollection(eventAuxDataTable, function(err, collection) {
+    db.createCollection(eventAuxDataTable, function(err) {
       test.equal(null, err);
 
       // // Insert a document in the capped collection

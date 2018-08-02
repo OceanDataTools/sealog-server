@@ -159,7 +159,7 @@ exports.register = function (server, options, next) {
 
       // Insert a document in the capped collection
       console.log("Populating Event Templates Collection");
-      collection.insertMany(test_data, function(err, result) {
+      collection.insertMany(test_data, function(err) {
         test.equal(null, err);
 
         return next();
@@ -168,7 +168,7 @@ exports.register = function (server, options, next) {
     });
   }).catch(function () {
     console.log("Event Templates Collection is present... dropping it");
-    db.dropCollection(eventTemplatesTable).then(function(result) {
+    db.dropCollection(eventTemplatesTable).then(function() {
 
       console.log("Creating Event Templates Collection");
       db.createCollection(eventTemplatesTable, function(err, collection) {
@@ -176,7 +176,7 @@ exports.register = function (server, options, next) {
 
         // Insert a document in the capped collection
         console.log("Populating Event Templates Collection");
-        collection.insertMany(test_data, function(err, result) {
+        collection.insertMany(test_data, function(err) {
           test.equal(null, err);
 
           return next();

@@ -19,9 +19,9 @@ describe('Server', () => {
     // or immediately if the server is already initialized
     LabbableServer.ready({timeout: 5000}).then((srv) => {
 
-//      if (err) {
-//        return done(err);
-//      }
+      // if (err) {
+      //   return done(err);
+      // }
 
       apiServer = srv.select('api');
 
@@ -511,7 +511,7 @@ describe('Server', () => {
       });
     });
 
-      // query all event exports based on data source
+    // query all event exports based on data source
     it('Restricted event_exports route should return not found because datasource does not exist and a http status 404', done => {
       var options = {
         method: 'GET',
@@ -830,7 +830,7 @@ describe('Server', () => {
       });
     });
 
-      // query all events based on data source
+    // query all events based on data source
     it('Restricted events route should return not found because datasource does not exist and a http status 404', done => {
       var options = {
         method: 'GET',
@@ -1623,7 +1623,7 @@ describe('Server', () => {
       });
     });
 
-      // query all events based on data source
+    // query all events based on data source
     it('Restricted event_aux_data route should return not found because datasource does not exist and a http status 404', done => {
       var options = {
         method: 'GET',
