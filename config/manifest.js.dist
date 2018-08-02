@@ -266,6 +266,13 @@ if(env == 'development') { // DEVELOPMENT
 
   manifest.registrations.push({
     "plugin": {
+      "register": "./plugins/db_custom_vars",
+      "options": {}
+    }
+  });
+
+  manifest.registrations.push({
+    "plugin": {
       "register": "good",
       "options": {
         "ops": { interval: 60000 },
@@ -312,6 +319,13 @@ if(env == 'development') { // DEVELOPMENT
   manifest.registrations.push({
     "plugin": {
       "register": "./plugins/db_event_aux_data",
+      "options": {}
+    }
+  });
+
+  manifest.registrations.push({
+    "plugin": {
+      "register": "./plugins/db_custom_vars",
       "options": {}
     }
   });
