@@ -1,6 +1,6 @@
 *** Sealog Server Overview ***
 Author: Webb Pinner, webbpinner@gmail.com
-Updated: Sept 24, 2018
+Updated: Nov 09, 2018
 
 Sealog is a modular system for submitting, and extracting events and ancillary data associated with events.  Events and associated data are submitted to and extracted from the server via http GET/POST calls to the server's RESTful API.
 
@@ -13,11 +13,11 @@ In addition to the API, sealog-server exposes a websocket-based connection for r
 
 *** System Maintenance ***
 
-The most likely maintenance required with regards to sealog-server or the ancillary services will be as a result of network changes to the sealog server machine, the Teradek frame grabbers or if the account information for sealog's "jason" account is in any way altered.
+The most likely maintenance required with regards to sealog-server or the ancillary services will be as a result of network changes to the sealog server machine, the Teradek frame grabbers or if the account information for sealog's "admin" account is in any way altered.
 
 In the event of a network change, the new ip address will need to be applied to all the ancillary services.  Network changes to the sealog-server machine should not affect any of the services that are also run from the sealog-server machine as these services should be connecting to the sealog-server via localhost (127.0.0.1).
 
-In the event of an account change, a new authentication token will need to be applied to all the ancillary services.  This easiest way to obtain the new token is to log into the sealog-client (http://198.17.154.223/sealog) using the "jason" account and select "Profile" from the dropdown menu in the upper-right of the client interface.  At the bottom of profile form will be the updated token string.  After obtaining the new token, the technician will need to open each of the services listed above and if a token string is listed in the script, replace it with the updated token.
+In the event of an account change, a new authentication token will need to be applied to all the ancillary services.  This easiest way to obtain the new token is to log into the sealog-client (http://<sealog-server-ip>/sealog) using the "admin" account and select "Profile" from the dropdown menu in the upper-right of the client interface.  At the bottom of profile form will be the updated token string.  After obtaining the new token, the technician will need to open each of the services listed above and if a token string is listed in the script, replace it with the updated token.
 
 **** ASNAP-specific: ****
 The Automatic snapper (ASNAP) script triggers event creations at a set interval.  To change the interval simply update the "interval" variable in the sealog-asnap.py script.
@@ -25,7 +25,7 @@ The Automatic snapper (ASNAP) script triggers event creations at a set interval.
 *** Sealog-Server Software changes ***
 Below are details about how the "build" sealog-server should there be a need to change the code-base.
 
-Sealog-server is written in nodeJS v8.7.x and the data is stored in MongoDB v3.4.x.  There is no compiling step with nodeJS services, simply make the changes and restart the service.  The sealog-server codebase includes mechanism for running the service in "development" mode.  This mode enables some additional debugging messages in the console stdout and also runs the services against a testing database.  The testing database is rebuilt each time the service is started in devel mode.  This allows the operated to modify the databased in any means necessary and then return to a known database state simply be restarting sealog-server.
+Sealog-server is written in nodeJS v8.11.x and the data is stored in MongoDB v3.4.x.  There is no compiling step with nodeJS services, simply make the changes and restart the service.  The sealog-server codebase includes mechanism for running the service in "development" mode.  This mode enables some additional debugging messages in the console stdout and also runs the services against a testing database.  The testing database is rebuilt each time the service is started in devel mode.  This allows the operated to modify the databased in any means necessary and then return to a known database state simply be restarting sealog-server.
 
 To start the sealog-server in devel mode, from a terminal run the following:
 cd ~/sealog-server/
@@ -36,9 +36,7 @@ cd ~/sealog-server/
 npm start
 
  **** Installed Accounts ****
-The sealog-server installation for Jason includes 4 system accounts:
  - admin --> admin account, password is "password"
- - pi --> event-logging, cruise/lowering management account intended for use by the pi, password is empty
  - guest --> event-logging account intended for use by anyone, password is empty
 
  **** Obtaining a JWT ****

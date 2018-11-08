@@ -1,9 +1,8 @@
 *** Sealog Server Data Management ***
 Author: Webb Pinner, webbpinner@gmail.com
-Written: May 2, 2018
-Updated: May 4, 2018
+Updated: Nov 09, 2018
 
-**** Pre-Dive ****
+**** Pre-Cruise ****
 + Verify the ASNAP service is working correctly
   - login to sealog client as pilot
   - Look at the ASNAP status in the lowering-left of the UI
@@ -30,12 +29,6 @@ Updated: May 4, 2018
 
       curl -X DELETE --header 'Accept: application/json' --header 'authorization: <token>' 'http://<sealog server IP>:8000/sealog-server/api/v1/events/all'
 
-+ Wipe frame capture directory from the machine hosting sealog
-  - The frame captures are stored in the /home/alvin/framegrabs directory.  Simply empty this directory
-
-      ssh sealos@<sealog server IP>
-      rm -r /home/sealog/framegrabs/*
-
 + Enable Auto-snap in sealog
   + Enabling auto-snap can be done in one of 2 ways:
     + from the sealog-client web-interface
@@ -54,11 +47,7 @@ Updated: May 4, 2018
       }' 'http://<sealog server IP>:8000/sealog-server/api/v1/custom_vars/59810167212b348aed7fa9f5'
 
 
-**** During the Dive ****
-- Observers/Pilot makes events ad-hoc
-- Autosnap makes an event every 10 seconds
-
-**** Post-Dive ****
+**** Post-Cruise ****
 + Disable Auto-snap in sealog
   + Disabling auto-snap can be done in one of 2 ways:
     + from the sealog-client web-interface
@@ -80,57 +69,78 @@ Updated: May 4, 2018
   + Exporting the event data can be done in one of 2 ways:
     + from the sealog-client web-interface
       - login to sealog client as admin.
-      - Select "Event Review/Export" from the top nav bar.
+      - Select "Review Events" from the top nav bar.
+      - In the upper-right click "Goto Search"
+      - In the "Filtered Events" Panel, click "Show ASNAP".  This will ensure the ASNAP events are included in the export
       - In the "Filtered Events" Panel, click the download icon and select the top "Events Only" option.
       - Save the file when prompted.
-      - rename the file to <loweringID>_eventOnlyExport.json replacing <loweringID> with the appropriate dive number.
+      - rename the file to <cruiseID>_eventOnlyExport.json replacing <cruiseID> with the appropriate cruise ID.
       - move the file to the appropriate locatation on the archive machine.
     + using the sealog-server API from the command-line
       From the command line enter the following command replacing:
         - <token> with the JWT token for the admin account
         - <sealog server IP> with the IP address of the machine hosting sealog
         - <output_path> with the appropriate destnation directory for the export file
-        - <loweringID> with the appropriate dive ID
+        - <cruiseID> with the appropriate cruise ID
 
-      curl -X GET --header 'Accept: application/json' --header 'authorization: <token>' --output '<output_path>/<loweringID>__eventOnlyExport.json' 'http://<sealog server IP>:8000/sealog-server/api/v1/events'
+      curl -X GET --header 'Accept: application/json' --header 'authorization: <token>' --output '<output_path>/<cruiseID>__eventOnlyExport.json' 'http://<sealog server IP>:8000/sealog-server/api/v1/events'
 
 + Export Aux data from sealog
   + Exporting the aux data can be done in one of 2 ways:
     + from the sealog-client web-interface
       - login to sealog client as admin.
-      - Select "Event Review/Export" from the top nav bar.
+      - Select "Review Events" from the top nav bar.
+      - In the upper-right click "Goto Search"
+      - In the "Filtered Events" Panel, click "Show ASNAP".  This will ensure the ASNAP events are included in the export
       - In the "Filtered Events" Panel, click the download icon and select the top "Aux Data Only" option.
       - Save the file when prompted.
-      - rename the file to <loweringID>_auxDataOnlyExport.json replacing <loweringID> with the appropriate dive number.
+      - rename the file to <cruiseID>_auxDataOnlyExport.json replacing <cruiseID> with the appropriate cruise ID.
       - move the file to the appropriate locatation on the archive machine.
     + using the sealog-server API from the command-line
       From the command line enter the following command replacing:
         - <token> with the JWT token for the admin account
         - <sealog server IP> with the IP address of the machine hosting sealog
         - <output_path> with the appropriate destnation directory for the export file
-        - <loweringID> with the appropriate dive ID
+        - <cruiseID> with the appropriate cruise ID
 
-      curl -X GET --header 'Accept: application/json' --header 'authorization: <token>' --output '<output_path>/<loweringID>__auxDataOnlyExport.json' 'http://<sealog server IP>:8000/sealog-server/api/v1/event_aux_data'
+      curl -X GET --header 'Accept: application/json' --header 'authorization: <token>' --output '<output_path>/<cruiseID>__auxDataOnlyExport.json' 'http://<sealog server IP>:8000/sealog-server/api/v1/event_aux_data'
+
++ Export events with the aux data from sealog as a json
+  + Exporting the data can be done in one of 2 ways:
+    + from the sealog-client web-interface
+      - login to sealog client as admin.
+      - Select "Review Events" from the top nav bar.
+      - In the upper-right click "Goto Search"
+      - In the "Filtered Events" Panel, click "Show ASNAP".  This will ensure the ASNAP events are included in the export
+      - In the "Filtered Events" Panel, click the download icon and select the bottom "Events w/aux data" option.
+      - Save the file when prompted.
+      - rename the file to <cruiseID>.sealog_export.json replacing <cruiseID> with the appropriate cruise ID.
+      - move the file to the appropriate locatation on the archive machine.
+    + using the sealog-server API from the command-line
+      From the command line enter the following command replacing:
+        - <token> with the JWT token for the admin account
+        - <sealog server IP> with the IP address of the machine hosting sealog
+        - <output_path> with the appropriate destnation directory for the export file
+        - <cruiseID> with the appropriate cruise ID
+
+      curl -X GET --header 'Accept: application/json' --header 'authorization: <token>' --output '<output_path>/<cruiseID>.sealog_export.json' 'http://<sealog server IP>:8000/sealog-server/api/v1/event_exports'
 
 + Export events with the aux data from sealog as a csv
   + Exporting the data can be done in one of 2 ways:
     + from the sealog-client web-interface
       - login to sealog client as admin.
-      - Select "Event Review/Export" from the top nav bar.
+      - Select "Review Events" from the top nav bar.
+      - In the upper-right click "Goto Search"
+      - In the "Filtered Events" Panel, click "Show ASNAP".  This will ensure the ASNAP events are included in the export
       - In the "Filtered Events" Panel, click the download icon and select the bottom "Events w/aux data" option.
       - Save the file when prompted.
-      - rename the file to <loweringID>.sealog_export.json replacing <loweringID> with the appropriate dive number.
+      - rename the file to <cruiseID>.sealog_export.json replacing <cruiseID> with the appropriate cruise ID.
       - move the file to the appropriate locatation on the archive machine.
     + using the sealog-server API from the command-line
       From the command line enter the following command replacing:
         - <token> with the JWT token for the admin account
         - <sealog server IP> with the IP address of the machine hosting sealog
         - <output_path> with the appropriate destnation directory for the export file
-        - <loweringID> with the appropriate dive ID
+        - <cruiseID> with the appropriate cruise ID
 
-      curl -X GET --header 'Accept: application/json' --header 'authorization: <token>' --output '<output_path>/<loweringID>.sealog_export.json' 'http://<sealog server IP>:8000/sealog-server/api/v1/event_exports?format=csv'
-
-+ Copy frame captures from machine hosting sealog
-  - Simply copy the framegrab files from the sealog machine to the appropriate data archive server
-
-    rsync -avi alvin@199.92.162.100:/home/alvin/framegrabs/* <destDir>
+      curl -X GET --header 'Accept: application/json' --header 'authorization: <token>' --output '<output_path>/<cruiseID>.sealog_export.csv' 'http://<sealog server IP>:8000/sealog-server/api/v1/event_exports?format=csv'
