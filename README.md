@@ -193,6 +193,6 @@ I've also setup a Slack channel for sealog, please contact me at oceandatarat at
 Customized versions of Sealog are currently supporting the human occupied vehicle Alvin and the remotely operated vehicle JASON operated by the Woods Hole Oceanographic Institution.
 
 # Thanks and acknowledgments
-Sealog is in ongoing development thanks to the generosity of the Schmidt Ocean Institute (SOI) who have supported the project since 2018. I also want to thank the Woods Hole Oceanographic Institution who provided the initial inspiration for the project and are slated to become it's first user.
+Sealog is in ongoing development thanks to the generosity of the Schmidt Ocean Institute (SOI) who have supported the project since 2018. I also want to thank the Woods Hole Oceanographic Institution who provided the initial inspiration for the project and have become it's first adopters.
 
 Lastly I want to thank the UNOLS community who have helped me since the beginning by sharing their wealth of experience and technical ability.
