@@ -1,6 +1,9 @@
 'use strict';
 const Joi = require('joi');
 
+const IMAGE_ROUTE = "/sealog-images/{param*}";
+const IMAGE_PATH = "/Users/webbpinner/sealog-images";
+
 exports.register = function (server, options, next) {
 
   server.route({
@@ -37,6 +40,7 @@ exports.register = function (server, options, next) {
       return reply({message: 'Ok, You are authorized.'}).code(200);
     },
     config: {
+      description: 'This is default route for testing restricted routes.',
       auth: {
         strategy: 'jwt',
         scope: 'admin'
@@ -49,7 +53,6 @@ exports.register = function (server, options, next) {
           allowUnknown: true
         }
       },
-      description: 'This is a default route used for testing the jwt authentication.',
       notes: '<div class="panel panel-default">\
         <div class="panel-heading"><strong>Status Code: 200</strong> - request successful</div>\
         <div class="panel-body">Returns JSON object for user record</div>\
@@ -76,6 +79,19 @@ exports.register = function (server, options, next) {
 
   server.route({
     method: 'GET',
+    path: IMAGE_ROUTE,
+    handler: {
+      directory: {
+        path: IMAGE_PATH
+      }
+    },
+    config: {
+      description: 'This route is used for serving image files for cameras.'
+    }
+  });
+
+  server.route({
+    method: 'GET',
     path: '/{path*}',
     handler: function (request, reply) {
       return reply({ message: 'Oops, 404 Page!' }).code(404);
@@ -90,6 +106,31 @@ exports.register = function (server, options, next) {
         status: {
           404: Joi.object({
             message: "Oops, 404 Page!"
+          })
+        }
+      },
+      tags: ['default','test'],
+    }
+  });
+
+  server.route({
+    method: 'GET',
+    path: '/server_time',
+    handler: function (request, reply) {
+      let timestamp = new Date();
+      // console.log(timestamp)
+      return reply({ ts: timestamp }).code(200);
+    },
+    config: {
+      description: 'This is the route used for retrieving the current server time.',
+      notes: '<div class="panel panel-default">\
+        <div class="panel-heading"><strong>Status Code: 200</strong> - success</div>\
+        <div class="panel-body">Returns JSON object containing the current server time (UTC)</div>\
+      </div>',
+      response: {
+        status: {
+          200: Joi.object({
+            ts: Joi.date().iso(),
           })
         }
       },

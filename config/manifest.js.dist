@@ -140,6 +140,50 @@ const manifest = {
     },
     {
       plugin: {
+        register: './routes/api/v1/custom_vars'
+      },
+      options: {
+        routes: {
+          prefix: envKey('prefix') + '/api/v1'
+        },
+        select: ['api']
+      }
+    },
+    {
+      plugin: {
+        register: './routes/default'
+      },
+      options: {
+        routes: {
+          prefix: envKey('prefix') 
+        },
+        select: ['api']
+      }
+    },
+    {
+      plugin: {
+        register: './routes/api/v1/event_aux_data'
+      },
+      options: {
+        routes: {
+          prefix: envKey('prefix') + '/api/v1'
+        },
+        select: ['api']
+      }
+    },
+    {
+      plugin: {
+        register: './routes/api/v1/event_exports'
+      },
+      options: {
+        routes: {
+          prefix: envKey('prefix') + '/api/v1'
+        },
+        select: ['api']
+      }
+    },
+    {
+      plugin: {
         register: './routes/api/v1/event_templates'
       },
       options: {
@@ -162,28 +206,6 @@ const manifest = {
     },
     {
       plugin: {
-        register: './routes/api/v1/event_exports'
-      },
-      options: {
-        routes: {
-          prefix: envKey('prefix') + '/api/v1'
-        },
-        select: ['api']
-      }
-    },
-    {
-      plugin: {
-        register: './routes/api/v1/event_aux_data'
-      },
-      options: {
-        routes: {
-          prefix: envKey('prefix') + '/api/v1'
-        },
-        select: ['api']
-      }
-    },
-    {
-      plugin: {
         register: './routes/api/v1/users'
       },
       options: {
@@ -192,30 +214,7 @@ const manifest = {
         },
         select: ['api']
       }
-    },
-    {
-      plugin: {
-        register: './routes/api/v1/custom_vars'
-      },
-      options: {
-        routes: {
-          prefix: envKey('prefix') + '/api/v1'
-        },
-        select: ['api']
-      }
-    },
-    {
-      plugin: {
-        register: './routes/default'
-      },
-      options: {
-        routes: {
-          prefix: envKey('prefix') 
-        },
-        select: ['api']
-      }
-    },
-    {
+    },    {
       plugin: './routes/ws/events',
       options: {
         routes: {
@@ -238,7 +237,14 @@ if(env == 'development') { // DEVELOPMENT
 
   manifest.registrations.push({
     "plugin": {
-      "register": "./plugins/dbDevel_users",
+      "register": "./plugins/db_custom_vars",
+      "options": {}
+    }
+  });
+
+  manifest.registrations.push({
+    "plugin": {
+      "register": "./plugins/dbDevel_event_aux_data",
       "options": {}
     }
   });
@@ -259,14 +265,7 @@ if(env == 'development') { // DEVELOPMENT
 
   manifest.registrations.push({
     "plugin": {
-      "register": "./plugins/dbDevel_event_aux_data",
-      "options": {}
-    }
-  });
-
-  manifest.registrations.push({
-    "plugin": {
-      "register": "./plugins/db_custom_vars",
+      "register": "./plugins/dbDevel_users",
       "options": {}
     }
   });
@@ -297,7 +296,14 @@ if(env == 'development') { // DEVELOPMENT
 } else if(env == 'production') { // PRODUCTION
   manifest.registrations.push({
     "plugin": {
-      "register": "./plugins/db_users",
+      "register": "./plugins/db_custom_vars",
+      "options": {}
+    }
+  });
+
+  manifest.registrations.push({
+    "plugin": {
+      "register": "./plugins/db_event_aux_data",
       "options": {}
     }
   });
@@ -318,14 +324,7 @@ if(env == 'development') { // DEVELOPMENT
 
   manifest.registrations.push({
     "plugin": {
-      "register": "./plugins/db_event_aux_data",
-      "options": {}
-    }
-  });
-
-  manifest.registrations.push({
-    "plugin": {
-      "register": "./plugins/db_custom_vars",
+      "register": "./plugins/db_users",
       "options": {}
     }
   });

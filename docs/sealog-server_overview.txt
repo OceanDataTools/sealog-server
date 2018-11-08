@@ -1,7 +1,6 @@
 *** Sealog Server Overview ***
 Author: Webb Pinner, webbpinner@gmail.com
-Written: May 2, 2018
-Updated: May 2, 2018
+Updated: Sept 24, 2018
 
 Sealog is a modular system for submitting, and extracting events and ancillary data associated with events.  Events and associated data are submitted to and extracted from the server via http GET/POST calls to the server's RESTful API.
 
@@ -12,67 +11,15 @@ http://<sealog-server-ip>:8000/sealog-server/documentation/
 
 In addition to the API, sealog-server exposes a websocket-based connection for receiving notification of new event submissions in real-time.  This functionality enable scripts, applications and other services to asynchronously respond to new events.  Examples of how this functionality can be leveraged includes: triggering frame captures for each/every new event, linking real-time position to events and pushing event-data to he surface/shore.
 
-*** Alvin-specific Installation details ***
-
-Below are details about how sealog server is install aboard the Alvin DSV.
-
-The sealog-server is installed on the c+c machine (199.92.162.100).  The service runs on port 8000.  Thus the address to reach the Swagger.io API documentation is: http://199.92.162.100:8000/sealog-server/documentation.
-
-In addition to the sealog-server, there are several additional services running on the c+c machine that enable sealog integration with the vehicle's frame capture system, enable sealog integration with the vehicle's real-time navigation and enable automatic event creation at a set interval.
-
-+ List of sealog-server related services:
- - sealog-server (node ~/git/sealog-server/server.js)
- - Alvin UDP data to MongoDB ingestor (python3 ~/git/sealog-server/misc/alvinUDPData2MongoDB.py)
- - framegrabber service (python3 ~/git/sealog-server/misc/auxDataInserter_framegrabber.py)
- - datagrabber service (python3 ~/git/sealog-server/misc/auxDataInserter_alvinDatagrabber.py)
- - ASNAP service (python3 ~/git/sealog-server/misc/sealog_asnap.py)
-
-The sealog-server and all of the additional services are started at boot and managed by Supervisor, a system-wide process manager.  It is strongly recommended that Supervisor be used when starting/stopping sealog-server or any of it's ancillary services.  Supervisor provides a web-interface for viewing the status or controlling sealog-server or any of the other services (http://199.92.162.100:9001).  Supervisor also includes a CLI (sudo supervisorctl) for control via ssh.
-
 *** System Maintenance ***
 
-The most likely maintenance required with regards to sealog-server or the ancillary services will be as a result of network changes to the c+c machine or the Teradek frame grabbers or if the account information for sealog's "admin" or "alvin" accounts are in any way altered.
+The most likely maintenance required with regards to sealog-server or the ancillary services will be as a result of network changes to the sealog server machine, the Teradek frame grabbers or if the account information for sealog's "jason" account is in any way altered.
 
-In the event of a network change, the new ip address will need to be applied to all the ancillary services.  Network changes to the c+c machine should not affect any of the services that are also run from the c+c machine as these services should be connecting to the sealog-server via localhost (127.0.0.1).
+In the event of a network change, the new ip address will need to be applied to all the ancillary services.  Network changes to the sealog-server machine should not affect any of the services that are also run from the sealog-server machine as these services should be connecting to the sealog-server via localhost (127.0.0.1).
 
-In the event of an account change, a new authentication token will need to be applied to all the ancillary services.  This easiest way to obtain the new token is to log into the sealog-client (http://199.92.162.100/sealog) with the cooresponding account and select "Profile" from the dropdown menu in the upper-right of the client interface.  At the bottom of profile form will be the updated token string.  After obtaining the new token, the technician will need to open each of the services listed above and if a token string is listed in the script, replace it with the updated token.
+In the event of an account change, a new authentication token will need to be applied to all the ancillary services.  This easiest way to obtain the new token is to log into the sealog-client (http://198.17.154.223/sealog) using the "jason" account and select "Profile" from the dropdown menu in the upper-right of the client interface.  At the bottom of profile form will be the updated token string.  After obtaining the new token, the technician will need to open each of the services listed above and if a token string is listed in the script, replace it with the updated token.
 
-
- **** Alvin UDP data to MongoDB ingestor specific ****
- At the time of writting the "Alvin UDP data to MongoDB ingestor" is listening for CSV messages arriving on UDP port 10600, constructing a JSON-formatted data object from that CSV string and writing it to a MongoDB document.  The purpose of this service is not to "log" the data but simply cache the most recent value for use by the datagrabber service.  It is dependant on the CSV string adhering to a specific format which at the time of this writing is:
-
-  CSV,<date_time>,<vehicle_name>,<latitude>,<longitude>,<depth>,<heading>,<pitch>,<roll>,<altitude>
-
-The target JSON-format for the data before it is submitted to the MongoDB is:
-  {
-    "label": "CSV",
-    "data": {
-      "date_time": <string>,
-      "vehicle_name": <string>,
-      "latitude": <string>,
-      "longitude": <string>,
-      "depth": <string>,
-      "heading": <string>,
-      "pitch": <string>,
-      "roll": <string>,
-      "altitude": <string>
-    }  
-  }
-
-If the input CSV string changes, then the Alvin UDP data to MongoDB ingestor script (~/git/sealog-server/misc/alvinUDPData2MongoDB.py) will need to be updated, specifically the parseCSV function of the script.
-
- **** Framegrabber-specific: ****
-If the IP addresses for the framegrabbers change or if the number of framegrabbers change, the technician will need to edit/update the JSON-formatted "framegrabbers" array in the ~/git/sealog-server/misc/auxDataInserter_framegrabber.py script.  Below is an example of a framegrabber object that makes up the array:
-  {
-    'name': "Framegrabber 1",
-    'ip': "199.92.162.124",
-    'prefix': "fg01_",
-    'suffix': ".jpg"
-  }
-
-At the time of writing, frame captures are stored at: '/home/alvin/framegrabs' on the c+c machine.  To change this, edit the destDir variable in the ~/git/sealog-server/misc/auxDataInserter_framegrabber.py script.  Make sure the new directory is writtable by the "alvin" user account.
-
- **** ASNAP-specific: ****
+**** ASNAP-specific: ****
 The Automatic snapper (ASNAP) script triggers event creations at a set interval.  To change the interval simply update the "interval" variable in the sealog-asnap.py script.
 
 *** Sealog-Server Software changes ***
@@ -81,21 +28,18 @@ Below are details about how the "build" sealog-server should there be a need to 
 Sealog-server is written in nodeJS v8.7.x and the data is stored in MongoDB v3.4.x.  There is no compiling step with nodeJS services, simply make the changes and restart the service.  The sealog-server codebase includes mechanism for running the service in "development" mode.  This mode enables some additional debugging messages in the console stdout and also runs the services against a testing database.  The testing database is rebuilt each time the service is started in devel mode.  This allows the operated to modify the databased in any means necessary and then return to a known database state simply be restarting sealog-server.
 
 To start the sealog-server in devel mode, from a terminal run the following:
-cd ~/git/sealog-server/
+cd ~/sealog-server/
 npm run start-devel
 
 To start the sealog-server in production mode, from a terminal run the following:
-cd ~/git/sealog-server/
+cd ~/sealog-server/
 npm start
 
  **** Installed Accounts ****
-The sealog-server installation for Alvin includes 4 system accounts:
- - alvin --> admin account, password is "atlantis"
- - pilot --> event-logging account intended for use by the pilot, password is empty
- - stbd_obs --> event-logging account intended for use by the starboard observer, password is empty
- - port_obs --> event-logging account intended for use by the starboard observer, password is empty
-
- The version of sealog-client developed for Alvin has been customized to leverage these accounts in ways unique to the vehicle.  Changing these accounts in any way could break some of these customizations.
+The sealog-server installation for Jason includes 4 system accounts:
+ - admin --> admin account, password is "password"
+ - pi --> event-logging, cruise/lowering management account intended for use by the pi, password is empty
+ - guest --> event-logging account intended for use by anyone, password is empty
 
  **** Obtaining a JWT ****
 

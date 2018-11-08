@@ -16,6 +16,7 @@ exports.register = function (server, options, next) {
       event_name: 'FISH',
       event_value: 'FISH',
       event_free_text_required: false,
+      system_template: false,
       event_options: [{
         event_option_name: "Status",
         event_option_type: "dropdown",
@@ -30,6 +31,7 @@ exports.register = function (server, options, next) {
       event_name: 'ROCK',
       event_value: 'ROCK',
       event_free_text_required: false,
+      system_template: false,
       event_options: [{
         event_option_name: "Color",
         event_option_type: "dropdown",
@@ -44,6 +46,7 @@ exports.register = function (server, options, next) {
       event_name: 'CORAL',
       event_value: 'CORAL',
       event_free_text_required: false,
+      system_template: false,
       event_options: [{
         event_option_name: "Color",
         event_option_type: "dropdown",
@@ -58,6 +61,7 @@ exports.register = function (server, options, next) {
       event_name: 'CRAB',
       event_value: 'CRAB',
       event_free_text_required: false,
+      system_template: false,
       event_options: [{
         event_option_name: "Color",
         event_option_type: "dropdown",
@@ -72,6 +76,7 @@ exports.register = function (server, options, next) {
       event_name: 'SQUID',
       event_value: 'SQUID',
       event_free_text_required: false,
+      system_template: false,
       event_options: [{
         event_option_name: "Color",
         event_option_type: "dropdown",
@@ -86,13 +91,30 @@ exports.register = function (server, options, next) {
       event_name: 'SAMPLE',
       event_value: 'SAMPLE',
       event_free_text_required: false,
-      event_options: []
+      system_template: true,
+      event_options: [
+        {
+          event_option_allow_freeform: false,
+          event_option_name: "Sample ID",
+          event_option_required: true,
+          event_option_type: "text",
+          event_option_values: []
+        },
+        {
+          event_option_allow_freeform:false,
+          event_option_name: "Sample Type",
+          event_option_required: true,
+          event_option_type: "dropdown",
+          event_option_values: ["push core","physical sample","fluid sample","slurp","majors","gas tight","hog bio", "hog chem"]
+        }
+      ]
     },
     {
       "_id" : ObjectID("5a71c3d7fa96aa1977822b32"),
       event_name: 'PROBLEM',
       event_value: 'PROBLEM',
       event_free_text_required: false,
+      system_template: true,
       event_options: []
     },
     {
@@ -100,6 +122,7 @@ exports.register = function (server, options, next) {
       event_name: "SUPER_EVENT",
       event_value: "SUPER_EVENT",
       event_free_text_required: false,
+      system_template: false,
       event_options:[
         {
           event_option_allow_freeform: false,
@@ -114,6 +137,13 @@ exports.register = function (server, options, next) {
           event_option_required: true,
           event_option_type: "text",
           event_option_values: []
+        },
+        {
+          event_option_allow_freeform:false,
+          event_option_name: "first checkbox option",
+          event_option_required: false,
+          event_option_type: "checkboxes",
+          event_option_values: ["1","2","3","4"]
         },
         {
           event_option_allow_freeform:false,

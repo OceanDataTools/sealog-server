@@ -30,7 +30,18 @@ exports.register = function (server, options, next) {
       last_login: new Date(),
       roles: ['event_manager', 'event_logger', 'event_watcher'],
       system_user: true,
+    },
+    {
+      _id: ObjectID("5981f167212b348aed7fc9f5"),
+      username: "pi",
+      fullname: "Primary Investigator",
+      email: "pi@notarealserver.com",
+      password: "$2a$10$oTRayeYC2sOAuW9vapp3Ze6zVFsGyj40cc1XgWv.NL/hGLNi82Whq",
+      last_login: new Date(),
+      roles: ['event_manager', 'event_logger', 'event_watcher', 'cruise_manager'],
+      system_user: true,
     }
+
   ];
 
   console.log("Searching for Users Collection");

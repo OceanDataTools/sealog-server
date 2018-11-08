@@ -36,12 +36,12 @@ exports.register = function (server, options, next) {
 
       let query = {};
 
-      if(!request.auth.credentials.scope.includes('admin'))
-        query.system_user = false;
+      // if(!request.auth.credentials.scope.includes('admin'))
+      //   query.system_user = false;
 
       let limit = (request.query.limit)? request.query.limit : 0;
       let offset = (request.query.offset)? request.query.offset : 0;
-      let sort = (request.query.sort)? { [request.query.sort]: -1 } : { username: -1 };
+      let sort = (request.query.sort)? { [request.query.sort]: 1 } : { username: 1 };
 
       db.collection(usersTable).find(query).skip(offset).limit(limit).sort(sort).toArray().then((results) => {
         results.forEach(_renameAndClearFields);

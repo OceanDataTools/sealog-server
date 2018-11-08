@@ -66,6 +66,7 @@ exports.register = function (server, options, next) {
             event_name: Joi.string(),
             event_value: Joi.string(),
             event_free_text_required: Joi.boolean(),
+            system_template: Joi.boolean(),
             event_options: Joi.array().items(Joi.object({
               event_option_name: Joi.string(),
               event_option_type: Joi.string(),
@@ -136,6 +137,7 @@ exports.register = function (server, options, next) {
             event_name: Joi.string(),
             event_value: Joi.string(),
             event_free_text_required: Joi.boolean(),
+            system_template: Joi.boolean(),
             event_options: Joi.array().items(Joi.object({
               event_option_name: Joi.string(),
               event_option_type: Joi.string(),
@@ -223,6 +225,7 @@ exports.register = function (server, options, next) {
           event_name: Joi.string().required(),
           event_value: Joi.string().required(),
           event_free_text_required: Joi.boolean().required(),
+          system_template: Joi.boolean().required(),
           event_options: Joi.array().items(Joi.object({
             event_option_name: Joi.string().required(),
             event_option_type: Joi.string().required(),
@@ -306,6 +309,7 @@ exports.register = function (server, options, next) {
           event_name: Joi.string().optional(),
           event_value: Joi.string().optional(),
           event_free_text_required: Joi.boolean().optional(),
+          system_template: Joi.boolean().optional(),
           event_options: Joi.array().items(Joi.object({
             event_option_name: Joi.string().required(),
             event_option_type: Joi.string().required(),
@@ -350,6 +354,12 @@ exports.register = function (server, options, next) {
       db.collection(eventTemplatesTable).findOne(query).then((result) => {
         if(!result) {
           return reply({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
+        }
+
+        console.log(typeof(result.system_template));
+        console.log(request.auth.credentials.scope);
+        if (result.system_template && !request.auth.credentials.scope.includes('admin')) {
+          return reply({"statusCode": 401, 'error': 'Unauthorized', 'message': 'user does not have permission to delete system templates'}).code(401);
         }
 
         db.collection(eventTemplatesTable).deleteOne(query).then((result) => {

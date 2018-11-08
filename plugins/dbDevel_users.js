@@ -30,7 +30,7 @@ exports.register = function (server, options, next) {
       last_login: new Date(),
       roles: ['event_manager', 'event_logger', 'event_watcher'],
       system_user: true,
-    }
+    },
   ];
 
   console.log("Searching for Users Collection");

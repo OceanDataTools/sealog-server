@@ -12,7 +12,9 @@ const json2csvOptions = {
 const {
   eventsTable,
   usersTable,
-  eventAuxDataTable
+  eventAuxDataTable,
+  loweringsTable,
+  cruisesTable
 } = require('../../../config/db_constants');
 
 
@@ -50,6 +52,594 @@ exports.register = function (server, options, next) {
 
     return doc;
   };
+
+  server.route({
+    method: 'GET',
+    path: '/events/bycruise/{id}',
+    handler: function (request, reply) {
+
+      db.collection(cruisesTable).findOne({ _id: ObjectID(request.params.id) }).then((cruise) => {
+
+        if(cruise.cruise_hidden && !request.auth.credentials.scope.includes("admin")) {
+          return reply({ "statusCode": 401, "error": "not authorized", "message": "User not authorized to retrieve hidden cruises"}).code(401);
+        }
+
+        let query = {};
+        let startTS = new Date(cruise.start_ts);
+        let stopTS = new Date(cruise.stop_ts);
+
+        // console.log(request.query);
+
+        //Data source filtering
+        if (request.query.datasource) {
+
+          let datasource_query = {};
+
+          if(Array.isArray(request.query.datasource)) {
+            datasource_query.data_source  = { $in: request.query.datasource };
+          } else {
+            datasource_query.data_source  = request.query.datasource;
+          }
+
+          db.collection(eventAuxDataTable).find(datasource_query, {_id: 0, event_id: 1}).toArray().then((collection) => {
+
+            let eventIDs = collection.map(x => x.event_id);
+
+            // console.log("collection:", eventIDs);
+
+            query._id = { $in: eventIDs};
+
+
+            if(request.query.author) {
+              if(Array.isArray(request.query.author)) {
+                query.event_author  = { $in: request.query.author };
+              } else {
+                query.event_author  = request.query.author;
+              }
+            }
+
+            if(request.query.value) {
+              if(Array.isArray(request.query.value)) {
+
+                let inList = [];
+                let ninList = [];
+
+                for( let value of request.query.value ) {
+                  if(value.startsWith("!")) {
+                    ninList.push(value.substr(1));
+                  } else {
+                    inList.push(value);
+                  }
+                }
+                
+                if( inList.length > 0 && ninList.length > 0) {
+                  query.event_value  = { $in: inList, $nin: ninList };
+                } else if (inList.length > 0) {
+                  query.event_value  = { $in: inList };
+                } else {
+                  query.event_value  = { $nin: ninList };
+                }
+
+              } else {
+                if(request.query.value.startsWith("!")) {
+                  query.event_value  = { $ne: request.query.value.substr(1) };
+                } else {
+                  query.event_value  = request.query.value;
+                }
+              }
+            }
+
+            if(request.query.freetext) {
+
+              query.event_free_text = { $regex: `${request.query.freetext}`};
+            }
+
+            //Time filtering
+            if (request.query.startTS) {
+              let tempStartTS = new Date(request.query.startTS);
+              // console.log("tempStartTS:", tempStartTS);
+              startTS = (tempStartTS >= startTS && tempStartTS <= stopTS)? tempStartTS : startTS;
+              // console.log("startTS:", startTS);
+            }
+
+            if (request.query.stopTS) {
+              let tempStopTS = new Date(request.query.stopTS);
+              // console.log("tempStopTS:", tempStopTS);
+              stopTS = (tempStopTS >= startTS && tempStopTS <= stopTS)? tempStopTS : stopTS;
+              // console.log("stopTS:", stopTS);
+            }
+
+            query.ts = {"$gte": startTS , "$lte": stopTS };
+
+            let limit = (request.query.limit)? request.query.limit : 0;
+            let offset = (request.query.offset)? request.query.offset : 0;
+
+            // console.log("query:", query);
+
+            db.collection(eventsTable).find(query).sort( { ts: 1 } ).skip(offset).limit(limit).toArray().then((results) => {
+              // console.log("results:", results);
+
+              if (results.length > 0) {
+                results.forEach(_renameAndClearFields);
+                return reply(results).code(200);
+              } else {
+                return reply({ "statusCode": 404, 'message': 'No records found'}).code(404);
+              }
+            }).catch((err) => {
+              console.log("ERROR:", err);
+              return reply().code(503);
+            });
+          }).catch((err) => {
+            console.log("ERROR:", err);
+            return reply().code(503);
+          });
+        } else {
+
+          if(request.query.author) {
+            if(Array.isArray(request.query.author)) {
+              query.event_author  = { $in: request.query.author };
+            } else {
+              query.event_author  = request.query.author;
+            }
+          }
+
+          if(request.query.value) {
+            if(Array.isArray(request.query.value)) {
+
+              let inList = [];
+              let ninList = [];
+
+              for( let value of request.query.value ) {
+                if(value.startsWith("!")) {
+                  ninList.push(value.substr(1));
+                } else {
+                  inList.push(value);
+                }
+              }
+
+              if( inList.length > 0 && ninList.length > 0) {
+                query.event_value  = { $in: inList, $nin: ninList };
+              } else if (inList.length > 0) {
+                query.event_value  = { $in: inList };
+              } else {
+                query.event_value  = { $nin: ninList };
+              }
+
+            } else {
+              if(request.query.value.startsWith("!")) {
+                query.event_value  = { $ne: request.query.value.substr(1) };
+              } else {
+                query.event_value  = request.query.value;
+              }
+            }
+          }
+
+          if(request.query.freetext) {
+
+            query.event_free_text = { $regex: `${request.query.freetext}`};
+          }
+
+          //Time filtering
+          if (request.query.startTS) {
+            let tempStartTS = new Date(request.query.startTS);
+            // console.log("tempStartTS:", tempStartTS);
+            startTS = (tempStartTS >= startTS && tempStartTS <= stopTS)? tempStartTS : startTS;
+            // console.log("startTS:", startTS);
+          }
+
+          if (request.query.stopTS) {
+            let tempStopTS = new Date(request.query.stopTS);
+            stopTS = (tempStopTS >= startTS && tempStopTS <= stopTS)? tempStopTS : stopTS;
+          }
+
+          query.ts = {"$gte": startTS , "$lte": stopTS };
+
+          let limit = (request.query.limit)? request.query.limit : 0;
+          let offset = (request.query.offset)? request.query.offset : 0;
+
+          // console.log("query:", query);
+
+          db.collection(eventsTable).find(query).sort( { ts: 1  } ).skip(offset).limit(limit).toArray().then((results) => {
+            // console.log("results:", results);
+
+            if (results.length > 0) {
+
+              results.forEach(_renameAndClearFields);
+
+              if(request.query.format && request.query.format == "csv") {
+                converter.json2csv(flattenJSON(results), (err, csv) => {
+                  if(err) {
+                    throw err;
+                  }
+                  return reply(csv).code(200);
+                }, json2csvOptions);
+              } else {
+                return reply(results).code(200);
+              }
+            } else {
+              return reply({ "statusCode": 404, 'message': 'No records found'}).code(404);
+            }
+          }).catch((err) => {
+            console.log("ERROR:", err);
+            return reply().code(503);
+          });
+        }
+      }).catch((err) => {
+        console.log(err);
+        return reply({ "statusCode": 404, 'message': 'No cruise record found for that id'}).code(404);
+      });
+    },
+    config: {
+      auth: {
+        strategy: 'jwt',
+        scope: ['admin', 'cruise_manager', 'event_manager', 'event_logger', 'event_watcher']
+      },
+      validate: {
+        headers: {
+          authorization: Joi.string().required()
+        },
+        params: Joi.object({
+          id: Joi.string().length(24).required()
+        }),
+        query: Joi.object({
+          format: Joi.string().optional(),
+          offset: Joi.number().integer().min(0).optional(),
+          limit: Joi.number().integer().min(1).optional(),
+          author: Joi.alternatives().try(
+            Joi.string(),
+            Joi.array().items(Joi.string()).optional()
+          ),
+          startTS: Joi.date().iso(),
+          stopTS: Joi.date().iso(),
+          datasource: Joi.alternatives().try(
+            Joi.string(),
+            Joi.array().items(Joi.string()).optional()
+          ),
+          value: Joi.alternatives().try(
+            Joi.string(),
+            Joi.array().items(Joi.string()).optional()
+          ),
+          freetext: Joi.alternatives().try(
+            Joi.string(),
+            Joi.array().items(Joi.string()).optional()
+          ),
+        }).optional(),
+        options: {
+          allowUnknown: true
+        }
+      },
+      response: {
+        status: {
+          200: Joi.alternatives().try(
+            Joi.string(),
+            Joi.array().items(Joi.object({
+              id: Joi.object(),
+              event_author: Joi.string(),
+              ts: Joi.date().iso(),
+              event_value: Joi.string(),
+              event_options: Joi.array().items(Joi.object({
+                event_option_name: Joi.string(),
+                event_option_value: Joi.string().allow('')
+              })),
+              event_free_text: Joi.string().allow(''),
+            }))
+          ),
+          400: Joi.object({
+            statusCode: Joi.number().integer(),
+            error: Joi.string(),
+            message: Joi.string()
+          }),
+          401: Joi.object({
+            statusCode: Joi.number().integer(),
+            error: Joi.string(),
+            message: Joi.string()
+          }),
+          404: Joi.object({
+            statusCode: Joi.number().integer(),
+            message: Joi.string()
+          })
+        }
+      },
+      description: 'Return the events based on query parameters',
+      notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+        <p>Available to: <strong>admin</strong>, <strong>event_manager</strong>, <strong>event_logger</strong> or <strong>event_watcher</strong></p>',
+      tags: ['events','auth', 'api'],
+    }
+  });
+
+  server.route({
+    method: 'GET',
+    path: '/events/bylowering/{id}',
+    handler: function (request, reply) {
+
+      db.collection(loweringsTable).findOne({ _id: ObjectID(request.params.id) }).then((lowering) => {
+
+        if(lowering.lowering_hidden && !request.auth.credentials.scope.includes("admin")) {
+          return reply({ "statusCode": 401, "error": "not authorized", "message": "User not authorized to retrieve hidden lowerings"}).code(401);
+        }
+
+        let query = {};
+        let startTS = new Date(lowering.start_ts);
+        let stopTS = new Date(lowering.stop_ts);
+
+        // console.log(request.query);
+
+        //Data source filtering
+        if (request.query.datasource) {
+
+          let datasource_query = {};
+
+          if(Array.isArray(request.query.datasource)) {
+            datasource_query.data_source  = { $in: request.query.datasource };
+          } else {
+            datasource_query.data_source  = request.query.datasource;
+          }
+
+          db.collection(eventAuxDataTable).find(datasource_query, {_id: 0, event_id: 1}).toArray().then((collection) => {
+
+            let eventIDs = collection.map(x => x.event_id);
+
+            // console.log("collection:", eventIDs);
+
+            query._id = { $in: eventIDs};
+
+
+            if(request.query.author) {
+              if(Array.isArray(request.query.author)) {
+                query.event_author  = { $in: request.query.author };
+              } else {
+                query.event_author  = request.query.author;
+              }
+            }
+
+            if(request.query.value) {
+              if(Array.isArray(request.query.value)) {
+
+                let inList = [];
+                let ninList = [];
+
+                for( let value of request.query.value ) {
+                  if(value.startsWith("!")) {
+                    ninList.push(value.substr(1));
+                  } else {
+                    inList.push(value);
+                  }
+                }
+                
+                if( inList.length > 0 && ninList.length > 0) {
+                  query.event_value  = { $in: inList, $nin: ninList };
+                } else if (inList.length > 0) {
+                  query.event_value  = { $in: inList };
+                } else {
+                  query.event_value  = { $nin: ninList };
+                }
+
+              } else {
+                if(request.query.value.startsWith("!")) {
+                  query.event_value  = { $ne: request.query.value.substr(1) };
+                } else {
+                  query.event_value  = request.query.value;
+                }
+              }
+            }
+
+            if(request.query.freetext) {
+
+              query.event_free_text = { $regex: `${request.query.freetext}`};
+            }
+
+            //Time filtering
+            if (request.query.startTS) {
+              let tempStartTS = new Date(request.query.startTS);
+              // console.log("tempStartTS:", tempStartTS);
+              startTS = (tempStartTS >= startTS && tempStartTS <= stopTS)? tempStartTS : startTS;
+              // console.log("startTS:", startTS);
+            }
+
+            if (request.query.stopTS) {
+              let tempStopTS = new Date(request.query.stopTS);
+              // console.log("tempStopTS:", tempStopTS);
+              stopTS = (tempStopTS >= startTS && tempStopTS <= stopTS)? tempStopTS : stopTS;
+              // console.log("stopTS:", stopTS);
+            }
+
+            query.ts = {"$gte": startTS , "$lte": stopTS };
+
+            let limit = (request.query.limit)? request.query.limit : 0;
+            let offset = (request.query.offset)? request.query.offset : 0;
+
+            // console.log("query:", query);
+
+            db.collection(eventsTable).find(query).sort( { ts: 1 } ).skip(offset).limit(limit).toArray().then((results) => {
+              // console.log("results:", results);
+
+              if (results.length > 0) {
+                results.forEach(_renameAndClearFields);
+                return reply(results).code(200);
+              } else {
+                return reply({ "statusCode": 404, 'message': 'No records found'}).code(404);
+              }
+            }).catch((err) => {
+              console.log("ERROR:", err);
+              return reply().code(503);
+            });
+          }).catch((err) => {
+            console.log("ERROR:", err);
+            return reply().code(503);
+          });
+        } else {
+
+          if(request.query.author) {
+            if(Array.isArray(request.query.author)) {
+              query.event_author  = { $in: request.query.author };
+            } else {
+              query.event_author  = request.query.author;
+            }
+          }
+
+          if(request.query.value) {
+            if(Array.isArray(request.query.value)) {
+
+              let inList = [];
+              let ninList = [];
+
+              for( let value of request.query.value ) {
+                if(value.startsWith("!")) {
+                  ninList.push(value.substr(1));
+                } else {
+                  inList.push(value);
+                }
+              }
+
+              if( inList.length > 0 && ninList.length > 0) {
+                query.event_value  = { $in: inList, $nin: ninList };
+              } else if (inList.length > 0) {
+                query.event_value  = { $in: inList };
+              } else {
+                query.event_value  = { $nin: ninList };
+              }
+
+            } else {
+              if(request.query.value.startsWith("!")) {
+                query.event_value  = { $ne: request.query.value.substr(1) };
+              } else {
+                query.event_value  = request.query.value;
+              }
+            }
+          }
+
+          if(request.query.freetext) {
+
+            query.event_free_text = { $regex: `${request.query.freetext}`};
+          }
+
+          //Time filtering
+          if (request.query.startTS) {
+            let tempStartTS = new Date(request.query.startTS);
+            // console.log("tempStartTS:", tempStartTS);
+            startTS = (tempStartTS >= startTS && tempStartTS <= stopTS)? tempStartTS : startTS;
+            // console.log("startTS:", startTS);
+          }
+
+          if (request.query.stopTS) {
+            let tempStopTS = new Date(request.query.stopTS);
+            stopTS = (tempStopTS >= startTS && tempStopTS <= stopTS)? tempStopTS : stopTS;
+          }
+
+          query.ts = {"$gte": startTS , "$lte": stopTS };
+
+          let limit = (request.query.limit)? request.query.limit : 0;
+          let offset = (request.query.offset)? request.query.offset : 0;
+
+          // console.log("query:", query);
+
+          db.collection(eventsTable).find(query).sort( { ts: 1  } ).skip(offset).limit(limit).toArray().then((results) => {
+            // console.log("results:", results);
+
+            if (results.length > 0) {
+
+              results.forEach(_renameAndClearFields);
+
+              if(request.query.format && request.query.format == "csv") {
+                converter.json2csv(flattenJSON(results), (err, csv) => {
+                  if(err) {
+                    throw err;
+                  }
+                  return reply(csv).code(200);
+                }, json2csvOptions);
+              } else {
+                return reply(results).code(200);
+              }
+            } else {
+              return reply({ "statusCode": 404, 'message': 'No records found'}).code(404);
+            }
+          }).catch((err) => {
+            console.log("ERROR:", err);
+            return reply().code(503);
+          });
+        }
+      }).catch((err) => {
+        console.log(err);
+        return reply({ "statusCode": 404, 'message': 'No lowering record found for that id'}).code(404);
+      });
+    },
+    config: {
+      auth: {
+        strategy: 'jwt',
+        scope: ['admin', 'cruise_manager', 'event_manager', 'event_logger', 'event_watcher']
+      },
+      validate: {
+        headers: {
+          authorization: Joi.string().required()
+        },
+        params: Joi.object({
+          id: Joi.string().length(24).required()
+        }),
+        query: Joi.object({
+          format: Joi.string().optional(),
+          offset: Joi.number().integer().min(0).optional(),
+          limit: Joi.number().integer().min(1).optional(),
+          author: Joi.alternatives().try(
+            Joi.string(),
+            Joi.array().items(Joi.string()).optional()
+          ),
+          startTS: Joi.date().iso(),
+          stopTS: Joi.date().iso(),
+          datasource: Joi.alternatives().try(
+            Joi.string(),
+            Joi.array().items(Joi.string()).optional()
+          ),
+          value: Joi.alternatives().try(
+            Joi.string(),
+            Joi.array().items(Joi.string()).optional()
+          ),
+          freetext: Joi.alternatives().try(
+            Joi.string(),
+            Joi.array().items(Joi.string()).optional()
+          ),
+        }).optional(),
+        options: {
+          allowUnknown: true
+        }
+      },
+      response: {
+        status: {
+          200: Joi.alternatives().try(
+            Joi.string(),
+            Joi.array().items(Joi.object({
+              id: Joi.object(),
+              event_author: Joi.string(),
+              ts: Joi.date().iso(),
+              event_value: Joi.string(),
+              event_options: Joi.array().items(Joi.object({
+                event_option_name: Joi.string(),
+                event_option_value: Joi.string().allow('')
+              })),
+              event_free_text: Joi.string().allow(''),
+            }))
+          ),
+          400: Joi.object({
+            statusCode: Joi.number().integer(),
+            error: Joi.string(),
+            message: Joi.string()
+          }),
+          401: Joi.object({
+            statusCode: Joi.number().integer(),
+            error: Joi.string(),
+            message: Joi.string()
+          }),
+          404: Joi.object({
+            statusCode: Joi.number().integer(),
+            message: Joi.string()
+          })
+        }
+      },
+      description: 'Return the events based on query parameters',
+      notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+        <p>Available to: <strong>admin</strong>, <strong>event_manager</strong>, <strong>event_logger</strong> or <strong>event_watcher</strong></p>',
+      tags: ['events','auth', 'api'],
+    }
+  });
 
   server.route({
     method: 'GET',
@@ -142,10 +732,11 @@ exports.register = function (server, options, next) {
 
           let limit = (request.query.limit)? request.query.limit : 0;
           let offset = (request.query.offset)? request.query.offset : 0;
+          let sort = (request.query.sort === "newest")? { ts: -1 } : { ts: 1 };
 
           // console.log("query:", query);
 
-          db.collection(eventsTable).find(query).sort( { ts: 1 } ).skip(offset).limit(limit).toArray().then((results) => {
+          db.collection(eventsTable).find(query).sort(sort).skip(offset).limit(limit).toArray().then((results) => {
             // console.log("results:", results);
 
             if (results.length > 0) {
@@ -226,11 +817,9 @@ exports.register = function (server, options, next) {
 
         let limit = (request.query.limit)? request.query.limit : 0;
         let offset = (request.query.offset)? request.query.offset : 0;
+        let sort = (request.query.sort === "newest")? { ts: -1 } : { ts: 1 };
 
-        // console.log("query:", query);
-
-        db.collection(eventsTable).find(query).sort( { ts: 1  } ).skip(offset).limit(limit).toArray().then((results) => {
-          // console.log("results:", results);
+        db.collection(eventsTable).find(query).sort(sort).skip(offset).limit(limit).toArray().then((results) => {
 
           if (results.length > 0) {
 
@@ -258,7 +847,7 @@ exports.register = function (server, options, next) {
     config: {
       auth: {
         strategy: 'jwt',
-        scope: ['admin', 'event_manager', 'event_logger', 'event_watcher']
+        scope: ['admin', 'cruise_manager', 'event_manager', 'event_logger', 'event_watcher']
       },
       validate: {
         headers: {
@@ -302,7 +891,7 @@ exports.register = function (server, options, next) {
               event_value: Joi.string(),
               event_options: Joi.array().items(Joi.object({
                 event_option_name: Joi.string(),
-                event_option_value: Joi.string()
+                event_option_value: Joi.string().allow('')
               })),
               event_free_text: Joi.string().allow(''),
             }))
@@ -370,7 +959,7 @@ exports.register = function (server, options, next) {
             event_value: Joi.string(),
             event_options: Joi.array().items(Joi.object({
               event_option_name: Joi.string(),
-              event_option_value: Joi.string()
+              event_option_value: Joi.string().allow('')
             })),
             event_free_text: Joi.string().allow(''),
           }),
@@ -436,7 +1025,7 @@ exports.register = function (server, options, next) {
           }
 
           if (!result) {
-            return reply({ "statusCode": 401, 'message': 'No user found for id: ' + request.params.id }).code(404);
+            return reply({ "statusCode": 404, 'message': 'No user found for id: ' + request.params.id }).code(404);
           }
 
           event.event_author = result.username;
@@ -463,9 +1052,12 @@ exports.register = function (server, options, next) {
         if(!event.id) {
           db.collection(eventsTable).insertOne(event, (err, result) => {
 
-            if (err) {
-              console.log("ERROR:", err);
-              return reply().code(503);
+            if(err) {
+              if(err.code === 11000) {
+                return reply({statusCode:400, error: "duplicate", message: "duplicate ID"}).code(400);
+              } else {
+                return reply({err}).code(503);
+              }
             }
 
             if (!result) {
@@ -523,7 +1115,7 @@ exports.register = function (server, options, next) {
           event_value: Joi.string().min(1).max(100).required(),
           event_options: Joi.array().items(Joi.object({
             event_option_name:Joi.string().required(),
-            event_option_value:Joi.string().required()
+            event_option_value:Joi.string().allow('').required()
           })).optional(),
           event_free_text: Joi.string().allow('').optional()
         },
@@ -619,7 +1211,7 @@ exports.register = function (server, options, next) {
           event_value: Joi.string().min(1).max(100).optional(),
           event_options: Joi.array().items(Joi.object({
             event_option_name:Joi.string().required(),
-            event_option_value:Joi.string().required()
+            event_option_value:Joi.string().allow('').required()
           })).optional(),
           event_free_text: Joi.string().optional()
         }).required().min(1),
