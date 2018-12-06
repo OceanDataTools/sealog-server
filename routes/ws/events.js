@@ -11,6 +11,20 @@ exports.register = function (server, options, next) {
 
   server.subscription('/ws/status/newEvents');
 
+  
+  server.method('publishUpdateEvent', ( payload ) => {
+    server.publish('/ws/status/updateEvents', payload );
+  });
+
+  server.subscription('/ws/status/updateEvents');
+
+
+  server.method('publishDeleteEvent', ( payload ) => {
+    server.publish('/ws/status/deleteEvents', payload );
+  });
+
+  server.subscription('/ws/status/deleteEvents');
+
   return next();
 };
 

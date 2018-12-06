@@ -9,6 +9,8 @@ const json2csvOptions = {
   emptyFieldValue: ''
 };
 
+const THRESHOLD = 120; //seconds
+
 const {
   eventsTable,
   usersTable,
@@ -819,7 +821,10 @@ exports.register = function (server, options, next) {
         let offset = (request.query.offset)? request.query.offset : 0;
         let sort = (request.query.sort === "newest")? { ts: -1 } : { ts: 1 };
 
+        // console.log("query:", query);
+
         db.collection(eventsTable).find(query).sort(sort).skip(offset).limit(limit).toArray().then((results) => {
+          // console.log("results:", results);
 
           if (results.length > 0) {
 
@@ -857,6 +862,7 @@ exports.register = function (server, options, next) {
           format: Joi.string().optional(),
           offset: Joi.number().integer().min(0).optional(),
           limit: Joi.number().integer().min(1).optional(),
+          sort: Joi.string().optional(),
           author: Joi.alternatives().try(
             Joi.string(),
             Joi.array().items(Joi.string()).optional()
@@ -1041,8 +1047,12 @@ exports.register = function (server, options, next) {
               return reply({ "statusCode": 400, 'message': 'Bad request'}).code(400);
             }
 
-            event = _renameAndClearFields(event);
-            server.methods.publishNewEvent(event);
+            let diff =(new Date().getTime() - event.ts.getTime()) / 1000;
+            console.log(diff);
+            if(Math.abs(Math.round(diff)) < THRESHOLD) {
+              event = _renameAndClearFields(event);
+              server.methods.publishNewEvent(event);
+            }
 
             return reply({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
           });
@@ -1056,7 +1066,7 @@ exports.register = function (server, options, next) {
               if(err.code === 11000) {
                 return reply({statusCode:400, error: "duplicate", message: "duplicate ID"}).code(400);
               } else {
-                return reply({err}).code(503);
+                return reply().code(503);
               }
             }
 
@@ -1064,8 +1074,13 @@ exports.register = function (server, options, next) {
               return reply({ "statusCode": 400, 'message': 'Bad request'}).code(400);
             }
 
-            event = _renameAndClearFields(event);
-            server.methods.publishNewEvent(event);
+            let diff =(new Date().getTime() - event.ts.getTime()) / 1000;
+            console.log(diff);
+            if(Math.abs(Math.round(diff)) < THRESHOLD) {
+              event = _renameAndClearFields(event);
+              server.methods.publishNewEvent(event);
+            }
+
             return reply({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
           });
         } else {
@@ -1076,6 +1091,7 @@ exports.register = function (server, options, next) {
               return reply().code(503);
             }
 
+            console.log(event);
             if (!result) {
               db.collection(eventsTable).insertOne(event, (err, result) => {
 
@@ -1180,9 +1196,13 @@ exports.register = function (server, options, next) {
           });
         }
 
-        db.collection(eventsTable).updateOne(query, { $set: request.payload }).then((result) => {
+        db.collection(eventsTable).findOneAndUpdate(query, { $set: request.payload },{returnOriginal: false}).then((result) => {
 
-          return reply(result).code(204);
+          let event = _renameAndClearFields(result.value);
+          console.log(event);
+          server.methods.publishUpdateEvent(event);
+
+          return reply(JSON.stringify(result.lastErrorObject)).code(204);
 
         }).catch((err) => {
           console.log("ERROR:", err);
@@ -1213,7 +1233,7 @@ exports.register = function (server, options, next) {
             event_option_name:Joi.string().required(),
             event_option_value:Joi.string().allow('').required()
           })).optional(),
-          event_free_text: Joi.string().optional()
+          event_free_text: Joi.string().allow('').optional()
         }).required().min(1),
         options: {
           allowUnknown: true
@@ -1252,15 +1272,24 @@ exports.register = function (server, options, next) {
           return reply({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
         }
 
-        db.collection(eventsTable).deleteOne(query).then((result) => {
+        db.collection(eventsTable).findOneAndDelete(query).then((result) => {
 
-          db.collection(eventAuxDataTable).deleteMany({ event_id: new ObjectID(request.params.id) }).then(() => {
-            return reply(result).code(204);
+          db.collection(eventAuxDataTable).find({ event_id: new ObjectID(request.params.id) }).toArray().then((aux_data_result) => {
+
+            result.value.aux_data = aux_data_result;
+            _renameAndClearFields(result.value);
+            server.methods.publishDeleteEvent(result.value);
+
+            db.collection(eventAuxDataTable).deleteMany({ event_id: new ObjectID(request.params.id) }).then(() => {
+              return reply(result).code(204);
+            }).catch((err) => {
+              console.log("ERROR:", err);
+              return reply().code(503);
+            });
           }).catch((err) => {
             console.log("ERROR:", err);
             return reply().code(503);
-          });
-          // return reply(result).code(204);
+          });  
         }).catch((err) => {
           console.log("ERROR:", err);
           return reply().code(503);
@@ -1274,7 +1303,7 @@ exports.register = function (server, options, next) {
     config: {
       auth: {
         strategy: 'jwt',
-        scope: ['admin']
+        scope: ['admin', 'event_manager', 'event_logger']
       },
       validate: {
         headers: {
