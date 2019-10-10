@@ -1,0 +1,100 @@
+*** Sealog Server Data Management ***
+Author: Webb Pinner, webbpinner@gmail.com
+Written: May 2, 2018
+Updated: October 08, 2019
+
+**** PRE-CRUISE ****
++ Setup a New cruise
+  - Log into the Sealog web-interface as an admin user
+  - Navigate to System Management --> Cruises
+  - Click the "Add Cruise" button.
+  - Complete the form.  Red asterisks designates the required fields.
+  - Click the "Create" button
+
++ Hide the previous cruise (optional)
+  This prevents the current science party from seeing the lowerings from the
+  previous cruise.  If it's a multi-part cruise and the science party wants to
+  review lowerings from the previous cruise then this step may be omitted.
+  - Log into the Sealog web-interface as an admin
+  - Navigate to System Management --> Cruises
+  - Click the "eye" icon next to the cruise you wish to hide. Hidden
+    cruises will have an eye icon with a diagonal slash through it.
+
+**** PRE-DIVE ****
++ Verify the ASNAP service is working correctly
+  - login to sealog client as guest
+  - Click the "Show ASNAP" button in the upper-right of the Event History
+    window.
+  - Look at the ASNAP status in the lowering-left of the UI
+  - If the ASNAP service is "Off"
+    - Use the top navbar and select System Maintenance --> Toggle ASNAP.
+      This should change the status to "On"
+    - Click "SeaLog" in the upper-left of the UI to return to the main
+      window
+  - Wait upto 10 seconds and look for new "ASNAP" events to appear in the
+    event history window.
+  - If events do not appear then try the following:
+    - Goto http://198.17.154.223:9001
+    - Click the "Restart" link next to "sealog-asnap"
+
++ Create the new lowering:
+  - Login as an admin
+  - Goto System Management --> Lowerings
+  - Complete the "Create New Lowering" form
+    - Since the end date/time is unknown simple set it to the current date/time
+      + 1 day. These times will need to be updated later.
+
+**** DURING THE DIVE ****
+- Guest makes events ad-hoc
+- Autosnap makes an event every 10 seconds
+
+**** POST-DIVE ****
++ Disable Auto-snap in sealog if needed
+  - login to sealog client as an admin.
+  - Take note of the ASNAP status in the footer.  Initially it make read
+    "Unknown" but within a few seconds it should switch to either "Off" or
+    "On".  If it switches to "Off" then ASNAP is already disabled and
+    you're done.  If it reads "On" then please continue with these
+    instructions.
+  - Use the top navbar to select System Maintenance --> Toggle ASNAP
+    Status.
+  - This should toggle the message in the footer from "On" to "Off"
+
++ Update the start/stop times for the lowering.
+  - Log into the Sealog web-interface as an admin
+  - From the top navigation bar, goto System-Management->Lowerings
+  - Click the blue pencil icon next to the recently completed lowering in the
+    list of lowerings
+  - Click the Orange "Milestones/stats" button
+  - Use the graphical interface to set the start/stop times and the on/off
+    bottom times
+  - Click the "Update" button to save the changes
+
+**** POST LAST DIVE OF THE CRUISE ****
++ Export the data from all of the lowerings for the current cruise
+  - Log into the Sealog web-interface as an admin
+  - Click the "Review Cruises/Lowerings" link in the top bar navigation
+  - Select the current cruise from the list of cruises
+  - Make note of the lowerings that have occured during the current cruise
+  - Open a terminal window.
+  - SSH into the sealog-server machine as "sealog"
+  - cd to ~/sealog-server/misc
+  - run "./sealog-postcruise.sh <cruise_id>" This script will run the 
+    "./sealog-postdive.sh -c <cruise_id> <lowering_id>" for each lowering
+    that occured during the cruise.  Replace <cruise_id> with the current
+    cruise id (i.e AT42-01).
+  - Use scp or rsync to copy the /home/sealog/sealog-backups/<cruise_id> folder
+    to the desire data repository.  This folder will contain the sealog cruise-
+    level record and directories for each of the lowerings.  Within each of the
+    lowering directories there will be json-formatted files containing the
+    lowering metadata record, event data and event aux data, a sub-directory of
+    framegrabs and the shell script used to copy the framegrabs from their
+    original location to the framegrab sub-directory.
+
+**** TRANSFER TO SEALOG-SHORESIDE ****
++ The shore-based version of Sealog requires the full backup of the cruise
+  lowerings as created by the sealog-postcruise.sh script.
++ The backups will reside in the /home/sealog/sealog-backups/<cruiseID> folder.
++ Given the number of images/files in a backup it may be more convenient to
+  tar/gzip the folder.  This can be done via this command:
+  tar cvfz /home/sealog/sealog-backups/<cruiseID>_sealogBackup.tgz /home/sealog/sealog-backups/<cruiseID>

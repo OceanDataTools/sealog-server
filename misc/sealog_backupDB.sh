@@ -1,0 +1,53 @@
+#!/bin/bash
+#
+# Purpose: This script is used to backup the mongo database that powers
+#          sealog to a backup folder.
+#
+#   Usage: sealog-backupSealogDB.sh
+#
+#  Author: Webb Pinner webbpinner@gmail.com
+# Created: 2019-05-11
+
+TIMESTAMP=`date +%F-%H%M`
+PWD=pwd
+APP_NAME="sealog-jason"
+DATABASE_NAME="sealogDB"
+
+BACKUP_DIR="/home/sealog/sealog-DB-backups"
+BACKUP_NAME="${APP_NAME}-${TIMESTAMP}.bkp"
+BACKUP_LOG="${BACKUP_DIR}/${APP_NAME}-backup.log"
+
+MONGOBIN_PATH="/usr/bin"
+MONGO_HOST="localhost"
+MONGO_PORT="27017"
+
+# Ensure the backup dir exists by trying to create it
+mkdir -p ${BACKUP_DIR}
+if [ $? != 0 ]; then
+    echo "Backup directory does not exist and can't be created"
+    exit -1
+fi
+
+# Goto the backup directory
+cd ${BACKUP_DIR}
+
+#Run the daily backup of remaining databases.
+echo "Starting backup of ${DATABASE_NAME}...." >> ${BACKUP_LOG}
+${MONGOBIN_PATH}/mongodump --host ${MONGO_HOST}:${MONGO_PORT} --db ${DATABASE_NAME} >> ${BACKUP_LOG} 2>&1
+
+if [ $? != 0 ]; then
+    echo "Failed to make backup of database on `date +%F_%T`"
+    # Return to where we started
+    cd $PWD
+    exit -1
+fi
+
+#Name the new backup appropriately
+echo "Renaming backup directory to ${BACKUP_NAME}" >> ${BACKUP_LOG}
+mv dump ${BACKUP_NAME}
+
+# Return to where we started
+cd $PWD
+
+echo "End of backup run `date`" >> ${BACKUP_LOG}
+echo "----------------------------------" >> ${BACKUP_LOG}

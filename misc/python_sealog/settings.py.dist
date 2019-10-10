@@ -1,0 +1,22 @@
+apiServerURL = 'http://localhost:8000/sealog-server'
+wsServerURL = 'ws://localhost:8000/ws'
+
+cruisesAPIPath = '/api/v1/cruises'
+
+customVarAPIPath = '/api/v1/custom_vars'
+
+eventsAPIPath = '/api/v1/events'
+
+eventAuxDataAPIPath = '/api/v1/event_aux_data'
+
+eventExportsAPIPath = '/api/v1/event_exports'
+
+eventTemplatesAPIPath = '/api/v1/event_templates'
+
+loweringsAPIPath = '/api/v1/lowerings'
+
+token = ''
+
+headers = {
+  "authorization": token
+}

@@ -71,7 +71,7 @@ npm run start-devel
 
 **This will start the server in development mode.**  This means that the server is in uber-verbose mode and that a new clean database is created each time the server starts (i.e. any data added from a previous run is blown away).
 
-Running in development mode will create an admin account (jason:dsl!jason) and 1 regular user account (guest).  There is no password set for the regular account 
+Running in development mode will create an admin account (testadmin:password) and regular user account (testuser:password). 
 
 ### Start the server in production mode
 
