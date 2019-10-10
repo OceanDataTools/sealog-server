@@ -1,6 +1,7 @@
 /node_modules
 npm-debug.log
 .DS_Store
+/misc/python_sealog/settings.py
 /config/db_constants.js
 /config/email_constants.js
 /config/manifest.js
