@@ -23,7 +23,7 @@ from pymongo import MongoClient
 UDP_IP_ADDRESS = "0.0.0.0"
 UDP_PORT_NO = 10600
 
-LOG_LEVEL = logging.DEBUG
+LOG_LEVEL = logging.INFO
 
 # Valid line headers to process
 validLineLabels = ['JDS','ODR']
@@ -37,7 +37,7 @@ ch = logging.StreamHandler()
 ch.setLevel(LOG_LEVEL)
 
 # create formatter
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter('%(asctime)s - %(name)s:%(lineno)s - %(levelname)s - %(message)s')
 
 # add formatter to ch
 ch.setFormatter(formatter)
@@ -93,18 +93,17 @@ def parseODR(message):
 
   return record
 
-def main():
+def insertUDPData():
 
   client = MongoClient()
-  db = client.datagrabberDB
-  collection = db.datagrabberCOLL
+  db = client.udpDataCache
+  collection = db.navData
 
   serverSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
   serverSock.bind((UDP_IP_ADDRESS, UDP_PORT_NO))
 
   while True:
     data, addr = serverSock.recvfrom(1024)
-    # logger.debug("Message: " + data)
 
     messageType = None
     for label in validLineLabels:
@@ -114,15 +113,14 @@ def main():
 
     if(messageType):
       data = data.rstrip()
-      # logger.debug("Message: " + data)
 
       record = None
       if(messageType == 'JDS'):
         record = parseJDS(data)
       elif(messageType == 'ODR'):
         record = parseODR(data)
-      # elif(messageType == 'JDS'):
-      # elif(messageType == 'JDS'):
+      # elif(messageType == 'something'):
+      # elif(messageType == 'else'):
 
       if record:
         logger.debug("Record" + json.dumps(record, indent=2))
@@ -133,7 +131,7 @@ if __name__ == '__main__':
 
   import argparse
 
-  parser = argparse.ArgumentParser(description='UDP to MongoDB inserter')
+  parser = argparse.ArgumentParser(description='UDP Data Caching Service')
   parser.add_argument('-d', '--debug', action='store_true', help=' display debug messages')
 
   args = parser.parse_args()
@@ -141,8 +139,17 @@ if __name__ == '__main__':
   # Turn on debug mode
   if args.debug:
     logger.info("Setting log level to DEBUG")
-    logging.getLogger().setLevel(logging.DEBUG)
+    logger.setLevel(logging.DEBUG)
     for handler in logger.handlers:
       handler.setLevel(logging.DEBUG)
-  
-  main()
+    logger.debug("Log level now set to DEBUG")
+    
+  # Run the main loop
+  try:
+    insertUDPData()
+  except KeyboardInterrupt:
+    print('Interrupted')
+    try:
+      sys.exit(0)
+    except SystemExit:
+      os._exit(0)

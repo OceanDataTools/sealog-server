@@ -12,14 +12,14 @@ eventsAPIPath = '/api/v1/events'
 
 localServerIP = '0.0.0.0'
 localServerAPIPort = '8000'
-localServerWSPort = '8001'
+localServerWSPort = '8000'
 localServerPath = '/sealog-server'
 localToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYTlmNSIsInNjb3BlIjpbImFkbWluIiwiZXZlbnRfbWFuYWdlciIsImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTI1MDE0NDE3fQ.D8ja66bnLxJ3bsJlaKRtOquu8XbibjNCyFxJpI7vafc'
 localClientWSID = 'localSealogReceive'
 
 remoteServerIP = '162.243.201.175'
 remoteServerAPIPort = '80'
-remoteServerWSPort = '8001'
+remoteServerWSPort = '8000'
 remoteServerPath = '/sealog-server'
 remoteToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYTlmNSIsInNjb3BlIjpbImFkbWluIiwiZXZlbnRfbWFuYWdlciIsImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTI1MDEzNTUxfQ.8X-fBRUHdrwtkTLcOFAsW-vvvqCzmkZKM2gQgHNkBKk"
 remoteClientWSID = 'remoteSealogReceive'

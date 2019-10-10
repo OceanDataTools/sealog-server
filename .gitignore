@@ -1,5 +1,9 @@
 /node_modules
 npm-debug.log
 .DS_Store
+/config/db_constants.js
+/config/email_constants.js
 /config/manifest.js
+/config/path_constants.js
+/config/secret.js
 package-lock.json

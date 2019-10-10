@@ -1,11 +1,12 @@
 {
   "extends": [
     "eslint:recommended",
+    "@hapi/eslint-config-hapi",
     "plugin:import/errors",
     "plugin:import/warnings"
   ],
   "parserOptions": {
-    "ecmaVersion": 6,
+    "ecmaVersion": 2017,
     "sourceType": "module"
   },
   "env": {
@@ -25,7 +26,8 @@
     "no-lone-blocks": 0,
     "no-unused-vars": [1, {
       "vars": "all",
-      "args": "after-used"
+      "args": "after-used",
+      "argsIgnorePattern": "options"
     }]
   }
 }

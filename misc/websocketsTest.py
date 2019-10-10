@@ -1,22 +1,41 @@
 #!/usr/bin/env python3
+# Little test script that can be used as a boilerplate for writing new 
+# services that listen to the real-time event feed
 
 import asyncio
 import websockets
 import json
+import logging
 
-serverIP = '0.0.0.0'
-serverWSPort = '8001'
-serverPath = ''
+import python_sealog
+from python_sealog.settings import wsServerURL, headers
 
-token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYjlmNSIsInNjb3BlIjpbImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTE3ODM5NjYyfQ.YCLG0TcDUuLtaYVgnfxC7R-y3kWZcZGtyMcvI2xYFYA"
+LOG_LEVEL = logging.INFO
+
+# create logger
+logger = logging.getLogger(__file__ )
+logger.setLevel(LOG_LEVEL)
+
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(LOG_LEVEL)
+
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(name)s:%(lineno)s - %(levelname)s - %(message)s')
+
+# add formatter to ch
+ch.setFormatter(formatter)
+
+# add ch to logger
+logger.addHandler(ch)
+
+clientWSID = 'websocketTest'
 
 hello = {
     'type': 'hello',
-    'id': 'abcdefg',
+    'id': clientWSID,
     'auth': {
-        'headers': {
-            'authorization': token
-        }
+        'headers': headers
     },
     'version': '2',
     'subs': ['/ws/status/newEvents']
@@ -24,12 +43,12 @@ hello = {
 
 ping = {
     'type':'ping',
-    'id':'abcdefg'
+    'id':clientWSID
 }
 
-async def eventlog():
+async def websocketTest():
     try:
-        async with websockets.connect('ws://' + serverIP + ':' + serverWSPort + serverPath) as websocket:
+        async with websockets.connect(wsServerURL) as websocket:
 
             await websocket.send(json.dumps(hello))
 
@@ -41,8 +60,20 @@ async def eventlog():
                 if eventObj['type'] and eventObj['type'] == 'ping':
                     await websocket.send(json.dumps(ping))
                 elif eventObj['type'] and eventObj['type'] == 'pub':
-                    print(json.dumps(eventObj['message']))
+                    logger.info("New Event: " + json.dumps(eventObj['message']))
     except Exception as error:
-        print(error)
+        logger.error(str(error))
 
-asyncio.get_event_loop().run_until_complete(eventlog())
+if __name__ == '__main__':
+
+  import os
+  import sys
+
+try:
+    asyncio.get_event_loop().run_until_complete(websocketTest())
+except KeyboardInterrupt:
+    print('Interrupted')
+    try:
+        sys.exit(0)
+    except SystemExit:
+        os._exit(0)

@@ -1,7 +1,7 @@
 # sealog-server
-Sealog event logging server
+Sealog event logging server, tweaked to support the JASON ROV shoreside
 
-Sealog is intended as a general purpose eventlogging framework that is independent of any particular user-interface.  All interactions with the Sealog Server are done via the [Sealog Server's RESTful API](<https://sealog.oceandatarat.org:8100/sealog-server/documentation>).
+Sealog is intended as a general purpose eventlogging framework that is independent of any particular user-interface.  All interactions with the Sealog Server are done via the [Sealog Server's RESTful API](<https://sealog-vehicle.oceandatarat.org:9200/sealog-server/documentation>).
 
 This allows for users to develop their own user interfaces for adding, editing and exporting events or extend the functionality of other systems to dynamically submit events.  It's even possible to develop hardware-based clients (physical buttons) using cheap network-aware microcontrollers (i.e Ardinuo w/Ethernet Shield).
 
@@ -12,31 +12,29 @@ Almost all calls to the API are authenticated using Java Web Tokens (JWT).  The 
  - Ad-hoc association of ancilary data with events such as sensor data, navigation, etc. 
  - Ability to filter events based on user, value, keywords and time spans
  - Ability to subscribe to the live eventlog feed (using websockets).
- - Simple exporting of all or a filtered list of events merged with ancilary data
+ - Simple exporting of all or a filtered list of events merged with ancilary data is JSON or CSV format
  - Defining event templates for quick event submission
  - role-based authentication using Java Web Tokens (JWT)
 
 ## API Documentation
 
-Please refer to the [Sealog Server's RESTful API](<https://sealog.oceandatarat.org:8100/sealog-server/documentation>)
+Please refer to the [Sealog Server's RESTful API](<https://sealog-vehicle.oceandatarat.org:9200/sealog-server/documentation>)
 
 ## Installation
 
 For Sealog Server installation instruction please look at [INSTALL.md](https://github.com/webbpinner/sealog-server/blob/master/INSTALL.md).
 
-## Examples
-
 ### React/Redux front-end client
 
-[sealog client](https://github.com/webbpinner/sealog-client) is a react/redux-based web-client developed for use with sealog-server.
+[sealog client for vehicles](https://github.com/webbpinner/sealog-client-vehicle) is a react/redux-based web-client developed for use with sealog-server.
 
 ### Obtaining a JWT via the Command-line
 
 Most of the API calls require a JWT to be included with the request header.  Here's how to obtain the JWT for a particular user from the command-line.  This example assumes cURL is installed.
 
-From the terminal:
+From the terminal replaceing `<username>` and `<password>` with the appropriate information:
 ```
-curl -H "Content-Type: application/json" -X POST -d '{"username":"admin","password":"password"}' https://sealog.oceandatarat.org:8100/sealog-server/login
+curl -H "Content-Type: application/json" -X POST -d '{"username":<username>,"password":<pasword>}' https://sealog-vehicle.oceandatarat.org:9200/sealog-server/login
 ```
 
 This will respond with:
@@ -61,7 +59,7 @@ Submitting an event to the Sealog Server requires a JWT who's associated user in
 
 From the terminal:
 ```
-curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' --header 'Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBjNDVkN2I0LTU4ODEtNGU2NC04ZmQzLTIwNTczMjVlMmFmZSIsInNjb3BlIjpbImV2ZW50X21hbmFnZXIiLCJldmVudF9sb2dnZXIiLCJldmVudF93YXRjaGVyIl0sImlhdCI6MTUwMDAzNTc1NX0.WoOLfXxCIxIZEswy1lsbjm7XxDcbfd_NuZsL2-NB_Qw' -d '{"event_value": "TEST"}' 'https://sealog.oceandatarat.org:8100/sealog-server/api/v1/events'
+curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' --header 'Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBjNDVkN2I0LTU4ODEtNGU2NC04ZmQzLTIwNTczMjVlMmFmZSIsInNjb3BlIjpbImV2ZW50X21hbmFnZXIiLCJldmVudF9sb2dnZXIiLCJldmVudF93YXRjaGVyIl0sImlhdCI6MTUwMDAzNTc1NX0.WoOLfXxCIxIZEswy1lsbjm7XxDcbfd_NuZsL2-NB_Qw' -d '{"event_value": "TEST"}' 'https://sealog-vehicle.oceandatarat.org:9200/sealog-server/api/v1/events'
 ```
 
 This will respond with:
@@ -87,12 +85,12 @@ Submitting an event to sealog using python is very similar to the way it's done 
 import requests
 import json
 
-root_url = 'https://sealog.oceandatarat.org:8100/sealog-server'
+root_url = 'https://sealog-vehicle.oceandatarat.org:9200/sealog-server'
 api_path = '/login'
 
 payload = {
-  "username": "admin",
-  "password": "password"
+  "username": "guest",
+  "password": ""
 }
 
 r = requests.post(root_url + api_path, data=payload)
@@ -125,7 +123,7 @@ Namespace Examples.System.Net
 
             Public Shared Sub Main()  
             Dim uriString As String
-            uriString = "https://sealog.oceandatarat.org:8100/sealog-server"
+            uriString = "https://sealog-vehicle.oceandatarat.org:9200/sealog-server"
 
             Dim loginPath As String
             loginPath = "/login"
@@ -134,8 +132,8 @@ Namespace Examples.System.Net
             submitPath = "/api/v1/events"
 
             Dim loginPostParms As New Specialized.NameValueCollection
-            loginPostParms.Add("username", "admin")
-            loginPostParms.Add("password", "password")
+            loginPostParms.Add("username", "guest")
+            loginPostParms.Add("password", "")
 
             Dim eventSubmitPostParams As New Specialized.NameValueCollection
             eventSubmitPostParams.Add("event_value", "HELLO_WORLD")
@@ -190,9 +188,9 @@ My intention with sealog-server was to create a production quality eventlogging 
 I've also setup a Slack channel for sealog, please contact me at oceandatarat at gmail dot com if you would like an invitation.
 
 # Current Users
-Customized versions of Sealog are currently supporting the human occupied vehicle Alvin and the remotely operated vehicle JASON operated by the Woods Hole Oceanographic Institution.
+Sealog Server is currently used by the Woods Hole Oceanographic Institution to support science eventlogging for the JASON ROV and Alvin HOV.  Sealog is also used for shoreside event logging of the NOAA Ship Okeanos Explorer and E/V Nautilus
 
 # Thanks and acknowledgments
-Sealog is in ongoing development thanks to the generosity of the Schmidt Ocean Institute (SOI) who have supported the project since 2018. I also want to thank the Woods Hole Oceanographic Institution who provided the initial inspiration for the project and have become it's first adopters.
+Sealog is in ongoing development thanks to the generosity of the Schmidt Ocean Institute (SOI) who have supported the project since 2018. I also want to thank the Woods Hole Oceanographic Institution who provided the initial inspiration for the project and are slated to become it's first user.
 
 Lastly I want to thank the UNOLS community who have helped me since the beginning by sharing their wealth of experience and technical ability.

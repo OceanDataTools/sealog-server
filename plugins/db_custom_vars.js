@@ -1,63 +1,49 @@
-'use strict';
-var test = require('assert');
+
 
 const {
-  customVarsTable,
+  customVarsTable
 } = require('../config/db_constants');
 
-exports.register = function (server, options, next) {
-
-  const db = server.mongo.db;
-  const ObjectID = server.mongo.ObjectID;
-
-  const test_data = [
-    {
-      _id: ObjectID('59810167212b348aed7fa9f5'),
-      custom_var_name: 'asnapStatus',
-      custom_var_value: 'Off',
-    }
-  ];
-
-  console.log("Searching for Custom Vars Collection");
-  db.listCollections({name:customVarsTable}).toArray().then(function(names) {
-    test.equal(0, names.length);
-
-    console.log("Creating Custom Vars Collection");
-    db.createCollection(customVarsTable, function(err, collection) {
-      test.equal(null, err);
-
-      // Insert a document in the capped collection
-      console.log("Populating Custom Vars Collection");
-      collection.insertMany(test_data, function(err) {
-        test.equal(null, err);
-        return next();
-      });
-    });
-  }).catch(function () {
-    console.log("Custom Vars Collection is present... dropping it");
-    db.dropCollection(customVarsTable).then(function() {
-
-      console.log("Creating Custom Vars Collection");
-      db.createCollection(customVarsTable, function(err, collection) {
-        test.equal(null, err);
-
-        // Insert a document in the capped collection
-        console.log("Populating Custom Vars Collection");
-        collection.insertMany(test_data, function(err) {
-          test.equal(null, err);
-          return next();
-        });
-      });
-    }).catch(function () {
-      console.log("unable to drop", customVarsTable);
-
-      return next();
-
-    });
-  });
-};
-
-exports.register.attributes = {
+exports.plugin = {
   name: 'db_populate_custom_vars',
-  dependencies: ['hapi-mongodb']
+  dependencies: ['hapi-mongodb'],
+  register: async (server, options) => {
+
+    const db = server.mongo.db;
+    const ObjectID = server.mongo.ObjectID;
+
+    const init_data = [
+      {
+        _id: ObjectID('59810167212b348aed7fa9f5'),
+        custom_var_name: 'asnapStatus',
+        custom_var_value: 'Off'
+      }
+    ];
+
+    console.log("Searching for Custom Variable Collection");
+    try {
+      const result = await db.listCollections({ name:customVarsTable }).toArray();
+      if (result.length > 0) {
+        console.log("Collection already exists... we're done here.");
+        return;
+      }
+    }
+    catch (err) {
+      console.log("ERROR:", err.code);
+      throw (err);
+    }
+
+    try {
+      console.log("Creating Custom Variable Collection");
+      const collection = await db.createCollection(customVarsTable);
+
+      console.log("Populating Custom Variable Collection");
+      await collection.insertMany(init_data);
+
+    }
+    catch (err) {
+      console.log("ERROR:", err.code);
+      throw (err);
+    }
+  }
 };

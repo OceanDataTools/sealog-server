@@ -1,40 +1,21 @@
-'use strict';
+const Glue = require('@hapi/glue');
+const Manifest = require('./config/manifest');
 
-const Glue = require('glue');
-const Labbable = require('labbable');
+const options = {
+  relativeTo: __dirname
+};
 
-const labbable = module.exports = new Labbable();
-const manifest = require('./config/manifest');
+const startServer = async function () {
 
-Glue.compose(manifest, { relativeTo: __dirname }, (err, server) => {
-
-  if (err) {
-    throw err;
+  try {
+    const apiServer = await Glue.compose(Manifest, options);
+    await apiServer.start();
+    console.log('✅  Server is listening on ' + apiServer.info.uri.toLowerCase());
   }
+  catch (err) {
+    console.error(err);
+    process.exit(1);
+  }
+};
 
-  labbable.using(server);
-
-  server.initialize((err) => {
-
-    if (err) {
-      throw err;
-    }
-
-    // Don't continue to start server if module
-    // is being require()'d (likely in a test)
-    if (module.parent) {
-      return;
-    }
-
-    server.start((err) => {
-
-      if (err) {
-        throw err;
-      }
-
-      // console.log(server);
-      console.log('✅  API Server is listening on ' + server.select('api').info.uri.toLowerCase());
-      console.log('✅  WS Server is listening on ' + server.select('ws').info.uri.toLowerCase());
-    });
-  });
-});
+startServer();

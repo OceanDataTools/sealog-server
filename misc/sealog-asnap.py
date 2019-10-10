@@ -11,47 +11,57 @@
 #
 #  Author: Webb Pinner webbpinner@gmail.com
 # Created: 2018-09-26
+# Updated: 2019-10-07
 
 import json
 import requests
 import time
 import sys
 import os
+import logging
+import python_sealog
+from python_sealog.settings import apiServerURL, cruisesAPIPath, eventsAPIPath, customVarAPIPath, headers
 
-serverIP = '0.0.0.0'
-serverAPIPort = '8000'
-serverWSPort = '8001'
-serverPath = '/sealog-server'
-eventAPIPath = '/api/v1/events'
-customVarAPIPath = '/api/v1/custom_vars'
+# Default logging level
+LOG_LEVEL = logging.INFO
+
+# create logger
+logger = logging.getLogger(__file__)
+logger.setLevel(LOG_LEVEL)
+
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(LOG_LEVEL)
+
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(name)s:%(lineno)s - %(levelname)s - %(message)s')
+
+# add formatter to ch
+ch.setFormatter(formatter)
+
+# add ch to logger
+logger.addHandler(ch)
+
 asnapStatusVarName = 'asnapStatus'
 
 interval = 10 #seconds
 
 clientWSID = "asnap"
 
-token_devel = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYzlmNSIsInNjb3BlIjpbImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTI2Njg2OTcwfQ.Qc-T-hRxQjxi0gGJAk3AkROwLbJZJOtWbOfEenexbDg"
-token_prod = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYTlmNSIsInNjb3BlIjpbImFkbWluIiwiZXZlbnRfbWFuYWdlciIsImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTM3MDYyOTc1fQ.mQiInLfCVv_jkyqna8qx6igCpiVz5b6ycE16a2S3RmQ"
-token = token_prod
-
 hello = {
-    'type': 'hello',
-    'id': clientWSID,
-    'auth': {
-        'headers': {
-            'authorization': token
-        }
-    },
-    'version': '2',
-    'subs': ['/ws/status/newEvents']
+  'type': 'hello',
+  'id': clientWSID,
+  'auth': {
+    'headers': headers
+  },
+  'version': '2',
+  'subs': ['/ws/status/newEvents']
 }
 
 ping = {
-    'type':'ping',
-    'id': clientWSID
+  'type':'ping',
+  'id': clientWSID
 }
-
-headers = {'authorization': token}
 
 eventTemplate = {
   "event_value": "ASNAP",
@@ -59,50 +69,70 @@ eventTemplate = {
   "event_free_text": ""
 }
 
-def main():
-    """
-    This is the main function for this script.  It creates a new event request at the specified interval
-    """
+def asnapService(interval):
+  """
+  This is the main function for this script.  It creates a new event request at the specified interval
+  """
 
-    runFlag = True
-    while True:
-        try:
-            r = requests.get('http://' + serverIP + ':' + serverAPIPort + serverPath + customVarAPIPath + '?name=' + asnapStatusVarName, headers=headers )
-            #print("text", r.text)
-            response = json.loads(r.text)
-            #print("response:", response)
-            if type(response) != type([]):
-                print("response:", response)
-            else:
-                #print("status:", response[0]['custom_var_value'])
-                if response[0]['custom_var_value'] == 'On':
-                    runFlag = True
-                elif response[0]['custom_var_value'] == 'Off':
-                    runFlag = False
-        except Exception as error:
-            print(error)
+  runFlag = True
+  while True:
+    try:
+      r = requests.get(apiServerURL + customVarAPIPath + '?name=' + asnapStatusVarName, headers=headers )
+      response = json.loads(r.text)
 
-        if runFlag:
-            try:
-                r = requests.post('http://' + serverIP + ':' + serverAPIPort + serverPath + eventAPIPath, headers=headers, data = json.dumps(eventTemplate))
-                #print(r.text)
-            except Exception as error:
-                print(error)
+      if type(response) != type([]):
+        print("response:", response)
+      else:
 
-        time.sleep(interval)
+        if response[0]['custom_var_value'] == 'On':
+          runFlag = True
+        elif response[0]['custom_var_value'] == 'Off':
+          runFlag = False
+    except Exception as error:
+      print(error)
+
+    if runFlag:
+      try:
+        logger.debug("Submitting ASNAP Event")
+        r = requests.post(apiServerURL + eventsAPIPath, headers=headers, data = json.dumps(eventTemplate))
+
+      except Exception as error:
+        print(error)
+
+    time.sleep(interval)
 
 if __name__ == '__main__':
-    """
-    This script creates a new event request at the specified interval
-    """
+  """
+  This script submit a new ASNAP event at the specified interval
+  """
 
+  import argparse
+
+  parser = argparse.ArgumentParser(description='ASNAP event submission service')
+  parser.add_argument('-d', '--debug', action='store_true', help=' display debug messages')
+  parser.add_argument('-i', '--interval', help='ASNAP interval in seconds.')
+
+  args = parser.parse_args()
+
+  # Turn on debug mode
+  if args.debug:
+    logger.info("Setting log level to DEBUG")
+    logger.setLevel(logging.DEBUG)
+    for handler in logger.handlers:
+      handler.setLevel(logging.DEBUG)
+    logger.debug("Log level now set to DEBUG")
+
+  if args.interval:
+    interval = args.interval
+    logger.info("Interval set to " + args.interval + " seconds.")
+
+  try:
+    asnapService(interval)
+  except KeyboardInterrupt:
+    print('Interrupted')
     try:
-        main()
-    except KeyboardInterrupt:
-        print('Interrupted')
-        try:
-            sys.exit(0)
-        except SystemExit:
-            os._exit(0)
+      sys.exit(0)
+    except SystemExit:
+      os._exit(0)
 
 

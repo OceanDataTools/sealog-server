@@ -1,534 +1,700 @@
-'use strict';
+const Nodemailer = require('nodemailer');
 
 const Bcrypt = require('bcryptjs');
-const Joi = require('joi');
+const Joi = require('@hapi/joi');
+const Crypto = require('crypto');
 
 const saltRounds = 10;
 
+const resetPasswordTokenExpires = 24; //hours
+
 const {
-  usersTable,
+  usersTable
 } = require('../../../config/db_constants');
+
+const {
+  emailAddress, emailPassword, resetPasswordURL
+} = require('../../../config/email_constants');
+
+const emailTransporter = Nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: emailAddress,
+    pass: emailPassword
+  }
+});
 
 const SECRET_KEY = require('../../../config/secret');
 const Jwt = require('jsonwebtoken');
 
-exports.register = function (server, options, next) {
+exports.plugin = {
+  name: 'routes-api-users',
+  dependencies: ['hapi-mongodb'],
+  register: (server, options) => {
 
-  const db = server.mongo.db;
-  const ObjectID = server.mongo.ObjectID;
+    const db = server.mongo.db;
+    const ObjectID = server.mongo.ObjectID;
 
-  const _renameAndClearFields = (doc) => {
+    const _renameAndClearFields = (doc) => {
 
-    //rename id
-    doc.id = doc._id;
-    delete doc._id;
+      //rename id
+      doc.id = doc._id;
+      delete doc._id;
 
-    //remove fields entirely
-    delete doc.password;
+      //remove fields entirely
+      delete doc.password;
+      delete doc.resetPasswordToken;
+      delete doc.resetPasswordExpires;
 
-    return doc;
-  };
+      return doc;
+    };
 
-  server.route({
-    method: 'GET',
-    path: '/users',
-    handler: function (request, reply) {
+    server.route({
+      method: 'GET',
+      path: '/users',
+      async handler(request, h) {
 
-      let query = {};
+        const query = {};
 
-      // if(!request.auth.credentials.scope.includes('admin'))
-      //   query.system_user = false;
+        // if (!request.auth.credentials.roles.includes('admin')) {
+        //   try {
+        //     query._id = new ObjectID(request.auth.credentials.id);
+        //   }
+        //   catch (err) {
+        //     console.log("ERROR:", err);
+        //     return h.response({ statusCode: 503, error: "server error", message: "objectID error" }).code(503);
+        //   }
+        // }
 
-      let limit = (request.query.limit)? request.query.limit : 0;
-      let offset = (request.query.offset)? request.query.offset : 0;
-      let sort = (request.query.sort)? { [request.query.sort]: 1 } : { username: 1 };
+        if (!request.auth.credentials.roles.includes('admin')) {
+          query.system_user = false;
+        }
 
-      db.collection(usersTable).find(query).skip(offset).limit(limit).sort(sort).toArray().then((results) => {
-        results.forEach(_renameAndClearFields);
-        return reply(results);
-      }).catch((err) => {
-        console.log("ERROR:", err);
-        return reply().code(503);
-      });
-    },
-    config: {
-      auth: {
-        strategy: 'jwt',
-        scope: ['admin', 'event_manager']
+        const limit = (request.query.limit) ? request.query.limit : 0;
+        const offset = (request.query.offset) ? request.query.offset : 0;
+        const sort = (request.query.sort) ? { [request.query.sort]: 1 } : { username: 1 };
+
+        try {
+          const result = await db.collection(usersTable).find(query).skip(offset).limit(limit).sort(sort).toArray();
+
+          result.forEach(_renameAndClearFields);
+
+          return h.response(result);
+        }
+        catch (err) {
+          console.log("ERROR:", err);
+          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+        }
       },
-      validate: {
-        headers: {
-          authorization: Joi.string().required()
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: ['admin', 'read_users']
         },
-        query: Joi.object({
-          offset: Joi.number().integer().min(0).optional(),
-          limit: Joi.number().integer().min(1).optional(),
-          sort: Joi.string().valid('username', 'last_login').default('username').optional()
-        }),
-        options: {
-          allowUnknown: true
-        }
-      },
-      response: {
-        status: {
-          200: Joi.array().items(Joi.object({
-            id: Joi.object(),
-            email: Joi.string().email(),
-            system_user: Joi.boolean(),
-            last_login: Joi.date(),
-            fullname: Joi.string(),
-            username: Joi.string(),
-            roles: Joi.array().items(Joi.string()),
-          })),
-          400: Joi.object({
-            statusCode: Joi.number().integer(),
-            error: Joi.string(),
-            message: Joi.string()
+        validate: {
+          headers: Joi.object({
+            authorization: Joi.string().required()
           }),
-          401: Joi.object({
-            statusCode: Joi.number().integer(),
-            error: Joi.string(),
-            message: Joi.string()
-          })
-        }
-      },
-      description: 'Return the current list of users',
-      notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
-        <p>Available to: <strong>admin</strong></p>',
-      tags: ['users','auth','api'],
-    }
-  });
-
-  server.route({
-    method: 'GET',
-    path: '/users/{id}',
-    handler: function (request, reply) {
-
-      //TODO - add code so that only admins and the user can do this.
-
-      let query = { _id: new ObjectID(request.params.id) };
-
-      db.collection(usersTable).findOne(query).then((result) => {
-        
-        if(!result) {
-          return reply({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
-        }
-
-        //if the request is for a system user but the requestor is not and admin AND if the requested user is not the requested user 
-        if(result.system_user && !request.auth.credentials.scope.includes('admin') && result._id != request.params.id ) {
-          return reply({statusCode: 400, error: "Unauthorized", message: "The requesting user is unauthorized to make that request"}).code(400);
-        }
-
-        result = _renameAndClearFields(result);
-        return reply(result);
-
-      }).catch((err) => {
-        console.log("ERROR:", err);
-        return reply().code(503);
-      });
-    },
-    config: {
-      auth:{
-        strategy: 'jwt',
-        // scope: 'admin'
-      },
-      validate: {
-        headers: {
-          authorization: Joi.string().required()
+          query: Joi.object({
+            offset: Joi.number().integer().min(0).optional(),
+            limit: Joi.number().integer().min(1).optional(),
+            sort: Joi.string().valid('username', 'last_login').optional()
+          }),
+          options: {
+            allowUnknown: true
+          }
         },
-        params: Joi.object({
-          id: Joi.string().length(24).required()
-        }),
-        options: {
-          allowUnknown: true
+        response: {
+          status: {
+            200: Joi.array().items(Joi.alternatives().try(Joi.object({
+              id: Joi.object(),
+              email: Joi.string().email(),
+              system_user: Joi.boolean(),
+              last_login: Joi.date(),
+              username: Joi.string(),
+              fullname: Joi.string(),
+              roles: Joi.array().items(Joi.string()),
+              disabled: Joi.boolean()
+            }), Joi.object({
+              id: Joi.object(),
+              fullname: Joi.string()
+            }))),
+            503: Joi.object({
+              statusCode: Joi.number().integer(),
+              error: Joi.string(),
+              message: Joi.string()
+            })
+          }
+        },
+        description: 'Return the current list of users',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong></p>',
+        tags: ['users','auth','api']
+      }
+    });
+
+    server.route({
+      method: 'GET',
+      path: '/users/{id}',
+      async handler(request, h) {
+
+        //if the request is for a user but the requestor is not an admin AND not the requested user, return 400
+        if (!request.auth.credentials.roles.includes('admin') && !request.auth.credentials.scope.includes('read_users') && request.auth.credentials.id !== request.params.id ) {
+          return h.response({ statusCode: 400, error: "Unauthorized", message: "The requesting user is unauthorized to make that request" }).code(400);
+        }
+
+        const query = {};
+
+        try {
+          query._id = new ObjectID(request.params.id);
+        }
+        catch (err) {
+          console.log("invalid ObjectID");
+          return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+        }
+
+        try {
+          const result = await db.collection(usersTable).findOne(query);
+          if (!result) {
+            return h.response({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
+          }
+          else if (!request.auth.credentials.roles.includes('admin') && result.system_user && request.auth.credentials.id !== request.params.id) {
+            return h.response({ statusCode: 400, error: "Unauthorized", message: "The requesting user is unauthorized to make that request" }).code(400);
+          }
+
+          const cleanedResult = _renameAndClearFields(result);
+          return h.response(cleanedResult);
+
+        }
+        catch (err) {
+          console.log("ERROR:", err);
+          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
         }
       },
-      response: {
-        status: {
-          200: Joi.object({
-            id: Joi.object(),
-            email: Joi.string().email(),
-            system_user: Joi.boolean(),
-            last_login: Joi.date(),
-            fullname: Joi.string(),
-            username: Joi.string(),
-            roles: Joi.array().items(Joi.string()),
+      config: {
+        auth:{
+          strategy: 'jwt'
+          // scope: ['admin', 'read_users']
+        },
+        validate: {
+          headers: Joi.object({
+            authorization: Joi.string().required()
           }),
-          400: Joi.object({
-            statusCode: Joi.number().integer(),
-            error: Joi.string(),
-            message: Joi.string()
+          params: Joi.object({
+            id: Joi.string().length(24).required()
           }),
-          401: Joi.object({
-            statusCode: Joi.number().integer(),
-            error: Joi.string(),
-            message: Joi.string()
-          }),
-          404: Joi.object({
-            statusCode: Joi.number().integer(),
-            message: Joi.string()
-          })
+          options: {
+            allowUnknown: true
+          }
+        },
+        response: {
+          status: {
+            200: Joi.alternatives().try(Joi.object({
+              id: Joi.object(),
+              email: Joi.string().email(),
+              system_user: Joi.boolean(),
+              last_login: Joi.date(),
+              username: Joi.string(),
+              fullname: Joi.string(),
+              roles: Joi.array().items(Joi.string()),
+              disabled: Joi.boolean()
+            }), Joi.object({
+              id: Joi.object(),
+              fullname: Joi.string()
+            })),
+            400: Joi.object({
+              statusCode: Joi.number().integer(),
+              error: Joi.string(),
+              message: Joi.string()
+            }),
+            404: Joi.object({
+              statusCode: Joi.number().integer(),
+              message: Joi.string()
+            }),
+            503: Joi.object({
+              statusCode: Joi.number().integer(),
+              error: Joi.string(),
+              message: Joi.string()
+            })
+          }
+        },
+        description: 'Return a user record based on the user id',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong></p>',
+        tags: ['user','auth','api']
+      }
+    });
+
+    server.route({
+      method: 'POST',
+      path: '/users',
+      async handler(request, h) {
+
+        // if (!request.auth.credentials.roles.includes('admin')) {
+        //   return h.response({ statusCode: 400, error: "Unauthorized", message: "The requesting user is unauthorized to make that request" }).code(400);
+        // }
+
+        if (request.payload.system_user && typeof request.payload.system_user === "boolean" && !request.auth.credentials.roles.includes('admin')) {
+          return h.response({ statusCode: 400, error: "Unauthorized", message: "Only admins can create system users" }).code(400);
         }
-      },
-      description: 'Return a single user based on user\'s id',
-      notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
-        <p>Available to: <strong>admin</strong></p>',
-      tags: ['user','auth','api'],
-    }
-  });
 
-  server.route({
-    method: 'POST',
-    path: '/users',
-    handler: function (request, reply) {
+        const query = { username: request.payload.username };
 
-      let query = { username: request.payload.username };
-
-      db.collection(usersTable).findOne(query, (err, result) => {
-
-        if (result) {
-          return reply({ "statusCode": 422, 'message': 'Username already exists' }).code(422);
+        try {
+          const result = await db.collection(usersTable).findOne(query);
+          if (result) {
+            return h.response({ "statusCode": 422, 'message': 'Username already exists' }).code(422);
+          }
+        }
+        catch (err) {
+          console.log("ERROR:", err);
+          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
         }
 
-        let user = request.payload;
+        const user = request.payload;
 
-        if(request.payload.id) {
+        if (request.payload.id) {
           try {
             user._id = new ObjectID(request.payload.id);
             delete user.id;
-          } catch(err) {
+          }
+          catch (err) {
             console.log("invalid ObjectID");
-            return reply({statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters"}).code(400);
+            return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
           }
         }
 
-        // console.log("request.payload:", request.payload);
-
-        user.last_login = new Date("1970-01-01T00:00:00.000Z");
-
-        // If the requesting users is not an admin OR the system_user param is undefined...
-        if(!(request.auth.credentials.scope.includes('admin')) || !(request.payload.system_user)) {
+        if (request.payload.system_user && typeof request.payload.system_user === "boolean") {
+          user.system_user = request.payload.system_user;
+        }
+        else {
           user.system_user = false;
         }
 
-        let password = request.payload.password;
+        if (request.payload.disabled && typeof request.payload.disabled === "boolean") {
+          user.disabled = request.payload.disabled;
+        }
+        else {
+          user.disabled = false;
+        }
 
-        Bcrypt.genSalt(saltRounds, (err, salt) => {
-          Bcrypt.hash(password, salt, (err, hash) => {
+        user.last_login = new Date("1970-01-01T00:00:00.000Z");
+
+        const password = request.payload.password;
+
+        const hashedPassword = await new Promise((resolve, reject) => {
+
+          Bcrypt.hash(password, saltRounds, (err, hash) => {
+
+            if (err) {
+              reject(err);
+            }
+
+            resolve(hash);
+          });
+        });
         
-            user.password = hash;
+        user.password = hashedPassword;
 
-            db.collection(usersTable).insertOne(user, (err, result) => {
+        let result = null;
 
-              if (err) {
-                console.log("ERROR:", err);
-                return reply().code(503);
-              }
-
-              if (!result) {
-                return reply({ "statusCode": 400, 'message': 'Bad request'}).code(400);
-              }
-
-              return reply({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
-            });
-          });
-        });
-      });
-    },
-    config: {
-      auth: {
-        strategy: 'jwt',
-        scope: ['admin', 'event_manager']
-      },
-      validate: {
-        headers: {
-          authorization: Joi.string().required()
-        },
-        payload: {
-          id: Joi.string().length(24).optional(),
-          username: Joi.string().min(1).max(100).required(),
-          fullname: Joi.string().min(1).max(100).required(),
-          system_user: Joi.boolean().optional(),
-          email: Joi.string().email().required(),
-          password: Joi.string().allow('').max(50).required(),
-          roles: Joi.array().items(Joi.string()).min(1).required()
-        },
-        options: {
-          allowUnknown: true
-        }
-      },
-      response: {
-        status: {
-          201: Joi.object({
-            n: Joi.number().integer(),
-            ok: Joi.number().integer(),
-            insertedCount: Joi.number().integer(),
-            insertedId: Joi.object()
-          }),
-          401: Joi.object({
-            statusCode: Joi.number().integer(),
-            error: Joi.string(),
-            message: Joi.string()
-          }),
-          422: Joi.object({
-            statusCode: Joi.number().integer(),
-            message: Joi.string()
-          }),
-        }
-      },
-      description: 'Create a new user',
-      notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
-        <p>Available to: <strong>admin</strong></p>',
-      tags: ['user','auth','api'],
-    }
-  });
-
-  server.route({
-    method: 'PATCH',
-    path: '/users/{id}',
-    handler: function (request, reply) {
-
-      //TODO - add code so that only admins and the user can do this.
-
-      let query = { _id: new ObjectID(request.params.id) };
-
-      db.collection(usersTable).findOne(query).then((result) => {
-        if(!result) {
-          return reply({ "statusCode": 400, "error": "Bad request", 'message': 'No record found for id: ' + request.params.id }).code(400);
-        }
-
-        //Trying to change the username?
-        if (request.payload.username != result.username) {
-
-          let usernameQuery = { username: request.payload.username};
-          //check if username already exists for a different account
-          db.collection(usersTable).findOne(usernameQuery).then((usernameResult) => {
-
-            if (usernameResult) {
-              return reply({ "statusCode": 422, 'message': 'Username already exists' }).code(422);
-            }
-
-            let user = request.payload;
-
-            if(request.payload.password) {
-              let password = request.payload.password;
-
-              Bcrypt.genSalt(saltRounds, (err, salt) => {
-                Bcrypt.hash(password, salt, (err, hash) => {
-                  user.password = hash;
-
-                  db.collection(usersTable).update(query, { $set: user }).then(() => {
-                    return reply().code(204);
-                  }).catch((err) => {
-                    console.log("ERROR:", err);
-                    return reply().code(503);
-                  });
-                });
-              });
-            } else {
-              db.collection(usersTable).update(query, { $set: user }).then(() => {
-                return reply().code(204);
-              }).catch((err) => {
-                console.log("ERROR:", err);
-                return reply().code(503);
-              });
-            }
-          }).catch((err) => {
-            console.log("ERROR:", err);
-            return reply().code(503);
-          });
-        } else {
-
-          let user = request.payload;
-
-          if(request.payload.password) {
-            let password = request.payload.password;
-
-            Bcrypt.genSalt(saltRounds, (err, salt) => {
-              Bcrypt.hash(password, salt, (err, hash) => {
-                user.password = hash;
-
-                db.collection(usersTable).update(query, { $set: user }).then(() => {
-                  return reply().code(204);
-                }).catch((err) => {
-                  console.log("ERROR:", err);
-                  return reply().code(503);
-                });
-              });
-            });
-          } else {
-            db.collection(usersTable).update(query, { $set: user }).then(() => {
-              return reply().code(204);
-            }).catch((err) => {
-              console.log("ERROR:", err);
-              return reply().code(503);
-            });
+        try {
+          result = await db.collection(usersTable).insertOne(user);
+          if (!result) {
+            return h.response({ "statusCode": 400, 'message': 'Bad request' }).code(400);
           }
-        }  
-      }).catch((err) => {
-        throw err;
-      });
-    },
-    config: {
-      auth: {
-        strategy: 'jwt',
-        // scope: 'admin'
-      },
-      validate: {
-        headers: {
-          authorization: Joi.string().required()
-        },
-        params: Joi.object({
-          id: Joi.string().length(24).required()
-        }),
-        payload: Joi.object({
-          username: Joi.string().min(1).max(100).optional(),
-          fullname: Joi.string().min(1).max(100).optional(),
-          system_user: Joi.boolean(),
-          email: Joi.string().email().optional(),
-          password: Joi.string().allow('').max(50).optional(),
-          roles: Joi.array().items(Joi.string()).min(1).optional(),
-        }).required().min(1),
-        options: {
-          allowUnknown: true
         }
-      },
-      response: {
-        status: {
-          400: Joi.object({
-            statusCode: Joi.number().integer(),
-            error: Joi.string(),
-            message: Joi.string()
-          }),
-          401: Joi.object({
-            statusCode: Joi.number().integer(),
-            error: Joi.string(),
-            message: Joi.string()
-          }),
-        }
-      },
-      description: 'Update a user record',
-      notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
-        <p>Available to: <strong>admin</strong></p>',
-      tags: ['user','auth','api'],
-    }
-  });
-
-  server.route({
-    method: 'DELETE',
-    path: '/users/{id}',
-    handler: function (request, reply) {
-
-      //Can't delete yourself
-      if (request.params.id === request.auth.credentials.id) {
-        return reply({ "statusCode": 400, "error": "Bad request", 'message': 'Cannot delete yourself' }).code(400);
-      }
-
-      let query = { _id: new ObjectID(request.params.id) };
-
-      db.collection(usersTable).findOne(query).then((result) => {
-        if(!result) {
-          return reply({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
+        catch (err) {
+          console.log(err);
+          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
         }
 
-        if(result.system_user && !request.auth.credentials.scope.includes('admin')) {
-          return reply({ 'statusCode': 422, 'error': 'Forbidden', 'message': 'User does not have privledges to delete system accounts' }).code(404); 
+        const token = Crypto.randomBytes(20).toString('hex');
+          
+        try {
+          await db.collection(usersTable).updateOne({ _id: user._id }, { $set: { resetPasswordToken: token, resetPasswordExpires: Date.now() + (resetPasswordTokenExpires * 60 * 60 * 1000) } }); // token expires in 24 hours
         }
-
-        db.collection(usersTable).deleteOne(query).then((result) => {
-          return reply(result).code(204);
-        }).catch((err) => {
+        catch (err) {
           console.log("ERROR:", err);
-          return reply().code(503);
-        });
-      }).catch((err) => {
-        console.log("ERROR:", err);
-        return reply().code(503);
-      });
-    },
-    config: {
-      auth: {
-        strategy: 'jwt',
-        scope: ['admin', 'event_manager']
-      },
-      validate: {
-        headers: {
-          authorization: Joi.string().required()
-        },
-        params: Joi.object({
-          id: Joi.string().length(24).required()
-        }),
-        options: {
-          allowUnknown: true
+          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);            
         }
-      },
-      description: 'Delete a user record',
-      notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
-        <p>Available to: <strong>admin</strong></p>',
-      tags: ['user','auth','api'],
-    }
-  });
 
-  server.route({
-    method: 'GET',
-    path: '/users/{id}/token',
-    handler: function (request, reply) {
+        const resetLink = resetPasswordURL + token;
+        const mailOptions = {
+          from: emailAddress, // sender address
+          to: request.payload.email, // list of receivers
+          subject: 'Sealog - New User Created', // Subject line
+          html: `<p>A new Sealog user account was created and associated with this email address.  The username for this account is: ${user.username}</p>
+          <p>To set the password for this account please click on the link below.  This link will expire in ${resetPasswordTokenExpires} hours.</p>
+          <p><a href="${resetLink}">${resetLink}</a></p>
+          <p>Please send any Sealog-related questions to: ${emailAddress}</p>
+          <p>Thanks!</p>`
+        };
 
-      if(request.auth.credentials.id == request.params.id || request.auth.credentials.scope.includes('admin')) {
-
-        db.collection(usersTable).findOne({ _id: new ObjectID(request.params.id) }, (err, result) => {
+        emailTransporter.sendMail(mailOptions, (err) => {
 
           if (err) {
             console.log("ERROR:", err);
-            return reply().code(503);
           }
+        });
+
+        return h.response({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: ["admin", "write_users"]
+        },
+        validate: {
+          headers: Joi.object({
+            authorization: Joi.string().required()
+          }),
+          payload: Joi.object({
+            id: Joi.string().length(24).optional(),
+            username: Joi.string().min(1).max(100).required(),
+            fullname: Joi.string().min(1).max(100).required(),
+            email: Joi.string().email().required(),
+            password: Joi.string().allow('').max(50).required(),
+            roles: Joi.array().items(Joi.string()).min(1).required(),
+            system_user: Joi.boolean().optional(),
+            disabled: Joi.boolean().optional()
+          }),
+          options: {
+            allowUnknown: true
+          }
+        },
+        response: {
+          status: {
+            201: Joi.object({
+              n: Joi.number().integer(),
+              ok: Joi.number().integer(),
+              insertedCount: Joi.number().integer(),
+              insertedId: Joi.object()
+            }),
+            400: Joi.object({
+              statusCode: Joi.number().integer(),
+              error: Joi.string(),
+              message: Joi.string()
+            }),
+            422: Joi.object({
+              statusCode: Joi.number().integer(),
+              message: Joi.string()
+            }),
+            503: Joi.object({
+              statusCode: Joi.number().integer(),
+              error: Joi.string(),
+              message: Joi.string()
+            })
+          }
+        },
+        description: 'Create a new user',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong></p>',
+        tags: ['user','auth','api']
+      }
+    });
+
+    server.route({
+      method: 'PATCH',
+      path: '/users/{id}',
+      async handler(request, h) {
+
+        //TODO - add code so that only admins and the user can do this.
+        if (request.auth.credentials.id !== request.params.id && !request.auth.credentials.roles.includes('admin')) {
+          return h.response({ "statusCode": 400, "error": "Bad request", 'message': 'Only admins and the owner can edit users' }).code(400);
+        }
+
+        if (request.payload.roles && request.payload.roles.includes("admin") && !request.auth.credentials.roles.includes('admin')) {
+          return h.response({ "statusCode": 400, "error": "Bad request", 'message': 'Only admins create other admins' }).code(400);
+        }
+
+        if (request.payload.disabled && typeof request.payload.disabled === "boolean" && !request.auth.credentials.roles.includes('admin')) {
+          return h.response({ "statusCode": 400, "error": "Bad request", 'message': 'Only admins can enable/disabled users' }).code(400);
+        }
+
+        if (request.payload.system_user && typeof request.payload.system_user === "boolean" && !request.auth.credentials.roles.includes('admin')) {
+          return h.response({ "statusCode": 400, "error": "Bad request", 'message': 'Only admins can promote/demote users to system users' }).code(400);
+        }
+
+        const query = {};
+
+        let userQuery = null;
+
+        try {
+          query._id = new ObjectID(request.params.id);
+        }
+        catch (err) {
+          console.log("invalid ObjectID");
+          return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+        }
+
+        try {
+          const result = await db.collection(usersTable).findOne(query);
+          if (!result) {
+            return h.response({ "statusCode": 400, "error": "Bad request", 'message': 'No record found for id: ' + request.params.id }).code(400);
+          }
+
+          userQuery = result;
+        }
+        catch (err) {
+          console.log("ERROR:", err);
+          return h.response({ statusCode: 503, error: "Server error", message: "database error" }).code(503);
+        }
+          
+        //Trying to change the username?
+        if (request.payload.username && request.payload.username !== userQuery.username) {
+
+          const usernameQuery = { username: request.payload.username };
+          //check if username already exists for a different account
+          try {
+            const result = await db.collection(usersTable).findOne(usernameQuery);
+
+            if (result) {
+              return h.response({ statusCode: 401, error: 'Invalid update', message: 'Username already exists' }).code(401);
+            }
+          }
+          catch (err) {
+            console.log("ERROR:", err);
+            return h.response({ statusCode: 503, error: "Server error", message: "database error" }).code(503);
+          }
+        }
+        
+        const user = request.payload;
+
+        if (request.payload.password) {
+          const password = request.payload.password;
+
+          const hashedPassword = await new Promise((resolve, reject) => {
+
+            Bcrypt.hash(password, saltRounds, (err, hash) => {
+            
+              if (err) {
+                reject(err);
+              }
+
+              resolve(hash);
+            });
+          });
+          
+          user.password = hashedPassword;
+        }
+
+        try {
+          await db.collection(usersTable).updateOne(query, { $set: user });
+          return h.response({ statusCode:204, message: "User Account Updated" }).code(204);
+        }
+        catch (err) {
+          console.log("ERROR:", err);
+          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+        }
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: ["admin", "write_users"]
+        },
+        validate: {
+          headers: Joi.object({
+            authorization: Joi.string().required()
+          }),
+          params: Joi.object({
+            id: Joi.string().length(24).required()
+          }),
+          payload: Joi.object({
+            username: Joi.string().min(1).max(100).optional(),
+            fullname: Joi.string().min(1).max(100).optional(),
+            // email: Joi.string().email().optional(),
+            password: Joi.string().allow('').max(50).optional(),
+            roles: Joi.array().items(Joi.string()).min(1).optional(),
+            system_user: Joi.boolean().optional(),
+            disabled: Joi.boolean().optional()
+          }).required().min(1),
+          options: {
+            allowUnknown: true
+          }
+        },
+        response: {
+          status: {
+            204: Joi.object({
+              statusCode: Joi.number().integer(),
+              message: Joi.string()
+            }),
+            400: Joi.object({
+              statusCode: Joi.number().integer(),
+              error: Joi.string(),
+              message: Joi.string()
+            }),
+            401: Joi.object({
+              statusCode: Joi.number().integer(),
+              error: Joi.string(),
+              message: Joi.string()
+            }),
+            503: Joi.object({
+              statusCode: Joi.number().integer(),
+              error: Joi.string(),
+              message: Joi.string()
+            })
+          }
+        },
+        description: 'Update a user record',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong></p>',
+        tags: ['user','auth','api']
+      }
+    });
+
+    server.route({
+      method: 'DELETE',
+      path: '/users/{id}',
+      async handler(request, h) {
+
+        //Can't delete yourself
+        if (request.auth.credentials.id === request.params.id) {
+          return h.response({ "statusCode": 400, "error": "Bad request", 'message': 'Users cannot delete themselves' }).code(400);
+        }
+
+        const query = {};
+        
+        try {
+          query._id = new ObjectID(request.params.id);
+        }
+        catch (err) {
+          console.log("invalid ObjectID");
+          return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+        }
+
+        try {
+          const result = await db.collection(usersTable).findOne(query);
+          if (!result) {
+            return h.response({ "statusCode": 404, 'message': 'No record found for user id: ' + request.params.id }).code(404);
+          }
+          else if (!request.auth.credentials.roles.includes('admin') && result.system_user) {
+            return h.response({ "statusCode": 400, 'message': 'Only admins can delete system users' }).code(400);
+          }
+        }
+        catch (err) {
+          console.log("ERROR:", err);
+          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+        }
+
+        try {
+          const result = await db.collection(usersTable).deleteOne(query);
+          return h.response(result).code(204);
+        }
+        catch (err) {
+          console.log("ERROR:", err);
+          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+        }
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: ["admin", "write_users"]
+        },
+        validate: {
+          headers: Joi.object({
+            authorization: Joi.string().required()
+          }),
+          params: Joi.object({
+            id: Joi.string().length(24).required()
+          }),
+          options: {
+            allowUnknown: true
+          }
+        },
+        response: {
+          status: {
+            400: Joi.object({
+              statusCode: Joi.number().integer(),
+              error: Joi.string(),
+              message: Joi.string()
+            }),
+            404: Joi.object({
+              statusCode: Joi.number().integer(),
+              message: Joi.string()
+            }),
+            503: Joi.object({
+              statusCode: Joi.number().integer(),
+              error: Joi.string(),
+              message: Joi.string()
+            })
+          }
+        },
+        description: 'Delete a user record',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong></p>',
+        tags: ['user','auth','api']
+      }
+    });
+
+    server.route({
+      method: 'GET',
+      path: '/users/{id}/token',
+      async handler(request, h) {
+
+        if (request.auth.credentials.id !== request.params.id && !request.auth.credentials.roles.includes('admin')) {
+          return h.response({ "statusCode":400,"error":"Forbidden","message":"Only admins and the owner of this user can access this user's token." }).code(400);
+        }
+
+        try {
+          const result = await db.collection(usersTable).findOne({ _id: new ObjectID(request.params.id) });
 
           if (!result) {
-            return reply().code(401);
+            return h.code(401);
           }
 
-          let user = result;
+          const user = result;
 
-          return reply({ token: Jwt.sign( { id:user._id, scope: user.roles}, SECRET_KEY ) }).code(200);
-        });
-      } else {
-        return reply({"statusCode":403,"error":"Forbidden","message":"Insufficient scope"}).code(403);
-      }
-    },
-    config: {
-      auth: {
-        strategy: 'jwt',
-        //scope: ['admin']
-      },
-      validate: {
-        params: {
-          id: Joi.string().length(24).required()
+          return h.response({ token: Jwt.sign( { id:user._id, scope: server.methods._rolesToScope(user.roles), roles: user.roles }, SECRET_KEY) }).code(200);
+        }
+        catch (err) {
+          console.log("ERROR:", err);
+          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
         }
       },
-      response: {
-        status: {
-          200: Joi.object({
-            token: Joi.string().regex(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_.+/=]*$/),
+      config: {
+        auth: {
+          strategy: 'jwt'
+        },
+        validate: {
+          headers: Joi.object({
+            authorization: Joi.string().required()
           }),
-        }
-      },
-      description: 'This is the route used for retrieving a user\'s JWT based on the user\'s ID.',
-      notes: '<div class="panel panel-default">\
-        <div class="panel-heading"><strong>Status Code: 200</strong> - authenication successful</div>\
-        <div class="panel-body">Returns JSON object conatining user information</div>\
-      </div>\
-      <div class="panel panel-default">\
-        <div class="panel-heading"><strong>Status Code: 401</strong> - authenication failed</div>\
-        <div class="panel-body">Returns nothing</div>\
-      </div>',
-      tags: ['login', 'auth', 'api']
-    }
-  });
-
-  return next();
-};
-
-exports.register.attributes = {
-  name: 'routes-api-users',
-  dependencies: ['hapi-mongodb']
+          params: Joi.object({
+            id: Joi.string().length(24).required()
+          }),
+          options: {
+            allowUnknown: true
+          }
+        },
+        response: {
+          status: {
+            200: Joi.object({
+              token: Joi.string().regex(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_.+/=]*$/)
+            }),
+            400: Joi.object({
+              statusCode: Joi.number().integer(),
+              error: Joi.string(),
+              message: Joi.string()
+            }),
+            503: Joi.object({
+              statusCode: Joi.number().integer(),
+              error: Joi.string(),
+              message: Joi.string()
+            })
+          }
+        },
+        description: 'This is the route used for retrieving a user\'s JWT based on the user\'s ID.',
+        notes: '<div class="panel panel-default">\
+          <div class="panel-heading"><strong>Status Code: 200</strong> - authenication successful</div>\
+          <div class="panel-body">Returns JSON object conatining user information</div>\
+        </div>\
+        <div class="panel panel-default">\
+          <div class="panel-heading"><strong>Status Code: 401</strong> - authenication failed</div>\
+          <div class="panel-body">Returns nothing</div>\
+        </div>',
+        tags: ['login', 'auth', 'api']
+      }
+    });
+  }
 };

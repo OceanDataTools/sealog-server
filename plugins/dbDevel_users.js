@@ -1,81 +1,91 @@
-'use strict';
-var test = require('assert');
+const Bcrypt = require('bcryptjs');
+
+const saltRounds = 10;
 
 const {
-  usersTable,
+  usersTable
 } = require('../config/db_constants');
 
-exports.register = function (server, options, next) {
-
-  const db = server.mongo.db;
-  const ObjectID = server.mongo.ObjectID;
-
-  const test_data = [
-    {
-      _id: ObjectID("5981f167212b348aed7fa9f5"),
-      username: "admin",
-      fullname: "Admin",
-      email: "admin@notarealserver.com",
-      password: "$2a$10$XXtpkkegXzqsCj1pN.Y5sus81F9/pvaLxmMjUc401.DZL3oZbh11i",
-      last_login: new Date(),
-      roles: ['admin', 'event_manager', 'event_logger', 'event_watcher'],
-      system_user: true,
-    },
-    {
-      _id: ObjectID("5981f167212b348aed7fb9f5"),
-      username: "guest",
-      fullname: "Guest",
-      email: "guest@notarealserver.com",
-      password: "$2a$10$oTRayeYC2sOAuW9vapp3Ze6zVFsGyj40cc1XgWv.NL/hGLNi82Whq",
-      last_login: new Date(),
-      roles: ['event_manager', 'event_logger', 'event_watcher'],
-      system_user: true,
-    },
-  ];
-
-  console.log("Searching for Users Collection");
-  db.listCollections({name:usersTable}).toArray().then(function(names) {
-    test.equal(0, names.length);
-
-    console.log("Creating Users Collection");
-    db.createCollection(usersTable, function(err, collection) {
-      test.equal(null, err);
-
-      // Insert a document in the capped collection
-      console.log("Populating Users Collection");
-      collection.insertMany(test_data, function(err) {
-        test.equal(null, err);
-
-        return next();
-
-      });
-    });
-  }).catch(function () {
-    console.log("Users Collection is present... dropping it");
-    db.dropCollection(usersTable).then(function() {
-
-      console.log("Creating Users Collection");
-      db.createCollection(usersTable, function(err, collection) {
-        test.equal(null, err);
-
-        // Insert a document in the capped collection
-        console.log("Populating Users Collection");
-        collection.insertMany(test_data, function(err) {
-          test.equal(null, err);
-
-          return next();
-        });
-      });
-    }).catch(function () {
-      console.log("unable to drop usersTable");
-
-      return next();
-
-    });
-  });
-};
-
-exports.register.attributes = {
+exports.plugin = {
   name: 'db_populate_users',
-  dependencies: ['hapi-mongodb']
+  dependencies: ['hapi-mongodb'],
+  register: async (server, options) => {
+
+    const hashedPassword = async (password) => {
+
+      return await Bcrypt.hash( password, saltRounds );
+
+    };
+
+    const db = server.mongo.db;
+    const ObjectID = server.mongo.ObjectID;
+
+    const test_data = [
+      {
+        _id: ObjectID("5981f167212b348aed7fa9f5"),
+        username: "admin",
+        fullname: "Admin",
+        email: "admin@notarealserver.com",
+        password: await hashedPassword("demo"),
+        last_login: new Date(),
+        roles: ['admin', 'event_watcher', 'event_logger', 'event_manager', 'cruise_manager'],
+        system_user: true,
+        disabled: false
+      },
+      {
+        _id: ObjectID("5981f167212b348aed7fb9f5"),
+        username: "guest",
+        fullname: "Guest",
+        email: "guest@notarealserver.com",
+        password: await hashedPassword(""),
+        last_login: new Date(),
+        roles: ['event_manager', 'event_logger', 'event_watcher'],
+        system_user: true,
+        disabled: false
+      },
+      {
+        _id: ObjectID("5981f167212b348aed7fc9f5"),
+        username: "pi",
+        fullname: "Primary Investigator",
+        email: "pi@notarealserver.com",
+        password: await hashedPassword(""),
+        last_login: new Date(),
+        roles: ['event_manager', 'event_logger', 'event_watcher', 'cruise_manager'],
+        system_user: true,
+        disabled: false
+      }
+    ];
+
+    console.log("Searching for Users Collection");
+    try {
+      const result = await db.listCollections({ name:usersTable }).toArray();
+      if (result.length > 0) {
+        console.log("Users Collection is present... dropping it");
+        try {
+          await db.dropCollection(usersTable);
+        }
+        catch (err) {
+          console.log("DROP ERROR:", err.code);
+          throw (err);
+        }
+      }
+    }
+    catch (err) {
+      console.log("LIST ERROR:", err.code);
+      throw (err);
+    }
+
+    try {
+      console.log("Creating Users Collection");
+      const collection = await db.createCollection(usersTable);
+
+      console.log("Populating Users Collection");
+      await collection.insertMany(test_data);
+
+    }
+    catch (err) {
+      console.log("CREATE ERROR:", err.code);
+      throw (err);
+    }
+  }
 };

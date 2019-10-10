@@ -1,115 +1,101 @@
-'use strict';
-var test = require('assert');
+
 
 const {
-  eventsTable,
+  eventsTable
 } = require('../config/db_constants');
 
-exports.register = function (server, options, next) {
-
-  const db = server.mongo.db;
-  const ObjectID = server.mongo.ObjectID;
-
-  const test_data = [
-    {
-      _id: ObjectID('5981f167212b348aed7fa9f5'),
-      event_author: 'admin',
-      ts: new Date(),
-      event_value: "FISH",
-      event_options: [{
-        event_option_name: "status",
-        event_option_value: "alive"
-      }],
-      event_free_text: "some free text",
-    }, {
-      _id: ObjectID('5981f167212b348aed7fa9f6'),
-      event_author: 'user',
-      ts: new Date(),
-      event_value: "CORAL",
-      event_options: [{
-        event_option_name: "status",
-        event_option_value: "alive"
-      }],
-      event_free_text: "some more text",
-    }, {
-      _id: ObjectID('5981f167212b348aed7fa9f7'),
-      event_author: 'user',
-      ts: new Date(),
-      event_value: "FISH",
-      event_options: [{
-        event_option_name: "status",
-        event_option_value: "alive"
-      }],
-      event_free_text: "some other text",
-    }, {
-      _id: ObjectID('5981f167212b348aed7fa9f8'),
-      event_author: 'admin',
-      ts: new Date(),
-      event_value: "FISH",
-      event_options: [{
-        event_option_name: "status",
-        event_option_value: "alive"
-      }],
-      event_free_text: "some misc text",
-    }, {
-      _id: ObjectID('5981f167212b348aed7fa9f9'),
-      event_author: 'admin',
-      ts: new Date(),
-      event_value: "FISH",
-      event_options: [{
-        event_option_name: "status",
-        event_option_value: "dead"
-      }],
-      event_free_text: "some free text",
-    }
-  ];
-
-  console.log("Searching for Events Collection");
-  db.listCollections({name:eventsTable}).toArray().then(function(names) {
-    test.equal(0, names.length);
-
-    console.log("Creating Events Collection");
-    db.createCollection(eventsTable, function(err, collection) {
-      test.equal(null, err);
-
-      // Insert a document in the capped collection
-      console.log("Populating Events Collection");
-      collection.insertMany(test_data, function(err) {
-        test.equal(null, err);
-
-        collection.ensureIndex({event_free_text:"text"}).then(() => {
-          return next();
-        });
-      });
-    });
-  }).catch(function () {
-    console.log("Events Collection is present... dropping it");
-    db.dropCollection(eventsTable).then(function() {
-
-      console.log("Creating Events Collection");
-      db.createCollection(eventsTable, function(err, collection) {
-        test.equal(null, err);
-
-        // Insert a document in the capped collection
-        console.log("Populating Events Collection");
-        collection.insertMany(test_data, function(err) {
-          test.equal(null, err);
-
-          collection.ensureIndex({event_free_text:"text"}).then(() => {
-            return next();
-          });
-        });
-      });
-    }).catch(function () {
-      console.log("unable to drop", eventsTable);
-
-      return next();
-
-    });
-  });
-};
-
-exports.register.attributes = {
+exports.plugin = {
   name: 'db_populate_events',
-  dependencies: ['hapi-mongodb']
+  dependencies: ['hapi-mongodb'],
+  register: async (server, options) => {
+
+    const db = server.mongo.db;
+    const ObjectID = server.mongo.ObjectID;
+
+    const test_data = [
+      {
+        _id: ObjectID('5981f167212b348aed7fa9f5'),
+        event_author: 'admin',
+        ts: new Date(),
+        event_value: "FISH",
+        event_options: [{
+          event_option_name: "status",
+          event_option_value: "alive"
+        }],
+        event_free_text: "some free text"
+      }, {
+        _id: ObjectID('5981f167212b348aed7fa9f6'),
+        event_author: 'user',
+        ts: new Date(),
+        event_value: "CORAL",
+        event_options: [{
+          event_option_name: "status",
+          event_option_value: "alive"
+        }],
+        event_free_text: "some more text"
+      }, {
+        _id: ObjectID('5981f167212b348aed7fa9f7'),
+        event_author: 'user',
+        ts: new Date(),
+        event_value: "FISH",
+        event_options: [{
+          event_option_name: "status",
+          event_option_value: "alive"
+        }],
+        event_free_text: "some other text"
+      }, {
+        _id: ObjectID('5981f167212b348aed7fa9f8'),
+        event_author: 'admin',
+        ts: new Date(),
+        event_value: "FISH",
+        event_options: [{
+          event_option_name: "status",
+          event_option_value: "alive"
+        }],
+        event_free_text: "some misc text"
+      }, {
+        _id: ObjectID('5981f167212b348aed7fa9f9'),
+        event_author: 'admin',
+        ts: new Date(),
+        event_value: "FISH",
+        event_options: [{
+          event_option_name: "status",
+          event_option_value: "dead"
+        }],
+        event_free_text: "some free text"
+      }
+    ];
+
+    console.log("Searching for Events Collection");
+    try {
+      const result = await db.listCollections({ name:eventsTable }).toArray();
+      if (result.length > 0) {
+        console.log("Events Collection is present... dropping it");
+        try {
+          await db.dropCollection(eventsTable);
+        }
+        catch (err) {
+          console.log("DROP ERROR:", err.code);
+          throw (err);
+        }
+      }
+    }
+    catch (err) {
+      console.log("LIST ERROR:", err.code);
+      throw (err);
+    }
+
+    try {
+      console.log("Creating Events Collection");
+      const collection = await db.createCollection(eventsTable);
+
+      console.log("Populating Events Collection");
+      await collection.insertMany(test_data);
+
+    }
+    catch (err) {
+      console.log("CREATE ERROR:", err.code);
+      throw (err);
+    }
+  }
 };

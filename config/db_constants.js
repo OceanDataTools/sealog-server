@@ -1,17 +1,21 @@
-const sealogDB = 'sealogDB';
-const sealogDB_devel = 'sealogDB_devel';
+const sealogDB = 'sealogDB_vehicle';
+const sealogDB_devel = 'sealogDB_devel_vehicle';
+const cruisesTable = 'cruises';
 const customVarsTable = 'custom_vars';
 const eventAuxDataTable = 'event_aux_data';
 const eventTemplatesTable = 'event_templates';
 const eventsTable = 'events';
+const loweringsTable = 'lowerings';
 const usersTable = 'users';
 
 module.exports = {
   sealogDB,
   sealogDB_devel,
+  cruisesTable,
   customVarsTable,
   eventAuxDataTable,
   eventTemplatesTable,
   eventsTable,
-  usersTable,
+  loweringsTable,
+  usersTable
 };

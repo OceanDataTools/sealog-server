@@ -12,7 +12,7 @@ eventsAPIPath = '/api/v1/events'
 
 localServerIP = '0.0.0.0'
 localServerAPIPort = '8000'
-localServerWSPort = '8001'
+localServerWSPort = '8000'
 localServerPath = '/sealog-server'
 #devel
 localToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYTlmNSIsInNjb3BlIjpbImFkbWluIiwiZXZlbnRfbWFuYWdlciIsImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTI1MDEyNzY4fQ.Smk_qqn4ixjjahh365a1XxhdbmQdDjwpgwcey_ow_T4"
