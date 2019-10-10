@@ -1,6 +1,5 @@
 # sealog-server
-Sealog event logging server, tweaked to support the JASON ROV shoreside
-
+Sealog event-logging server
 Sealog is intended as a general purpose eventlogging framework that is independent of any particular user-interface.  All interactions with the Sealog Server are done via the [Sealog Server's RESTful API](<https://sealog-vehicle.oceandatatools.org:9200/sealog-server/documentation>).
 
 This allows for users to develop their own user interfaces for adding, editing and exporting events or extend the functionality of other systems to dynamically submit events.  It's even possible to develop hardware-based clients (physical buttons) using cheap network-aware microcontrollers (i.e Ardinuo w/Ethernet Shield).
