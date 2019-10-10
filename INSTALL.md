@@ -20,15 +20,15 @@ https://www.digitalocean.com/community/tutorials/how-to-install-node-js-on-ubunt
 ### Clone the repository
 
 ```
-git clone https://github.com/webbpinner/sealog-server-jason.git
+git clone https://github.com/webbpinner/sealog-server.git
 ```
 
-This should clone the repo to a directory called `sealog-server-jason`
+This should clone the repo to a directory called `sealog-server`
 
 ### Create the new configurations files
 
 ```
-cd ./sealog-server-jason
+cd ./sealog-server
 cp ./config/db_constants.js.dist ./config/db_constants.js
 cp ./config/email_constants.js.dist ./config/email_constants.js
 cp ./config/manifest.js.dist ./config/manifest.js
@@ -57,7 +57,7 @@ i.e. `module.exports = '<replace with secret key>'`
 
 From a terminal run:
 ```
-cd ./sealog-server-jason
+cd ./sealog-server
 npm install
 ```
 
@@ -65,7 +65,7 @@ npm install
 
 From a terminal run:
 ```
-cd ./sealog-server-jason
+cd ./sealog-server
 npm run start-devel
 ```
 
@@ -78,7 +78,7 @@ Running in development mode will create an admin account (testadmin:password) an
 From a terminal run:
 
 ```
-cd ./sealog-server-jason
+cd ./sealog-server
 npm start
 ```
 
@@ -119,7 +119,7 @@ If everything went correctly you should not be able to access the sealog-server 
 
 ## Need to make everything available over port https?
 
-By default sealog-server-jason runs over http.  To run the server over https uncomment the following commented lines at the top of the `./config/manifest.js` file and replace `<privKey.pem>` and `<fullchain.pem>` with the appropriate cert files:
+By default sealog-server runs over http.  To run the server over https uncomment the following commented lines at the top of the `./config/manifest.js` file and replace `<privKey.pem>` and `<fullchain.pem>` with the appropriate cert files:
 
 ```
 // const Fs = require('fs')
