@@ -2,7 +2,7 @@ import requests
 import json
 import logging
 
-from settings import apiServerURL, headers, customVarAPIPath
+from .settings import apiServerURL, headers, customVarAPIPath
 
 def getCustomVarUid(var_name):
 

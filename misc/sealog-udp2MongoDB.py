@@ -26,7 +26,7 @@ UDP_PORT_NO = 10600
 LOG_LEVEL = logging.INFO
 
 # Valid line headers to process
-validLineLabels = ['JDS','ODR']
+validLineLabels = ['GGA','HDR']
 
 # create logger
 logger = logging.getLogger(__file__ )
@@ -97,7 +97,7 @@ def insertUDPData():
 
   client = MongoClient()
   db = client.udpDataCache
-  collection = db.navData
+  collection = db.udpData
 
   serverSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
   serverSock.bind((UDP_IP_ADDRESS, UDP_PORT_NO))
@@ -115,9 +115,9 @@ def insertUDPData():
       data = data.rstrip()
 
       record = None
-      if(messageType == 'JDS'):
+      if(messageType == 'GGA'):
         record = parseJDS(data)
-      elif(messageType == 'ODR'):
+      elif(messageType == 'HDR'):
         record = parseODR(data)
       # elif(messageType == 'something'):
       # elif(messageType == 'else'):

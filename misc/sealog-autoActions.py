@@ -21,6 +21,8 @@ import websockets
 import json
 import requests
 import logging
+import sys
+import os
 from pymongo import MongoClient
 
 import python_sealog
@@ -137,7 +139,7 @@ if __name__ == '__main__':
     
   # Retrieve the asnapStatus ID
   try:
-    asnapStatusVarID = getCustomVarId(asnapStatusVarName)
+    asnapStatusVarID = getCustomVarUid(asnapStatusVarName)
   except Exception as error:
     logger.error("Error retrieving the asnapStatus ID")
     logger.error(str(error))
