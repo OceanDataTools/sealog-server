@@ -1,6 +1,4 @@
 ## Sealog Server Overview
-Author: Webb Pinner, webbpinner@gmail.com
-Updated: October 09, 2019
 
 Sealog is a modular system for submitting, and extracting events and ancillary data associated with events.  Events and associated data are submitted to and extracted from the server via http GET/POST calls to the server's RESTful API.
 
@@ -55,7 +53,7 @@ The sealog-server installation for Sealog includes 3 system accounts:
 There are 3 ways to obtain a JWT:
 1. Login to Sealog-Client as the user you want the JWT for then goto Profile. The JWT will be listed at the bottom of the profile form.
 2. Login to Sealog-Client as an admin user then goto to System Maintenance --> Users. Click the "eye" icon next to the user you want the JWT for. This will open a modal containing the JWT for that user.
-3.	 From the command line, make the following call, replacing `<username>` and `<password>` with the username and password for the disired account:
+3. From the command line, make the following call, replacing `<username>` and `<password>` with the username and password for the disired account:
 
 ```
 curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' -d '{
