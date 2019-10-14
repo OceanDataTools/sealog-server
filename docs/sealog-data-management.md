@@ -1,7 +1,4 @@
 ## Sealog Server Data Management
-Author: Webb Pinner, webbpinner@gmail.com
-Written: May 2, 2018
-Updated: October 08, 2019
 
 ### PRE-CRUISE
 
