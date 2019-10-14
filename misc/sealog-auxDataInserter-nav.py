@@ -22,12 +22,13 @@ import websockets
 import json
 import requests
 import logging
+import os
+import sys
 from datetime import datetime
 from pymongo import MongoClient
 
 import python_sealog
-from python_sealog.custom_vars import getCustomVarUid
-from python_sealog.settings import apiServerURL, wsServerURL, cruisesAPIPath, eventsAPIPath, customVarAPIPath, headers
+from python_sealog.settings import apiServerURL, wsServerURL, cruisesAPIPath, eventsAPIPath, auxDataAPIPath, headers
 
 # set of events to ignore
 excludeSet = ()
@@ -57,7 +58,7 @@ auxDataTemplate = {
 
 client = MongoClient()
 db = client.udpDataCache
-collection = db.navData
+collection = db.udpData
 
 LOG_LEVEL = logging.INFO
 
