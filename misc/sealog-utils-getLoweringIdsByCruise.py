@@ -42,4 +42,8 @@ if __name__ == '__main__':
       handler.setLevel(logging.DEBUG)
     logger.debug("Log level now set to DEBUG")
 
-  print(' '.join(getLoweringIdsByCruise(args.cruise_id)))
+  lowerings = getLoweringIdsByCruise(args.cruise_id)
+  if not lowerings == None:
+    print(' '.join(lowerings))
+  else:
+    logger.error("No lowerings found for cruise_id: " + args.cruise_id)

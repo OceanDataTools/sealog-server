@@ -42,4 +42,8 @@ if __name__ == '__main__':
       handler.setLevel(logging.DEBUG)
     logger.debug("Log level now set to DEBUG")
 
-  print(getCruise(args.cruise_id))
+  cruise = getCruise(args.cruise_id)
+  if cruise != None:
+    print(cruise)
+  else:
+    logger.error("No cruise found for cruise_id: " + args.cruise_id)

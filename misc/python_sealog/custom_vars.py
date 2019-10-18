@@ -11,10 +11,11 @@ def getCustomVarUid(var_name):
     r = requests.get(url, headers=headers)
     logging.debug(r.text)
 
-    customVars = json.loads(r.text)
-    for customVar in customVars:
-      if customVar['custom_var_name'] == var_name:
-        return customVar['id']
+    if r.status_code != 404:
+      customVars = json.loads(r.text)
+      for customVar in customVars:
+        if customVar['custom_var_name'] == var_name:
+          return customVar['id']
 
   except Exception as error:
     logging.error('Error retrieving custom variable ID')

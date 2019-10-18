@@ -1,0 +1,144 @@
+#!/bin/bash
+#
+# Purpose: This script backs up sealog data to file.  The backup includes the
+#          cruise record, event_templates, event records and
+#          ancillary data.
+#
+#   Usage: Type sealog_vessel_postCruise.sh [-d dest_dir] <cruise_id> to run the script.
+#          - [-d dest_dir] --> where to save the data, the default location
+#                              is defined in the BACKUP_DIR_ROOT variable
+#          - <dest_dir>    --> the cruise ID (RR1802)
+#
+#  Author: Webb Pinner webbpinner@gmail.com
+# Created: 2019-10-15
+
+SCRIPT_BASE=`dirname $0`
+
+GET_CRUISE_SCRIPT='python3 '${SCRIPT_BASE}'/sealog-utils-getCruise.py'
+GET_EVENT_TEMPLATES_SCRIPT='python3 '${SCRIPT_BASE}'/sealog-utils-getEventTemplates.py'
+GET_EVENTS_SCRIPT='python3 '${SCRIPT_BASE}'/sealog-utils-getEvents.py'
+GET_EVENT_AUX_DATA_SCRIPT='python3 '${SCRIPT_BASE}'/sealog-utils-getEventAuxData.py'
+GET_EVENT_EXPORTS_SCRIPT='python3 '${SCRIPT_BASE}'/sealog-utils-getEventExports.py'
+GET_CRUISE_UID_SCRIPT='python3 '${SCRIPT_BASE}'/sealog-utils-getCruiseUid.py'
+GET_FRAMEGRAB_SCRIPT='python3 '${SCRIPT_BASE}'/sealog-utils-getFramegrabList.py'
+
+# Root data folder for Sealog
+BACKUP_DIR_ROOT="/Users/webbpinner/Desktop/sealog-backups"
+FRAMEGRAB_DIR="images"
+CRUISE_ID=""
+CRUISE_OID=""
+
+getCruiseDataFiles(){
+
+	echo "Exporting cruise record"
+	${GET_CRUISE_SCRIPT} ${CRUISE_ID} > ${CRUISE_DIR}'/'${CRUISE_ID}'_cruiseRecord.json'
+
+	echo "Exporting event data"
+	${GET_EVENTS_SCRIPT} -c ${CRUISE_ID} > ${CRUISE_DIR}'/'${CRUISE_ID}'_eventOnlyExport.json'
+
+	echo "Exporting aux data"
+	${GET_EVENT_AUX_DATA_SCRIPT} -c ${CRUISE_ID} > ${CRUISE_DIR}'/'${CRUISE_ID}'_auxDataExport.json'
+
+	echo "Exporting events with aux data as json"
+	${GET_EVENT_EXPORTS_SCRIPT} -c ${CRUISE_ID} > ${CRUISE_DIR}'/'${CRUISE_ID}'_sealogExport.json'
+
+	echo "Exporting events with aux data as csv"
+	${GET_EVENT_EXPORTS_SCRIPT} -f csv -c ${CRUISE_ID} > ${CRUISE_DIR}'/'${CRUISE_ID}'_sealogExport.csv'
+}
+
+usage(){
+cat <<EOF
+Usage: $0 [-?] [-d dest_dir] <cruise_id>
+	-d <dest_dir>   Where to store the backup, the default is:
+	                ${BACKUP_DIR_ROOT}
+	<cruise_id>     The cruise id for the cruise, i.e. 'RR1801'
+EOF
+}
+
+while getopts ":d:" opt; do
+  case $opt in
+   d)
+      BACKUP_DIR_ROOT=${OPTARG}
+      ;;
+
+   \?)
+      usage
+      exit 0
+      ;;
+  esac
+done
+
+shift $((OPTIND-1))
+
+if [ $# -ne 1 ]; then
+        echo ""
+        echo "Missing cruise number"
+        echo ""
+        usage
+        exit 1
+fi
+
+CRUISE_ID=${1}
+CRUISE_OID=`${GET_CRUISE_UID_SCRIPT} ${1}`
+
+if [ -z ${CRUISE_OID} ]; then
+	echo ""
+	echo "Unable to find cruise record for cruise id: ${1}"
+	echo ""
+	exit 1
+fi
+
+echo ""
+echo "-----------------------------------------------------"
+echo "Backup Directory:" ${BACKUP_DIR_ROOT}/${CRUISE_ID}
+echo "-----------------------------------------------------"
+read -p "Continue? (Y/N): " confirm && [[ $confirm == [Yy] || $confirm == [Yy][Ee][Ss] ]] || exit 1
+
+echo ""
+
+BACKUP_DIR=${BACKUP_DIR_ROOT}
+
+CRUISE_DIR=${BACKUP_DIR}/${CRUISE_ID}
+
+if [ ! -d ${CRUISE_DIR} ]; then
+    read -p "Create backup directory? (Y/N): " confirm && [[ $confirm == [Yy] || $confirm == [Yy][Ee][Ss] ]] || exit 1
+    mkdir -p ${CRUISE_DIR}
+    if [ ! -d ${CRUISE_DIR} ]; then
+            echo "Unable to create backup directory... quitting"
+            exit 1
+    fi
+    mkdir ${CRUISE_DIR}/${FRAMEGRAB_DIR}
+    if [ ! -d ${CRUISE_DIR}/${FRAMEGRAB_DIR} ]; then
+            echo "Unable to create framegrab directory... quitting"
+            exit 1
+    fi
+fi
+
+echo "Exporting event templates"
+${GET_EVENT_TEMPLATES_SCRIPT} > ${CRUISE_DIR}'/'${CRUISE_ID}'_eventTemplates.json'
+
+getCruiseDataFiles
+
+FRAMEGRABS=`${GET_FRAMEGRAB_SCRIPT} -c ${CRUISE_ID}`
+if [ ! -z ${FRAMEGRABS} ]; then
+  cat ${FRAMEGRABS} | awk -v dest=${CRUISE_DIR}/${FRAMEGRAB_DIR} 'BEGIN{printf "#!/bin/bash\nDEST_DIR=%s\n", dest} {printf "cp -v %s ${DEST_DIR}/\n", $0}' > ${CRUISE_DIR}/${CRUISE_ID}_framegrabCopyScript.sh
+  pico ${CRUISE_DIR}/${CRUISE_ID}_framegrabCopyScript.sh
+
+  read -p "Proceed with copying framegrabs? (Y/N): " confirm && [[ $confirm == [Yy] || $confirm == [Yy][Ee][Ss] ]] || echo "done";echo "";exit 0
+  echo ""
+
+  echo "Copying framegrabs"
+  chmod +x ${CRUISE_DIR}/${CRUISE_ID}_framegrabCopyScript.sh
+
+  which pv
+  if [ $? != 0]; then
+	  pv -p -w 80 ${CRUISE_DIR}/${CRUISE_ID}_framegrabCopyScript.sh | bash > /dev/null
+  else
+	  ${CRUISE_DIR}/${CRUISE_ID}_framegrabCopyScript.sh
+  fi
+else
+  echo "No framegrabs found to copy."
+fi
+
+echo "Done!"
+echo ""

@@ -10,9 +10,10 @@ def getEventTemplates():
     url = apiServerURL + eventTemplatesAPIPath
     r = requests.get(url, headers=headers)
 
-    eventTemplates = json.loads(r.text)
-    logging.debug(json.dumps(eventTemplates))
-    return eventTemplates
+    if r.status_code != 404:
+      eventTemplates = json.loads(r.text)
+      logging.debug(json.dumps(eventTemplates))
+      return eventTemplates
 
   except Exception as error:
     print(r.text)

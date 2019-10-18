@@ -10,11 +10,12 @@ def getCruiseUid(cruise_id):
     url = apiServerURL + cruisesAPIPath
     r = requests.get(url, headers=headers)
 
-    cruises = json.loads(r.text)
-    for cruise in cruises:
-      if cruise['cruise_id'] == cruise_id:
-        logging.debug(json.dumps(cruise))
-        return cruise['id']
+    if r.status_code != 404:
+      cruises = json.loads(r.text)
+      for cruise in cruises:
+        if cruise['cruise_id'] == cruise_id:
+          logging.debug(json.dumps(cruise))
+          return cruise['id']
   except Exception as error:
     logging.error(str(error))
 
@@ -25,10 +26,11 @@ def getCruise(cruise_id):
     url = apiServerURL + cruisesAPIPath
     r = requests.get(url, headers=headers)
 
-    cruises = json.loads(r.text)
-    for cruise in cruises:
-      if cruise['cruise_id'] == cruise_id:
-        logging.debug(json.dumps(cruise))
-        return cruise
+    if r.status_code != 404:
+      cruises = json.loads(r.text)
+      for cruise in cruises:
+        if cruise['cruise_id'] == cruise_id:
+          logging.debug(json.dumps(cruise))
+          return cruise
   except Exception as error:
     logging.error(str(error))  

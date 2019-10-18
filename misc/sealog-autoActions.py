@@ -4,17 +4,16 @@
 #          and performs additional actions depending on the recieved
 #          event.
 #
-#          Currently this service listens for "On Bottom" and "Off
-#          Bottom" events and enables/disables the ASNAP functionality.
+#          Currently this service listens for "Vehicle in water" and "Vehicle
+#          on deck" events and enables/disables the ASNAP functionality.
 #
 #   Usage: Type python3 sealog-autoActions.py to start the service.
 #
-#          This serivce runs in the forground. Type ^d to kill the
-#          service.
+#          This serivce runs in the forground. Type ^d to kill the service.
 #
 #  Author: Webb Pinner webbpinner@gmail.com
 # Created: 2018-09-26
-# Modified: 2019-10-07
+# Modified: 2019-10-17
 
 import asyncio
 import websockets

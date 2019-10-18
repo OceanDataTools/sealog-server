@@ -4,7 +4,7 @@
 #          cruise record, lowering records, event_templates, event records and
 #          ancillary data.
 #
-#   Usage: Type sealog_postdive.sh [-d dest_dir] [-c cruise_id] <lowering_id> to run the script.
+#   Usage: Type sealog_postLowering.sh [-d dest_dir] [-c cruise_id] <lowering_id> to run the script.
 #          - [-d dest_dir] --> where to save the data, the default location
 #                              is defined in the BACKUP_DIR_ROOT variable
 #          - [-c dest_dir] --> the cruise ID (RR1802).  If this is defined 
@@ -41,16 +41,16 @@ getLoweringDataFiles(){
 	${GET_LOWERING_SCRIPT} ${LOWERING_ID} > ${LOWERING_DIR}'/'${LOWERING_ID}'_loweringRecord.json'
 
 	echo "Exporting event data"
-	${GET_EVENTS_SCRIPT} ${LOWERING_ID} > ${LOWERING_DIR}'/'${LOWERING_ID}'_eventOnlyExport.json'
+	${GET_EVENTS_SCRIPT} '-l' ${LOWERING_ID} > ${LOWERING_DIR}'/'${LOWERING_ID}'_eventOnlyExport.json'
 
 	echo "Exporting aux data"
-	${GET_EVENT_AUX_DATA_SCRIPT} ${LOWERING_ID} > ${LOWERING_DIR}'/'${LOWERING_ID}'_auxDataExport.json'
+	${GET_EVENT_AUX_DATA_SCRIPT} '-l' ${LOWERING_ID} > ${LOWERING_DIR}'/'${LOWERING_ID}'_auxDataExport.json'
 
 	echo "Exporting events with aux data as json"
-	${GET_EVENT_EXPORTS_SCRIPT} ${LOWERING_ID} > ${LOWERING_DIR}'/'${LOWERING_ID}'_sealogExport.json'
+	${GET_EVENT_EXPORTS_SCRIPT} '-l' ${LOWERING_ID} > ${LOWERING_DIR}'/'${LOWERING_ID}'_sealogExport.json'
 
 	echo "Exporting events with aux data as csv"
-	${GET_EVENT_EXPORTS_SCRIPT} -c ${LOWERING_ID} > ${LOWERING_DIR}'/'${LOWERING_ID}'_sealogExport.csv'
+	${GET_EVENT_EXPORTS_SCRIPT} '-f csv' '-l' ${LOWERING_ID} > ${LOWERING_DIR}'/'${LOWERING_ID}'_sealogExport.csv'
 }
 
 getFramegrabs(){
@@ -66,7 +66,7 @@ Usage: $0 [-?] [-d dest_dir] [-c cruise_id] <lowering_id>
 	                the lowering backup will be stored within a 
 	                <cruise_id> directory. 
 	-?              Print this statement.
-	<lowering_id>   The dive ID i.e. 'J2-1107'
+	<lowering_id>   The lowering ID i.e. 'J2-1107'
 EOF
 }
 
@@ -90,7 +90,7 @@ shift $((OPTIND-1))
 
 if [ $# -ne 1 ]; then
         echo ""
-        echo "Missing dive number"
+        echo "Missing lowering number"
         echo ""
         usage
         exit 1
@@ -113,7 +113,7 @@ fi
 LOWERING_OID=`${GET_LOWERING_UID_SCRIPT} ${1}`
 if [ -z ${LOWERING_OID} ]; then
 	echo ""
-	echo "Unable to find lowering data for dive id: ${1}"
+	echo "Unable to find lowering data for lowering id: ${1}"
 	echo ""
 	exit 1
 fi

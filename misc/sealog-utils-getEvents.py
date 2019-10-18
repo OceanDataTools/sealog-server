@@ -2,8 +2,9 @@
 
 import logging
 import python_sealog
-from python_sealog.events import getEventsByLoweringUid
+from python_sealog.events import getEventsByLoweringUid, getEventsByCruiseUid
 from python_sealog.lowerings import getLoweringUid
+from python_sealog.cruises import getCruiseUid
 
 # Default logging level
 LOG_LEVEL = logging.INFO
@@ -29,10 +30,11 @@ if __name__ == '__main__':
 
   import argparse
 
-  parser = argparse.ArgumentParser(description='Retrieve events for a lowering')
+  parser = argparse.ArgumentParser(description='Export events for a cruise or lowering')
   parser.add_argument('-d', '--debug', action='store_true', help=' display debug messages')
-  parser.add_argument('-c', '--csv', action='store_true', help=' export events as csv file')
-  parser.add_argument('lowering_id', help='Lowering ID i.e. "J2-1111".')
+  parser.add_argument('-f', '--format', default='json', choices=['csv', 'json'], help=' export events in json (default) or csv format')
+  parser.add_argument('-c', '--cruise_id', help='Cruise ID i.e. "RR1801".')
+  parser.add_argument('-l', '--lowering_id', help='Lowering ID i.e. "J2-1111".')
 
   args = parser.parse_args()
 
@@ -44,11 +46,32 @@ if __name__ == '__main__':
       handler.setLevel(logging.DEBUG)
     logger.debug("Log level now set to DEBUG")
 
-  export_format = 'json'
-  if args.csv:
-    export_format = 'csv'  
+  logger.debug(args)
 
-  lowering_uid = getLoweringUid(args.lowering_id)
-  if not lowering_uid == None:
-    logger.debug("Logger UID: " + lowering_uid)
-    print(getEventsByLoweringUid(lowering_uid, export_format))
+  if args.lowering_id and args.cruise_id:
+    logger.error("Must define either a cruise_id or Lowering_id")
+  elif args.lowering_id:
+    lowering_uid = getLoweringUid(args.lowering_id)
+    if not lowering_uid == None:
+      logger.debug("Lowering UID: " + lowering_uid)
+      events = getEventsByLoweringUid(lowering_uid, args.format)
+      if not events == None:
+        print(events)
+      else:
+        logger.error("No events found for lowering_id: " + args.lowering_id)
+    else:
+      logger.error("No lowering found for lowering_id: " + args.lowering_id)
+  elif args.cruise_id:
+    cruise_uid = getCruiseUid(args.cruise_id)
+    if not cruise_uid == None:
+      logger.debug("Cruise UID: " + cruise_uid)
+      events = getEventsByCruiseUid(cruise_uid, args.format)
+      if not events == None:
+        print(events)
+      else:
+        logger.error("No events found for cruise_id: " + args.cruise_id)
+    else:
+      logger.error("No cruise found for cruise_id: " + args.cruise_id)
+  else:
+    logger.error("Must define either a cruise_id or Lowering_id")
+    

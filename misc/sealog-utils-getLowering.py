@@ -42,4 +42,8 @@ if __name__ == '__main__':
       handler.setLevel(logging.DEBUG)
     logger.debug("Log level now set to DEBUG")
 
-  print(getLowering(args.lowering_id))
+  lowering = getLowering(args.lowering_id)
+  if not lowering == None:
+    print(lowering)
+  else:
+    logger.error("No lowering found for lowering_id: " + args.lowering_id)

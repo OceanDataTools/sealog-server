@@ -14,7 +14,7 @@ SCRIPT_BASE=`dirname $0`
 
 GET_CRUISE_UID_SCRIPT='python3 '${SCRIPT_BASE}'/sealog-utils-getCruiseUid.py'
 GET_LOWERING_IDS_SCRIPT='python3 '${SCRIPT_BASE}'/sealog-utils-getLoweringIdsByCruise.py'
-BACKUP_LOWERING_SCRIPT=${SCRIPT_BASE}'/sealog_postdive.sh'
+BACKUP_LOWERING_SCRIPT=${SCRIPT_BASE}'/sealog_postLowering.sh'
 
 # Root data folder for Sealog
 BACKUP_DIR_ROOT="/Users/webbpinner/Desktop/sealog-backups"

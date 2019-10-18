@@ -41,4 +41,8 @@ if __name__ == '__main__':
       handler.setLevel(logging.DEBUG)
     logger.debug("Log level now set to DEBUG")
 
-    print(getEventTemplates())
+  event_templates = getEventTemplates()
+  if not event_templates == None:
+    print(event_templates)
+  else:
+    logger.error("No templates found")

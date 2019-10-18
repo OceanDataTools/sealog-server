@@ -59,7 +59,7 @@ This prevents the current science party from seeing the lowerings from the previ
 2. SSH into the sealog-server machine as the user that runs sealog-server and run the following commands replacing `<cruise_id>` with the current cruise id (i.e AT42-01) and replace `<lowering_id>` with the lowering ID (i.e. J2-1110):
   ```
   cd to ~/sealog-server/misc
-  ./sealog-postdive.sh -c <cruise_id> <lowering_id>
+  ./sealog-postLowering.sh -c <cruise_id> <lowering_id>
   ```
 This script with create a directory within the backup directory (default is: `/home/sealog/sealog-backups`) using the cruiseID as the directory name.  Within this cruiseID directory there will be the following:
 - the cruise metadata record (JSON-formatted)
@@ -75,9 +75,11 @@ With the loweringID subdirectory there will be the following:
 - a sub-directory of framegrabs
 - the shell script used to copy the framegrabs from their original location to the framegrab sub-directory.
 
-The `sealog-postdive.sh` script is interactive and will prompt the user to confirm actions before they are executed.
+The `sealog-postLowering.sh` script is interactive and will prompt the user to confirm actions before they are executed.
 
-### POST LAST DIVE OF THE CRUISE
+### POST LAST LOWERING OF THE CRUISE
+
+These procedures are for the vehicle-version of the Sealog client.
 
 #### Export the data from all of the lowerings for the current cruise
 1. Open a terminal window.
@@ -86,5 +88,5 @@ The `sealog-postdive.sh` script is interactive and will prompt the user to confi
   cd to ~/sealog-server/misc
   ./sealog-postcruise.sh <cruise_id>
   ```
-  This script will run the `./sealog-postdive.sh -c <cruise_id> <lowering_id>` for each lowering that occured during the cruise.
+  This script will run the `./sealog-postLowering.sh -c <cruise_id> <lowering_id>` for each lowering that occured during the cruise.
 3. Use scp or rsync to copy the `/home/sealog/sealog-backups/<cruise_id>` folder to the desire data repository.  This folder will contain the sealog cruise-level record and directories for each of the lowerings.  Within each of the lowering directories there will be json-formatted files containing the lowering metadata record, event data and event aux data, a sub-directory of framegrabs and the shell script used to copy the framegrabs from their original location to the framegrab sub-directory.
