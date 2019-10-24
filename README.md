@@ -19,6 +19,8 @@ Almost all calls to the API are authenticated using Java Web Tokens (JWT).  The 
 
 Please refer to the [Sealog Server's RESTful API](<https://sealog.oceandatatools.org:9200/sealog-server/documentation>)
 
+![Sealog Server's RESTful API](/docs/sealog-swagger-screenshot.png)
+
 ## Installation
 
 For Sealog Server installation instruction please look at [INSTALL.md](https://github.com/oceandatatools/sealog-server/blob/master/INSTALL.md).
