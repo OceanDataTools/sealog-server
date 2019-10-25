@@ -23,7 +23,7 @@ GET_CRUISE_UID_SCRIPT='python3 '${SCRIPT_BASE}'/sealog-utils-getCruiseUid.py'
 GET_FRAMEGRAB_SCRIPT='python3 '${SCRIPT_BASE}'/sealog-utils-getFramegrabList.py'
 
 # Root data folder for Sealog
-BACKUP_DIR_ROOT="/Users/webbpinner/Desktop/sealog-backups"
+BACKUP_DIR_ROOT="/home/sealog/Desktop/sealog-backups"
 FRAMEGRAB_DIR="images"
 CRUISE_ID=""
 CRUISE_OID=""
