@@ -26,7 +26,7 @@ UDP_PORT_NO = 10600
 LOG_LEVEL = logging.INFO
 
 # Valid line headers to process
-validLineLabels = ['GGA','HDR']
+validLineLabels = ['GGA']
 
 # create logger
 logger = logging.getLogger(__file__ )
@@ -45,53 +45,47 @@ ch.setFormatter(formatter)
 # add ch to logger
 logger.addHandler(ch)
 
-def parseJDS(message):
+def _convertGGA_LL(value, hemisphere):
 
-  msg_array = message.split(" ")
+  deg = ""
+  try:
+    if hemisphere == "E":
+      deg = str(round(int(value[:3]) + float(value[3:])/60, 6))
+    elif hemisphere == "W":
+      deg = str(round((int(value[:3]) + float(value[3:])/60) * -1, 6))
+    elif hemisphere == "N":
+      deg = str(round(int(value[:2]) + float(value[2:])/60, 6))
+    elif hemisphere == "S":
+      deg = str(round((int(value[:2]) + float(value[2:])/60) * -1, 6))
 
-  date_time = str(msg_array[1] + ' ' + msg_array[2])
+  except Exception as error:
+    logger.error("Unable to parse " + value)
 
-  record = {
-    "label": msg_array[0],
-    "data": {
-      "date_time": date_time,
-      "vehicle_name": msg_array[3],
-      "latitude": msg_array[4],
-      "longitude": msg_array[5],
-      "alvin_x": msg_array[6],
-      "alvin_y": msg_array[7],
-      "roll": msg_array[8],
-      "pitch": msg_array[9],
-      "heading": msg_array[10],
-      "depth": msg_array[11],
-      "altitude": msg_array[12],
-      "runtime": msg_array[13],
-      "wraps": msg_array[14],
+  return deg
+
+def parseGGA(message, label=None):
+
+  try:
+    msg_array = message.split(",")
+
+    if label ==None:
+      label = msg_array[0]
+
+    record = {
+      "label": label,
+      "data": {
+        "date_time": datetime.datetime.utcnow().isoformat(),
+        "latitude": _convertGGA_LL(msg_array[2],msg_array[3]),
+        "longitude": _convertGGA_LL(msg_array[4],msg_array[5]),
+        "depth": str(float(msg_array[9])*-1)
+      }
     }
-  }
 
-  return record
+    return record
 
-def parseODR(message):
+  except Exception as error:
+    logger.error("Error parsing message")
 
-  msg_array = message.split(" ")
-
-  date_time = str(msg_array[1] + ' ' + msg_array[2])
-
-  record = {
-    "label": msg_array[0],
-    "data": {
-      "date_time": date_time,
-      "vehicle_name": msg_array[3],
-      "orig_lat": msg_array[4],
-      "orig_lon": msg_array[5],
-      "utm_zone": msg_array[6],
-      "cruise_id": msg_array[7],
-      "dive_id": msg_array[8],
-    }
-  }
-
-  return record
 
 def insertUDPData():
 
@@ -116,9 +110,7 @@ def insertUDPData():
 
       record = None
       if(messageType == 'GGA'):
-        record = parseJDS(data)
-      elif(messageType == 'HDR'):
-        record = parseODR(data)
+        record = parseGGA(data)
       # elif(messageType == 'something'):
       # elif(messageType == 'else'):
 
