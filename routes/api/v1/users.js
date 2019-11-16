@@ -352,7 +352,11 @@ exports.plugin = {
             roles: Joi.array().items(Joi.string()).min(1).required(),
             system_user: Joi.boolean().optional(),
             disabled: Joi.boolean().optional()
-          })
+          }),
+          failAction: (request, h, err) => {
+
+            throw Boom.badRequest(err.message);
+          }
         },
         response: {
           status: {
@@ -499,7 +503,11 @@ exports.plugin = {
             roles: Joi.array().items(Joi.string()).min(1).optional(),
             system_user: Joi.boolean().optional(),
             disabled: Joi.boolean().optional()
-          }).required().min(1)
+          }).required().min(1),
+          failAction: (request, h, err) => {
+
+            throw Boom.badRequest(err.message);
+          }
         },
         response: {
           status: {
