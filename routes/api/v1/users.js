@@ -2,6 +2,7 @@ const Nodemailer = require('nodemailer');
 
 const Bcrypt = require('bcryptjs');
 const Joi = require('@hapi/joi');
+const Boom = require('@hapi/boom');
 const Crypto = require('crypto');
 
 const saltRounds = 10;
