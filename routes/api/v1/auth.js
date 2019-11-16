@@ -105,7 +105,7 @@ exports.plugin = {
 
         if (reCaptchaSecret !== "") {
           try {
-            const reCaptchaVerify = await Axios.get('https://www.google.com/recaptcha/api/siteverify?secret=' + reCaptchaSecret + '&response=' + request.payload.reCaptcha + '&remoteip=' + request.info.remoteAddress,
+            const reCaptchaVerify = await Axios.get('https://www.google.com/recaptcha/api/siteverify?secret=' + reCaptchaSecret + '&response=' + request.payload.reCaptcha + '&remoteip=' + request.info.remoteAddress
             );
 
             if (!reCaptchaVerify.data.success) {

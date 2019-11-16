@@ -1,8 +1,8 @@
 const Joi = require('@hapi/joi');
+const Boom = require('@hapi/boom');
 const Fs = require('fs');
 const Tmp = require('tmp');
 const Path = require('path');
-const Boom = require('@hapi/boom');
 
 const {
   CRUISE_PATH
@@ -375,11 +375,11 @@ exports.plugin = {
         }
 
         // Validate date strings
-        cruise.start_ts = new Date(request.payload.startTS);
-        cruise.stop_ts = new Date(request.payload.stopTS);
+        cruise.start_ts = new Date(request.payload.start_ts);
+        cruise.stop_ts = new Date(request.payload.stop_ts);
 
         if (cruise.start_ts >= cruise.stop_ts) {
-          return h.response({ "statusCode": 401, "error": "Invalid argument", "message": "Start date must be older than stop date" }).code(401);
+          return h.response({ "statusCode": 400, "error": "Invalid argument", "message": "Start date must be older than stop date" }).code(401);
         }
 
         try {
@@ -427,9 +427,8 @@ exports.plugin = {
             cruise_hidden: Joi.boolean().required()
           }),
           failAction: (request, h, err) => {
-            // if (err.output.statusCode === 400) {
+
             throw Boom.badRequest(err.message);
-            // }
           }
         },
         response: {
@@ -614,7 +613,11 @@ exports.plugin = {
             cruise_tags: Joi.array().items(Joi.string()).optional(),
             // cruise_access_list: Joi.array().items(Joi.string()).optional(),
             cruise_hidden: Joi.boolean().optional()
-          }).required().min(1)
+          }).required().min(1),
+          failAction: (request, h, err) => {
+
+            throw Boom.badRequest(err.message);
+          }
         },
         response: {
           status: {
