@@ -94,15 +94,12 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           query: Joi.object({
             offset: Joi.number().integer().min(0).optional(),
             limit: Joi.number().integer().min(1).optional(),
             sort: Joi.string().valid('username', 'last_login').optional()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         response: {
           status: {
@@ -179,13 +176,10 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         response: {
           status: {
@@ -348,7 +342,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           payload: Joi.object({
             id: Joi.string().length(24).optional(),
             username: Joi.string().min(1).max(100).required(),
@@ -358,10 +352,7 @@ exports.plugin = {
             roles: Joi.array().items(Joi.string()).min(1).required(),
             system_user: Joi.boolean().optional(),
             disabled: Joi.boolean().optional()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         response: {
           status: {
@@ -496,7 +487,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
           }),
@@ -508,10 +499,7 @@ exports.plugin = {
             roles: Joi.array().items(Joi.string()).min(1).optional(),
             system_user: Joi.boolean().optional(),
             disabled: Joi.boolean().optional()
-          }).required().min(1),
-          options: {
-            allowUnknown: true
-          }
+          }).required().min(1)
         },
         response: {
           status: {
@@ -594,13 +582,10 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         response: {
           status: {
@@ -659,13 +644,10 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         response: {
           status: {

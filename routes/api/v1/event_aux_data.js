@@ -204,7 +204,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
           }),
@@ -229,10 +229,7 @@ exports.plugin = {
               Joi.string(),
               Joi.array().items(Joi.string()).optional()
             )
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          }).optional()
         },
         response: {
           status: {
@@ -358,7 +355,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
           }),
@@ -383,10 +380,7 @@ exports.plugin = {
               Joi.string(),
               Joi.array().items(Joi.string()).optional()
             )
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          }).optional()
         },
         response: {
           status: {
@@ -559,7 +553,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           query: Joi.object({
             offset: Joi.number().integer().min(0).optional(),
             limit: Joi.number().integer().min(1).optional(),
@@ -585,10 +579,7 @@ exports.plugin = {
               Joi.string(),
               Joi.array().items(Joi.string()).optional()
             )
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          }).optional()
         },
         response: {
           status: {
@@ -653,13 +644,10 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         response: {
           status: {
@@ -831,7 +819,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           payload: Joi.object({
             id: Joi.string().length(24).optional(),
             event_id: Joi.string().length(24).required(),
@@ -844,10 +832,7 @@ exports.plugin = {
               ).required(),
               data_uom:Joi.string().optional()
             })).required().min(1)
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         response: {
           status: {
@@ -884,7 +869,14 @@ exports.plugin = {
         const db = server.mongo.db;
         const ObjectID = server.mongo.ObjectID;
 
-        const query = { _id: new ObjectID(request.params.id) };
+        const query = {};
+
+        try {
+          query._id = new ObjectID(request.params.id);
+        }
+        catch (err) {
+          return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+        }
 
         try {
           const result = await db.collection(eventAuxDataTable).findOne(query);
@@ -894,13 +886,23 @@ exports.plugin = {
           }
 
           const event_aux_data = request.payload;
+
+          if (request.payload.event_id) {
+            try {
+              event_aux_data.event_id = new ObjectID(request.payload.event_id);
+            }
+            catch (err) {
+              return h.response({ statusCode: 400, error: "Invalid argument", message: "event_id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+            }
+          }
+
           if (event_aux_data.data_array) {
             result.data_array.forEach((resultOption) => {
 
               let foundit = false;
               
               event_aux_data.data_array.forEach((requestOption) => {
-              
+
                 if (requestOption.data_name === resultOption.data_name) {
                   requestOption.data_value = resultOption.data_value;
                   
@@ -941,7 +943,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
           }),
@@ -953,10 +955,7 @@ exports.plugin = {
               data_value:Joi.string().required(),
               data_uom:Joi.string().optional()
             })).optional()
-          }).required().min(1),
-          options: {
-            allowUnknown: true
-          }
+          }).required().min(1)
         },
         response: {
           status: {
@@ -1017,7 +1016,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
           })

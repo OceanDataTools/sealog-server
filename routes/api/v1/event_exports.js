@@ -323,7 +323,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
           }),
@@ -346,10 +346,7 @@ exports.plugin = {
               Joi.array().items(Joi.string()).optional()
             ).optional(),
             freetext: Joi.string().optional()
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          }).optional()
         },
         response: {
           status: {
@@ -506,7 +503,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
           }),
@@ -529,10 +526,7 @@ exports.plugin = {
               Joi.array().items(Joi.string()).optional()
             ).optional(),
             freetext: Joi.string().optional()
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          }).optional()
         },
         response: {
           status: {
@@ -686,7 +680,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           query: Joi.object({
             format: Joi.string().optional(),
             offset: Joi.number().integer().min(0).optional(),
@@ -706,10 +700,7 @@ exports.plugin = {
               Joi.array().items(Joi.string()).optional()
             ).optional(),
             freetext: Joi.string().optional()
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          }).optional()
         },
         response: {
           status: {
@@ -780,13 +771,10 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         response: {
           status: {

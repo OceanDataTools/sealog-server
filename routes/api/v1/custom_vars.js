@@ -44,7 +44,7 @@ exports.plugin = {
         try {
           const results = await db.collection(customVarsTable).find(query).toArray();
 
-          // console.log("results:", results)
+          // console.log("results:", results);
           if (results.length > 0) {
 
             results.forEach(_renameAndClearFields);
@@ -68,13 +68,10 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           query: Joi.object({
             name: Joi.string()
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          }).optional()
         },
         response: {
           status: {
@@ -141,13 +138,10 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         response: {
           status: {
@@ -235,17 +229,14 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
           }),
           payload: Joi.object({
             custom_var_name: Joi.string().optional(),
             custom_var_value: Joi.string().allow('').optional()
-          }).required().min(1),
-          options: {
-            allowUnknown: true
-          }
+          }).required().min(1)
         },
         response: {
           status: {

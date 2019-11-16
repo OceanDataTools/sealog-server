@@ -100,10 +100,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          }).options({ allowUnknown: true })
         },
         description: 'This is a default route used for testing the jwt authentication.',
         notes: '<div class="panel panel-default">\
@@ -146,10 +143,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          }).options({ allowUnknown: true })
         },
         description: 'This route is used for reload files not yet associated with cruises back into filepond.',
         tags: ['cruises','auth','api','file_get']
@@ -201,10 +195,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          }).options({ allowUnknown: true })
         },
         description: 'This route is used for deleting files managed with filepond not yet fully associated with a cruise.',
         tags: ['cruises','auth','api','file_delete']
@@ -228,10 +219,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          }).options({ allowUnknown: true })
         },
         description: 'This route is used for deleting files associated with cruises.',
         tags: ['cruises','auth','api','file_delete']
@@ -269,16 +257,13 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).optional()
           }),
           payload: Joi.object({
             file: Joi.any().meta({ swaggerType: 'file' }).allow('').optional()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         description: 'Upload cruise file via filepond',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
@@ -309,16 +294,13 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).optional()
           }),
           payload: Joi.object({
             file: Joi.any().meta({ swaggerType: 'file' }).allow('').optional()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         description: 'Upload cruise file',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
@@ -343,10 +325,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          }).options({ allowUnknown: true })
         },
         description: 'This route is used for reload files not yet associated with lowerings back into filepond.',
         tags: ['lowerings','auth','api','file_get']
@@ -369,13 +348,10 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             param: Joi.string().required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         description: 'This route is used for serving files associated with lowerings.',
         tags: ['lowerings','auth','api','file_get']
@@ -398,10 +374,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          }).options({ allowUnknown: true })
         },
         description: 'This route is used for deleting files managed with filepond not yet fully associated with a lowering.',
         tags: ['lowerings','auth','api','file_delete']
@@ -427,10 +400,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          }).options({ allowUnknown: true })
         },
         description: 'This route is used for deleting files associated with cruises.',
         tags: ['lowerings','auth','api','file_delete']
@@ -468,16 +438,13 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).optional()
           }),
           payload: Joi.object({
             file: Joi.any().meta({ swaggerType: 'file' }).allow('').optional()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         description: 'Upload lowering file via filepond',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
@@ -508,16 +475,13 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).optional()
           }),
           payload:Joi.object({
             file: Joi.any().meta({ swaggerType: 'file' }).allow('').optional()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         description: 'Upload lowering file',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
@@ -542,13 +506,10 @@ exports.plugin = {
         validate: {
           // headers: Joi.object({
           //   authorization: Joi.string().required()
-          // }),
+          // }).options({ allowUnknown: true }),
           params: Joi.object({
             param: Joi.string().required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         description: 'This route is used for serving image files for cameras.',
         tags: ['api','auth']

@@ -197,7 +197,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           query: Joi.object({
             lowering_id: Joi.string().optional(),
             startTS: Joi.date().iso(),
@@ -209,10 +209,7 @@ exports.plugin = {
             ).optional(),
             offset: Joi.number().integer().min(0).optional(),
             limit: Joi.number().integer().min(1).optional()
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          }).optional()
         },
         response: {
           status: {
@@ -364,7 +361,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
           }),
@@ -378,10 +375,7 @@ exports.plugin = {
             ).optional(),
             offset: Joi.number().integer().min(0).optional(),
             limit: Joi.number().integer().min(1).optional()
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          }).optional()
         },
         response: {
           status: {
@@ -474,13 +468,10 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         response: {
           status: {
@@ -538,6 +529,14 @@ exports.plugin = {
           }
         }
 
+        // Validate date strings
+        lowering.start_ts = new Date(request.payload.startTS);
+        lowering.stop_ts = new Date(request.payload.stopTS);
+
+        if (lowering.start_ts >= lowering.stop_ts) {
+          return h.response({ "statusCode": 401, "error": "Invalid argument", "message": "Start date must be older than stop date" }).code(401);
+        }
+
         try {
           const result = await db.collection(loweringsTable).insertOne(lowering);
 
@@ -579,7 +578,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           payload: Joi.object({
             id: Joi.string().length(24).optional(),
             lowering_id: Joi.string().required(),
@@ -590,10 +589,7 @@ exports.plugin = {
             lowering_location: Joi.string().allow('').required(),
             // lowering_access_list: Joi.array().items(Joi.string()).required(),
             lowering_hidden: Joi.boolean().required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         response: {
           status: {
@@ -694,7 +690,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
           }),
@@ -707,10 +703,7 @@ exports.plugin = {
             lowering_location: Joi.string().allow('').optional(),
             // lowering_access_list: Joi.array().items(Joi.string()).optional(),
             lowering_hidden: Joi.boolean().optional()
-          }).required().min(1),
-          options: {
-            allowUnknown: true
-          }
+          }).required().min(1)
         },
         response: {
           status: {
@@ -779,13 +772,10 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         response: {
           status: {
@@ -847,10 +837,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          }).options({ allowUnknown: true })
         },
         response: {
           status: {

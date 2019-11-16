@@ -258,7 +258,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
           }),
@@ -284,10 +284,7 @@ exports.plugin = {
               Joi.string(),
               Joi.array().items(Joi.string()).optional()
             )
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          }).optional()
         },
         response: {
           status: {
@@ -432,7 +429,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
           }),
@@ -455,10 +452,7 @@ exports.plugin = {
               Joi.string(),
               Joi.array().items(Joi.string()).optional()
             )
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          }).optional()
         },
         response: {
           status: {
@@ -610,7 +604,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
           }),
@@ -636,10 +630,7 @@ exports.plugin = {
               Joi.string(),
               Joi.array().items(Joi.string()).optional()
             )
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          }).optional()
         },
         response: {
           status: {
@@ -784,7 +775,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
           }),
@@ -807,10 +798,7 @@ exports.plugin = {
               Joi.string(),
               Joi.array().items(Joi.string()).optional()
             )
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          }).optional()
         },
         response: {
           status: {
@@ -957,7 +945,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           query: Joi.object({
             format: Joi.string().optional(),
             offset: Joi.number().integer().min(0).optional(),
@@ -981,10 +969,7 @@ exports.plugin = {
               Joi.string(),
               Joi.array().items(Joi.string()).optional()
             )
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          }).optional()
         },
         response: {
           status: {
@@ -1107,7 +1092,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           query: Joi.object({
             author: Joi.alternatives().try(
               Joi.string(),
@@ -1127,10 +1112,7 @@ exports.plugin = {
               Joi.string(),
               Joi.array().items(Joi.string()).optional()
             )
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          }).optional()
         },
         response: {
           status: {
@@ -1190,13 +1172,10 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         response: {
           status: {
@@ -1327,7 +1306,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           payload: Joi.object({
             id: Joi.string().length(24).optional(),
             event_author: Joi.string().min(1).max(100).optional(),
@@ -1338,10 +1317,7 @@ exports.plugin = {
               event_option_value:Joi.string().allow('').required()
             })).optional(),
             event_free_text: Joi.string().allow('').optional()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         response: {
           status: {
@@ -1391,6 +1367,7 @@ exports.plugin = {
         const ObjectID = request.mongo.ObjectID;
 
         const query = {};
+        let time_change = false;
 
         try {
           query._id = new ObjectID(request.params.id);
@@ -1400,26 +1377,26 @@ exports.plugin = {
           return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
         }
 
-        let event = null;
         try {
           const result = await db.collection(eventsTable).findOne(query);
 
           if (!result) {
-            return h.response({ "statusCode": 400, "error": "Bad request", 'message': 'No record found for id: ' + request.params.id }).code(400);
+            return h.response({ "statusCode": 400, "error": "Bad request", 'message': 'No event record found for id: ' + request.params.id }).code(400);
           }
 
-          event = result;
-
+          if (request.payload.ts && result.ts.getTime() !== request.payload.ts.getTime()) {
+            time_change = true;
+          }
         }
         catch (err) {
           console.log(err);
           return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
         }
 
-        if (request.payload.event_options) {
-          const temp_event_options = request.payload.event_options;
+        const event = request.payload;
 
-          temp_event_options.map((event_option) => {
+        if (event.event_options) {
+          const temp_event_options = event.event_options.map((event_option) => {
 
             event_option.event_option_name = event_option.event_option_name.toLowerCase().replace(/\s+/g, "_");
             return event_option;
@@ -1443,9 +1420,8 @@ exports.plugin = {
           });
         }
 
-        const time_change = (request.payload.ts && (event.ts - request.payload.ts) !== 0) ? true : false;
-        if (time_change) {
-          event.ts = request.payload.ts;
+        if (event.ts) {
+          event.ts = new Date(event.ts);
         }
 
         try {
@@ -1476,7 +1452,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
           }),
@@ -1489,10 +1465,7 @@ exports.plugin = {
               event_option_value:Joi.string().allow('').required()
             })).optional(),
             event_free_text: Joi.string().allow('').optional()
-          }).required().min(1),
-          options: {
-            allowUnknown: true
-          }
+          }).required().min(1)
         },
         response: {
           status: {
@@ -1588,13 +1561,10 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         response: {
           status: {
@@ -1650,10 +1620,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          }).options({ allowUnknown: true })
         },
         response: {
           status: {

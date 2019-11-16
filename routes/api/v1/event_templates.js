@@ -53,14 +53,11 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           query: Joi.object({
             offset: Joi.number().integer().min(0).optional(),
             limit: Joi.number().integer().min(1).optional()
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          }).optional()
         },
         response: {
           status: {
@@ -137,13 +134,10 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         response: {
           status: {
@@ -239,7 +233,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           payload: Joi.object({
             id: Joi.string().length(24).optional(),
             event_name: Joi.string().required(),
@@ -254,10 +248,7 @@ exports.plugin = {
               event_option_allow_freeform: Joi.boolean().required(),
               event_option_required: Joi.boolean().required()
             })).optional()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         response: {
           status: {
@@ -316,8 +307,10 @@ exports.plugin = {
           return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
         }
 
+        const event_template = request.payload;
+
         try {
-          const result = await db.collection(eventTemplatesTable).updateOne(query, { $set: request.payload });
+          const result = await db.collection(eventTemplatesTable).updateOne(query, { $set: event_template });
           return h.response(result).code(204);
         }
         catch (err) {
@@ -333,7 +326,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
           }),
@@ -350,10 +343,7 @@ exports.plugin = {
               event_option_allow_freeform: Joi.boolean().required(),
               event_option_required: Joi.boolean().required()
             })).optional()
-          }).required().min(1),
-          options: {
-            allowUnknown: true
-          }
+          }).required().min(1)
         },
         response: {
           status: {
@@ -425,13 +415,10 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         response: {
           status: {

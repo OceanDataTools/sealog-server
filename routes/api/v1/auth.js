@@ -437,10 +437,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          }).options({ allowUnknown: true })
         },
         description: 'This is the route used for verifying the JWT is valid.',
         notes: 'Simple utiliy route that verifies the JWT included in the http call header is valid.',

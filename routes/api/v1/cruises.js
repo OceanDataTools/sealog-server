@@ -124,6 +124,11 @@ exports.plugin = {
             query.cruise_pi = request.query.cruise_pi;
           }
 
+          // Vessel filtering
+          if (request.query.cruise_vessel) {
+            query.cruise_vessel = request.query.cruise_vessel;
+          }
+
           // Location filtering
           if (request.query.cruise_location) {
             query.cruise_location = request.query.cruise_location;
@@ -197,12 +202,13 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           query: Joi.object({
             startTS: Joi.date().iso(),
             stopTS: Joi.date().iso(),
             hidden: Joi.boolean().optional(),
             cruise_id: Joi.string().optional(),
+            cruise_vessel: Joi.string().optional(),
             cruise_location: Joi.string().optional(),
             cruise_pi: Joi.string().optional(),
             cruise_tags: Joi.alternatives().try(
@@ -211,10 +217,7 @@ exports.plugin = {
             ).optional(),
             offset: Joi.number().integer().min(0).optional(),
             limit: Joi.number().integer().min(1).optional()
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          }).optional()
         },
         response: {
           status: {
@@ -222,6 +225,7 @@ exports.plugin = {
               id: Joi.object(),
               cruise_id: Joi.string(),
               cruise_location: Joi.string().allow(''),
+              cruise_vessel: Joi.string(),
               start_ts: Joi.date().iso(),
               stop_ts: Joi.date().iso(),
               cruise_pi: Joi.string().allow(''),
@@ -306,13 +310,10 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         response: {
           status: {
@@ -320,6 +321,7 @@ exports.plugin = {
               id: Joi.object(),
               cruise_id: Joi.string(),
               cruise_location: Joi.string().allow(''),
+              cruise_vessel: Joi.string(),
               start_ts: Joi.date().iso(),
               stop_ts: Joi.date().iso(),
               cruise_pi: Joi.string().allow(''),
@@ -371,6 +373,14 @@ exports.plugin = {
           }
         }
 
+        // Validate date strings
+        cruise.start_ts = new Date(request.payload.startTS);
+        cruise.stop_ts = new Date(request.payload.stopTS);
+
+        if (cruise.start_ts >= cruise.stop_ts) {
+          return h.response({ "statusCode": 401, "error": "Invalid argument", "message": "Start date must be older than stop date" }).code(401);
+        }
+
         try {
           const result = await db.collection(cruisesTable).insertOne(cruise);
 
@@ -401,7 +411,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           payload: Joi.object({
             id: Joi.string().length(24).optional(),
             cruise_id: Joi.string().required(),
@@ -409,14 +419,12 @@ exports.plugin = {
             stop_ts: Joi.date().iso().required(),
             cruise_pi: Joi.string().allow('').required(),
             cruise_location: Joi.string().allow('').required(),
+            cruise_vessel: Joi.string().required(),
             cruise_additional_meta: Joi.object().required(),
             cruise_tags: Joi.array().items(Joi.string().allow('')).required(),
             // cruise_access_list: Joi.array().items(Joi.string()).required(),
             cruise_hidden: Joi.boolean().required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         response: {
           status: {
@@ -463,7 +471,7 @@ exports.plugin = {
           return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
         }
 
-        let cruise = null;
+        const cruise = request.payload;
 
         try {
           const result = await db.collection(cruisesTable).findOne(query);
@@ -472,15 +480,22 @@ exports.plugin = {
             return h.response({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
           }
 
-          if (!request.auth.credentials.scope.includes('admin')) {
-            // if (result.cruise_hidden || !result.cruise_access_list.includes(request.auth.credentials.id)) {
-            if (result.cruise_hidden) {
-              return h.response({ "statusCode": 401, "error": "not authorized", "message": "User not authorized to edit this cruise" }).code(401);
+          // if only a start or stop date is provided, ensure the new date works with the existing date
+          if (!(request.payload.startTS && request.payload.stopTS)) {
+            if (request.payload.startTS && result.stop_ts && Date(request.payload.startTS) >= result.stop_ts) {
+              return h.response({ "statusCode": 401, "error": "Invalid argument", "message": "Start date must be older than stop date" }).code(401);
+            }
+            else if (request.payload.stopTS && result.start_ts && Date(request.payload.stopTS) <= result.start_ts) {
+              return h.response({ "statusCode": 401, "error": "Invalid argument", "message": "Start date must be older than stop date" }).code(401);
+            }
+
+            if (!request.auth.credentials.scope.includes('admin')) {
+              // if (result.cruise_hidden || !result.cruise_access_list.includes(request.auth.credentials.id)) {
+              if (result.cruise_hidden) {
+                return h.response({ "statusCode": 401, "error": "not authorized", "message": "User not authorized to edit this cruise" }).code(401);
+              }
             }
           }
-
-          cruise = result;
-
         }
         catch (err) {
           console.log("ERROR:", err);
@@ -494,33 +509,53 @@ exports.plugin = {
               // console.log("move files from", Path.join(Tmp.tmpdir,file), "to", Path.join(CRUISE_PATH, request.params.id));
               _mvFilesToDir(Path.join(Tmp.tmpdir,file), Path.join(CRUISE_PATH, request.params.id));
             });
+
           }
           catch (err) {
             return h.response({ "statusCode": 503, "error": "File Error", 'message': 'unabled to upload files. Verify directory ' + Path.join(CRUISE_PATH, request.params.id) + ' exists'  }).code(503);
           }
 
-          delete request.payload.cruise_additional_meta.cruise_files;
+          delete cruise.cruise_additional_meta.cruise_files;
         }
-        
+
+        // Validate date strings
+        if (request.query.startTS) {
+          cruise.start_ts = new Date(request.query.startTS);
+        }
+
+        if (request.query.stopTS) {
+          cruise.stop_ts = new Date(request.query.stopTS);
+        }
+
+        if (cruise.start_ts && cruise.stop_ts && cruise.start_ts >= cruise.stop_ts) {
+          return h.response({ "statusCode": 401, "error": "Invalid argument", "message": "Start date must be older than stop date" }).code(401);
+        }
+
         try {
-          await db.collection(cruisesTable).updateOne(query, { $set: request.payload });
+          await db.collection(cruisesTable).updateOne(query, { $set: cruise });
         }
         catch (err) {
           console.log("ERROR:", err);
           return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
         }
 
-        if (typeof (request.payload.cruise_hidden) !== 'undefined' && request.payload.cruise_hidden !== cruise.cruise_hidden){
-          const loweringQuery = { start_ts: { "$gte": new Date(cruise.start_ts) }, stop_ts: { "$lt": new Date(cruise.stop_ts) } };
-          try {
-            await db.collection(loweringsTable).updateMany(loweringQuery, { $set: { lowering_hidden: request.payload.cruise_hidden } });
-          }
-          catch (err) {
-            console.log("ERROR:", err);
-            return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+        if (typeof (cruise.cruise_hidden) !== 'undefined') {
+          const result = await db.collection(cruisesTable).findOne(query);
+
+          if (cruise.cruise_hidden !== result.cruise_hidden) {
+
+            cruise.start_ts = (cruise.start_ts) ? cruise.start_ts : result.start_ts;
+            cruise.stop_ts = (cruise.stop_ts) ? cruise.stop_ts : result.stop_ts;
+            const loweringQuery = { start_ts: { "$gte": cruise.start_ts }, stop_ts: { "$lt": cruise.stop_ts } };
+            try {
+              await db.collection(loweringsTable).updateMany(loweringQuery, { $set: { lowering_hidden: cruise.cruise_hidden } });
+            }
+            catch (err) {
+              console.log("ERROR:", err);
+              return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+            }
           }
         }
-
         // if (request.payload.cruise_access_list && request.payload.cruise_access_list !== cruise.cruise_access_list) {
         //   const add = request.payload.cruise_access_list.filter((user) => !cruise.cruise_access_list.includes(user));
         //   const remove = cruise.cruise_access_list.filter((user) => !request.payload.cruise_access_list.includes(user));
@@ -558,7 +593,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
           }),
@@ -567,15 +602,13 @@ exports.plugin = {
             start_ts: Joi.date().iso().optional(),
             stop_ts: Joi.date().iso().optional(),
             cruise_location: Joi.string().allow('').optional(),
+            cruise_vessel: Joi.string().optional(),
             cruise_pi: Joi.string().allow('').optional(),
             cruise_additional_meta: Joi.object().optional(),
             cruise_tags: Joi.array().items(Joi.string()).optional(),
             // cruise_access_list: Joi.array().items(Joi.string()).optional(),
             cruise_hidden: Joi.boolean().optional()
-          }).required().min(1),
-          options: {
-            allowUnknown: true
-          }
+          }).required().min(1)
         },
         response: {
           status: {
@@ -648,13 +681,10 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
+          }).options({ allowUnknown: true }),
           params: Joi.object({
             id: Joi.string().length(24).required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          })
         },
         response: {
           status: {
@@ -710,10 +740,7 @@ exports.plugin = {
         validate: {
           headers: Joi.object({
             authorization: Joi.string().required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          }).options({ allowUnknown: true })
         },
         response: {
           status: {
