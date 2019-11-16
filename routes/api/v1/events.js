@@ -1,6 +1,5 @@
-
-
 const Joi = require('@hapi/joi');
+const Boom = require('@hapi/boom');
 const Converter = require('json-2-csv');
 const Extend = require('jquery-extend');
 
@@ -1317,7 +1316,11 @@ exports.plugin = {
               event_option_value:Joi.string().allow('').required()
             })).optional(),
             event_free_text: Joi.string().allow('').optional()
-          })
+          }),
+          failAction: (request, h, err) => {
+
+            throw Boom.badRequest(err.message);
+          }
         },
         response: {
           status: {
@@ -1465,7 +1468,11 @@ exports.plugin = {
               event_option_value:Joi.string().allow('').required()
             })).optional(),
             event_free_text: Joi.string().allow('').optional()
-          }).required().min(1)
+          }).required().min(1),
+          failAction: (request, h, err) => {
+
+            throw Boom.badRequest(err.message);
+          }
         },
         response: {
           status: {
