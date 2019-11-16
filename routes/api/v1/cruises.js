@@ -2,6 +2,7 @@ const Joi = require('@hapi/joi');
 const Fs = require('fs');
 const Tmp = require('tmp');
 const Path = require('path');
+const Boom = require('@hapi/boom');
 
 const {
   CRUISE_PATH
@@ -421,10 +422,15 @@ exports.plugin = {
             cruise_location: Joi.string().allow('').required(),
             cruise_vessel: Joi.string().required(),
             cruise_additional_meta: Joi.object().required(),
-            cruise_tags: Joi.array().items(Joi.string().allow('')).required(),
+            cruise_tags: Joi.array().items(Joi.string()).required(),
             // cruise_access_list: Joi.array().items(Joi.string()).required(),
             cruise_hidden: Joi.boolean().required()
-          })
+          }),
+          failAction: (request, h, err) => {
+            // if (err.output.statusCode === 400) {
+            throw Boom.badRequest(err.message);
+            // }
+          }
         },
         response: {
           status: {
