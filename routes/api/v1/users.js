@@ -28,6 +28,53 @@ const emailTransporter = Nodemailer.createTransport({
 const SECRET_KEY = require('../../../config/secret');
 const Jwt = require('jsonwebtoken');
 
+const authorizationHeader = Joi.object({
+  authorization: Joi.string().required()
+}).options({ allowUnknown: true }).label('authorizationHeader');
+
+const userParam = Joi.object({
+  id: Joi.string().length(24).required()
+}).label('userParam');
+
+const userCreateResponse = Joi.object({
+  n: Joi.number().integer(),
+  ok: Joi.number().integer(),
+  insertedCount: Joi.number().integer(),
+  insertedId: Joi.object()
+}).label('userCreateResponse');
+
+const userCreatePayload = Joi.object({
+  id: Joi.string().length(24).optional(),
+  username: Joi.string().min(1).max(100).required(),
+  fullname: Joi.string().min(1).max(100).required(),
+  email: Joi.string().email().required(),
+  password: Joi.string().allow('').max(50).required(),
+  roles: Joi.array().items(Joi.string()).min(1).required(),
+  system_user: Joi.boolean().optional(),
+  disabled: Joi.boolean().optional()
+}).label('userCreatePayload');
+
+const userUpdatePayload = Joi.object({
+  username: Joi.string().min(1).max(100).optional(),
+  fullname: Joi.string().min(1).max(100).optional(),
+  // email: Joi.string().email().optional(),
+  password: Joi.string().allow('').max(50).optional(),
+  roles: Joi.array().items(Joi.string()).min(1).optional(),
+  system_user: Joi.boolean().optional(),
+  disabled: Joi.boolean().optional()
+}).required().min(1).label('userUpdatePayload');
+
+const userSuccessResponse = Joi.object({
+  id: Joi.object(),
+  email: Joi.string().email(),
+  system_user: Joi.boolean(),
+  last_login: Joi.date(),
+  username: Joi.string(),
+  fullname: Joi.string(),
+  roles: Joi.array().items(Joi.string()),
+  disabled: Joi.boolean()
+}).label('userSuccessResponse');
+
 exports.plugin = {
   name: 'routes-api-users',
   dependencies: ['hapi-mongodb'],
@@ -84,7 +131,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          Boom.serviceUnavailable('database error');
         }
       },
       config: {
@@ -93,9 +140,7 @@ exports.plugin = {
           scope: ['admin', 'read_users']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
+          headers: authorizationHeader,
           query: Joi.object({
             offset: Joi.number().integer().min(0).optional(),
             limit: Joi.number().integer().min(1).optional(),
@@ -104,24 +149,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.array().items(Joi.alternatives().try(Joi.object({
-              id: Joi.object(),
-              email: Joi.string().email(),
-              system_user: Joi.boolean(),
-              last_login: Joi.date(),
-              username: Joi.string(),
-              fullname: Joi.string(),
-              roles: Joi.array().items(Joi.string()),
-              disabled: Joi.boolean()
-            }), Joi.object({
-              id: Joi.object(),
-              fullname: Joi.string()
-            }))),
-            503: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
+            200: Joi.array().items(userSuccessResponse)
           }
         },
         description: 'Return the current list of users',
@@ -137,9 +165,9 @@ exports.plugin = {
       async handler(request, h) {
 
         //if the request is for a user but the requestor is not an admin AND not the requested user, return 400
-        if (!request.auth.credentials.roles.includes('admin') && !request.auth.credentials.scope.includes('read_users') && request.auth.credentials.id !== request.params.id ) {
-          return h.response({ statusCode: 400, error: "Unauthorized", message: "The requesting user is unauthorized to make that request" }).code(400);
-        }
+        // if (!request.auth.credentials.roles.includes('admin') && !request.auth.credentials.scope.includes('read_users') && request.auth.credentials.id !== request.params.id ) {
+        //   return Boom.unauthorized('The requesting user is unauthorized to make that request');
+        // }
 
         const query = {};
 
@@ -148,16 +176,16 @@ exports.plugin = {
         }
         catch (err) {
           console.log("invalid ObjectID");
-          return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+          return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
         try {
           const result = await db.collection(usersTable).findOne(query);
           if (!result) {
-            return h.response({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
+            return Boom.notFound('No record found for id: ' + request.params.id);
           }
           else if (!request.auth.credentials.roles.includes('admin') && result.system_user && request.auth.credentials.id !== request.params.id) {
-            return h.response({ statusCode: 400, error: "Unauthorized", message: "The requesting user is unauthorized to make that request" }).code(400);
+            return Boom.badRequest('The requesting user is unauthorized to make that request');
           }
 
           const cleanedResult = _renameAndClearFields(result);
@@ -166,51 +194,21 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          Boom.serviceUnavailable('database error');
         }
       },
       config: {
         auth:{
-          strategy: 'jwt'
-          // scope: ['admin', 'read_users']
+          strategy: 'jwt',
+          scope: ['admin', 'read_users']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          })
+          headers: authorizationHeader,
+          params: userParam
         },
         response: {
           status: {
-            200: Joi.alternatives().try(Joi.object({
-              id: Joi.object(),
-              email: Joi.string().email(),
-              system_user: Joi.boolean(),
-              last_login: Joi.date(),
-              username: Joi.string(),
-              fullname: Joi.string(),
-              roles: Joi.array().items(Joi.string()),
-              disabled: Joi.boolean()
-            }), Joi.object({
-              id: Joi.object(),
-              fullname: Joi.string()
-            })),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            404: Joi.object({
-              statusCode: Joi.number().integer(),
-              message: Joi.string()
-            }),
-            503: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
+            200: userSuccessResponse
           }
         },
         description: 'Return a user record based on the user id',
@@ -230,7 +228,7 @@ exports.plugin = {
         // }
 
         if (request.payload.system_user && typeof request.payload.system_user === "boolean" && !request.auth.credentials.roles.includes('admin')) {
-          return h.response({ statusCode: 400, error: "Unauthorized", message: "Only admins can create system users" }).code(400);
+          return Boom.unauthorized('Only admins can create system users');
         }
 
         const query = { username: request.payload.username };
@@ -238,12 +236,12 @@ exports.plugin = {
         try {
           const result = await db.collection(usersTable).findOne(query);
           if (result) {
-            return h.response({ "statusCode": 422, 'message': 'Username already exists' }).code(422);
+            return Boom.conflict('Username already exists');
           }
         }
         catch (err) {
           console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          Boom.serviceUnavailable('database error');
         }
 
         const user = request.payload;
@@ -255,7 +253,7 @@ exports.plugin = {
           }
           catch (err) {
             console.log("invalid ObjectID");
-            return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+            return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
           }
         }
 
@@ -295,13 +293,10 @@ exports.plugin = {
 
         try {
           result = await db.collection(usersTable).insertOne(user);
-          if (!result) {
-            return h.response({ "statusCode": 400, 'message': 'Bad request' }).code(400);
-          }
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable("database error");
         }
 
         const token = Crypto.randomBytes(20).toString('hex');
@@ -311,7 +306,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);            
+          Boom.serviceUnavailable('database error');
         }
 
         const resetLink = resetPasswordURL + token;
@@ -341,19 +336,8 @@ exports.plugin = {
           scope: ["admin", "write_users"]
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          payload: Joi.object({
-            id: Joi.string().length(24).optional(),
-            username: Joi.string().min(1).max(100).required(),
-            fullname: Joi.string().min(1).max(100).required(),
-            email: Joi.string().email().required(),
-            password: Joi.string().allow('').max(50).required(),
-            roles: Joi.array().items(Joi.string()).min(1).required(),
-            system_user: Joi.boolean().optional(),
-            disabled: Joi.boolean().optional()
-          }),
+          headers: authorizationHeader,
+          payload: userCreatePayload,
           failAction: (request, h, err) => {
 
             throw Boom.badRequest(err.message);
@@ -361,26 +345,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            201: Joi.object({
-              n: Joi.number().integer(),
-              ok: Joi.number().integer(),
-              insertedCount: Joi.number().integer(),
-              insertedId: Joi.object()
-            }),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            422: Joi.object({
-              statusCode: Joi.number().integer(),
-              message: Joi.string()
-            }),
-            503: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
+            201: userCreateResponse
           }
         },
         description: 'Create a new user',
@@ -477,11 +442,11 @@ exports.plugin = {
 
         try {
           await db.collection(usersTable).updateOne(query, { $set: user });
-          return h.response({ statusCode:204, message: "User Account Updated" }).code(204);
+          return h.response().code(204);
         }
         catch (err) {
           console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          Boom.serviceUnavailable('database error');
         }
       },
       config: {
@@ -490,48 +455,16 @@ exports.plugin = {
           scope: ["admin", "write_users"]
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          }),
-          payload: Joi.object({
-            username: Joi.string().min(1).max(100).optional(),
-            fullname: Joi.string().min(1).max(100).optional(),
-            // email: Joi.string().email().optional(),
-            password: Joi.string().allow('').max(50).optional(),
-            roles: Joi.array().items(Joi.string()).min(1).optional(),
-            system_user: Joi.boolean().optional(),
-            disabled: Joi.boolean().optional()
-          }).required().min(1),
+          headers: authorizationHeader,
+          params: userParam,
+          payload: userUpdatePayload,
           failAction: (request, h, err) => {
 
             throw Boom.badRequest(err.message);
           }
         },
         response: {
-          status: {
-            204: Joi.object({
-              statusCode: Joi.number().integer(),
-              message: Joi.string()
-            }),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            503: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
-          }
+          status: {}
         },
         description: 'Update a user record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
@@ -547,7 +480,7 @@ exports.plugin = {
 
         //Can't delete yourself
         if (request.auth.credentials.id === request.params.id) {
-          return h.response({ "statusCode": 400, "error": "Bad request", 'message': 'Users cannot delete themselves' }).code(400);
+          return Boom.badRequest('Users cannot delete themselves');
         }
 
         const query = {};
@@ -557,21 +490,21 @@ exports.plugin = {
         }
         catch (err) {
           console.log("invalid ObjectID");
-          return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+          return Boom.unauthorized('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
         try {
           const result = await db.collection(usersTable).findOne(query);
           if (!result) {
-            return h.response({ "statusCode": 404, 'message': 'No record found for user id: ' + request.params.id }).code(404);
+            return Boom.notFound('No record found for user id: ' + request.params.id);
           }
           else if (!request.auth.credentials.roles.includes('admin') && result.system_user) {
-            return h.response({ "statusCode": 400, 'message': 'Only admins can delete system users' }).code(400);
+            return Boom.unauthorized('Only admins can delete system users');
           }
         }
         catch (err) {
           console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          Boom.serviceUnavailable('database error');
         }
 
         try {
@@ -580,7 +513,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          Boom.serviceUnavailable('database error');
         }
       },
       config: {
@@ -589,30 +522,11 @@ exports.plugin = {
           scope: ["admin", "write_users"]
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          })
+          headers: authorizationHeader,
+          params: userParam
         },
         response: {
-          status: {
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            404: Joi.object({
-              statusCode: Joi.number().integer(),
-              message: Joi.string()
-            }),
-            503: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
-          }
+          status: {}
         },
         description: 'Delete a user record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
@@ -643,7 +557,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          Boom.serviceUnavailable('database error');
         }
       },
       config: {
@@ -651,28 +565,14 @@ exports.plugin = {
           strategy: 'jwt'
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          })
+          headers: authorizationHeader,
+          params: userParam
         },
         response: {
           status: {
             200: Joi.object({
               token: Joi.string().regex(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_.+/=]*$/)
-            }),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            503: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
+            }).label('user JWT')
           }
         },
         description: 'This is the route used for retrieving a user\'s JWT based on the user\'s ID.',

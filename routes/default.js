@@ -1,3 +1,4 @@
+const Boom = require('@hapi/boom');
 const Joi = require('@hapi/joi');
 const Fs = require('fs');
 const Path = require('path');
@@ -56,6 +57,25 @@ const handleFileDelete = (filePath) => {
   }
 };
 
+const authorizationHeader = Joi.object({
+  authorization: Joi.string().required()
+}).options({ allowUnknown: true }).label('authorizationHeader');
+
+const fileParam = Joi.object({
+  param: Joi.string().required()
+}).label('fileParam');
+
+const filePayload = Joi.object({
+  file: Joi.any().meta({ swaggerType: 'file' }).allow('').optional()
+}).label('filePayload');
+
+const filepondFileParam = Joi.object({
+  id: Joi.string().length(24).optional()
+}).label('filepondFileParam');
+
+const filepondFilePayload = Joi.object({
+  file: Joi.any().meta({ swaggerType: 'file' }).allow('').optional()
+}).label('filepondFilePayload');
 
 exports.plugin = {
   name: 'routes-default',
@@ -98,9 +118,7 @@ exports.plugin = {
           strategy: 'jwt'
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true })
+          headers: authorizationHeader
         },
         description: 'This is a default route used for testing the jwt authentication.',
         notes: '<div class="panel panel-default">\
@@ -112,16 +130,7 @@ exports.plugin = {
           <div class="panel-body">Returns JSON object explaining error</div>\
         </div>',
         response: {
-          status: {
-            200: Joi.object({
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
-          }
+          status: {}
         },
         tags: ['default','test','auth']
       }
@@ -141,9 +150,7 @@ exports.plugin = {
           scope: ['admin', 'read_cruises']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true })
+          headers: authorizationHeader
         },
         description: 'This route is used for reload files not yet associated with cruises back into filepond.',
         tags: ['cruises','auth','api','file_get']
@@ -164,15 +171,8 @@ exports.plugin = {
           scope: ['admin', 'read_cruises']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }),
-          params: Joi.object({
-            param: Joi.string().required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          headers: authorizationHeader,
+          params: fileParam
         },
         description: 'This route is used for serving files associated with cruises.',
         tags: ['cruises','auth','api','file_get']
@@ -193,9 +193,7 @@ exports.plugin = {
           scope: ['admin', 'write_cruises']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true })
+          headers: authorizationHeader
         },
         description: 'This route is used for deleting files managed with filepond not yet fully associated with a cruise.',
         tags: ['cruises','auth','api','file_delete']
@@ -217,9 +215,7 @@ exports.plugin = {
           scope: ['admin', 'write_cruises']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true })
+          headers: authorizationHeader
         },
         description: 'This route is used for deleting files associated with cruises.',
         tags: ['cruises','auth','api','file_delete']
@@ -241,7 +237,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return h.response({ error: "Upload Error", message: err }).code(501);
+          return Boom.serverUnavailable('Upload Error', err);
         }
       },
       config: {
@@ -255,15 +251,9 @@ exports.plugin = {
           allow: 'multipart/form-data' // important
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          params: Joi.object({
-            id: Joi.string().length(24).optional()
-          }),
-          payload: Joi.object({
-            file: Joi.any().meta({ swaggerType: 'file' }).allow('').optional()
-          })
+          headers: authorizationHeader,
+          params: filepondFileParam,
+          payload: filepondFilePayload
         },
         description: 'Upload cruise file via filepond',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
@@ -292,15 +282,9 @@ exports.plugin = {
           allow: 'multipart/form-data' // important
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          params: Joi.object({
-            id: Joi.string().length(24).optional()
-          }),
-          payload: Joi.object({
-            file: Joi.any().meta({ swaggerType: 'file' }).allow('').optional()
-          })
+          headers: authorizationHeader,
+          params: fileParam,
+          payload: filePayload
         },
         description: 'Upload cruise file',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
@@ -323,9 +307,7 @@ exports.plugin = {
           scope: ['admin', 'read_lowerings']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true })
+          headers: authorizationHeader
         },
         description: 'This route is used for reload files not yet associated with lowerings back into filepond.',
         tags: ['lowerings','auth','api','file_get']
@@ -346,12 +328,8 @@ exports.plugin = {
           scope: ['admin', 'read_lowerings']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          params: Joi.object({
-            param: Joi.string().required()
-          })
+          headers: authorizationHeader,
+          params: fileParam
         },
         description: 'This route is used for serving files associated with lowerings.',
         tags: ['lowerings','auth','api','file_get']
@@ -372,9 +350,7 @@ exports.plugin = {
           scope: ['admin', 'write_cruises']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true })
+          headers: authorizationHeader
         },
         description: 'This route is used for deleting files managed with filepond not yet fully associated with a lowering.',
         tags: ['lowerings','auth','api','file_delete']
@@ -398,9 +374,8 @@ exports.plugin = {
           scope: ['admin', 'write_cruises']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true })
+          headers: authorizationHeader,
+          params: fileParam
         },
         description: 'This route is used for deleting files associated with cruises.',
         tags: ['lowerings','auth','api','file_delete']
@@ -422,7 +397,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return h.response({ error: "Upload Error", message: err }).code(501);
+          return Boom.serverUnavailable('Upload Error', err);
         }
       },
       config: {
@@ -436,15 +411,9 @@ exports.plugin = {
           allow: 'multipart/form-data' // important
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          params: Joi.object({
-            id: Joi.string().length(24).optional()
-          }),
-          payload: Joi.object({
-            file: Joi.any().meta({ swaggerType: 'file' }).allow('').optional()
-          })
+          headers: authorizationHeader,
+          params: filepondFileParam,
+          payload: filepondFilePayload
         },
         description: 'Upload lowering file via filepond',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
@@ -473,15 +442,9 @@ exports.plugin = {
           allow: 'multipart/form-data' // important
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          params: Joi.object({
-            id: Joi.string().length(24).optional()
-          }),
-          payload:Joi.object({
-            file: Joi.any().meta({ swaggerType: 'file' }).allow('').optional()
-          })
+          headers: authorizationHeader,
+          params: fileParam,
+          payload: filePayload
         },
         description: 'Upload lowering file',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
@@ -504,14 +467,10 @@ exports.plugin = {
         //   scope: ['admin', 'read_events']
         // },
         validate: {
-          // headers: Joi.object({
-          //   authorization: Joi.string().required()
-          // }).options({ allowUnknown: true }),
-          params: Joi.object({
-            param: Joi.string().required()
-          })
+          // headers: authorizationHeader,
+          params: fileParam
         },
-        description: 'This route is used for serving image files for cameras.',
+        description: 'This route is used for serving image files.',
         tags: ['api','auth']
       }
     });
@@ -519,9 +478,9 @@ exports.plugin = {
     server.route({
       method: 'GET',
       path: '/{path*}',
-      handler(request, h) {
+      handler() {
 
-        return h.response({ message: 'Oops, 404 Page!' }).code(404);
+        return Boom.notFound('Oops, 404 Page!');
       },
       config: {
         description: 'This is the route used for handling invalid routes.',
@@ -530,11 +489,7 @@ exports.plugin = {
           <div class="panel-body">Returns JSON object explaining error</div>\
         </div>',
         response: {
-          status: {
-            404: Joi.object({
-              message: "Oops, 404 Page!"
-            })
-          }
+          status: {}
         },
         tags: ['default']
       }
@@ -558,7 +513,7 @@ exports.plugin = {
           status: {
             200: Joi.object({
               ts: Joi.date().iso()
-            })
+            }).label('serverTimeResponse')
           }
         },
         tags: ['default','api']

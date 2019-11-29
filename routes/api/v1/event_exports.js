@@ -1,3 +1,4 @@
+const Boom = require('@hapi/boom');
 const Joi = require('@hapi/joi');
 const Converter = require('json-2-csv');
 const Extend = require('jquery-extend');
@@ -28,11 +29,8 @@ const _flattenJSON = (json) => {
 
           const elementName = `${data.data_source}_${data2.data_name}`;
           const elementUOM = `${data.data_source}_${data2.data_name}`;
-          // copiedEvent[elementName] = data2.data_value;
-          // copiedEvent[elementUOM] = data2.data_uom;
 
           if (!(elementName + '_value' in copiedEvent)) {
-            // copiedEvent[elementName] = data.event_option_value;
             copiedEvent[elementName + '_value'] = data2.data_value;
             copiedEvent[elementUOM + '_uom'] = data2.data_uom;
           }
@@ -40,8 +38,6 @@ const _flattenJSON = (json) => {
             enumerator = 2;
             while (enumerator > 1) {
               if (!(elementName + "_" + enumerator  + '_value' in copiedEvent)) {
-                // console.log(elementName + "_" + enumerator)
-                // copiedEvent[elementName + "_" + enumerator] = data.event_option_value;
                 copiedEvent[elementName + "_" + enumerator + '_value'] = data2.data_value;
                 copiedEvent[elementUOM + "_" + enumerator + '_uom'] = data2.data_uom;
                 enumerator = 1;
@@ -110,7 +106,6 @@ const _buildEventsQuery = (request, start_ts = new Date("1970-01-01T00:00:00.000
     if (Array.isArray(request.query.author)) {
       const regex_query = request.query.author.map((author) => {
 
-        // return '/' + author + '/i';
         const return_regex = new RegExp(author, 'i');
         return return_regex;
       });
@@ -185,6 +180,56 @@ const _buildEventsQuery = (request, start_ts = new Date("1970-01-01T00:00:00.000
   return query;
 };
 
+const authorizationHeader = Joi.object({
+  authorization: Joi.string().required()
+}).options({ allowUnknown: true }).label('authorizationHeader');
+
+const eventParam = Joi.object({
+  id: Joi.string().length(24).required()
+}).label('eventParam');
+
+const eventExportSuccessResponse = Joi.object({
+  id: Joi.object(),
+  event_author: Joi.string(),
+  ts: Joi.date().iso(),
+  event_value: Joi.string(),
+  event_options: Joi.array().items(Joi.object({
+    event_option_name: Joi.string(),
+    event_option_value: Joi.string().allow('')
+  })),
+  event_free_text: Joi.string().allow(''),
+  aux_data: Joi.array().items(Joi.object({
+    id: Joi.object(),
+    data_source: Joi.string(),
+    data_array: Joi.array().items(Joi.object({
+      data_name: Joi.string(),
+      data_value: Joi.string(),
+      data_uom: Joi.string()
+    }))
+  }))
+}).label('eventExportSuccessResponse');
+
+const eventExportQuery = Joi.object({
+  format: Joi.string().optional(),
+  offset: Joi.number().integer().min(0).optional(),
+  limit: Joi.number().integer().min(1).optional(),
+  author: Joi.alternatives().try(
+    Joi.string(),
+    Joi.array().items(Joi.string()).optional()
+  ).optional(),
+  startTS: Joi.date().optional(),
+  stopTS: Joi.date().optional(),
+  datasource: Joi.alternatives().try(
+    Joi.string(),
+    Joi.array().items(Joi.string()).optional()
+  ).optional(),
+  value: Joi.alternatives().try(
+    Joi.string(),
+    Joi.array().items(Joi.string()).optional()
+  ).optional(),
+  freetext: Joi.string().optional()
+}).optional().label('eventExportQuery');
+
 exports.plugin = {
   name: 'routes-api-event-exports',
   dependencies: ['hapi-mongodb'],
@@ -204,13 +249,12 @@ exports.plugin = {
           const cruiseResult = await db.collection(cruisesTable).findOne({ _id: ObjectID(request.params.id) });
 
           if (!cruiseResult) {
-            return h.response({ "statusCode": 404, "message": "cruise not found for that id" }).code(404);          
+            return Boom.notFound('cruise not found for that id');          
           }
 
           if (!request.auth.credentials.scope.includes('admin')) {
-            // if (cruiseResult.cruise_hidden || !cruiseResult.cruise_access_list.includes(request.auth.credentials.id)) {
             if (cruiseResult.cruise_hidden) {
-              return h.response({ "statusCode": 401, "error": "not authorized", "message": "User not authorized to retrieve this cruise" }).code(401);
+              return Boom.unauthorized('User not authorized to retrieve this cruise');
             }
           }
 
@@ -219,7 +263,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
 
         if (cruise.cruise_hidden && !request.auth.credentials.scope.includes("admin")) {
@@ -253,7 +297,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
 
         if (results.length > 0) {
@@ -280,7 +324,7 @@ exports.plugin = {
             }
             catch (err) {
               console.log(err);
-              return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+              return Boom.serviceUnavailable('database error');
             }
 
             const aux_data_eventID_set = new Set(aux_data_results.map((aux_data) => String(aux_data.event_id)));
@@ -313,7 +357,7 @@ exports.plugin = {
           return h.response(results).code(200);
         }
 
-        return h.response({ "statusCode": 404, 'message': 'No records found' }).code(404);
+        return Boom.notFound('No records found');
       },
       config: {
         auth: {
@@ -321,46 +365,13 @@ exports.plugin = {
           scope: ['admin', 'read_events']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          }),
-          query: Joi.object({
-            format: Joi.string().optional(),
-            offset: Joi.number().integer().min(0).optional(),
-            limit: Joi.number().integer().min(1).optional(),
-            author: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ).optional(),
-            startTS: Joi.date().optional(),
-            stopTS: Joi.date().optional(),
-            datasource: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ).optional(),
-            value: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ).optional(),
-            freetext: Joi.string().optional()
-          }).optional()
+          headers: authorizationHeader,
+          params: eventParam,
+          query: eventExportQuery
         },
         response: {
           status: {
-            200: Joi.any(),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
+            200: Joi.any()
           }
         },
         description: 'Export the events merged with their event_aux_data records for a cruise based on the cruise id',
@@ -384,13 +395,13 @@ exports.plugin = {
           const loweringResult = await db.collection(loweringsTable).findOne({ _id: ObjectID(request.params.id) });
 
           if (!loweringResult) {
-            return h.response({ "statusCode": 404, "message": "lowering not found for that id" }).code(404);          
+            return Boom.notFound('lowering not found for that id');          
           }
 
           if (!request.auth.credentials.scope.includes('admin')) {
             // if (loweringResult.lowering_hidden || !loweringResult.lowering_access_list.includes(request.auth.credentials.id)) {
             if (loweringResult.lowering_hidden) {
-              return h.response({ "statusCode": 401, "error": "not authorized", "message": "User not authorized to retrieve this lowering" }).code(401);
+              return Boom.unauthorized('User not authorized to retrieve this lowering');
             }
           }
 
@@ -399,11 +410,11 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
 
         if (lowering.lowering_hidden && !request.auth.credentials.scope.includes("admin")) {
-          return h.response({ "statusCode": 401, "error": "not authorized", "message": "User not authorized to retrieve hidden lowerings" }).code(401);
+          return Boom.unauthorized('User not authorized to retrieve hidden lowerings');
         }
 
         const query = _buildEventsQuery(request, lowering.start_ts, lowering.stop_ts);
@@ -433,7 +444,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
 
         if (results.length > 0) {
@@ -460,7 +471,7 @@ exports.plugin = {
             }
             catch (err) {
               console.log(err);
-              return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+              return Boom.serviceUnavailable('database error');
             }
 
             const aux_data_eventID_set = new Set(aux_data_results.map((aux_data) => String(aux_data.event_id)));
@@ -469,7 +480,6 @@ exports.plugin = {
               
               return (aux_data_eventID_set.has(String(event._id))) ? event : null;
             });
-
           }
 
           results.forEach(_renameAndClearFields);
@@ -493,7 +503,7 @@ exports.plugin = {
           return h.response(results).code(200);
         }
 
-        return h.response({ "statusCode": 404, 'message': 'No records found' }).code(404);
+        return Boom.notFound('No records found');
       },
       config: {
         auth: {
@@ -501,46 +511,13 @@ exports.plugin = {
           scope: ['admin', 'read_events']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          }),
-          query: Joi.object({
-            format: Joi.string().optional(),
-            offset: Joi.number().integer().min(0).optional(),
-            limit: Joi.number().integer().min(1).optional(),
-            author: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ).optional(),
-            startTS: Joi.date().optional(),
-            stopTS: Joi.date().optional(),
-            datasource: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ).optional(),
-            value: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ).optional(),
-            freetext: Joi.string().optional()
-          }).optional()
+          headers: authorizationHeader,
+          params: eventParam,
+          query: eventExportQuery
         },
         response: {
           status: {
-            200: Joi.any(),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
+            200: Joi.any()
           }
         },
         description: 'Export the events merged with their event_aux_data records for a lowering based on the lowering id',
@@ -578,7 +555,7 @@ exports.plugin = {
           }
           catch (err) {
             console.log(err);
-            return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+            return Boom.serviceUnavailable('database error');
           }
 
           const query = _buildEventsQuery(request);
@@ -609,12 +586,12 @@ exports.plugin = {
               return h.response(results).code(200);
             }
  
-            return h.response({ "statusCode": 404, 'message': 'No records found' }).code(404);
+            return Boom.notFound('No records found');
             
           }
           catch (err) {
             console.log(err);
-            return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+            return Boom.serviceUnavailable('database error');
           }
         }
         else {
@@ -664,11 +641,11 @@ exports.plugin = {
               return h.response(results).code(200);
             }
 
-            return h.response({ "statusCode": 404, 'message': 'No records found' }).code(404);
+            return Boom.notFound('No records found');
           }
           catch (err) {
             console.log(err);
-            return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+            return Boom.serviceUnavailable('database error');
           }
         }
       },
@@ -678,43 +655,12 @@ exports.plugin = {
           scope: ['admin', 'read_events']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          query: Joi.object({
-            format: Joi.string().optional(),
-            offset: Joi.number().integer().min(0).optional(),
-            limit: Joi.number().integer().min(1).optional(),
-            author: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ).optional(),
-            startTS: Joi.date().optional(),
-            stopTS: Joi.date().optional(),
-            datasource: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ).optional(),
-            value: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ).optional(),
-            freetext: Joi.string().optional()
-          }).optional()
+          headers: authorizationHeader,
+          query: eventExportQuery
         },
         response: {
           status: {
-            200: Joi.any(),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
+            200: Joi.any()
           }
         },
         description: 'Export events merged with their aux_data based on the query parameters',
@@ -755,12 +701,12 @@ exports.plugin = {
             return h.response(results[0]).code(200);
           }
  
-          return h.response({ "statusCode": 404, 'message': 'No records found' }).code(404);
+          return Boom.notFound('No records found');
           
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
       },
       config: {
@@ -769,50 +715,12 @@ exports.plugin = {
           scope: ['admin', 'read_events']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          })
+          headers: authorizationHeader,
+          params: eventParam
         },
         response: {
           status: {
-            200: Joi.object({
-              id: Joi.object(),
-              event_author: Joi.string(),
-              ts: Joi.date().iso(),
-              event_value: Joi.string(),
-              event_options: Joi.array().items(Joi.object({
-                event_option_name: Joi.string(),
-                event_option_value: Joi.string().allow('')
-              })),
-              event_free_text: Joi.string().allow(''),
-              aux_data: Joi.array().items(Joi.object({
-                id: Joi.object(),
-                data_source: Joi.string(),
-                data_array: Joi.array().items(Joi.object({
-                  data_name: Joi.string(),
-                  data_value: Joi.string(),
-                  data_uom: Joi.string()
-                }))
-              }))
-            }),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            404: Joi.object({
-              statusCode: Joi.number().integer(),
-              message: Joi.string()
-            })
-
+            200: eventExportSuccessResponse
           }
         },
         description: 'Export an event merged with its aux_data based on event id',

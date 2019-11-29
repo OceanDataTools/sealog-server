@@ -1,3 +1,4 @@
+const Boom = require('@hapi/boom');
 const Joi = require('@hapi/joi');
 
 const {
@@ -13,6 +14,46 @@ const _renameAndClearFields = (doc) => {
   return doc;
 };
 
+const authorizationHeader = Joi.object({
+  authorization: Joi.string().required()
+}).options({ allowUnknown: true }).label('authorizationHeader');
+
+const eventTemplateParam = Joi.object({
+  id: Joi.string().length(24).required()
+}).label('eventTemplateParam');
+
+const eventTemplateSuccessResponse = Joi.object({
+  id: Joi.object(),
+  event_name: Joi.string(),
+  event_value: Joi.string(),
+  event_free_text_required: Joi.boolean(),
+  system_template: Joi.boolean(),
+  event_options: Joi.array().items(Joi.object({
+    event_option_name: Joi.string(),
+    event_option_type: Joi.string(),
+    event_option_default_value: Joi.string().allow(''),
+    event_option_values: Joi.array().items(Joi.string()),
+    event_option_allow_freeform: Joi.boolean(),
+    event_option_required: Joi.boolean()
+  }))
+}).label('eventTemplateSuccessResponse');
+
+const eventTemplatePayload = Joi.object({
+  id: Joi.string().length(24).optional(),
+  event_name: Joi.string().required(),
+  event_value: Joi.string().required(),
+  event_free_text_required: Joi.boolean().required(),
+  system_template: Joi.boolean().required(),
+  event_options: Joi.array().items(Joi.object({
+    event_option_name: Joi.string().required(),
+    event_option_type: Joi.string().required(),
+    event_option_default_value: Joi.string().allow('').optional(),
+    event_option_values: Joi.array().items(Joi.string()).required(),
+    event_option_allow_freeform: Joi.boolean().required(),
+    event_option_required: Joi.boolean().required()
+  })).optional()
+}).label('eventTemplatePayload');
+
 exports.plugin = {
   name: 'routes-api-event_templates',
   dependencies: ['hapi-mongodb'],
@@ -24,7 +65,6 @@ exports.plugin = {
       async handler(request, h) {
 
         const db = request.mongo.db;
-        // const ObjectID = request.mongo.ObjectID;
 
         const limit = (request.query.limit) ? request.query.limit : 0;
         const offset = (request.query.offset) ? request.query.offset : 0;
@@ -37,12 +77,12 @@ exports.plugin = {
             return h.response(results).code(200);
           }
  
-          return h.response({ "statusCode": 404, 'message': 'No records found' }).code(404);
+          return Boom.notFound('No records found');
           
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
       },
       config: {
@@ -51,9 +91,7 @@ exports.plugin = {
           scope: ['admin', 'read_event_templates']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
+          headers: authorizationHeader,
           query: Joi.object({
             offset: Joi.number().integer().min(0).optional(),
             limit: Joi.number().integer().min(1).optional()
@@ -61,21 +99,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.array().items(Joi.object({
-              id: Joi.object(),
-              event_name: Joi.string(),
-              event_value: Joi.string(),
-              event_free_text_required: Joi.boolean(),
-              system_template: Joi.boolean(),
-              event_options: Joi.array().items(Joi.object({
-                event_option_name: Joi.string(),
-                event_option_type: Joi.string(),
-                event_option_default_value: Joi.string().allow(''),
-                event_option_values: Joi.array().items(Joi.string()),
-                event_option_allow_freeform: Joi.boolean(),
-                event_option_required: Joi.boolean()
-              }))
-            })),
+            200: Joi.array().items(eventTemplateSuccessResponse),
             400: Joi.object({
               statusCode: Joi.number().integer(),
               error: Joi.string(),
@@ -109,21 +133,21 @@ exports.plugin = {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
-          return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+          return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
         try {
           const result = await db.collection(eventTemplatesTable).findOne(query);
 
           if (!result) {
-            return h.response({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
+            return Boom.notFound('No record found for id: ' + request.params.id);
           }
 
           return h.response(_renameAndClearFields(result)).code(200);
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
       },
       config: {
@@ -132,44 +156,12 @@ exports.plugin = {
           scope: ['admin', 'read_event_templates']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          })
+          headers: authorizationHeader,
+          params: eventTemplateParam
         },
         response: {
           status: {
-            200: Joi.object({
-              id: Joi.object(),
-              event_name: Joi.string(),
-              event_value: Joi.string(),
-              event_free_text_required: Joi.boolean(),
-              system_template: Joi.boolean(),
-              event_options: Joi.array().items(Joi.object({
-                event_option_name: Joi.string(),
-                event_option_type: Joi.string(),
-                event_option_default_value: Joi.string().allow(''),
-                event_option_values: Joi.array().items(Joi.string()),
-                event_option_allow_freeform: Joi.boolean(),
-                event_option_required: Joi.boolean()
-              }))
-            }),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            404: Joi.object({
-              statusCode: Joi.number().integer(),
-              message: Joi.string()
-            })
+            200: eventTemplateSuccessResponse
           }
         },
         description: 'Return the event template based on the event template id',
@@ -196,7 +188,7 @@ exports.plugin = {
           }
           catch (err) {
             console.log("invalid ObjectID");
-            return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+            return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
           }
         }
 
@@ -208,21 +200,15 @@ exports.plugin = {
           event_template.event_free_text_required = false;
         }
 
-        //console.log(event_template);
-
         try {
           const result = await db.collection(eventTemplatesTable).insertOne(event_template);
-
-          if (!result) {
-            return h.response({ "statusCode": 400, 'message': 'Bad request' }).code(400);
-          }
 
           return h.response({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
 
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
       },
       config: {
@@ -231,24 +217,8 @@ exports.plugin = {
           scope: ['admin', 'write_event_templates']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          payload: Joi.object({
-            id: Joi.string().length(24).optional(),
-            event_name: Joi.string().required(),
-            event_value: Joi.string().required(),
-            event_free_text_required: Joi.boolean().required(),
-            system_template: Joi.boolean().required(),
-            event_options: Joi.array().items(Joi.object({
-              event_option_name: Joi.string().required(),
-              event_option_type: Joi.string().required(),
-              event_option_default_value: Joi.string().allow("").optional(),
-              event_option_values: Joi.array().items(Joi.string()).required(),
-              event_option_allow_freeform: Joi.boolean().required(),
-              event_option_required: Joi.boolean().required()
-            })).optional()
-          })
+          headers: authorizationHeader,
+          payload: eventTemplatePayload
         },
         response: {
           status: {
@@ -257,16 +227,6 @@ exports.plugin = {
               ok: Joi.number().integer(),
               insertedCount: Joi.number().integer(),
               insertedId: Joi.object()
-            }),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            503: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
             })
           }
         },
@@ -292,30 +252,30 @@ exports.plugin = {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
-          return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+          return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
         try {
           const result = await db.collection(eventTemplatesTable).findOne(query);
 
           if (!result) {
-            return h.response({ "statusCode": 400, "error": "Bad request", 'message': 'No record found for id: ' + request.params.id }).code(400);
+            return Boom.badRequest('No record found for id: ' + request.params.id );
           }
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
 
         const event_template = request.payload;
 
         try {
-          const result = await db.collection(eventTemplatesTable).updateOne(query, { $set: event_template });
-          return h.response(result).code(204);
+          await db.collection(eventTemplatesTable).updateOne(query, { $set: event_template });
+          return h.response().code(204);
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
       },
       config: {
@@ -324,12 +284,8 @@ exports.plugin = {
           scope: ['admin', 'write_event_templates']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          }),
+          headers: authorizationHeader,
+          params: eventTemplateParam,
           payload: Joi.object({
             event_name: Joi.string().optional(),
             event_value: Joi.string().optional(),
@@ -346,18 +302,7 @@ exports.plugin = {
           }).required().min(1)
         },
         response: {
-          status: {
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
-          }
+          status: {}
         },
         description: 'Update an event template record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
@@ -380,17 +325,17 @@ exports.plugin = {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
-          return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+          return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
         try {
           const result = await db.collection(eventTemplatesTable).findOne(query);
           if (!result) {
-            return h.response({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
+            return Boom.notFound('No record found for id: ' + request.params.id );
           }
 
           if (result.system_template && !request.auth.credentials.scope.includes('admin')) {
-            return h.response({ "statusCode": 401, 'error': 'Unauthorized', 'message': 'user does not have permission to delete system templates' }).code(401);
+            return Boom.unauthorized('user does not have permission to delete system templates');
           }
 
           try {
@@ -399,12 +344,12 @@ exports.plugin = {
           }
           catch (err) {
             console.log(err);
-            return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+            return Boom.serviceUnavailable('database error');
           }
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
       },
       config: {
@@ -413,26 +358,11 @@ exports.plugin = {
           scope: ['admin', 'write_event_templates']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          })
+          headers: authorizationHeader,
+          params: eventTemplateParam
         },
         response: {
-          status: {
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
-          }
+          status: {}
         },
         description: 'Delete an event templates record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\

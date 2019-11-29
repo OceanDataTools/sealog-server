@@ -89,6 +89,72 @@ const _renameAndClearFields = (doc) => {
   return doc;
 };
 
+const authorizationHeader = Joi.object({
+  authorization: Joi.string().required()
+}).options({ allowUnknown: true }).label('authorizationHeader');
+
+const cruiseParam = Joi.object({
+  id: Joi.string().length(24).required()
+}).label('cruiseParam');
+
+const loweringParam = Joi.object({
+  id: Joi.string().length(24).required()
+}).label('loweringParam');
+
+const loweringCreatePayload = Joi.object({
+  id: Joi.string().length(24).optional(),
+  lowering_id: Joi.string().required(),
+  start_ts: Joi.date().iso().required(),
+  stop_ts: Joi.date().iso().required(),
+  lowering_additional_meta: Joi.object().required(),
+  lowering_tags: Joi.array().items(Joi.string().allow('')).required(),
+  lowering_location: Joi.string().allow('').required(),
+  // lowering_access_list: Joi.array().items(Joi.string()).required(),
+  lowering_hidden: Joi.boolean().required()
+}).label('loweringCreatePayload');
+
+const loweringUpdatePayload = Joi.object({
+  lowering_id: Joi.string().optional(),
+  start_ts: Joi.date().iso().optional(),
+  stop_ts: Joi.date().iso().optional(),
+  lowering_additional_meta: Joi.object().optional(),
+  lowering_tags: Joi.array().items(Joi.string().allow('')).optional(),
+  lowering_location: Joi.string().allow('').optional(),
+  // lowering_access_list: Joi.array().items(Joi.string()).optional(),
+  lowering_hidden: Joi.boolean().optional()
+}).required().min(1).label('loweringUpdatePayload');
+
+const loweringQuery = Joi.object({
+  lowering_id: Joi.string().optional(),
+  startTS: Joi.date().iso(),
+  stopTS: Joi.date().iso(),
+  lowering_location: Joi.string().optional(),
+  lowering_tags: Joi.alternatives().try(
+    Joi.string(),
+    Joi.array().items(Joi.string())
+  ).optional(),
+  offset: Joi.number().integer().min(0).optional(),
+  limit: Joi.number().integer().min(1).optional()
+}).optional().label('loweringQuery');
+
+const loweringSuccessResponse = Joi.object({
+  id: Joi.object(),
+  lowering_id: Joi.string(),
+  start_ts: Joi.date().iso(),
+  stop_ts: Joi.date().iso(),
+  lowering_additional_meta: Joi.object(),
+  lowering_tags: Joi.array().items(Joi.string().allow('')),
+  lowering_location: Joi.string().allow(''),
+  // lowering_access_list: Joi.array().items(Joi.string()),
+  lowering_hidden: Joi.boolean()
+});
+
+const loweringCreateResponse = Joi.object({
+  n: Joi.number().integer(),
+  ok: Joi.number().integer(),
+  insertedCount: Joi.number().integer(),
+  insertedId: Joi.object()
+}).label('loweringCreateResponse');
 
 exports.plugin = {
   name: 'routes-api-lowerings',
@@ -108,7 +174,7 @@ exports.plugin = {
         //Hiddle filtering
         if (typeof (request.query.hidden) !== "undefined"){
           if (request.query.hidden && !request.auth.credentials.scope.includes('admin')) {
-            return h.response({ "statusCode": 401, "error": "not authorized", "message": "User not authorized to retrieve hidden lowerings" }).code(401);
+            return Boom.unauthorized('User not authorized to retrieve hidden lowerings');
           }
 
           query.lowering_hidden = request.query.hidden;
@@ -182,12 +248,12 @@ exports.plugin = {
             return h.response(mod_lowerings).code(200);
           }
  
-          return h.response({ "statusCode": 404, 'message': 'No records found' }).code(404);
+          return Boom.notFound('No records found');
           
         }
         catch (err) {
           console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
       },
       config: {
@@ -196,45 +262,12 @@ exports.plugin = {
           scope: ['admin', 'read_lowerings']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          query: Joi.object({
-            lowering_id: Joi.string().optional(),
-            startTS: Joi.date().iso(),
-            stopTS: Joi.date().iso(),
-            lowering_location: Joi.string().optional(),
-            lowering_tags: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string())
-            ).optional(),
-            offset: Joi.number().integer().min(0).optional(),
-            limit: Joi.number().integer().min(1).optional()
-          }).optional()
+          headers: authorizationHeader,
+          query: loweringQuery
         },
         response: {
           status: {
-            200: Joi.array().items(Joi.object({
-              id: Joi.object(),
-              lowering_id: Joi.string(),
-              start_ts: Joi.date().iso(),
-              stop_ts: Joi.date().iso(),
-              lowering_additional_meta: Joi.object(),
-              lowering_tags: Joi.array().items(Joi.string().allow('')),
-              lowering_location: Joi.string().allow(''),
-              // lowering_access_list: Joi.array().items(Joi.string()),
-              lowering_hidden: Joi.boolean()
-            })),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
+            200: Joi.array().items(loweringSuccessResponse)
           }
         },
         description: 'Return the lowerings based on query parameters',
@@ -258,18 +291,18 @@ exports.plugin = {
           const cruiseResult = await db.collection(cruisesTable).findOne({ _id: ObjectID(request.params.id) });
 
           if (!cruiseResult) {
-            return h.response({ "statusCode": 404, 'message': 'No cruise record found for id: ' + request.params.id }).code(404);
+            return Boom.notFound('No cruise record found for id: ' + request.params.id);
           }
 
           if (!request.auth.credentials.scope.includes('admin') && cruiseResult.cruise_hidden) {
-            return h.response({ "statusCode": 401, "error": "not authorized", "message": "User not authorized to retrieve this cruise" }).code(401);
+            return Boom.unauthorized('User not authorized to retrieve this cruise');
           }
 
           cruise = cruiseResult;
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('unknown error');
         }
 
         const query = {};
@@ -277,7 +310,7 @@ exports.plugin = {
         //Hiddle filtering
         if (typeof (request.query.hidden) !== "undefined"){
           if (request.query.hidden && !request.auth.credentials.scope.includes('admin')) {
-            return h.response({ "statusCode": 401, "error": "not authorized", "message": "User not authorized to retrieve hidden lowerings" }).code(401);
+            return Boom.unauthorized('User not authorized to retrieve hidden lowerings');
           }
 
           query.lowering_hidden = request.query.hidden;
@@ -346,12 +379,12 @@ exports.plugin = {
             return h.response(mod_lowerings).code(200);
           }
  
-          return h.response({ "statusCode": 404, 'message': 'No records found' }).code(404);
+          return Boom.notFound('No records found');
           
         }
         catch (err) {
           console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
       },
       config: {
@@ -360,47 +393,13 @@ exports.plugin = {
           scope: ['admin', 'read_lowerings']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          }),
-          query: Joi.object({
-            startTS: Joi.date().iso(),
-            stopTS: Joi.date().iso(),
-            lowering_location: Joi.string().optional(),
-            lowering_tags: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string())
-            ).optional(),
-            offset: Joi.number().integer().min(0).optional(),
-            limit: Joi.number().integer().min(1).optional()
-          }).optional()
+          headers: authorizationHeader,
+          params: cruiseParam,
+          query: loweringQuery
         },
         response: {
           status: {
-            200: Joi.array().items(Joi.object({
-              id: Joi.object(),
-              lowering_id: Joi.string(),
-              start_ts: Joi.date().iso(),
-              stop_ts: Joi.date().iso(),
-              lowering_additional_meta: Joi.object(),
-              lowering_tags: Joi.array().items(Joi.string().allow('')),
-              lowering_location: Joi.string().allow(''),
-              // lowering_access_list: Joi.array().items(Joi.string()),
-              lowering_hidden: Joi.boolean()
-            })),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
+            200: loweringSuccessResponse
           }
         },
         description: 'Return the lowerings based on query parameters',
@@ -425,7 +424,7 @@ exports.plugin = {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
-          return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+          return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
         let lowering = null;
@@ -433,13 +432,13 @@ exports.plugin = {
         try {
           const result = await db.collection(loweringsTable).findOne(query);
           if (!result) {
-            return h.response({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
+            return Boom.notFound('No record found for id: ' + request.params.id);
           }
 
           if (!request.auth.credentials.scope.includes('admin')) {
             // if (result.lowering_hidden || !result.lowering_access_list.includes(request.auth.credentials.id)) {
             if (result.lowering_hidden) {
-              return h.response({ "statusCode": 401, "error": "not authorized", "message": "User not authorized to retrieve this lowering" }).code(401);
+              return Boom.unauthorized('User not authorized to retrieve this lowering');
             }
           }
 
@@ -448,7 +447,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
 
         try {
@@ -467,40 +466,12 @@ exports.plugin = {
           scope: ['admin', 'read_lowerings']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          })
+          headers: authorizationHeader,
+          params: loweringParam
         },
         response: {
           status: {
-            200: Joi.object({
-              id: Joi.object(),
-              lowering_id: Joi.string(),
-              start_ts: Joi.date().iso(),
-              stop_ts: Joi.date().iso(),
-              lowering_additional_meta: Joi.object(),
-              lowering_tags: Joi.array().items(Joi.string().allow('')),
-              lowering_location: Joi.string().allow(''),
-              // lowering_access_list: Joi.array().items(Joi.string()),
-              lowering_hidden: Joi.boolean()
-            }),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            404: Joi.object({
-              statusCode: Joi.number().integer(),
-              message: Joi.string()
-            })
+            200: loweringSuccessResponse
           }
         },
         description: 'Return the lowering based on lowering id',
@@ -526,7 +497,7 @@ exports.plugin = {
             delete lowering.id;
           }
           catch (err) {
-            return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+            return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
           }
         }
 
@@ -535,41 +506,27 @@ exports.plugin = {
         lowering.stop_ts = new Date(request.payload.stop_ts);
 
         if (lowering.start_ts >= lowering.stop_ts) {
-          return h.response({ "statusCode": 401, "error": "Invalid argument", "message": "Start date must be older than stop date" }).code(401);
+          return Boom.badRequest('Start date must be older than stop date');
         }
 
+        let result = null;
         try {
-          const result = await db.collection(loweringsTable).insertOne(lowering);
-
-          if (!result) {
-            return h.response({ "statusCode": 400, 'message': 'Bad request' }).code(400);
-          }
-
-          try {
-            Fs.mkdirSync(LOWERING_PATH + '/' + result.insertedId);
-          }
-          catch (err) {
-            console.log("ERROR:", err);
-          }
-
-          // const cruiseQuery = { start_ts: { "$lte": new Date(lowering.start_ts) }, stop_ts: { "$gte": new Date(lowering.stop_ts) } };
-          // try {
-          //   const cruiseResult = await db.collection(cruisesTable).findOne(cruiseQuery);
-
-          //   if (cruiseResult && cruiseResult.cruise_access_list.length > 0) {
-          //     await db.collection(loweringsTable).updateOne( { _id: result.insertedId }, { $push: { lowering_access_list: { $each: cruiseResult.cruise_access_list } } });
-          //   }
-          // }
-          // catch (err) {
-          //   console.log("ERROR:", err);
-          // }
-
-          return h.response({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
+          result = await db.collection(loweringsTable).insertOne(lowering);
         }
         catch (err) {
           console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
+
+        try {
+          Fs.mkdirSync(LOWERING_PATH + '/' + result.insertedId);
+        }
+        catch (err) {
+          console.log("ERROR:", err);
+        }
+
+        return h.response({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
+        
       },
       config: {
         auth: {
@@ -577,20 +534,8 @@ exports.plugin = {
           scope: ['admin', 'create_lowerings']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          payload: Joi.object({
-            id: Joi.string().length(24).optional(),
-            lowering_id: Joi.string().required(),
-            start_ts: Joi.date().iso().required(),
-            stop_ts: Joi.date().iso().required(),
-            lowering_additional_meta: Joi.object().required(),
-            lowering_tags: Joi.array().items(Joi.string().allow('')).required(),
-            lowering_location: Joi.string().allow('').required(),
-            // lowering_access_list: Joi.array().items(Joi.string()).required(),
-            lowering_hidden: Joi.boolean().required()
-          }),
+          headers: authorizationHeader,
+          payload: loweringCreatePayload,
           failAction: (request, h, err) => {
 
             throw Boom.badRequest(err.message);
@@ -598,22 +543,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            201: Joi.object({
-              n: Joi.number().integer(),
-              ok: Joi.number().integer(),
-              insertedCount: Joi.number().integer(),
-              insertedId: Joi.object()
-            }),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
+            201: loweringCreateResponse
           }
         },
 
@@ -638,7 +568,7 @@ exports.plugin = {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
-          return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+          return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
         try {
@@ -646,20 +576,20 @@ exports.plugin = {
           const result = await db.collection(loweringsTable).findOne(query);
 
           if (!result) {
-            return h.response({ "statusCode": 400, "error": "Bad request", 'message': 'No record found for id: ' + request.params.id }).code(400);
+            return Boom.badRequest('No record found for id: ' + request.params.id);
           }
 
           if (!request.auth.credentials.scope.includes('admin')) {
             // if (result.lowering_hidden || !result.lowering_access_list.includes(request.auth.credentials.id)) {
             if (result.lowering_hidden) {
-              return h.response({ "statusCode": 401, "error": "not authorized", "message": "User not authorized to edit this lowering" }).code(401);
+              return Boom.unauthorized('User not authorized to edit this lowering');
             }
           }
 
         }
         catch (err) {
           console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
 
         if (request.payload.lowering_additional_meta && request.payload.lowering_additional_meta.lowering_files) {
@@ -672,19 +602,19 @@ exports.plugin = {
           }
           catch (err) {
             console.log("ERROR:", err);
-            return h.response({ "statusCode": 503, "error": "File Error", 'message': 'unabled to upload files. Verify directory ' + Path.join(LOWERING_PATH, request.params.id) + ' exists'  }).code(503);
+            return Boom.serviceUnavailable('unabled to upload files. Verify directory ' + Path.join(LOWERING_PATH, request.params.id) + ' exists');
           }
           
           delete request.payload.lowering_files;
         }
 
         try {
-          const result = await db.collection(loweringsTable).updateOne(query, { $set: request.payload });
-          return h.response(result).code(204);
+          await db.collection(loweringsTable).updateOne(query, { $set: request.payload });
+          return h.response().code(204);
         }
         catch (err) {
           console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
       },
       config: {
@@ -693,40 +623,16 @@ exports.plugin = {
           scope: ['admin', 'write_lowerings']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          }),
-          payload: Joi.object({
-            lowering_id: Joi.string().optional(),
-            start_ts: Joi.date().iso().optional(),
-            stop_ts: Joi.date().iso().optional(),
-            lowering_additional_meta: Joi.object().optional(),
-            lowering_tags: Joi.array().items(Joi.string().allow('')).optional(),
-            lowering_location: Joi.string().allow('').optional(),
-            // lowering_access_list: Joi.array().items(Joi.string()).optional(),
-            lowering_hidden: Joi.boolean().optional()
-          }).required().min(1),
+          headers: authorizationHeader,
+          params: loweringParam,
+          payload: loweringUpdatePayload,
           failAction: (request, h, err) => {
 
             throw Boom.badRequest(err.message);
           }
         },
         response: {
-          status: {
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
-          }
+          status: {}
         },
         description: 'Update a lowering record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
@@ -750,27 +656,27 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+          return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
         try {
           const result = await db.collection(loweringsTable).findOne(query);
           if (!result) {
-            return h.response({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
+            return Boom.notFound('No record found for id: ' + request.params.id);
           }
         }
         catch (err) {
           console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
 
         try {
-          const result = await db.collection(loweringsTable).deleteOne(query);
-          return h.response(result).code(204);
+          await db.collection(loweringsTable).deleteOne(query);
+          return h.response().code(204);
         }
         catch (err) {
           console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
       },
       config: {
@@ -779,26 +685,11 @@ exports.plugin = {
           scope: ['admin', 'create_lowerings']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          })
+          headers: authorizationHeader,
+          params: loweringParam
         },
         response: {
-          status: {
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
-          }
+          status: {}
         },
         description: 'Delete a lowering record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
@@ -828,14 +719,14 @@ exports.plugin = {
           }
           catch (err) {
             console.log("ERROR:", err);
-            return h.response({ statusCode: 503, error: "filesystem error", message: "unable to delete lowering files" }).code(503);  
+            return Boom.serviceUnavailable('unable to delete lowering files');  
           }
 
           return h.response(result).code(204);
         }
         catch (err) {
           console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
       },
       config: {
@@ -844,23 +735,10 @@ exports.plugin = {
           scope: ['admin']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }).options({ allowUnknown: true })
+          headers: authorizationHeader
         },
         response: {
-          status: {
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
-          }
+          status: {}
         },
         description: 'Delete ALL lowering records',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
