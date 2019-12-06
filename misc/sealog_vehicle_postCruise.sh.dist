@@ -17,7 +17,7 @@ GET_LOWERING_IDS_SCRIPT='python3 '${SCRIPT_BASE}'/sealog-utils-getLoweringIdsByC
 BACKUP_LOWERING_SCRIPT=${SCRIPT_BASE}'/sealog_postLowering.sh'
 
 # Root data folder for Sealog
-BACKUP_DIR_ROOT="/home/sealog/Desktop/sealog-backups"
+BACKUP_DIR_ROOT="/home/sealog/sealog-backups"
 
 usage(){
 cat <<EOF

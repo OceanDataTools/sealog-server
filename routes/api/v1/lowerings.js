@@ -399,7 +399,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: loweringSuccessResponse
+            200: Joi.array().items(loweringSuccessResponse)
           }
         },
         description: 'Return the lowerings based on query parameters',
