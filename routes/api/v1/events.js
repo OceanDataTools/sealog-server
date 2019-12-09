@@ -1,5 +1,4 @@
-
-
+const Boom = require('@hapi/boom');
 const Joi = require('@hapi/joi');
 const Converter = require('json-2-csv');
 const Extend = require('jquery-extend');
@@ -29,7 +28,6 @@ const _flattenJSON = (json) => {
     copiedEvent.event_options.map((data) => {
   
       const elementName = `event_option_${data.event_option_name}`;
-      // console.log(elementName, data.event_option_value);
       copiedEvent[elementName] = data.event_option_value;
     });
 
@@ -134,6 +132,83 @@ const _buildEventsQuery = (request, start_ts = new Date("1970-01-01T00:00:00.000
   return query;
 };
 
+
+const authorizationHeader = Joi.object({
+  authorization: Joi.string().required()
+}).options({ allowUnknown: true }).label('authorizationHeader');
+
+const eventParam = Joi.object({
+  id: Joi.string().length(24).required()
+}).label('eventParam');
+
+const eventQuery = Joi.object({
+  format: Joi.string().optional(),
+  offset: Joi.number().integer().min(0).optional(),
+  limit: Joi.number().integer().min(1).optional(),
+  sort: Joi.string().optional(),
+  author: Joi.alternatives().try(
+    Joi.string(),
+    Joi.array().items(Joi.string()).optional()
+  ),
+  startTS: Joi.date().iso(),
+  stopTS: Joi.date().iso(),
+  datasource: Joi.alternatives().try(
+    Joi.string(),
+    Joi.array().items(Joi.string()).optional()
+  ),
+  value: Joi.alternatives().try(
+    Joi.string(),
+    Joi.array().items(Joi.string()).optional()
+  ),
+  freetext: Joi.alternatives().try(
+    Joi.string(),
+    Joi.array().items(Joi.string()).optional()
+  )
+}).optional().label('eventQuery');
+
+const eventSuccessResponse = Joi.object({
+  id: Joi.object(),
+  event_author: Joi.string(),
+  ts: Joi.date().iso(),
+  event_value: Joi.string(),
+  event_options: Joi.array().items(Joi.object({
+    event_option_name: Joi.string(),
+    event_option_value: Joi.string().allow('')
+  })),
+  event_free_text: Joi.string().allow('')
+}).label('eventSuccessResponse');
+
+const eventCreatePayload = Joi.object({
+  id: Joi.string().length(24).optional(),
+  event_author: Joi.string().min(1).max(100).optional(),
+  ts: Joi.date().iso().optional(),
+  event_value: Joi.string().min(1).max(100).required(),
+  event_options: Joi.array().items(Joi.object({
+    event_option_name:Joi.string().required(),
+    event_option_value:Joi.string().allow('').required()
+  })).optional(),
+  event_free_text: Joi.string().allow('').optional()
+}).label('eventCreatePayload');
+
+const eventCreateResponse = Joi.object({
+  n: Joi.number().integer(),
+  ok: Joi.number().integer(),
+  insertedCount: Joi.number().integer(),
+  insertedId: Joi.object(),
+  insertedEvent: eventSuccessResponse
+}).label('eventCreateResponse');
+
+const eventUpdatePayload = Joi.object({
+  event_author: Joi.string().min(1).max(100).optional(),
+  ts: Joi.date().iso().optional(),
+  event_value: Joi.string().min(1).max(100).optional(),
+  event_options: Joi.array().items(Joi.object({
+    event_option_name:Joi.string().required(),
+    event_option_value:Joi.string().allow('').required()
+  })).optional(),
+  event_free_text: Joi.string().allow('').optional()
+}).required().min(1).label('eventUpdateResponse');
+
 exports.plugin = {
   name: 'routes-api-events',
   dependencies: ['hapi-mongodb', 'nes'],
@@ -157,18 +232,18 @@ exports.plugin = {
           const cruiseResult = await db.collection(cruisesTable).findOne({ _id: ObjectID(request.params.id) });
 
           if (!cruiseResult) {
-            return h.response({ "statusCode": 404, 'message': 'No cruise record found for id: ' + request.params.id }).code(404);
+            return Boom.notFound('No cruise record found for id: ' + request.params.id );
           }
 
           if (!request.auth.credentials.scope.includes('admin') && cruiseResult.cruise_hidden) {
-            return h.response({ "statusCode": 401, "error": "not authorized", "message": "User not authorized to retrieve this cruise" }).code(401);
+            return Boom.unauthorized('User not authorized to retrieve this cruise');
           }
 
           cruise = cruiseResult;
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
 
         const query = _buildEventsQuery(request, cruise.start_ts, cruise.stop_ts);
@@ -183,7 +258,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
 
         if (results.length > 0) {
@@ -216,7 +291,7 @@ exports.plugin = {
             }
             catch (err) {
               console.log(err);
-              return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+              return Boom.serviceUnavailable('database error');
             }
 
             const aux_data_eventID_set = new Set(aux_data_results.map((aux_data) => String(aux_data.event_id)));
@@ -248,7 +323,7 @@ exports.plugin = {
           return h.response(results).code(200);
         }
 
-        return h.response({ "statusCode": 404, 'message': 'No records found' }).code(404);
+        return Boom.notFound('No records found' );
       },
       config: {
         auth: {
@@ -256,69 +331,16 @@ exports.plugin = {
           scope: ['admin', 'read_events']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          }),
-          query: Joi.object({
-            format: Joi.string().optional(),
-            offset: Joi.number().integer().min(0).optional(),
-            limit: Joi.number().integer().min(1).optional(),
-            author: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ),
-            startTS: Joi.date().iso(),
-            stopTS: Joi.date().iso(),
-            datasource: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ),
-            value: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ),
-            freetext: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            )
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          headers: authorizationHeader,
+          params: eventParam,
+          query: eventQuery
         },
         response: {
           status: {
             200: Joi.alternatives().try(
               Joi.string(),
-              Joi.array().items(Joi.object({
-                id: Joi.object(),
-                event_author: Joi.string(),
-                ts: Joi.date().iso(),
-                event_value: Joi.string(),
-                event_options: Joi.array().items(Joi.object({
-                  event_option_name: Joi.string(),
-                  event_option_value: Joi.string().allow('')
-                })),
-                event_free_text: Joi.string().allow('')
-              }))
-            ),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            404: Joi.object({
-              statusCode: Joi.number().integer(),
-              message: Joi.string()
-            })
+              Joi.array().items(eventSuccessResponse)
+            )
           }
         },
         description: 'Export the events for a cruise based on the cruise id',
@@ -343,13 +365,13 @@ exports.plugin = {
           const cruiseResult = await db.collection(cruisesTable).findOne({ _id: ObjectID(request.params.id) });
 
           if (!cruiseResult) {
-            return h.response({ "statusCode": 404, 'message': 'No record cruise found for id: ' + request.params.id }).code(404);
+            return Boom.notFound('No record cruise found for id: ' + request.params.id );
           }
 
           if (!request.auth.credentials.scope.includes('admin')) {
             // if (cruiseResult.cruise_hidden || !cruiseResult.cruise_access_list.includes(request.auth.credentials.id)) {
             if (cruiseResult.cruise_hidden) {
-              return h.response({ "statusCode": 401, "error": "not authorized", "message": "User not authorized to retrieve this cruise" }).code(401);
+              return Boom.unauthorized('User not authorized to retrieve this cruise');
             }
           }
 
@@ -357,11 +379,11 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
 
         if (cruise.cruise_hidden && !request.auth.credentials.scope.includes("admin")) {
-          return h.response({ "statusCode": 401, "error": "not authorized", "message": "User not authorized to retrieve hidden cruises" }).code(401);
+          return Boom.unauthorized('User not authorized to retrieve hidden cruises');
         }
 
         const query = _buildEventsQuery(request, cruise.start_ts, cruise.stop_ts);
@@ -374,7 +396,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
 
         if (results.length > 0) {
@@ -407,7 +429,7 @@ exports.plugin = {
             }
             catch (err) {
               console.log(err);
-              return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+              return Boom.serviceUnavailable('database error');
             }
 
             const aux_data_eventID_set = new Set(aux_data_results.map((aux_data) => String(aux_data.event_id)));
@@ -430,54 +452,14 @@ exports.plugin = {
           scope: ['admin', 'read_events']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          }),
-          query: Joi.object({
-            author: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ),
-            startTS: Joi.date().iso(),
-            stopTS: Joi.date().iso(),
-            datasource: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ),
-            value: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ),
-            freetext: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            )
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          headers: authorizationHeader,
+          params: eventParam,
+          query: eventQuery
         },
         response: {
           status: {
             200: Joi.object({
               events: Joi.number().integer()
-            }),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            404: Joi.object({
-              statusCode: Joi.number().integer(),
-              message: Joi.string()
             })
           }
         },
@@ -502,13 +484,13 @@ exports.plugin = {
           const loweringResult = await db.collection(loweringsTable).findOne({ _id: ObjectID(request.params.id) });
 
           if (!loweringResult) {
-            return h.response({ "statusCode": 404, 'message': 'No record lowering found for id: ' + request.params.id }).code(404);
+            return Boom.notFound('No record lowering found for id: ' + request.params.id );
           }
 
           if (!request.auth.credentials.scope.includes('admin')) {
             // if (loweringResult.lowering_hidden || !loweringResult.lowering_access_list.includes(request.auth.credentials.id)) {
             if (loweringResult.lowering_hidden) {
-              return h.response({ "statusCode": 401, "error": "not authorized", "message": "User not authorized to retrieve this lowering" }).code(401);
+              return Boom.unauthorized('User not authorized to retrieve this lowering');
             }
           }
 
@@ -516,11 +498,11 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
 
         if (lowering.lowering_hidden && !request.auth.credentials.scope.includes("admin")) {
-          return h.response({ "statusCode": 401, "error": "not authorized", "message": "User not authorized to retrieve hidden lowerings" }).code(401);
+          return Boom.unauthorized('User not authorized to retrieve hidden lowerings');
         }
 
         const query = _buildEventsQuery(request, lowering.start_ts, lowering.stop_ts);
@@ -535,7 +517,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
 
         if (results.length > 0) {
@@ -568,7 +550,7 @@ exports.plugin = {
             }
             catch (err) {
               console.log(err);
-              return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+              return Boom.serviceUnavailable('database error');
             }
 
             const aux_data_eventID_set = new Set(aux_data_results.map((aux_data) => String(aux_data.event_id)));
@@ -600,7 +582,7 @@ exports.plugin = {
           return h.response(results).code(200);
         }
 
-        return h.response({ "statusCode": 404, 'message': 'No records found' }).code(404);
+        return Boom.notFound('No records found' );
       },
       config: {
         auth: {
@@ -608,69 +590,16 @@ exports.plugin = {
           scope: ['admin', 'read_events']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          }),
-          query: Joi.object({
-            format: Joi.string().optional(),
-            offset: Joi.number().integer().min(0).optional(),
-            limit: Joi.number().integer().min(1).optional(),
-            author: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ),
-            startTS: Joi.date().iso(),
-            stopTS: Joi.date().iso(),
-            datasource: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ),
-            value: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ),
-            freetext: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            )
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          headers: authorizationHeader,
+          params: eventParam,
+          query: eventQuery
         },
         response: {
           status: {
             200: Joi.alternatives().try(
               Joi.string(),
-              Joi.array().items(Joi.object({
-                id: Joi.object(),
-                event_author: Joi.string(),
-                ts: Joi.date().iso(),
-                event_value: Joi.string(),
-                event_options: Joi.array().items(Joi.object({
-                  event_option_name: Joi.string(),
-                  event_option_value: Joi.string().allow('')
-                })),
-                event_free_text: Joi.string().allow('')
-              }))
-            ),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            404: Joi.object({
-              statusCode: Joi.number().integer(),
-              message: Joi.string()
-            })
+              Joi.array().items(eventSuccessResponse)
+            )
           }
         },
         description: 'Export the events for a lowering based on the lowering id',
@@ -695,13 +624,13 @@ exports.plugin = {
           const loweringResult = await db.collection(loweringsTable).findOne({ _id: ObjectID(request.params.id) });
 
           if (!loweringResult) {
-            return h.response({ "statusCode": 404, 'message': 'No record lowering found for id: ' + request.params.id }).code(404);
+            return Boom.notFound('No record lowering found for id: ' + request.params.id );
           }
 
           if (!request.auth.credentials.scope.includes('admin')) {
             // if (loweringResult.lowering_hidden || !loweringResult.lowering_access_list.includes(request.auth.credentials.id)) {
             if (loweringResult.lowering_hidden) {
-              return h.response({ "statusCode": 401, "error": "not authorized", "message": "User not authorized to retrieve this lowering" }).code(401);
+              return Boom.unauthorized('User not authorized to retrieve this lowering');
             }
           }
 
@@ -709,11 +638,11 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
 
         if (lowering.lowering_hidden && !request.auth.credentials.scope.includes("admin")) {
-          return h.response({ "statusCode": 401, "error": "not authorized", "message": "User not authorized to retrieve hidden lowerings" }).code(401);
+          return Boom.unauthorized('User not authorized to retrieve hidden lowerings');
         }
 
         const query = _buildEventsQuery(request, lowering.start_ts, lowering.stop_ts);
@@ -726,7 +655,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
 
         if (results.length > 0) {
@@ -759,7 +688,7 @@ exports.plugin = {
             }
             catch (err) {
               console.log(err);
-              return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+              return Boom.serviceUnavailable('database error');
             }
 
             const aux_data_eventID_set = new Set(aux_data_results.map((aux_data) => String(aux_data.event_id)));
@@ -782,54 +711,14 @@ exports.plugin = {
           scope: ['admin', 'read_events']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          }),
-          query: Joi.object({
-            author: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ),
-            startTS: Joi.date().iso(),
-            stopTS: Joi.date().iso(),
-            datasource: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ),
-            value: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ),
-            freetext: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            )
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          headers: authorizationHeader,
+          params: eventParam,
+          query: eventQuery
         },
         response: {
           status: {
             200: Joi.object({
               events: Joi.number().integer()
-            }),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            404: Joi.object({
-              statusCode: Joi.number().integer(),
-              message: Joi.string()
             })
           }
         },
@@ -881,7 +770,7 @@ exports.plugin = {
           }
           catch (err) {
             console.log(err);
-            return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+            return Boom.serviceUnavailable('database error');
           }
 
           const query = _buildEventsQuery(request);
@@ -899,12 +788,12 @@ exports.plugin = {
               return h.response(results).code(200);
             }
  
-            return h.response({ "statusCode": 404, 'message': 'No records found' }).code(404);
+            return Boom.notFound('No records found' );
             
           }
           catch (err) {
             console.log(err);
-            return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+            return Boom.serviceUnavailable('database error');
           }
 
         }
@@ -941,11 +830,11 @@ exports.plugin = {
               return h.response(results).code(200);
             }
 
-            return h.response({ "statusCode": 404, 'message': 'No records found' }).code(404);
+            return Boom.notFound('No records found' );
           }
           catch (err) {
             console.log(err);
-            return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+            return Boom.serviceUnavailable('database error');
           }
         }
       },
@@ -955,63 +844,15 @@ exports.plugin = {
           scope: ['admin', 'read_events']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }),
-          query: Joi.object({
-            format: Joi.string().optional(),
-            offset: Joi.number().integer().min(0).optional(),
-            limit: Joi.number().integer().min(1).optional(),
-            sort: Joi.string().optional(),
-            author: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ),
-            startTS: Joi.date().iso(),
-            stopTS: Joi.date().iso(),
-            datasource: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ),
-            value: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ),
-            freetext: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            )
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          headers: authorizationHeader,
+          query: eventQuery
         },
         response: {
           status: {
             200: Joi.alternatives().try(
               Joi.string(),
-              Joi.array().items(Joi.object({
-                id: Joi.object(),
-                event_author: Joi.string(),
-                ts: Joi.date().iso(),
-                event_value: Joi.string(),
-                event_options: Joi.array().items(Joi.object({
-                  event_option_name: Joi.string(),
-                  event_option_value: Joi.string().allow('')
-                })),
-                event_free_text: Joi.string().allow('')
-              }))
-            ),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
+              Joi.array().items(eventSuccessResponse)
+            )
           }
         },
         description: 'Return the events based on query parameters',
@@ -1064,7 +905,7 @@ exports.plugin = {
           }
           catch (err) {
             console.log(err);
-            return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+            return Boom.serviceUnavailable('database error');
           }
 
           const query = _buildEventsQuery(request);
@@ -1079,7 +920,7 @@ exports.plugin = {
           }
           catch (err) {
             console.log(err);
-            return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+            return Boom.serviceUnavailable('database error');
           }
 
         }
@@ -1095,7 +936,7 @@ exports.plugin = {
           }
           catch (err) {
             console.log(err);
-            return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+            return Boom.serviceUnavailable('database error');
           }
         }
       },
@@ -1105,47 +946,13 @@ exports.plugin = {
           scope: ['admin', 'read_events']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }),
-          query: Joi.object({
-            author: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ),
-            startTS: Joi.date().iso(),
-            stopTS: Joi.date().iso(),
-            datasource: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ),
-            value: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            ),
-            freetext: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(Joi.string()).optional()
-            )
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          headers: authorizationHeader,
+          query: eventQuery
         },
         response: {
           status: {
             200: Joi.object({
               events: Joi.number().integer()
-            }),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
             })
           }
         },
@@ -1172,14 +979,14 @@ exports.plugin = {
           const result = await db.collection(eventsTable).findOne(query);
 
           if (!result) {
-            return h.response({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
+            return Boom.notFound('No record found for id: ' + request.params.id );
           }
 
           return h.response(_renameAndClearFields(result)).code(200);
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
       },
       config: {
@@ -1188,44 +995,12 @@ exports.plugin = {
           scope: ['admin', 'read_events']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          headers: authorizationHeader,
+          params: eventParam
         },
         response: {
           status: {
-            200: Joi.object({
-              id: Joi.object(),
-              event_author: Joi.string(),
-              ts: Joi.date().iso(),
-              event_value: Joi.string(),
-              event_options: Joi.array().items(Joi.object({
-                event_option_name: Joi.string(),
-                event_option_value: Joi.string().allow('')
-              })),
-              event_free_text: Joi.string().allow('')
-            }),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            404: Joi.object({
-              statusCode: Joi.number().integer(),
-              message: Joi.string()
-            })
-
+            200: eventSuccessResponse
           }
         },
         description: 'Return an event based on the event id',
@@ -1252,12 +1027,12 @@ exports.plugin = {
           }
           catch (err) {
             console.log("invalid ObjectID");
-            return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+            return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
           }
 
           const result = await db.collection(eventsTable).findOne({ _id: event._id });
           if (result) {
-            return h.response({ statusCode:400, error: "duplicate", message: "duplicate event ID" }).code(400);
+            return Boom.badRequest('duplicate event ID');
           }
         }
 
@@ -1285,7 +1060,7 @@ exports.plugin = {
             const result = await db.collection(usersTable).findOne({ _id: new ObjectID(request.auth.credentials.id) });
             
             if (!result) {
-              return h.response({ "statusCode": 401, 'error': 'invalid user', 'message': 'specified user does not exist' }).code(401);
+              return Boom.badRequest('specified user does not exist');
             }
 
             event.event_author = result.username;
@@ -1293,16 +1068,12 @@ exports.plugin = {
           }
           catch (err) {
             console.log(err);
-            return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+            return Boom.serviceUnavailable('database error');
           }
         }
 
         try {
           const result = await db.collection(eventsTable).insertOne(event);
-
-          if (!result) {
-            return h.response({ "statusCode": 400, 'message': 'Bad request' }).code(400);
-          }
 
           event._id = result.insertedId;
           _renameAndClearFields(event);
@@ -1316,7 +1087,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
       },
       config: {
@@ -1325,53 +1096,16 @@ exports.plugin = {
           scope: ['admin', 'write_events']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }),
-          payload: Joi.object({
-            id: Joi.string().length(24).optional(),
-            event_author: Joi.string().min(1).max(100).optional(),
-            ts: Joi.date().iso().optional(),
-            event_value: Joi.string().min(1).max(100).required(),
-            event_options: Joi.array().items(Joi.object({
-              event_option_name:Joi.string().required(),
-              event_option_value:Joi.string().allow('').required()
-            })).optional(),
-            event_free_text: Joi.string().allow('').optional()
-          }),
-          options: {
-            allowUnknown: true
+          headers: authorizationHeader,
+          payload: eventCreatePayload,
+          failAction: (request, h, err) => {
+
+            throw Boom.badRequest(err.message);
           }
         },
         response: {
           status: {
-            201: Joi.object({
-              n: Joi.number().integer(),
-              ok: Joi.number().integer(),
-              insertedCount: Joi.number().integer(),
-              insertedId: Joi.object(),
-              insertedEvent: Joi.object({
-                id: Joi.object(),
-                event_author: Joi.string(),
-                ts: Joi.date().iso(),
-                event_value: Joi.string(),
-                event_options: Joi.array().items(Joi.object({
-                  event_option_name: Joi.string(),
-                  event_option_value: Joi.string().allow('')
-                })),
-                event_free_text: Joi.string().allow('')
-              })
-            }),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
+            201: eventCreateResponse
           }
         },
 
@@ -1391,35 +1125,36 @@ exports.plugin = {
         const ObjectID = request.mongo.ObjectID;
 
         const query = {};
+        let time_change = false;
 
         try {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
           console.log("invalid ObjectID");
-          return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+          return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
-        let event = null;
         try {
           const result = await db.collection(eventsTable).findOne(query);
 
           if (!result) {
-            return h.response({ "statusCode": 400, "error": "Bad request", 'message': 'No record found for id: ' + request.params.id }).code(400);
+            return Boom.badRequest('No event record found for id: ' + request.params.id);
           }
 
-          event = result;
-
+          if (request.payload.ts && result.ts.getTime() !== request.payload.ts.getTime()) {
+            time_change = true;
+          }
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
 
-        if (request.payload.event_options) {
-          const temp_event_options = request.payload.event_options;
+        const event = request.payload;
 
-          temp_event_options.map((event_option) => {
+        if (event.event_options) {
+          const temp_event_options = event.event_options.map((event_option) => {
 
             event_option.event_option_name = event_option.event_option_name.toLowerCase().replace(/\s+/g, "_");
             return event_option;
@@ -1443,9 +1178,8 @@ exports.plugin = {
           });
         }
 
-        const time_change = (request.payload.ts && (event.ts - request.payload.ts) !== 0) ? true : false;
-        if (time_change) {
-          event.ts = request.payload.ts;
+        if (event.ts) {
+          event.ts = new Date(event.ts);
         }
 
         try {
@@ -1460,12 +1194,12 @@ exports.plugin = {
             server.publish('/ws/status/updateEvents', _renameAndClearFields(result.value));
           }
 
-          return h.response(JSON.stringify(result.lastErrorObject)).code(204);
+          return h.response().code(204);
 
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
       },
       config: {
@@ -1474,39 +1208,16 @@ exports.plugin = {
           scope: ['admin', 'write_events']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          }),
-          payload: Joi.object({
-            event_author: Joi.string().min(1).max(100).optional(),
-            ts: Joi.date().iso().optional(),
-            event_value: Joi.string().min(1).max(100).optional(),
-            event_options: Joi.array().items(Joi.object({
-              event_option_name:Joi.string().required(),
-              event_option_value:Joi.string().allow('').required()
-            })).optional(),
-            event_free_text: Joi.string().allow('').optional()
-          }).required().min(1),
-          options: {
-            allowUnknown: true
+          headers: authorizationHeader,
+          params: eventParam,
+          payload: eventUpdatePayload,
+          failAction: (request, h, err) => {
+
+            throw Boom.badRequest(err.message);
           }
         },
         response: {
-          status: {
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
-          }
+          status: {}
         },
         description: 'Update an event record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
@@ -1530,7 +1241,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log("invalid ObjectID");
-          return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+          return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
         let event = null;
@@ -1539,7 +1250,7 @@ exports.plugin = {
           const result = await db.collection(eventsTable).findOne(query);
 
           if (!result) {
-            return h.response({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
+            return Boom.notFound('No record found for id: ' + request.params.id );
           }
 
           event = result;
@@ -1547,7 +1258,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
   
         try {
@@ -1557,7 +1268,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
   
         try {
@@ -1565,7 +1276,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
 
         try {
@@ -1573,12 +1284,12 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
 
         server.publish('/ws/status/deleteEvents', _renameAndClearFields(event));
 
-        return h.response(event).code(204);
+        return h.response().code(204);
       },
       config: {
         auth: {
@@ -1586,29 +1297,11 @@ exports.plugin = {
           scope: ['admin', 'write_events']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          headers: authorizationHeader,
+          params: eventParam
         },
         response: {
-          status: {
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
-          }
+          status: {}
         },
         description: 'Delete an event record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
@@ -1630,7 +1323,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
   
         try {
@@ -1639,7 +1332,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return h.response({ statusCode: 503, error: "database error", message: "unknown error" }).code(503);
+          return Boom.serviceUnavailable('database error');
         }
       },
       config: {
@@ -1648,26 +1341,10 @@ exports.plugin = {
           scope: ['admin']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          headers: authorizationHeader
         },
         response: {
-          status: {
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
-          }
+          status: {}
         },
         description: 'Delete ALL the event records',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\

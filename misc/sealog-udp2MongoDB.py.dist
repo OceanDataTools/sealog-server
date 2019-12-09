@@ -23,6 +23,9 @@ from pymongo import MongoClient
 UDP_IP_ADDRESS = "0.0.0.0"
 UDP_PORT_NO = 10600
 
+DATABASE = 'sealog_udp_cache'
+COLLECITON = 'udpData'
+
 LOG_LEVEL = logging.INFO
 
 # Valid line headers to process
@@ -90,8 +93,8 @@ def parseGGA(message, label=None):
 def insertUDPData():
 
   client = MongoClient()
-  db = client.udpDataCache
-  collection = db.udpData
+  db = client[DATABASE]
+  collection = db[COLLECITON]
 
   serverSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
   serverSock.bind((UDP_IP_ADDRESS, UDP_PORT_NO))

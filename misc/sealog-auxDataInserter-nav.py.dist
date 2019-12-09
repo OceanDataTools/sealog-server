@@ -30,6 +30,9 @@ from pymongo import MongoClient
 import python_sealog
 from python_sealog.settings import apiServerURL, wsServerURL, cruisesAPIPath, eventsAPIPath, auxDataAPIPath, headers
 
+DATABASE = 'sealog_udp_cache'
+COLLECITON = 'navData'
+
 # set of events to ignore
 excludeSet = ()
 
@@ -57,8 +60,8 @@ auxDataTemplate = {
 }
 
 client = MongoClient()
-db = client.udpDataCache
-collection = db.udpData
+db = client[DATABASE]
+collection = db[COLLECITON]
 
 LOG_LEVEL = logging.INFO
 

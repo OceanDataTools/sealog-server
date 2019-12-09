@@ -9,7 +9,7 @@
 # Created: 2019-05-11
 
 # Parent Directory of sealog database backups
-BACKUP_DIR="/home/sealog/sealog-db-backups"
+BACKUP_DIR="/home/sealog/sealog-DB-backups"
 
 # Directory where the script is being run from
 PWD=pwd

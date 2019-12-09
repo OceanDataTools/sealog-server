@@ -1,3 +1,4 @@
+const Boom = require('@hapi/boom');
 const Joi = require('@hapi/joi');
 
 const {
@@ -12,6 +13,32 @@ const _renameAndClearFields = (doc) => {
 
   return doc;
 };
+
+const authorizationHeader = Joi.object({
+  authorization: Joi.string().required()
+}).options({ allowUnknown: true }).label('authorizationHeader');
+
+// const databaseInsertResponse = Joi.object({
+//   n: Joi.number().integer(),
+//   ok: Joi.number().integer(),
+//   insertedCount: Joi.number().integer(),
+//   insertedId: Joi.object()
+// }).label('databaseInsertResponse');
+
+const customVarParam = Joi.object({
+  id: Joi.string().length(24).required()
+}).label('customVarParam');
+
+const customVarResponse = Joi.object({
+  id: Joi.object(),
+  custom_var_name: Joi.string(),
+  custom_var_value: Joi.string().allow('')
+}).label('customVarResponse');
+
+const customVarUpdatePayload = Joi.object({
+  custom_var_name: Joi.string().optional(),
+  custom_var_value: Joi.string().allow('').optional()
+}).required().min(1).label('customVarUpdatePayload');
 
 exports.plugin = {
   name: 'routes-api-custom_vars',
@@ -44,7 +71,7 @@ exports.plugin = {
         try {
           const results = await db.collection(customVarsTable).find(query).toArray();
 
-          // console.log("results:", results)
+          // console.log("results:", results);
           if (results.length > 0) {
 
             results.forEach(_renameAndClearFields);
@@ -52,12 +79,11 @@ exports.plugin = {
             return h.response(results).code(200);
           }
  
-          return h.response({ "statusCode": 404, 'message': 'No records found' }).code(404);
+          return Boom.notFound('No records found');
           
         }
         catch (err) {
-          console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          return Boom.serviceUnavailable('database error', err);
         }
       },
       config: {
@@ -66,33 +92,14 @@ exports.plugin = {
           scope: ['admin', 'read_events']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }),
+          headers: authorizationHeader,
           query: Joi.object({
             name: Joi.string()
-          }).optional(),
-          options: {
-            allowUnknown: true
-          }
+          }).optional()
         },
         response: {
           status: {
-            200: Joi.array().items(Joi.object({
-              id: Joi.object(),
-              custom_var_name: Joi.string(),
-              custom_var_value: Joi.string().allow('')
-            })),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
+            200: Joi.array().items(customVarResponse)
           }
         },
         description: 'Return the custom vars based on query parameters',
@@ -116,21 +123,20 @@ exports.plugin = {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
-          return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+          return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
         try {
           const result = await db.collection(customVarsTable).findOne(query);
           if (!result) {
-            return h.response({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
+            return Boom.notFound('No record found for id: ' + request.params.id);
           }
 
           const mod_result = _renameAndClearFields(result);
           return h.response(mod_result).code(200);
         }
         catch (err) {
-          console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          return Boom.serviceUnavailable('database error', err);
         }
       },
       config: {
@@ -139,38 +145,12 @@ exports.plugin = {
           scope: ['admin', 'read_events']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          }),
-          options: {
-            allowUnknown: true
-          }
+          headers: authorizationHeader,
+          params: customVarParam
         },
         response: {
           status: {
-            200: Joi.object({
-              id: Joi.object(),
-              custom_var_name: Joi.string(),
-              custom_var_value: Joi.string().allow('')
-            }),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            404: Joi.object({
-              statusCode: Joi.number().integer(),
-              message: Joi.string()
-            })
-
+            200: customVarResponse
           }
         },
         description: 'Return the custom_var based on custom_var id',
@@ -195,36 +175,34 @@ exports.plugin = {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
-          return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+          return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
         try {
           const result = await db.collection(customVarsTable).findOne(query);
 
           if (!result) {
-            return h.response({ "statusCode": 404, 'message': 'No record found for id: ' + request.params.id }).code(404);
+            return Boom.notFound('No record found for id: ' + request.params.id);
           }
 
           custom_var_name = result.custom_var_name;
         }
         catch (err) {
-          console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          return Boom.serviceUnavailable('database error', err);
         }
 
         try {
-          const updateResult = await db.collection(customVarsTable).updateOne(query, { $set: request.payload });
+          await db.collection(customVarsTable).updateOne(query, { $set: request.payload });
 
           const custom_var = { id: request.params.id, custom_var_name, custom_var_value : request.payload.custom_var_value };
 
           server.publish('/ws/status/updateCustomVars', custom_var );
 
-          return h.response(updateResult).code(204);
+          return h.response().code(204);
 
         }
         catch (err) {
-          console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "server error", message: "database error" }).code(503);
+          return Boom.serviceUnavailable('database error', err);
         }   
       },
       config: {
@@ -233,32 +211,12 @@ exports.plugin = {
           scope: ['admin', 'write_events']
         },
         validate: {
-          headers: Joi.object({
-            authorization: Joi.string().required()
-          }),
-          params: Joi.object({
-            id: Joi.string().length(24).required()
-          }),
-          payload: Joi.object({
-            custom_var_name: Joi.string().optional(),
-            custom_var_value: Joi.string().allow('').optional()
-          }).required().min(1),
-          options: {
-            allowUnknown: true
-          }
+          headers: authorizationHeader,
+          params: customVarParam,
+          payload: customVarUpdatePayload
         },
         response: {
-          status: {
-            404: Joi.object({
-              statusCode: Joi.number().integer(),
-              message: Joi.string()
-            }),
-            503: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
-          }
+          status: {}
         },
         description: 'Update a custom var record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
