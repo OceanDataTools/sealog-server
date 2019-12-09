@@ -144,7 +144,7 @@ exports.plugin = {
     // Need to add a register route
     server.route({
       method: 'POST',
-      path: '/register',
+      path: '/auth/register',
       async handler(request, h) {
       
         const db = request.mongo.db;
@@ -279,7 +279,7 @@ exports.plugin = {
     // Need to add a register route
     server.route({
       method: 'PATCH',
-      path: '/resetPassword',
+      path: '/auth/resetPassword',
       async handler(request, h) {
 
         const db = request.mongo.db;
@@ -354,7 +354,7 @@ exports.plugin = {
 
     server.route({
       method: 'POST',
-      path: '/login',
+      path: '/auth/login',
       async handler(request, h) {
 
         const db = request.mongo.db;
@@ -426,7 +426,7 @@ exports.plugin = {
 
     server.route({
       method: 'GET',
-      path: '/validate',
+      path: '/auth/validate',
       handler(request, h) {
 
         return h.response({ status:"valid" }).code(200);
@@ -446,7 +446,7 @@ exports.plugin = {
 
     server.route({
       method: 'POST',
-      path: '/forgotPassword',
+      path: '/auth/forgotPassword',
       async handler(request, h) {
 
         const db = request.mongo.db;
@@ -527,7 +527,7 @@ exports.plugin = {
 
     server.route({
       method: 'GET',
-      path: '/profile',
+      path: '/auth/profile',
       async handler(request, h) {
 
         const db = request.mongo.db;
@@ -569,7 +569,7 @@ exports.plugin = {
 
     server.route({
       method: 'GET',
-      path: '/profile/token',
+      path: '/auth/profile/token',
       async handler(request, h) {
 
         const db = request.mongo.db;
