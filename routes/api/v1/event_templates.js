@@ -5,11 +5,14 @@ const {
   eventTemplatesTable
 } = require('../../../config/db_constants');
 
-const _renameAndClearFields = (doc) => {
+const _renameAndClearFields = (doc, admin = false) => {
 
   //rename id
   doc.id = doc._id;
   delete doc._id;
+  if (!admin) {
+    delete doc.template_disabled;
+  }
 
   return doc;
 };
@@ -17,6 +20,13 @@ const _renameAndClearFields = (doc) => {
 const authorizationHeader = Joi.object({
   authorization: Joi.string().required()
 }).options({ allowUnknown: true }).label('authorizationHeader');
+
+const databaseInsertResponse = Joi.object({
+  n: Joi.number().integer(),
+  ok: Joi.number().integer(),
+  insertedCount: Joi.number().integer(),
+  insertedId: Joi.object()
+}).label('databaseInsertResponse');
 
 const eventTemplateParam = Joi.object({
   id: Joi.string().length(24).required()
@@ -28,6 +38,8 @@ const eventTemplateSuccessResponse = Joi.object({
   event_value: Joi.string(),
   event_free_text_required: Joi.boolean(),
   system_template: Joi.boolean(),
+  template_categories: Joi.array().items(Joi.string()),
+  template_disabled: Joi.boolean().optional(),
   event_options: Joi.array().items(Joi.object({
     event_option_name: Joi.string(),
     event_option_type: Joi.string(),
@@ -38,12 +50,14 @@ const eventTemplateSuccessResponse = Joi.object({
   }))
 }).label('eventTemplateSuccessResponse');
 
-const eventTemplatePayload = Joi.object({
+const eventTemplateCreatePayload = Joi.object({
   id: Joi.string().length(24).optional(),
   event_name: Joi.string().required(),
   event_value: Joi.string().required(),
   event_free_text_required: Joi.boolean().required(),
   system_template: Joi.boolean().required(),
+  template_categories: Joi.array().items(Joi.string()).optional(),
+  template_disabled: Joi.boolean().optional(),
   event_options: Joi.array().items(Joi.object({
     event_option_name: Joi.string().required(),
     event_option_type: Joi.string().required(),
@@ -52,7 +66,24 @@ const eventTemplatePayload = Joi.object({
     event_option_allow_freeform: Joi.boolean().required(),
     event_option_required: Joi.boolean().required()
   })).optional()
-}).label('eventTemplatePayload');
+}).label('eventTemplateCreatePayload');
+
+const eventTemplateUpdatePayload = Joi.object({
+  event_name: Joi.string().optional(),
+  event_value: Joi.string().optional(),
+  event_free_text_required: Joi.boolean().optional(),
+  system_template: Joi.boolean().optional(),
+  template_categories: Joi.array().items(Joi.string()).optional(),
+  template_disabled: Joi.boolean().optional(),
+  event_options: Joi.array().items(Joi.object({
+    event_option_name: Joi.string().required(),
+    event_option_type: Joi.string().required(),
+    event_option_default_value: Joi.string().allow('').optional(),
+    event_option_values: Joi.array().items(Joi.string()).required(),
+    event_option_allow_freeform: Joi.boolean().required(),
+    event_option_required: Joi.boolean().required()
+  })).optional()
+}).required().min(1).label('eventTemplateUpdatePayload');
 
 exports.plugin = {
   name: 'routes-api-event_templates',
@@ -69,11 +100,17 @@ exports.plugin = {
         const limit = (request.query.limit) ? request.query.limit : 0;
         const offset = (request.query.offset) ? request.query.offset : 0;
 
+        const query = (request.auth.credentials.scope.includes('admin')) ? {} : { template_disabled: { $eq: false } };
+
         try {
-          const results = await db.collection(eventTemplatesTable).find().skip(offset).limit(limit).toArray();
+          const results = await db.collection(eventTemplatesTable).find(query).skip(offset).limit(limit).toArray();
 
           if (results.length > 0) {
-            results.forEach(_renameAndClearFields);
+            results.forEach((result) => {
+
+              return _renameAndClearFields(result, request.auth.credentials.scope.includes('admin'));
+            });
+
             return h.response(results).code(200);
           }
  
@@ -99,17 +136,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.array().items(eventTemplateSuccessResponse),
-            400: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            }),
-            401: Joi.object({
-              statusCode: Joi.number().integer(),
-              error: Joi.string(),
-              message: Joi.string()
-            })
+            200: Joi.array().items(eventTemplateSuccessResponse)
           }
         },
         description: 'Return the event templates based on query parameters',
@@ -143,7 +170,7 @@ exports.plugin = {
             return Boom.notFound('No record found for id: ' + request.params.id);
           }
 
-          return h.response(_renameAndClearFields(result)).code(200);
+          return h.response(_renameAndClearFields(result, request.auth.credentials.scope.includes('admin'))).code(200);
         }
         catch (err) {
           console.log(err);
@@ -196,8 +223,16 @@ exports.plugin = {
           event_template.event_options = [];
         }
 
-        if (!event_template.event_free_text_required) {
+        if (typeof event_template.event_free_text_required === 'undefined') {
           event_template.event_free_text_required = false;
+        }
+
+        if (!event_template.template_categories) {
+          event_template.template_categories = [];
+        }
+
+        if (typeof event_template.template_disabled === 'undefined') {
+          event_template.template_disabled = false;
         }
 
         try {
@@ -218,16 +253,11 @@ exports.plugin = {
         },
         validate: {
           headers: authorizationHeader,
-          payload: eventTemplatePayload
+          payload: eventTemplateCreatePayload
         },
         response: {
           status: {
-            201: Joi.object({
-              n: Joi.number().integer(),
-              ok: Joi.number().integer(),
-              insertedCount: Joi.number().integer(),
-              insertedId: Joi.object()
-            })
+            201: databaseInsertResponse
           }
         },
 
@@ -286,20 +316,7 @@ exports.plugin = {
         validate: {
           headers: authorizationHeader,
           params: eventTemplateParam,
-          payload: Joi.object({
-            event_name: Joi.string().optional(),
-            event_value: Joi.string().optional(),
-            event_free_text_required: Joi.boolean().optional(),
-            system_template: Joi.boolean().optional(),
-            event_options: Joi.array().items(Joi.object({
-              event_option_name: Joi.string().required(),
-              event_option_type: Joi.string().required(),
-              event_option_default_value: Joi.string().allow('').optional(),
-              event_option_values: Joi.array().items(Joi.string()).required(),
-              event_option_allow_freeform: Joi.boolean().required(),
-              event_option_required: Joi.boolean().required()
-            })).optional()
-          }).required().min(1)
+          payload: eventTemplateUpdatePayload
         },
         response: {
           status: {}
