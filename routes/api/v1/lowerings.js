@@ -9,8 +9,13 @@ const {
 } = require('../../../config/path_constants');
 
 const {
+  useAccessControl
+} = require('../../../config/email_constants');
+
+const {
   cruisesTable,
-  loweringsTable
+  loweringsTable,
+  usersTable
 } = require('../../../config/db_constants');
 
 const _rmDir = (dirPath) => {
@@ -80,11 +85,10 @@ const _renameAndClearFields = (doc) => {
   //rename id
   doc.id = doc._id;
   delete doc._id;
-  // delete doc.event_id;
 
-  // if(doc.aux_data && doc.aux_data.length > 0) {
-  //   doc.aux_data.forEach(_renameAndClearFields);
-  // }
+  if ( !useAccessControl ) {
+    delete doc.lowering_access_list;
+  }
 
   return doc;
 };
@@ -92,6 +96,13 @@ const _renameAndClearFields = (doc) => {
 const authorizationHeader = Joi.object({
   authorization: Joi.string().required()
 }).options({ allowUnknown: true }).label('authorizationHeader');
+
+const databaseInsertResponse = Joi.object({
+  n: Joi.number().integer(),
+  ok: Joi.number().integer(),
+  insertedCount: Joi.number().integer(),
+  insertedId: Joi.object()
+}).label('databaseInsertResponse');
 
 const cruiseParam = Joi.object({
   id: Joi.string().length(24).required()
@@ -101,28 +112,36 @@ const loweringParam = Joi.object({
   id: Joi.string().length(24).required()
 }).label('loweringParam');
 
+const loweringTag = Joi.string().label('loweringTag');
+
+const userID = Joi.string().label('userID');
+
 const loweringCreatePayload = Joi.object({
   id: Joi.string().length(24).optional(),
   lowering_id: Joi.string().required(),
   start_ts: Joi.date().iso().required(),
   stop_ts: Joi.date().iso().required(),
   lowering_additional_meta: Joi.object().required(),
-  lowering_tags: Joi.array().items(Joi.string().allow('')).required(),
+  lowering_tags: Joi.array().items(loweringTag).required(),
   lowering_location: Joi.string().allow('').required(),
-  // lowering_access_list: Joi.array().items(Joi.string()).required(),
-  lowering_hidden: Joi.boolean().required()
+  lowering_access_list: Joi.array().items(userID).optional(),
+  lowering_hidden: Joi.boolean().optional()
 }).label('loweringCreatePayload');
+
+const loweringCreatePayloadNoAccessControl = loweringCreatePayload.keys({ lowering_access_list: Joi.forbidden() }).label('loweringCreatePayload');
 
 const loweringUpdatePayload = Joi.object({
   lowering_id: Joi.string().optional(),
   start_ts: Joi.date().iso().optional(),
   stop_ts: Joi.date().iso().optional(),
   lowering_additional_meta: Joi.object().optional(),
-  lowering_tags: Joi.array().items(Joi.string().allow('')).optional(),
+  lowering_tags: Joi.array().items(loweringTag).optional(),
   lowering_location: Joi.string().allow('').optional(),
-  // lowering_access_list: Joi.array().items(Joi.string()).optional(),
+  lowering_access_list: Joi.array().items(userID).optional(),
   lowering_hidden: Joi.boolean().optional()
 }).required().min(1).label('loweringUpdatePayload');
+
+const loweringUpdatePayloadNoAccessControl = loweringUpdatePayload.keys({ lowering_access_list: Joi.forbidden() }).label('loweringUpdatePayload');
 
 const loweringQuery = Joi.object({
   lowering_id: Joi.string().optional(),
@@ -130,8 +149,8 @@ const loweringQuery = Joi.object({
   stopTS: Joi.date().iso(),
   lowering_location: Joi.string().optional(),
   lowering_tags: Joi.alternatives().try(
-    Joi.string(),
-    Joi.array().items(Joi.string())
+    loweringTag,
+    Joi.array().items(loweringTag)
   ).optional(),
   offset: Joi.number().integer().min(0).optional(),
   limit: Joi.number().integer().min(1).optional()
@@ -143,18 +162,18 @@ const loweringSuccessResponse = Joi.object({
   start_ts: Joi.date().iso(),
   stop_ts: Joi.date().iso(),
   lowering_additional_meta: Joi.object(),
-  lowering_tags: Joi.array().items(Joi.string().allow('')),
+  lowering_tags: Joi.array().items(loweringTag),
   lowering_location: Joi.string().allow(''),
-  // lowering_access_list: Joi.array().items(Joi.string()),
+  lowering_access_list: Joi.array().items(userID),
   lowering_hidden: Joi.boolean()
-});
+}).label('loweringSuccessResponse');
 
-const loweringCreateResponse = Joi.object({
-  n: Joi.number().integer(),
-  ok: Joi.number().integer(),
-  insertedCount: Joi.number().integer(),
-  insertedId: Joi.object()
-}).label('loweringCreateResponse');
+const loweringSuccessResponseNoAccessControl = loweringSuccessResponse.keys({ lowering_access_list: Joi.forbidden() }).label('loweringSuccessResponse');
+
+const loweringUpdatePermissionsPayload = Joi.object({
+  add: Joi.array().items(userID).optional(),
+  remove: Joi.array().items(userID).optional()
+}).required().min(1).label('loweringUpdatePermissionsPayload');
 
 exports.plugin = {
   name: 'routes-api-lowerings',
@@ -167,22 +186,32 @@ exports.plugin = {
       async handler(request, h) {
 
         const db = request.mongo.db;
-        // const ObjectID = request.mongo.ObjectID;
-
         const query = {};
 
-        //Hiddle filtering
-        if (typeof (request.query.hidden) !== "undefined"){
-          if (request.query.hidden && !request.auth.credentials.scope.includes('admin')) {
+        //Hidden filtering
+        if (typeof request.query.hidden !== "undefined") {
+
+          if (request.auth.credentials.scope.includes('admin')) {
+            query.lowering_hidden = request.query.hidden;
+          }
+          else if (request.query.hidden) {
             return Boom.unauthorized('User not authorized to retrieve hidden lowerings');
           }
-
-          query.lowering_hidden = request.query.hidden;
+          else {
+            query.lowering_hidden = false;
+          }
         }
-        else if (!request.auth.credentials.scope.includes('admin')) {
-          // const user_id = request.auth.credentials.id;
-          query.lowering_hidden = false;
-          // query.lowering_access_list = user_id;
+        else {
+          if (!request.auth.credentials.scope.includes('admin')) {
+            query.lowering_hidden = false;
+          }
+        }
+
+        // use access control filtering
+        if (useAccessControl && !request.auth.credentials.scope.includes('admin')) {
+          query.$or = [{ lowering_hidden: query.lowering_hidden }, { lowering_access_list: request.auth.credentials.id }];
+          // query.$or = [{ lowering_hidden: query.lowering_hidden }];
+          delete query.lowering_hidden;
         }
 
         // Lowering ID filtering... if using this then there's no reason to use other filters
@@ -233,16 +262,16 @@ exports.plugin = {
 
           if (lowerings.length > 0) {
 
-            const mod_lowerings = lowerings.map((result) => {
+            const mod_lowerings = lowerings.map((lowering) => {
 
               try {
-                result.lowering_additional_meta.lowering_files = Fs.readdirSync(LOWERING_PATH + '/' + result._id);
+                lowering.lowering_additional_meta.lowering_files = Fs.readdirSync(LOWERING_PATH + '/' + lowering._id);
               }
               catch (error) {
-                result.lowering_additional_meta.lowering_files = [];
+                lowering.lowering_additional_meta.lowering_files = [];
               }
 
-              return _renameAndClearFields(result);
+              return _renameAndClearFields(lowering);
             });
 
             return h.response(mod_lowerings).code(200);
@@ -253,7 +282,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
       },
       config: {
@@ -267,7 +296,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.array().items(loweringSuccessResponse)
+            200: Joi.array().items((useAccessControl) ? loweringSuccessResponse : loweringSuccessResponseNoAccessControl )
           }
         },
         description: 'Return the lowerings based on query parameters',
@@ -302,23 +331,30 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('unknown error');
+          return Boom.serverUnavailable('unknown error');
         }
 
         const query = {};
 
-        //Hiddle filtering
-        if (typeof (request.query.hidden) !== "undefined"){
-          if (request.query.hidden && !request.auth.credentials.scope.includes('admin')) {
+        //Hidden filtering
+        if (typeof request.query.hidden !== "undefined") {
+
+          if (request.auth.credentials.scope.includes('admin')) {
+            query.lowering_hidden = request.query.hidden;
+          }
+          else if (request.query.hidden) {
             return Boom.unauthorized('User not authorized to retrieve hidden lowerings');
           }
-
-          query.lowering_hidden = request.query.hidden;
+          else {
+            query.lowering_hidden = false;
+          }
         }
-        else if (!request.auth.credentials.scope.includes('admin')) {
-          // const user_id = request.auth.credentials.id;
-          query.lowering_hidden = false;
-          // query.lowering_access_list = user_id;
+
+        // use access control filtering
+        if (useAccessControl && !request.auth.credentials.scope.includes('admin')) {
+          query.$or = [{ lowering_hidden: query.lowering_hidden }, { lowering_access_list: request.auth.credentials.id }];
+          // query.$or = [{ lowering_hidden: query.lowering_hidden }];
+          delete query.lowering_hidden;
         }
 
         // Location filtering
@@ -335,7 +371,6 @@ exports.plugin = {
             query.lowering_tags  = request.query.lowering_tags;
           }
         }
-
 
         //Time filtering
         if (request.query.startTS) {
@@ -384,7 +419,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
       },
       config: {
@@ -399,7 +434,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.array().items(loweringSuccessResponse)
+            200: Joi.array().items((useAccessControl) ? loweringSuccessResponse : loweringSuccessResponseNoAccessControl )
           }
         },
         description: 'Return the lowerings based on query parameters',
@@ -435,11 +470,8 @@ exports.plugin = {
             return Boom.notFound('No record found for id: ' + request.params.id);
           }
 
-          if (!request.auth.credentials.scope.includes('admin')) {
-            // if (result.lowering_hidden || !result.lowering_access_list.includes(request.auth.credentials.id)) {
-            if (result.lowering_hidden) {
-              return Boom.unauthorized('User not authorized to retrieve this lowering');
-            }
+          if (!request.auth.credentials.scope.includes("admin") && result.lowering_hidden && (useAccessControl && typeof result.lowering_access_list !== 'undefined' && !result.lowering_access_list.includes(request.auth.credentials.id))) {
+            return Boom.unauthorized('User not authorized to retrieve this lowering');
           }
 
           lowering = result;
@@ -447,7 +479,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
 
         try {
@@ -471,7 +503,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: loweringSuccessResponse
+            200: (useAccessControl) ? loweringSuccessResponse : loweringSuccessResponseNoAccessControl
           }
         },
         description: 'Return the lowering based on lowering id',
@@ -509,13 +541,44 @@ exports.plugin = {
           return Boom.badRequest('Start date must be older than stop date');
         }
 
+        if (typeof lowering.lowering_hidden === 'undefined') {
+          lowering.lowering_hidden = false;
+        }
+
+        // Validate user ids in access list
+        if (!lowering.lowering_access_list && useAccessControl) {
+          lowering.lowering_access_list = [];
+        }
+        else if ( lowering.lowering_access_list && lowering.lowering_access_list.length > 0 ) {
+          try {
+            const users = db.collection(usersTable).toArray();
+            const user_ids = users.map((user) => user._id);
+            const user_are_valid = lowering.lowering_access_list.reduce((result, user_id) => {
+
+              if (!user_ids.includes(user_id)) {
+                result = false;
+              }
+
+              return result;
+
+            }, true);
+
+            if (!user_are_valid) {
+              return Boom.badRequest('lowering_access_list includes invalid user IDs');
+            }
+          }
+          catch (err) {
+            return Boom.serverUnavailable('database error', err);
+          }
+        }
+
         let result = null;
         try {
           result = await db.collection(loweringsTable).insertOne(lowering);
         }
         catch (err) {
           console.log("ERROR:", err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
 
         try {
@@ -535,7 +598,7 @@ exports.plugin = {
         },
         validate: {
           headers: authorizationHeader,
-          payload: loweringCreatePayload,
+          payload: (useAccessControl) ? loweringCreatePayload : loweringCreatePayloadNoAccessControl,
           failAction: (request, h, err) => {
 
             throw Boom.badRequest(err.message);
@@ -543,7 +606,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            201: loweringCreateResponse
+            201: databaseInsertResponse
           }
         },
 
@@ -571,6 +634,22 @@ exports.plugin = {
           return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
+        const lowering = request.payload;
+
+        // convert dates
+        try {
+          if (request.payload.startTS) {
+            lowering.start_ts = Date(request.payload.startTS);
+          }
+
+          if (request.payload.stopTS) {
+            lowering.stop_ts = Date(request.payload.stopTS);
+          }          
+        }
+        catch (err) {
+          return Boom.badRequest('Unable to parse date string');
+        }
+
         try {
 
           const result = await db.collection(loweringsTable).findOne(query);
@@ -579,21 +658,53 @@ exports.plugin = {
             return Boom.badRequest('No record found for id: ' + request.params.id);
           }
 
-          if (!request.auth.credentials.scope.includes('admin')) {
-            // if (result.lowering_hidden || !result.lowering_access_list.includes(request.auth.credentials.id)) {
-            if (result.lowering_hidden) {
-              return Boom.unauthorized('User not authorized to edit this lowering');
-            }
+          if (!request.auth.credentials.scope.includes('admin') && result.lowering_hidden && ( useAccessControl && typeof result.lowering_access_list !== 'undefined' && !result.lowering_access_list.includes(request.auth.credentials.id))) {
+            return Boom.unauthorized('User not authorized to edit this lowering');
+          }
+
+          // if a start date and/or stop date is provided, ensure the new date works with the existing date
+          if (lowering.start_ts && lowering.stop_ts && (lowering.start_ts >= lowering.stop_ts)) {
+            return Boom.badRequest('Start date must be older than stop date');
+          }
+          else if (lowering.start_ts && lowering.start_ts >= result.stop_ts) {
+            return Boom.badRequest('Start date must be older than stop date');
+          }
+          else if (lowering.stop_ts && result.start_ts >= lowering.stop_ts) {
+            return Boom.badRequest('Start date must be older than stop date');
           }
 
         }
         catch (err) {
           console.log("ERROR:", err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error', err);
         }
 
+        // Validate user ids in access list
+        if ( lowering.lowering_access_list && lowering.lowering_access_list.length > 0 ) {
+          try {
+            const users = db.collection(usersTable).toArray();
+            const user_ids = users.map((user) => user._id);
+            const user_are_valid = lowering.lowering_access_list.reduce((result, user_id) => {
+
+              if (!user_ids.includes(user_id)) {
+                result = false;
+              }
+
+              return result;
+
+            }, true);
+
+            if (!user_are_valid) {
+              return Boom.badRequest('lowering_access_list include invalid user IDs');
+            }
+          }
+          catch (err) {
+            return Boom.serverUnavailable('database error', err);
+          }
+        }
+
+        //move files from tmp directory to permanent directory
         if (request.payload.lowering_additional_meta && request.payload.lowering_additional_meta.lowering_files) {
-          //move files from tmp directory to permanent directory
           try {
             request.payload.lowering_additional_meta.lowering_files.map((file) => {
 
@@ -602,7 +713,7 @@ exports.plugin = {
           }
           catch (err) {
             console.log("ERROR:", err);
-            return Boom.serviceUnavailable('unabled to upload files. Verify directory ' + Path.join(LOWERING_PATH, request.params.id) + ' exists');
+            return Boom.serverUnavailable('unabled to upload files. Verify directory ' + Path.join(LOWERING_PATH, request.params.id) + ' exists');
           }
           
           delete request.payload.lowering_files;
@@ -610,12 +721,14 @@ exports.plugin = {
 
         try {
           await db.collection(loweringsTable).updateOne(query, { $set: request.payload });
-          return h.response().code(204);
         }
         catch (err) {
           console.log("ERROR:", err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
+
+        return h.response().code(204);
+
       },
       config: {
         auth: {
@@ -625,7 +738,7 @@ exports.plugin = {
         validate: {
           headers: authorizationHeader,
           params: loweringParam,
-          payload: loweringUpdatePayload,
+          payload: (useAccessControl) ? loweringUpdatePayload : loweringUpdatePayloadNoAccessControl,
           failAction: (request, h, err) => {
 
             throw Boom.badRequest(err.message);
@@ -635,6 +748,128 @@ exports.plugin = {
           status: {}
         },
         description: 'Update a lowering record',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong></p>',
+        tags: ['lowerings','auth','api']
+      }
+    });
+
+
+    server.route({
+      method: 'PATCH',
+      path: '/lowerings/{id}/permissions',
+      async handler(request, h) {
+
+        if ( !useAccessControl ) {
+          Boom.notFound();
+        }
+
+        const db = request.mongo.db;
+        const ObjectID = request.mongo.ObjectID;
+
+        const query = {};
+
+        try {
+          query._id = new ObjectID(request.params.id);
+        }
+        catch (err) {
+          return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
+        }
+
+        let lowering = null;
+
+        try {
+          lowering = await db.collection(loweringsTable).findOne(query);
+
+          if (!lowering) {
+            return Boom.notFound('No record found for id: ' + request.params.id);
+          }
+
+        }
+        catch (err) {
+          return Boom.serverUnavailable('database error', err);
+        }
+
+        // Validate user ids in access list
+        try {
+          const users = await db.collection(usersTable).find().toArray();
+          const user_ids = users.map((user) => user._id.toString());
+
+          if (request.payload.add) {
+            const users_are_valid = request.payload.add.reduce((result, user_id) => {
+
+              if (!user_ids.includes(user_id)) {
+                console.log("userid:", user_id, "is invalid");
+                result = false;
+              }
+
+              return result;
+
+            }, true);
+
+            if (!users_are_valid) {
+              return Boom.badRequest('lowering_access_list include invalid user IDs');
+            }
+          }
+
+          if (request.payload.remove) {
+            const users_are_valid = request.payload.remove.reduce((result, user_id) => {
+
+              if (!user_ids.includes(user_id)) {
+                result = false;
+              }
+
+              return result;
+        
+            }, true);
+
+            if (!users_are_valid) {
+              return Boom.badRequest('lowering_access_list include invalid user IDs');
+            }
+          }
+        }
+        catch (err) {
+          return Boom.serverUnavailable('database error', err);
+        }
+
+        if (request.payload.remove) {
+          try {
+            await db.collection(loweringsTable).updateOne(query, { $pull: { lowering_access_list: { $in: request.payload.remove } } });
+          }
+          catch (err) {
+            return Boom.serverUnavailable('database error', err);
+          }
+        }
+
+        if (request.payload.add) {
+          try {
+            await db.collection(loweringsTable).updateOne(query, { $push: { lowering_access_list: { $each: request.payload.add } } });
+          }
+          catch (err) {
+            return Boom.serverUnavailable('database error', err);
+          }
+        }
+
+        return h.response().code(204);
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: ['admin', 'write_lowerings']
+        },
+        validate: {
+          headers: authorizationHeader,
+          params: loweringParam,
+          payload: (useAccessControl) ? loweringUpdatePermissionsPayload : null,
+          failAction: (request, h, err) => {
+
+            throw Boom.badRequest(err.message);
+          }
+        },
+        response: {
+          status: { }
+        },
+        description: 'Update a lowering access permissions',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
         tags: ['lowerings','auth','api']
@@ -667,7 +902,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
 
         try {
@@ -676,7 +911,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
       },
       config: {
@@ -704,30 +939,30 @@ exports.plugin = {
       async handler(request, h) {
 
         const db = request.mongo.db;
-        // const ObjectID = request.mongo.ObjectID;
 
         const query = { };
 
         try {
-          const result = await db.collection(loweringsTable).deleteMany(query);
-
-          try {
-            _rmDir(LOWERING_PATH);
-            if (!Fs.existsSync(LOWERING_PATH)) {
-              Fs.mkdirSync(LOWERING_PATH);
-            }
-          }
-          catch (err) {
-            console.log("ERROR:", err);
-            return Boom.serviceUnavailable('unable to delete lowering files');  
-          }
-
-          return h.response(result).code(204);
+          await db.collection(loweringsTable).deleteMany(query);
         }
         catch (err) {
           console.log("ERROR:", err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
+
+        try {
+          _rmDir(LOWERING_PATH);
+          if (!Fs.existsSync(LOWERING_PATH)) {
+            Fs.mkdirSync(LOWERING_PATH);
+          }
+        }
+        catch (err) {
+          console.log("ERROR:", err);
+          return Boom.serverUnavailable('error deleting lowering files');  
+        }
+
+        return h.response().code(204);
+
       },
       config: {
         auth: {

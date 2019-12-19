@@ -158,7 +158,7 @@ exports.plugin = {
           }
         }
         catch (err) {
-          return Boom.serviceUnavailable('database error', err);
+          return Boom.serverUnavailable('database error', err);
         }
 
         try {
@@ -169,7 +169,7 @@ exports.plugin = {
           }
         }
         catch (err) {
-          return Boom.serviceUnavailable('database error', err);
+          return Boom.serverUnavailable('database error', err);
         }
 
         if (reCaptchaSecret !== "") {
@@ -182,7 +182,7 @@ exports.plugin = {
             }
           }
           catch (err) {
-            return Boom.serviceUnavailable('reCaptcha error', err);
+            return Boom.serverUnavailable('reCaptcha error', err);
           }
         }
    
@@ -259,7 +259,7 @@ exports.plugin = {
 
         }
         catch (err) {
-          return Boom.serviceUnavailable('database error', err);
+          return Boom.serverUnavailable('database error', err);
         }
       },
       config: {
@@ -301,7 +301,7 @@ exports.plugin = {
           
         }
         catch (err) {
-          return Boom.serviceUnavailable('database error', err);
+          return Boom.serverUnavailable('database error', err);
         }
 
         if (reCaptchaSecret !== "") {
@@ -313,7 +313,7 @@ exports.plugin = {
             }
           }
           catch (err) {
-            return Boom.serviceUnavailable('reCaptcha error', err);
+            return Boom.serverUnavailable('reCaptcha error', err);
           }
         }
 
@@ -336,7 +336,7 @@ exports.plugin = {
           return h.response().code(204);
         }
         catch (err) {
-          return Boom.serviceUnavailable('database error', err);
+          return Boom.serverUnavailable('database error', err);
         }
       },
       config: {
@@ -381,7 +381,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
 
         if (reCaptchaSecret !== "") {
@@ -394,7 +394,7 @@ exports.plugin = {
           }
           catch (err) {
             console.log(err);
-            return Boom.serviceUnavailable('reCaptcha error');
+            return Boom.serverUnavailable('reCaptcha error');
           }
         }
 
@@ -406,7 +406,7 @@ exports.plugin = {
           return h.response({ token: Jwt.sign( { id:user._id, scope: _rolesToScope(user.roles), roles: user.roles }, SECRET_KEY), id: user._id.toString() }).code(200);
         }
         catch (err) {
-          return Boom.serviceUnavailable('database error', err);
+          return Boom.serverUnavailable('database error', err);
         }
       },
       config: {
@@ -467,7 +467,7 @@ exports.plugin = {
           user = result;
         }
         catch (err) {
-          return Boom.serviceUnavailable('database error', err);
+          return Boom.serverUnavailable('database error', err);
         }
           
         const token = Crypto.randomBytes(20).toString('hex');
@@ -476,7 +476,7 @@ exports.plugin = {
           await db.collection(usersTable).updateOne({ _id: user._id }, { $set: { resetPasswordToken: token, resetPasswordExpires: Date.now() + (resetPasswordTokenExpires * 60 * 1000) } });
         }
         catch (err) {
-          return Boom.serviceUnavailable('database error', err);
+          return Boom.serverUnavailable('database error', err);
         }
 
         if (reCaptchaSecret !== "") {
@@ -488,7 +488,7 @@ exports.plugin = {
             }
           }
           catch (err) {
-            return Boom.serviceUnavailable('reCaptcha error', err);
+            return Boom.serverUnavailable('reCaptcha error', err);
           }
         }
 
@@ -544,7 +544,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          Boom.serviceUnavailable('database error');
+          Boom.serverUnavailable('database error');
         }
       },
       config: {
@@ -582,7 +582,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          Boom.serviceUnavailable('database error');
+          Boom.serverUnavailable('database error');
         }
       },
       config: {

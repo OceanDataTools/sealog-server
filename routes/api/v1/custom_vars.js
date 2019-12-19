@@ -83,7 +83,7 @@ exports.plugin = {
           
         }
         catch (err) {
-          return Boom.serviceUnavailable('database error', err);
+          return Boom.serverUnavailable('database error', err);
         }
       },
       config: {
@@ -136,7 +136,7 @@ exports.plugin = {
           return h.response(mod_result).code(200);
         }
         catch (err) {
-          return Boom.serviceUnavailable('database error', err);
+          return Boom.serverUnavailable('database error', err);
         }
       },
       config: {
@@ -188,7 +188,7 @@ exports.plugin = {
           custom_var_name = result.custom_var_name;
         }
         catch (err) {
-          return Boom.serviceUnavailable('database error', err);
+          return Boom.serverUnavailable('database error', err);
         }
 
         try {
@@ -202,7 +202,7 @@ exports.plugin = {
 
         }
         catch (err) {
-          return Boom.serviceUnavailable('database error', err);
+          return Boom.serverUnavailable('database error', err);
         }   
       },
       config: {

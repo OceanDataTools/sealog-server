@@ -20,7 +20,7 @@ exports.plugin = {
         event_free_text_required: false,
         system_template: false,
         template_categories: ['biology'],
-        template_disabled: false,
+        disabled: false,
         event_options: [{
           event_option_name: "Status",
           event_option_type: "dropdown",
@@ -37,7 +37,7 @@ exports.plugin = {
         event_free_text_required: false,
         system_template: false,
         template_categories: ['geology'],
-        template_disabled: false,
+        disabled: false,
         event_options: [{
           event_option_name: "Color",
           event_option_type: "dropdown",
@@ -54,7 +54,7 @@ exports.plugin = {
         event_free_text_required: false,
         system_template: false,
         template_categories: ['biology'],
-        template_disabled: false,
+        disabled: false,
         event_options: [{
           event_option_name: "Color",
           event_option_type: "dropdown",
@@ -71,7 +71,7 @@ exports.plugin = {
         event_free_text_required: false,
         system_template: false,
         template_categories: ['biology'],
-        template_disabled: false,
+        disabled: false,
         event_options: [{
           event_option_name: "Color",
           event_option_type: "dropdown",
@@ -88,7 +88,7 @@ exports.plugin = {
         event_free_text_required: false,
         system_template: false,
         template_categories: ['biology'],
-        template_disabled: false,
+        disabled: false,
         event_options: [{
           event_option_name: "Color",
           event_option_type: "dropdown",
@@ -105,7 +105,7 @@ exports.plugin = {
         event_free_text_required: false,
         system_template: true,
         template_categories: ['operations'],
-        template_disabled: false,
+        disabled: false,
         event_options: [
           {
             event_option_allow_freeform: false,
@@ -130,7 +130,7 @@ exports.plugin = {
         event_free_text_required: false,
         system_template: true,
         template_categories: ['operations'],
-        template_disabled: false,
+        disabled: false,
         event_options: []
       },
       {
@@ -140,7 +140,7 @@ exports.plugin = {
         event_free_text_required: false,
         system_template: false,
         template_categories: ['biology','geology','operations'],
-        template_disabled: false,
+        disabled: false,
         event_options:[
           {
             event_option_allow_freeform: false,

@@ -11,6 +11,10 @@ const json2csvOptions = {
 const THRESHOLD = 120; //seconds
 
 const {
+  useAccessControl
+} = require('../../../config/email_constants');
+
+const {
   eventsTable,
   usersTable,
   eventAuxDataTable,
@@ -235,7 +239,7 @@ exports.plugin = {
             return Boom.notFound('No cruise record found for id: ' + request.params.id );
           }
 
-          if (!request.auth.credentials.scope.includes('admin') && cruiseResult.cruise_hidden) {
+          if (!request.auth.credentials.scope.includes("admin") && cruiseResult.cruise_hidden && (useAccessControl && typeof cruiseResult.cruise_access_list !== 'undefined' && !cruiseResult.cruise_access_list.includes(request.auth.credentials.id))) {
             return Boom.unauthorized('User not authorized to retrieve this cruise');
           }
 
@@ -243,7 +247,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
 
         const query = _buildEventsQuery(request, cruise.start_ts, cruise.stop_ts);
@@ -258,7 +262,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
 
         if (results.length > 0) {
@@ -291,7 +295,7 @@ exports.plugin = {
             }
             catch (err) {
               console.log(err);
-              return Boom.serviceUnavailable('database error');
+              return Boom.serverUnavailable('database error');
             }
 
             const aux_data_eventID_set = new Set(aux_data_results.map((aux_data) => String(aux_data.event_id)));
@@ -368,18 +372,15 @@ exports.plugin = {
             return Boom.notFound('No record cruise found for id: ' + request.params.id );
           }
 
-          if (!request.auth.credentials.scope.includes('admin')) {
-            // if (cruiseResult.cruise_hidden || !cruiseResult.cruise_access_list.includes(request.auth.credentials.id)) {
-            if (cruiseResult.cruise_hidden) {
-              return Boom.unauthorized('User not authorized to retrieve this cruise');
-            }
+          if (!request.auth.credentials.scope.includes("admin") && cruiseResult.cruise_hidden && (useAccessControl && typeof cruiseResult.cruise_access_list !== 'undefined' && !cruiseResult.cruise_access_list.includes(request.auth.credentials.id))) {
+            return Boom.unauthorized('User not authorized to retrieve this cruise');
           }
 
           cruise = cruiseResult;
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
 
         if (cruise.cruise_hidden && !request.auth.credentials.scope.includes("admin")) {
@@ -396,7 +397,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
 
         if (results.length > 0) {
@@ -429,7 +430,7 @@ exports.plugin = {
             }
             catch (err) {
               console.log(err);
-              return Boom.serviceUnavailable('database error');
+              return Boom.serverUnavailable('database error');
             }
 
             const aux_data_eventID_set = new Set(aux_data_results.map((aux_data) => String(aux_data.event_id)));
@@ -487,22 +488,15 @@ exports.plugin = {
             return Boom.notFound('No record lowering found for id: ' + request.params.id );
           }
 
-          if (!request.auth.credentials.scope.includes('admin')) {
-            // if (loweringResult.lowering_hidden || !loweringResult.lowering_access_list.includes(request.auth.credentials.id)) {
-            if (loweringResult.lowering_hidden) {
-              return Boom.unauthorized('User not authorized to retrieve this lowering');
-            }
+          if (!request.auth.credentials.scope.includes("admin") && loweringResult.lowering_hidden && (useAccessControl && typeof loweringResult.lowering_access_list !== 'undefined' && !loweringResult.lowering_access_list.includes(request.auth.credentials.id))) {
+            return Boom.unauthorized('User not authorized to retrieve this lowering');
           }
 
           lowering = loweringResult;
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
-        }
-
-        if (lowering.lowering_hidden && !request.auth.credentials.scope.includes("admin")) {
-          return Boom.unauthorized('User not authorized to retrieve hidden lowerings');
+          return Boom.serverUnavailable('database error');
         }
 
         const query = _buildEventsQuery(request, lowering.start_ts, lowering.stop_ts);
@@ -517,7 +511,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
 
         if (results.length > 0) {
@@ -550,7 +544,7 @@ exports.plugin = {
             }
             catch (err) {
               console.log(err);
-              return Boom.serviceUnavailable('database error');
+              return Boom.serverUnavailable('database error');
             }
 
             const aux_data_eventID_set = new Set(aux_data_results.map((aux_data) => String(aux_data.event_id)));
@@ -627,22 +621,15 @@ exports.plugin = {
             return Boom.notFound('No record lowering found for id: ' + request.params.id );
           }
 
-          if (!request.auth.credentials.scope.includes('admin')) {
-            // if (loweringResult.lowering_hidden || !loweringResult.lowering_access_list.includes(request.auth.credentials.id)) {
-            if (loweringResult.lowering_hidden) {
-              return Boom.unauthorized('User not authorized to retrieve this lowering');
-            }
+          if (!request.auth.credentials.scope.includes("admin") && loweringResult.lowering_hidden && (useAccessControl && typeof loweringResult.lowering_access_list !== 'undefined' && !loweringResult.lowering_access_list.includes(request.auth.credentials.id))) {
+            return Boom.unauthorized('User not authorized to retrieve this lowering');
           }
 
           lowering = loweringResult;
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
-        }
-
-        if (lowering.lowering_hidden && !request.auth.credentials.scope.includes("admin")) {
-          return Boom.unauthorized('User not authorized to retrieve hidden lowerings');
+          return Boom.serverUnavailable('database error');
         }
 
         const query = _buildEventsQuery(request, lowering.start_ts, lowering.stop_ts);
@@ -655,7 +642,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
 
         if (results.length > 0) {
@@ -688,7 +675,7 @@ exports.plugin = {
             }
             catch (err) {
               console.log(err);
-              return Boom.serviceUnavailable('database error');
+              return Boom.serverUnavailable('database error');
             }
 
             const aux_data_eventID_set = new Set(aux_data_results.map((aux_data) => String(aux_data.event_id)));
@@ -770,7 +757,7 @@ exports.plugin = {
           }
           catch (err) {
             console.log(err);
-            return Boom.serviceUnavailable('database error');
+            return Boom.serverUnavailable('database error');
           }
 
           const query = _buildEventsQuery(request);
@@ -793,7 +780,7 @@ exports.plugin = {
           }
           catch (err) {
             console.log(err);
-            return Boom.serviceUnavailable('database error');
+            return Boom.serverUnavailable('database error');
           }
 
         }
@@ -834,7 +821,7 @@ exports.plugin = {
           }
           catch (err) {
             console.log(err);
-            return Boom.serviceUnavailable('database error');
+            return Boom.serverUnavailable('database error');
           }
         }
       },
@@ -905,7 +892,7 @@ exports.plugin = {
           }
           catch (err) {
             console.log(err);
-            return Boom.serviceUnavailable('database error');
+            return Boom.serverUnavailable('database error');
           }
 
           const query = _buildEventsQuery(request);
@@ -920,7 +907,7 @@ exports.plugin = {
           }
           catch (err) {
             console.log(err);
-            return Boom.serviceUnavailable('database error');
+            return Boom.serverUnavailable('database error');
           }
 
         }
@@ -936,7 +923,7 @@ exports.plugin = {
           }
           catch (err) {
             console.log(err);
-            return Boom.serviceUnavailable('database error');
+            return Boom.serverUnavailable('database error');
           }
         }
       },
@@ -986,7 +973,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
       },
       config: {
@@ -1068,7 +1055,7 @@ exports.plugin = {
           }
           catch (err) {
             console.log(err);
-            return Boom.serviceUnavailable('database error');
+            return Boom.serverUnavailable('database error');
           }
         }
 
@@ -1087,7 +1074,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
       },
       config: {
@@ -1148,7 +1135,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
 
         const event = request.payload;
@@ -1199,7 +1186,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
       },
       config: {
@@ -1258,7 +1245,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
   
         try {
@@ -1268,7 +1255,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
   
         try {
@@ -1276,7 +1263,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
 
         try {
@@ -1284,7 +1271,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
 
         server.publish('/ws/status/deleteEvents', _renameAndClearFields(event));
@@ -1323,7 +1310,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
   
         try {
@@ -1332,7 +1319,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
       },
       config: {

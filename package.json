@@ -1,6 +1,6 @@
 {
   "name": "sealog-server",
-  "version": "1.0.5-rc",
+  "version": "1.0.6-rc",
   "license": "MIT",
   "description": "Sealog event-logging server",
   "bugs": {
@@ -17,7 +17,7 @@
     "lint-fix": "eslint . --ext .js --fix"
   },
   "author": "Webb Pinner",
-  "homepage": "https://github.com/webbpinner/",
+  "homepage": "https://github.com/oceandatatools/",
   "private": false,
   "repository": {
     "type": "git",
@@ -44,9 +44,9 @@
     "hapi-swagger": "^11.1.0",
     "jquery-extend": "^2.0.3",
     "json-2-csv": "^3.5.6",
-    "mongodb": "^3.3.5",
-    "nodemailer": "^6.4.1",
-    "nodemon": "^2.0.1"
+    "mongodb": "^3.4.0",
+    "nodemailer": "^6.4.2",
+    "nodemon": "^2.0.2"
   },
   "devDependencies": {
     "@hapi/code": "^7.0.0",
