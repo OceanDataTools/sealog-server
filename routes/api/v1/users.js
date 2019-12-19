@@ -10,6 +10,12 @@ const saltRounds = 10;
 const resetPasswordTokenExpires = 24; //hours
 
 const {
+  useAccessControl
+} = require('../../../config/email_constants');
+
+const {
+  cruisesTable,
+  loweringsTable,
   usersTable
 } = require('../../../config/db_constants');
 
@@ -35,6 +41,13 @@ const authorizationHeader = Joi.object({
 const userParam = Joi.object({
   id: Joi.string().length(24).required()
 }).label('userParam');
+
+const userQuery = Joi.object({
+  system_user: Joi.boolean().optional(),
+  offset: Joi.number().integer().min(0).optional(),
+  limit: Joi.number().integer().min(1).optional(),
+  sort: Joi.string().valid('username', 'last_login').optional()
+}).optional().label('userQuery');
 
 const userCreateResponse = Joi.object({
   n: Joi.number().integer(),
@@ -104,18 +117,11 @@ exports.plugin = {
 
         const query = {};
 
-        // if (!request.auth.credentials.roles.includes('admin')) {
-        //   try {
-        //     query._id = new ObjectID(request.auth.credentials.id);
-        //   }
-        //   catch (err) {
-        //     console.log("ERROR:", err);
-        //     return h.response({ statusCode: 503, error: "server error", message: "objectID error" }).code(503);
-        //   }
-        // }
-
         if (!request.auth.credentials.roles.includes('admin')) {
           query.system_user = false;
+        }
+        else if (typeof request.query.system_user !== 'undefined') {
+          query.system_user = request.query.system_user;
         }
 
         const limit = (request.query.limit) ? request.query.limit : 0;
@@ -131,7 +137,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          Boom.serviceUnavailable('database error');
+          Boom.serverUnavailable('database error');
         }
       },
       config: {
@@ -141,11 +147,7 @@ exports.plugin = {
         },
         validate: {
           headers: authorizationHeader,
-          query: Joi.object({
-            offset: Joi.number().integer().min(0).optional(),
-            limit: Joi.number().integer().min(1).optional(),
-            sort: Joi.string().valid('username', 'last_login').optional()
-          })
+          query: userQuery
         },
         response: {
           status: {
@@ -194,7 +196,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          Boom.serviceUnavailable('database error');
+          Boom.serverUnavailable('database error');
         }
       },
       config: {
@@ -241,7 +243,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          Boom.serviceUnavailable('database error');
+          Boom.serverUnavailable('database error');
         }
 
         const user = request.payload;
@@ -296,7 +298,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable("database error");
+          return Boom.serverUnavailable("database error");
         }
 
         const token = Crypto.randomBytes(20).toString('hex');
@@ -306,7 +308,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          Boom.serviceUnavailable('database error');
+          Boom.serverUnavailable('database error');
         }
 
         const resetLink = resetPasswordURL + token;
@@ -362,48 +364,48 @@ exports.plugin = {
 
         //TODO - add code so that only admins and the user can do this.
         if (request.auth.credentials.id !== request.params.id && !request.auth.credentials.roles.includes('admin')) {
-          return h.response({ "statusCode": 400, "error": "Bad request", 'message': 'Only admins and the owner can edit users' }).code(400);
+          return Boom.badRequest('Only admins and the owner can edit users');
         }
 
         if (request.payload.roles && request.payload.roles.includes("admin") && !request.auth.credentials.roles.includes('admin')) {
-          return h.response({ "statusCode": 400, "error": "Bad request", 'message': 'Only admins create other admins' }).code(400);
+          return Boom.badRequest('Only admins create other admins');
         }
 
         if (request.payload.disabled && typeof request.payload.disabled === "boolean" && !request.auth.credentials.roles.includes('admin')) {
-          return h.response({ "statusCode": 400, "error": "Bad request", 'message': 'Only admins can enable/disabled users' }).code(400);
+          return Boom.badRequest('Only admins can enable/disabled users');
         }
 
         if (request.payload.system_user && typeof request.payload.system_user === "boolean" && !request.auth.credentials.roles.includes('admin')) {
-          return h.response({ "statusCode": 400, "error": "Bad request", 'message': 'Only admins can promote/demote users to system users' }).code(400);
+          return Boom.badRequest('Only admins can promote/demote users to system users');
         }
 
         const query = {};
 
-        let userQuery = null;
+        let user_query = null;
 
         try {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
           console.log("invalid ObjectID");
-          return h.response({ statusCode: 400, error: "Invalid argument", message: "id must be a single String of 12 bytes or a string of 24 hex characters" }).code(400);
+          return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
         try {
           const result = await db.collection(usersTable).findOne(query);
           if (!result) {
-            return h.response({ "statusCode": 400, "error": "Bad request", 'message': 'No record found for id: ' + request.params.id }).code(400);
+            return Boom.badRequest('No record found for id: ' + request.params.id );
           }
 
-          userQuery = result;
+          user_query = result;
         }
         catch (err) {
           console.log("ERROR:", err);
-          return h.response({ statusCode: 503, error: "Server error", message: "database error" }).code(503);
+          return Boom.serverUnavailable('database error', err);
         }
           
         //Trying to change the username?
-        if (request.payload.username && request.payload.username !== userQuery.username) {
+        if (request.payload.username && request.payload.username !== user_query.username) {
 
           const usernameQuery = { username: request.payload.username };
           //check if username already exists for a different account
@@ -411,12 +413,12 @@ exports.plugin = {
             const result = await db.collection(usersTable).findOne(usernameQuery);
 
             if (result) {
-              return h.response({ statusCode: 401, error: 'Invalid update', message: 'Username already exists' }).code(401);
+              return Boom.badRequest('Username already exists');
             }
           }
           catch (err) {
             console.log("ERROR:", err);
-            return h.response({ statusCode: 503, error: "Server error", message: "database error" }).code(503);
+            return Boom.serverUnavailable('database error', err);
           }
         }
         
@@ -446,7 +448,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          Boom.serviceUnavailable('database error');
+          Boom.serverUnavailable('database error');
         }
       },
       config: {
@@ -504,17 +506,35 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          Boom.serviceUnavailable('database error');
+          Boom.serverUnavailable('database error');
         }
 
         try {
-          const result = await db.collection(usersTable).deleteOne(query);
-          return h.response(result).code(204);
+          await db.collection(usersTable).deleteOne(query);
         }
         catch (err) {
           console.log("ERROR:", err);
-          Boom.serviceUnavailable('database error');
+          Boom.serverUnavailable('database error');
         }
+
+        if (useAccessControl) {
+          try {
+            await db.collection(cruisesTable).updateMany({}, { $pull: { cruise_access_list: { $in: [request.params.id] } } });
+          }
+          catch (err) {
+            return Boom.serverUnavailable('database error', err);
+          }
+
+          try {
+            await db.collection(loweringsTable).updateMany({}, { $pull: { lowering_access_list: { $in: [request.params.id] } } });
+          }
+          catch (err) {
+            return Boom.serverUnavailable('database error', err);
+          }
+        }
+
+        return h.response().code(204);
+
       },
       config: {
         auth: {
@@ -541,14 +561,14 @@ exports.plugin = {
       async handler(request, h) {
 
         if (request.auth.credentials.id !== request.params.id && !request.auth.credentials.roles.includes('admin')) {
-          return h.response({ "statusCode":400,"error":"Forbidden","message":"Only admins and the owner of this user can access this user's token." }).code(400);
+          return Boom.unauthorized('Only admins and the owner of this user can access this user\'s token.');
         }
 
         try {
           const result = await db.collection(usersTable).findOne({ _id: new ObjectID(request.params.id) });
 
           if (!result) {
-            return h.code(401);
+            return Boom.notFound('No user found for id: ' + request.params.id);
           }
 
           const user = result;
@@ -557,7 +577,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log("ERROR:", err);
-          Boom.serviceUnavailable('database error');
+          Boom.serverUnavailable('database error');
         }
       },
       config: {

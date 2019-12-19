@@ -2,6 +2,10 @@ const Boom = require('@hapi/boom');
 const Joi = require('@hapi/joi');
 
 const {
+  useAccessControl
+} = require('../../../config/email_constants');
+
+const {
   eventAuxDataTable,
   eventsTable,
   loweringsTable,
@@ -191,25 +195,21 @@ exports.plugin = {
         let cruise = null;
 
         try {
-          cruise = await db.collection(cruisesTable).findOne({ _id: cruise_id });
+          const cruiseResult = await db.collection(cruisesTable).findOne({ _id: cruise_id });
 
-          if (!cruise) {
+          if (!cruiseResult) {
             return Boom.badRequest('Cruise not found for id' + request.params.id);
           }
 
-          if (!request.auth.credentials.scope.includes('admin')) {
-            // if (cruiseResult.cruise_hidden || !cruiseResult.cruise_access_list.includes(request.auth.credentials.id)) {
-            if (cruise.cruise_hidden) {
-              return Boom.unauthorized('User not authorized to retrieve this cruise');
-            }
+          if (!request.auth.credentials.scope.includes("admin") && cruiseResult.cruise_hidden && (useAccessControl && typeof cruiseResult.cruise_access_list !== 'undefined' && !cruiseResult.cruise_access_list.includes(request.auth.credentials.id))) {
+            return Boom.unauthorized('User not authorized to retrieve this cruise');
           }
+
+          cruise = cruiseResult;
+
         }
         catch (err) {
-          return Boom.serviceUnavailable('database error', err);
-        }
-
-        if (cruise.cruise_hidden && !request.auth.credentials.scope.includes("admin")) {
-          return Boom.unauthorized('User not authorized to retrieve hidden cruises');
+          return Boom.serverUnavailable('database error', err);
         }
 
         const eventQuery = _buildEventsQuery(request, cruise.start_ts, cruise.stop_ts);
@@ -256,7 +256,7 @@ exports.plugin = {
               
             }
             catch (err) {
-              return Boom.serviceUnavailable('database error', err);
+              return Boom.serverUnavailable('database error', err);
             }
           }
           else {
@@ -264,7 +264,7 @@ exports.plugin = {
           }
         }
         catch (err) {
-          return Boom.serviceUnavailable('database error', err);
+          return Boom.serverUnavailable('database error', err);
         }
       },
       config: {
@@ -306,17 +306,14 @@ exports.plugin = {
             return Boom.notFound('lowering not found for that id');
           }
 
-          if (!request.auth.credentials.scope.includes('admin')) {
-            // if (loweringResult.lowering_hidden || !loweringResult.lowering_access_list.includes(request.auth.credentials.id)) {
-            if (loweringResult.lowering_hidden) {
-              return Boom.unauthorized('User not authorized to retrieve this lowering');
-            }
+          if (!request.auth.credentials.scope.includes("admin") && loweringResult.lowering_hidden && (useAccessControl && typeof loweringResult.lowering_access_list !== 'undefined' && !loweringResult.lowering_access_list.includes(request.auth.credentials.id))) {
+            return Boom.unauthorized('User not authorized to retrieve this lowering');
           }
 
           lowering = loweringResult;
         }
         catch (err) {
-          return Boom.serviceUnavailable('database error', err);
+          return Boom.serverUnavailable('database error', err);
         }
 
         const eventQuery = _buildEventsQuery(request, lowering.start_ts, lowering.stop_ts);
@@ -360,7 +357,7 @@ exports.plugin = {
 
             }
             catch (err) {
-              return Boom.serviceUnavailable('database error', err);
+              return Boom.serverUnavailable('database error', err);
             }
           }
           else {
@@ -368,7 +365,7 @@ exports.plugin = {
           }
         }
         catch (err) {
-          return Boom.serviceUnavailable('database error', err);
+          return Boom.serverUnavailable('database error', err);
         }
       },
       config: {
@@ -455,7 +452,7 @@ exports.plugin = {
 
               }
               catch (err) {
-                return Boom.serviceUnavailable('database error', err);
+                return Boom.serverUnavailable('database error', err);
               }
             }
             else {
@@ -463,7 +460,7 @@ exports.plugin = {
             }
           }
           catch (err) {
-            return Boom.serviceUnavailable('database error', err);
+            return Boom.serverUnavailable('database error', err);
           }
         }
         else {
@@ -513,7 +510,7 @@ exports.plugin = {
 
           }
           catch (err) {
-            return Boom.serviceUnavailable('database error', err);
+            return Boom.serverUnavailable('database error', err);
           }
         }
       },
@@ -558,7 +555,7 @@ exports.plugin = {
           return h.response(mod_result).code(200);
         }
         catch (err) {
-          return Boom.serviceUnavailable('database error', err);
+          return Boom.serverUnavailable('database error', err);
         }
       },
       config: {
@@ -612,11 +609,11 @@ exports.plugin = {
                   return h.response(updateResults).code(204);
                 }
                 catch (err) {
-                  return Boom.serviceUnavailable('database error', err);
+                  return Boom.serverUnavailable('database error', err);
                 }
               }
               else {
-                return Boom.serviceUnavailable('database error', err);
+                return Boom.serverUnavailable('database error', err);
               }
             }
           }
@@ -668,11 +665,11 @@ exports.plugin = {
                       return h.response(updateResults).code(204);
                     }
                     catch (err) {
-                      return Boom.serviceUnavailable('database error', err);
+                      return Boom.serverUnavailable('database error', err);
                     }
                   }
                   else {
-                    return Boom.serviceUnavailable('database error', err);
+                    return Boom.serverUnavailable('database error', err);
                   }
                 }
               }
@@ -685,16 +682,16 @@ exports.plugin = {
                   return h.response().code(204);
                 }
                 catch (err) {
-                  return Boom.serviceUnavailable('database error', err);
+                  return Boom.serverUnavailable('database error', err);
                 }
               }    
             }
             catch (err) {
-              return Boom.serviceUnavailable("ERROR find aux data:", err);
+              return Boom.serverUnavailable("ERROR find aux data:", err);
             }
           }
           catch (err) {
-            return Boom.serviceUnavailable("ERROR find event:", err);
+            return Boom.serverUnavailable("ERROR find event:", err);
           }
         }
       },
@@ -750,7 +747,7 @@ exports.plugin = {
 
         }
         catch (err) {
-          return Boom.serviceUnavailable('database error', err);
+          return Boom.serverUnavailable('database error', err);
         }
 
         try {
@@ -789,7 +786,7 @@ exports.plugin = {
           return h.response().code(204);
         }
         catch (err) {
-          return Boom.serviceUnavailable('database error', err);
+          return Boom.serverUnavailable('database error', err);
         }
       },
       config: {
@@ -836,7 +833,7 @@ exports.plugin = {
           }
         }
         catch (err) {
-          return Boom.serviceUnavailable('database error', err);
+          return Boom.serverUnavailable('database error', err);
         }
 
         try {
@@ -844,7 +841,7 @@ exports.plugin = {
           return h.response().code(204);
         }
         catch (err) {
-          return Boom.serviceUnavailable('database error', err);
+          return Boom.serverUnavailable('database error', err);
         }
 
       },

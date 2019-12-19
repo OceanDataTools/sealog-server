@@ -29,6 +29,7 @@ exports.plugin = {
           cruise_participants: ["Malcom Reynolds", "River Tam", "Inara Serra", "Kaylee Frye", "Hoban Washburn", "Jayne Cobb", "Zoe Washburn", "Simon Tam", "Shepard Book"]
         },
         cruise_tags: ["engineering"],
+        cruise_access_list: ['5981f167212b348aed7fd9f5'],
         cruise_hidden: false
       },
       {

@@ -11,7 +11,7 @@ const _renameAndClearFields = (doc, admin = false) => {
   doc.id = doc._id;
   delete doc._id;
   if (!admin) {
-    delete doc.template_disabled;
+    delete doc.disabled;
   }
 
   return doc;
@@ -32,6 +32,12 @@ const eventTemplateParam = Joi.object({
   id: Joi.string().length(24).required()
 }).label('eventTemplateParam');
 
+const eventTemplateQuery = Joi.object({
+  system_template: Joi.boolean().optional(),
+  offset: Joi.number().integer().min(0).optional(),
+  limit: Joi.number().integer().min(1).optional()
+}).optional().label('eventTemplateQuery');
+
 const eventTemplateSuccessResponse = Joi.object({
   id: Joi.object(),
   event_name: Joi.string(),
@@ -39,7 +45,7 @@ const eventTemplateSuccessResponse = Joi.object({
   event_free_text_required: Joi.boolean(),
   system_template: Joi.boolean(),
   template_categories: Joi.array().items(Joi.string()),
-  template_disabled: Joi.boolean().optional(),
+  disabled: Joi.boolean().optional(),
   event_options: Joi.array().items(Joi.object({
     event_option_name: Joi.string(),
     event_option_type: Joi.string(),
@@ -57,7 +63,7 @@ const eventTemplateCreatePayload = Joi.object({
   event_free_text_required: Joi.boolean().required(),
   system_template: Joi.boolean().required(),
   template_categories: Joi.array().items(Joi.string()).optional(),
-  template_disabled: Joi.boolean().optional(),
+  disabled: Joi.boolean().optional(),
   event_options: Joi.array().items(Joi.object({
     event_option_name: Joi.string().required(),
     event_option_type: Joi.string().required(),
@@ -74,7 +80,7 @@ const eventTemplateUpdatePayload = Joi.object({
   event_free_text_required: Joi.boolean().optional(),
   system_template: Joi.boolean().optional(),
   template_categories: Joi.array().items(Joi.string()).optional(),
-  template_disabled: Joi.boolean().optional(),
+  disabled: Joi.boolean().optional(),
   event_options: Joi.array().items(Joi.object({
     event_option_name: Joi.string().required(),
     event_option_type: Joi.string().required(),
@@ -97,10 +103,18 @@ exports.plugin = {
 
         const db = request.mongo.db;
 
+        if (request.query.system_template) {
+          query.system_template = request.query.system_template;
+        }
+
         const limit = (request.query.limit) ? request.query.limit : 0;
         const offset = (request.query.offset) ? request.query.offset : 0;
 
-        const query = (request.auth.credentials.scope.includes('admin')) ? {} : { template_disabled: { $eq: false } };
+        const query = (request.auth.credentials.scope.includes('admin')) ? {} : { disabled: { $eq: false } };
+
+        if (typeof request.query.system_template !== 'undefined') {
+          query.system_template = request.query.system_template;
+        }
 
         try {
           const results = await db.collection(eventTemplatesTable).find(query).skip(offset).limit(limit).toArray();
@@ -119,7 +133,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
       },
       config: {
@@ -129,10 +143,7 @@ exports.plugin = {
         },
         validate: {
           headers: authorizationHeader,
-          query: Joi.object({
-            offset: Joi.number().integer().min(0).optional(),
-            limit: Joi.number().integer().min(1).optional()
-          }).optional()
+          query: eventTemplateQuery
         },
         response: {
           status: {
@@ -174,7 +185,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
       },
       config: {
@@ -231,8 +242,8 @@ exports.plugin = {
           event_template.template_categories = [];
         }
 
-        if (typeof event_template.template_disabled === 'undefined') {
-          event_template.template_disabled = false;
+        if (typeof event_template.disabled === 'undefined') {
+          event_template.disabled = false;
         }
 
         try {
@@ -243,7 +254,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
       },
       config: {
@@ -253,7 +264,11 @@ exports.plugin = {
         },
         validate: {
           headers: authorizationHeader,
-          payload: eventTemplateCreatePayload
+          payload: eventTemplateCreatePayload,
+          failAction: (request, h, err) => {
+
+            throw Boom.badRequest(err.message);
+          }
         },
         response: {
           status: {
@@ -294,7 +309,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
 
         const event_template = request.payload;
@@ -305,7 +320,7 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
       },
       config: {
@@ -316,7 +331,11 @@ exports.plugin = {
         validate: {
           headers: authorizationHeader,
           params: eventTemplateParam,
-          payload: eventTemplateUpdatePayload
+          payload: eventTemplateUpdatePayload,
+          failAction: (request, h, err) => {
+
+            throw Boom.badRequest(err.message);
+          }
         },
         response: {
           status: {}
@@ -361,12 +380,12 @@ exports.plugin = {
           }
           catch (err) {
             console.log(err);
-            return Boom.serviceUnavailable('database error');
+            return Boom.serverUnavailable('database error');
           }
         }
         catch (err) {
           console.log(err);
-          return Boom.serviceUnavailable('database error');
+          return Boom.serverUnavailable('database error');
         }
       },
       config: {

@@ -53,6 +53,17 @@ exports.plugin = {
         roles: ['event_manager', 'event_logger', 'event_watcher', 'cruise_manager'],
         system_user: true,
         disabled: false
+      },
+      {
+        _id: ObjectID("5981f167212b348aed7fd9f5"),
+        username: "webb",
+        fullname: "Webb Pinner",
+        email: "webb@notarealserver.com",
+        password: await hashedPassword("1234567890"),
+        last_login: new Date(),
+        roles: ['event_manager', 'event_logger', 'event_watcher', 'cruise_manager'],
+        system_user: false,
+        disabled: false
       }
     ];
 
