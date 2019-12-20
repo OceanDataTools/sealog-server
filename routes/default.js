@@ -74,7 +74,7 @@ const filepondFileParam = Joi.object({
 }).label('filepondFileParam');
 
 const filepondFilePayload = Joi.object({
-  file: Joi.any().meta({ swaggerType: 'file' }).allow('').optional()
+  filepond: Joi.any().meta({ swaggerType: 'file' }).allow('').optional()
 }).label('filepondFilePayload');
 
 exports.plugin = {
@@ -133,27 +133,6 @@ exports.plugin = {
           status: {}
         },
         tags: ['default','test','auth']
-      }
-    });
-
-    server.route({
-      method: 'GET',
-      path: CRUISE_ROUTE + '/filepond/load',
-      handler(request, h) {
-
-        console.log(request.params);
-        return h.response().code(200);
-      },
-      config: {
-        auth: {
-          strategy: 'jwt',
-          scope: ['admin', 'read_cruises']
-        },
-        validate: {
-          headers: authorizationHeader
-        },
-        description: 'This route is used for reload files not yet associated with cruises back into filepond.',
-        tags: ['cruises','auth','api','file_get']
       }
     });
 
@@ -253,7 +232,11 @@ exports.plugin = {
         validate: {
           headers: authorizationHeader,
           params: filepondFileParam,
-          payload: filepondFilePayload
+          payload: filepondFilePayload,
+          failAction: (request, h, err) => {
+
+            throw Boom.badRequest(err.message);
+          }
         },
         description: 'Upload cruise file via filepond',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
@@ -295,27 +278,6 @@ exports.plugin = {
 
     server.route({
       method: 'GET',
-      path: LOWERING_ROUTE + '/filepond/load',
-      handler(request, h) {
-
-        console.log(request.params);
-        return h.response().code(200);
-      },
-      config: {
-        auth: {
-          strategy: 'jwt',
-          scope: ['admin', 'read_lowerings']
-        },
-        validate: {
-          headers: authorizationHeader
-        },
-        description: 'This route is used for reload files not yet associated with lowerings back into filepond.',
-        tags: ['lowerings','auth','api','file_get']
-      }
-    });
-
-    server.route({
-      method: 'GET',
       path: LOWERING_ROUTE + '/{param*}',
       handler: {
         directory: {
@@ -347,7 +309,7 @@ exports.plugin = {
       config: {
         auth: {
           strategy: 'jwt',
-          scope: ['admin', 'write_cruises']
+          scope: ['admin', 'write_lowerings']
         },
         validate: {
           headers: authorizationHeader
@@ -371,7 +333,7 @@ exports.plugin = {
       config: {
         auth: {
           strategy: 'jwt',
-          scope: ['admin', 'write_cruises']
+          scope: ['admin', 'write_lowerings']
         },
         validate: {
           headers: authorizationHeader,

@@ -1,5 +1,3 @@
-
-
 const {
   customVarsTable
 } = require('../config/db_constants');

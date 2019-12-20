@@ -1,5 +1,3 @@
-
-
 const {
   cruisesTable
 } = require('../config/db_constants');

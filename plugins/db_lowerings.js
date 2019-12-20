@@ -1,5 +1,3 @@
-
-
 const {
   loweringsTable
 } = require('../config/db_constants');

@@ -1,5 +1,3 @@
-
-
 const {
   eventAuxDataTable
 } = require('../config/db_constants');

@@ -1,5 +1,3 @@
-
-
 const {
   eventTemplatesTable
 } = require('../config/db_constants');

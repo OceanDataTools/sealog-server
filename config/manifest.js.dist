@@ -68,6 +68,7 @@ const manifest = {
         }
       },
       { plugin: './plugins/auth' },
+      { plugin: './plugins/filesystem_init' },
       { plugin: '@hapi/inert' },
       { plugin: '@hapi/vision' },
       { plugin: '@hapi/nes' },
