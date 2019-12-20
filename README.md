@@ -35,7 +35,7 @@ Most of the API calls require a JWT to be included with the request header.  Her
 
 From the terminal replaceing `<username>` and `<password>` with the appropriate information:
 ```
-curl -H "Content-Type: application/json" -X POST -d '{"username":<username>,"password":<pasword>}' https://sealog.oceandatatools.org:9200/sealog-server/login
+curl -H "Content-Type: application/json" -X POST -d '{"username":<username>,"password":<pasword>}' https://sealog.oceandatatools.org:9200/sealog-server/api/v1/auth/login
 ```
 
 This will respond with:
@@ -87,7 +87,7 @@ import requests
 import json
 
 root_url = 'https://sealog.oceandatatools.org:9200/sealog-server'
-api_path = '/login'
+api_path = '/api/v1/auth/login'
 
 payload = {
   "username": "guest",
@@ -127,7 +127,7 @@ Namespace Examples.System.Net
             uriString = "https://sealog.oceandatatools.org:9200/sealog-server"
 
             Dim loginPath As String
-            loginPath = "/login"
+            loginPath = "/api/v1/auth/login"
 
             Dim submitPath As String
             submitPath = "/api/v1/events"
