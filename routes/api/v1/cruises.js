@@ -113,6 +113,16 @@ const cruiseTag = Joi.string().label('cruiseTag');
 
 const userID = Joi.string().label('userID');
 
+const cruiseAdditionalMetaCreate = Joi.object({
+  cruise_vessel: Joi.string(),
+  cruise_pi: Joi.string()
+}).options({ allowUnknown: true }).label('cruiseAdditionalMetaCreate');
+
+const cruiseAdditionalMetaUpdate = Joi.object({
+  cruise_vessel: Joi.string().optional(),
+  cruise_pi: Joi.string().optional()
+}).options({ allowUnknown: true }).label('cruiseAdditionalMetaUpdate');
+
 const cruiseQuery = Joi.object({
   startTS: Joi.date().iso(),
   stopTS: Joi.date().iso(),
@@ -129,12 +139,10 @@ const cruiseQuery = Joi.object({
 const cruiseResponse = Joi.object({
   id: Joi.object(),
   cruise_id: Joi.string(),
-  cruise_location: Joi.string().allow(''),
-  cruise_vessel: Joi.string(),
   start_ts: Joi.date().iso(),
   stop_ts: Joi.date().iso(),
-  cruise_pi: Joi.string().allow(''),
-  cruise_additional_meta: Joi.object(),
+  cruise_location: Joi.string().allow(''),
+  cruise_additional_meta: cruiseAdditionalMetaCreate,
   cruise_tags: Joi.array().items(cruiseTag),
   cruise_access_list: Joi.array().items(userID),
   cruise_hidden: Joi.boolean()
@@ -147,10 +155,8 @@ const cruiseCreatePayload = Joi.object({
   cruise_id: Joi.string().required(),
   start_ts: Joi.date().iso().required(),
   stop_ts: Joi.date().iso().required(),
-  cruise_pi: Joi.string().allow('').required(),
   cruise_location: Joi.string().allow('').required(),
-  cruise_vessel: Joi.string().required(),
-  cruise_additional_meta: Joi.object().required(),
+  cruise_additional_meta: cruiseAdditionalMetaCreate.required(),
   cruise_tags: Joi.array().items(cruiseTag).required(),
   cruise_access_list: Joi.array().items(userID).optional(),
   cruise_hidden: Joi.boolean().optional()
@@ -163,9 +169,7 @@ const cruiseUpdatePayload = Joi.object({
   start_ts: Joi.date().iso().optional(),
   stop_ts: Joi.date().iso().optional(),
   cruise_location: Joi.string().allow('').optional(),
-  cruise_vessel: Joi.string().optional(),
-  cruise_pi: Joi.string().allow('').optional(),
-  cruise_additional_meta: Joi.object().optional(),
+  cruise_additional_meta: cruiseAdditionalMetaUpdate.optional(),
   cruise_tags: Joi.array().items(cruiseTag).optional(),
   cruise_access_list: Joi.array().items(userID).optional(),
   cruise_hidden: Joi.boolean().optional()
@@ -227,12 +231,12 @@ exports.plugin = {
 
           // PI filtering
           if (request.query.cruise_pi) {
-            query.cruise_pi = request.query.cruise_pi;
+            query.cruise_additional_meta.cruise_pi = request.query.cruise_pi;
           }
 
           // Vessel filtering
           if (request.query.cruise_vessel) {
-            query.cruise_vessel = request.query.cruise_vessel;
+            query.cruise_additional_meta.cruise_vessel = request.query.cruise_vessel;
           }
 
           // Location filtering
@@ -263,7 +267,6 @@ exports.plugin = {
               stopTS = new Date(request.query.stopTS);
             }
 
-            // query.ts = { "$gte": startTS , "$lt": stopTS };
             query.start_ts = { "$lt": stopTS };
             query.stop_ts = { "$gt": startTS };
           }
@@ -275,6 +278,7 @@ exports.plugin = {
         try {
           const cruises = await db.collection(cruisesTable).find(query).sort( { start_ts: -1 } ).skip(offset).limit(limit).toArray();
 
+          console.log("cruises:", cruises);
           if (cruises.length > 0) {
 
             const mod_cruises = cruises.map((cruise) => {
