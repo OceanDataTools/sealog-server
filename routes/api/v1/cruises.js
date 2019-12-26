@@ -278,7 +278,7 @@ exports.plugin = {
         try {
           const cruises = await db.collection(cruisesTable).find(query).sort( { start_ts: -1 } ).skip(offset).limit(limit).toArray();
 
-          console.log("cruises:", cruises);
+          // console.log("cruises:", cruises);
           if (cruises.length > 0) {
 
             const mod_cruises = cruises.map((cruise) => {

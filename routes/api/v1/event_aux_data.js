@@ -133,21 +133,21 @@ const auxDataQuery = Joi.object({
   author: Joi.alternatives().try(
     Joi.string(),
     Joi.array().items(Joi.string()).optional()
-  ),
-  startTS: Joi.date().iso(),
-  stopTS: Joi.date().iso(),
+  ).optional(),
+  startTS: Joi.date().iso().optional(),
+  stopTS: Joi.date().iso().optional(),
   datasource: Joi.alternatives().try(
     Joi.string(),
-    Joi.array().items(Joi.string()).optional()
-  ),
+    Joi.array().items(Joi.string())
+  ).optional(),
   value: Joi.alternatives().try(
     Joi.string(),
-    Joi.array().items(Joi.string()).optional()
-  ),
+    Joi.array().items(Joi.string())
+  ).optional(),
   freetext: Joi.alternatives().try(
     Joi.string(),
-    Joi.array().items(Joi.string()).optional()
-  )
+    Joi.array().items(Joi.string())
+  ).optional()
 }).optional().label('auxDataQuery');
 
 const auxDataCreatePayload = Joi.object({
@@ -214,18 +214,15 @@ exports.plugin = {
 
         const eventQuery = _buildEventsQuery(request, cruise.start_ts, cruise.stop_ts);
 
-        // console.log("eventQuery:", eventQuery);
-
         try {
           const results = await db.collection(eventsTable).find(eventQuery, { _id: 1 }).sort( { ts: 1 } ).toArray();
 
           // EventID Filtering
           if (results.length > 0) {
-            // console.log("results:", results);
             const query = {};
 
             const eventIDs = results.map((event) => {
-              // console.log(event._id);
+
               return event._id;
             });
             query.event_id = { $in: eventIDs };
@@ -376,11 +373,11 @@ exports.plugin = {
         validate: {
           headers: authorizationHeader,
           params: auxDataParam,
-          query: auxDataQuery
+          query: auxDataQuery,
         },
         response: {
           status: {
-            200: auxDataSuccessResponse
+            200: Joi.array().items(auxDataSuccessResponse)
           }
         },
         description: 'Return the event_aux_data records for a lowering based on the lowering id',
@@ -406,20 +403,15 @@ exports.plugin = {
 
           const eventQuery = _buildEventsQuery(request);
 
-          // console.log("eventQuery:", eventQuery);
-
           try {
             const results = await db.collection(eventsTable).find(eventQuery, { _id: 1 }).sort( { ts: 1 } ).toArray();
-
-            // console.log(results);
 
             // EventID Filtering
             if (results.length > 0) {
               const query = {};
 
-              // console.log("results:", results);
               const eventIDs = results.map((event) => {
-                // console.log(event._id);
+
                 return new ObjectID(event._id);
               });
               query.event_id  = { $in: eventIDs };
@@ -447,7 +439,6 @@ exports.plugin = {
                   return h.response(auxDataResults).code(200);
                 }
 
-                // console.log(auxDataResults);
                 return Boom.notFound('No records found');
 
               }
@@ -494,8 +485,6 @@ exports.plugin = {
           // Limiting & Offset
           const limit = (request.query.limit) ? request.query.limit : 0;
           const offset = (request.query.offset) ? request.query.offset : 0;
-
-          // console.log("query:", query);
 
           try {
             const results = await db.collection(eventAuxDataTable).find(query).skip(offset).limit(limit).toArray();
@@ -603,7 +592,6 @@ exports.plugin = {
             }
             catch (err) {
               if (err.code === 11000) {
-                // console.log(event_aux_data)
                 try {
                   const updateResults = await db.collection(eventAuxDataTable).updateOne( { _id: event_aux_data._id }, { $set: event_aux_data } );
                   return h.response(updateResults).code(204);
@@ -639,18 +627,12 @@ exports.plugin = {
               return Boom.badRequest('event not found');
             }
 
-            // console.log("queryResult:", queryResult)
             query = { event_id: event_aux_data.event_id, data_source: event_aux_data.data_source };
-            // console.log("query1:", query)
 
             try {
               const result = await db.collection(eventAuxDataTable).findOne(query);
 
-              // console.log("result1:", result)
-            
               if (!result){
-                // console.log("This is an insert")
-                // event_aux_data.event_id = new ObjectID(event_aux_data.event_id);
                 try {
                   const insertResult = await db.collection(eventAuxDataTable).insertOne(event_aux_data);
               
@@ -659,7 +641,6 @@ exports.plugin = {
                 }
                 catch (err) {
                   if (err.code === 11000) {
-                    // console.log(event_aux_data)
                     try {
                       const updateResults = await db.collection(eventAuxDataTable).updateOne( query, { $set: event_aux_data } );
                       return h.response(updateResults).code(204);
