@@ -373,7 +373,7 @@ exports.plugin = {
         validate: {
           headers: authorizationHeader,
           params: auxDataParam,
-          query: auxDataQuery,
+          query: auxDataQuery
         },
         response: {
           status: {
