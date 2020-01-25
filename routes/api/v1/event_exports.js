@@ -1,12 +1,7 @@
 const Boom = require('@hapi/boom');
 const Joi = require('@hapi/joi');
-const Converter = require('json-2-csv');
+const { parseAsync } = require('json2csv');
 const Extend = require('jquery-extend');
-
-const json2csvOptions = {
-  checkSchemaDifferences: false,
-  emptyFieldValue: ''
-};
 
 const {
   useAccessControl
@@ -21,7 +16,7 @@ const {
 
 const _flattenJSON = (json) => {
 
-  const exportData = json.map((event) => {
+  const flattenJSON = json.map((event) => {
 
     const copiedEvent = Extend(true, {}, event);
     let enumerator = 0;
@@ -31,8 +26,8 @@ const _flattenJSON = (json) => {
     
         data.data_array.map((data2) => {
 
-          const elementName = `${data.data_source}_${data2.data_name}`;
-          const elementUOM = `${data.data_source}_${data2.data_name}`;
+          const elementName = `${data.data_source}.${data2.data_name}`;
+          const elementUOM = `${data.data_source}.${data2.data_name}`;
 
           if (!(elementName + '_value' in copiedEvent)) {
             copiedEvent[elementName + '_value'] = data2.data_value;
@@ -59,7 +54,7 @@ const _flattenJSON = (json) => {
     enumerator = 0;
     copiedEvent.event_options.map((data) => {
 
-      const elementName = `event_option_${data.event_option_name}`;
+      const elementName = `event_option.${data.event_option_name}`;
       if (!(elementName in copiedEvent)) {
         copiedEvent[elementName] = data.event_option_value;
       }
@@ -67,7 +62,6 @@ const _flattenJSON = (json) => {
         enumerator = 2;
         while (enumerator > 1) {
           if (!(elementName + "_" + enumerator in copiedEvent)) {
-            console.log(elementName + "_" + enumerator);
             copiedEvent[elementName + "_" + enumerator] = data.event_option_value;
             enumerator = 1;
           }
@@ -86,7 +80,22 @@ const _flattenJSON = (json) => {
     return copiedEvent;
   });
 
-  return exportData;
+  return flattenJSON;
+};
+
+const _buildCSVHeaders = (flattenJSON) => {
+
+  const csvHeaders = flattenJSON.reduce((headers, event) => {
+
+    const keyNames = Object.keys(event);
+
+    return headers.concat(keyNames).filter((value, index, self) => {
+
+      return self.indexOf(value) === index;
+    });
+  }, ['id','ts','event_value','event_author','event_free_text']);
+
+  return csvHeaders.slice(0, 5).concat(csvHeaders.slice(5).filter((header) => header.startsWith("event_option")).sort(), csvHeaders.slice(5).filter((header) => !header.startsWith("event_option")).sort());
 };
 
 const _renameAndClearFields = (doc) => {
@@ -338,15 +347,18 @@ exports.plugin = {
 
           if (request.query.format && request.query.format === "csv") {
 
-            const csv_results = await Converter.json2csvAsync(_flattenJSON(results), json2csvOptions)
+            const flattenJSON = _flattenJSON(results);
+            const csvHeaders = _buildCSVHeaders(flattenJSON);
+            
+            const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
               .then((csv) => {
-          
+
                 return csv;
               })
               .catch((err) => {
-          
-                console.log(err);
-                throw err;    
+
+                console.error(err);
+                throw err;
               });
 
             return h.response(csv_results).code(200);
@@ -481,15 +493,18 @@ exports.plugin = {
 
           if (request.query.format && request.query.format === "csv") {
 
-            const csv_results = await Converter.json2csvAsync(_flattenJSON(results), json2csvOptions)
+            const flattenJSON = _flattenJSON(results);
+            const csvHeaders = _buildCSVHeaders(flattenJSON);
+            
+            const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
               .then((csv) => {
-          
+
                 return csv;
               })
               .catch((err) => {
-          
-                console.log(err);
-                throw err;    
+
+                console.error(err);
+                throw err;
               });
 
             return h.response(csv_results).code(200);
@@ -619,15 +634,18 @@ exports.plugin = {
               results.forEach(_renameAndClearFields);
 
               if (request.query.format && request.query.format === "csv") {
-                const csv_results = await Converter.json2csvAsync(_flattenJSON(results), json2csvOptions)
+                const flattenJSON = _flattenJSON(results);
+                const csvHeaders = _buildCSVHeaders(flattenJSON);
+                
+                const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
                   .then((csv) => {
 
                     return csv;
                   })
                   .catch((err) => {
 
-                    console.log(err);
-                    throw err;    
+                    console.error(err);
+                    throw err;
                   });
 
                 return h.response(csv_results).code(200);

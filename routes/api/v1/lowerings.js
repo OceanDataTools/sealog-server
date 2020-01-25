@@ -180,6 +180,9 @@ exports.plugin = {
   dependencies: ['hapi-mongodb'],
   register: (server, options) => {
 
+    server.subscription('/ws/status/newLowerings');
+    server.subscription('/ws/status/updateLowerings');
+
     server.route({
       method: 'GET',
       path: '/lowerings',
@@ -588,6 +591,9 @@ exports.plugin = {
           console.log("ERROR:", err);
         }
 
+        lowering.id = result.insertedId;
+        server.publish('/ws/status/newLowerings', lowering);
+
         return h.response({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
         
       },
@@ -726,6 +732,9 @@ exports.plugin = {
           console.log("ERROR:", err);
           return Boom.serverUnavailable('database error');
         }
+
+        const updatedLowering = await db.collection(loweringsTable).findOne(query);
+        server.publish('/ws/status/updateLowerings', updatedLowering);
 
         return h.response().code(204);
 

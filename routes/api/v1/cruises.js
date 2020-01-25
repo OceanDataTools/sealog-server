@@ -187,6 +187,9 @@ exports.plugin = {
   dependencies: ['hapi-mongodb'],
   register: (server, options) => {
 
+    server.subscription('/ws/status/newCruises');
+    server.subscription('/ws/status/updateCruises');
+
     server.route({
       method: 'GET',
       path: '/cruises',
@@ -466,6 +469,9 @@ exports.plugin = {
           console.log("ERROR:", err);
         }
 
+        cruise.id = result.insertedId;
+        server.publish('/ws/status/newCruises', cruise);
+
         return h.response({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
 
       },
@@ -646,6 +652,9 @@ exports.plugin = {
             }
           }
         }
+
+        const updatedCruise = await db.collection(cruisesTable).findOne(query);
+        server.publish('/ws/status/updateCruises', updatedCruise);
 
         return h.response().code(204);
       },

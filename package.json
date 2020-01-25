@@ -1,6 +1,6 @@
 {
   "name": "sealog-server",
-  "version": "1.0.8-rc",
+  "version": "1.0.9-rc",
   "license": "MIT",
   "description": "Sealog event-logging server",
   "bugs": {
@@ -38,25 +38,25 @@
     "@hapi/joi": "^16.1.8",
     "@hapi/nes": "^11.2.1",
     "@hapi/vision": "^5.5.4",
-    "axios": "^0.19.0",
+    "axios": "^0.19.2",
     "bcryptjs": "^2.4.3",
     "hapi-auth-jwt2": "^8.8.1",
     "hapi-mongodb": "^9.0.0",
     "hapi-swagger": "^11.1.0",
     "jquery-extend": "^2.0.3",
-    "json-2-csv": "^3.5.6",
-    "mongodb": "^3.4.1",
+    "json2csv": "^4.5.4",
+    "mongodb": "^3.5.2",
     "nodemailer": "^6.4.2",
     "nodemon": "^2.0.2"
   },
   "devDependencies": {
     "@hapi/code": "^7.0.0",
     "@hapi/eslint-config-hapi": "^12.0.0",
-    "@hapi/eslint-plugin-hapi": "^4.3.4",
+    "@hapi/eslint-plugin-hapi": "^4.3.5",
     "@hapi/lab": "^21.0.0",
     "blipp": "^4.0.1",
-    "eslint": "^6.7.2",
-    "eslint-plugin-import": "^2.19.1",
+    "eslint": "^6.8.0",
+    "eslint-plugin-import": "^2.20.0",
     "npm-run-all": "^4.1.5"
   }
 }

@@ -28,6 +28,7 @@
       "vars": "all",
       "args": "after-used",
       "argsIgnorePattern": "options"
-    }]
+    }],
+    no-extend-native: 0
   }
 }

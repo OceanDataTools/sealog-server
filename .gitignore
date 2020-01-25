@@ -2,6 +2,8 @@
 npm-debug.log
 .DS_Store
 /misc/sealog-asnap.py
+/misc/sealog-cruiseResponder.py
+/misc/sealog-loweringResponder.py
 /misc/sealog-autoActions.py
 /misc/sealog-auxDataInserter-nav.py
 /misc/sealog-udp2MongoDB.py
