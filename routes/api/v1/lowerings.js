@@ -326,10 +326,6 @@ exports.plugin = {
             return Boom.notFound('No cruise record found for id: ' + request.params.id);
           }
 
-          if (!request.auth.credentials.scope.includes('admin') && cruiseResult.cruise_hidden) {
-            return Boom.unauthorized('User not authorized to retrieve this cruise');
-          }
-
           cruise = cruiseResult;
         }
         catch (err) {
@@ -356,8 +352,12 @@ exports.plugin = {
         // use access control filtering
         if (useAccessControl && !request.auth.credentials.scope.includes('admin')) {
           query.$or = [{ lowering_hidden: query.lowering_hidden }, { lowering_access_list: request.auth.credentials.id }];
-          // query.$or = [{ lowering_hidden: query.lowering_hidden }];
           delete query.lowering_hidden;
+        }
+
+        // Lowering_id filtering
+        if (request.query.lowering_id) {
+          query.lowering_id = request.query.lowering_id;
         }
 
         // Location filtering

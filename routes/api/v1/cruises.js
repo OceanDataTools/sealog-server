@@ -5,7 +5,8 @@ const Tmp = require('tmp');
 const Path = require('path');
 
 const {
-  CRUISE_PATH
+  CRUISE_PATH,
+  LOWERING_PATH
 } = require('../../../config/path_constants');
 
 const {
@@ -109,6 +110,10 @@ const cruiseParam = Joi.object({
   id: Joi.string().length(24).required()
 }).label('cruiseParam');
 
+const loweringParam = Joi.object({
+  id: Joi.string().length(24).required()
+}).label('loweringParam');
+
 const cruiseTag = Joi.string().label('cruiseTag');
 
 const userID = Joi.string().label('userID');
@@ -136,7 +141,7 @@ const cruiseQuery = Joi.object({
   limit: Joi.number().integer().min(1).optional()
 }).optional().label('cruiseQuery');
 
-const cruiseResponse = Joi.object({
+const cruiseSuccessResponse = Joi.object({
   id: Joi.object(),
   cruise_id: Joi.string(),
   start_ts: Joi.date().iso(),
@@ -146,9 +151,9 @@ const cruiseResponse = Joi.object({
   cruise_tags: Joi.array().items(cruiseTag),
   cruise_access_list: Joi.array().items(userID),
   cruise_hidden: Joi.boolean()
-}).label('cruiseResponse');
+}).label('cruiseSuccessResponse');
 
-const cruiseResponseNoAccessControl = cruiseResponse.keys({ cruise_access_list: Joi.forbidden() }).label('cruiseResponse');
+const cruiseSuccessResponseNoAccessControl = cruiseSuccessResponse.keys({ cruise_access_list: Joi.forbidden() }).label('cruiseSuccessResponse');
 
 const cruiseCreatePayload = Joi.object({
   id: Joi.string().length(24).optional(),
@@ -317,7 +322,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.array().items((useAccessControl) ? cruiseResponse : cruiseResponseNoAccessControl)
+            200: Joi.array().items((useAccessControl) ? cruiseSuccessResponse : cruiseSuccessResponseNoAccessControl)
           }
         },
         description: 'Return the cruises based on query parameters',
@@ -326,6 +331,90 @@ exports.plugin = {
         tags: ['cruises','auth','api']
       }
     });
+
+
+    server.route({
+      method: 'GET',
+      path: '/cruises/bylowering/{id}',
+      async handler(request, h) {
+
+        const db = request.mongo.db;
+        const ObjectID = request.mongo.ObjectID;
+
+        let lowering = null;
+
+        try {
+          const loweringResult = await db.collection(loweringsTable).findOne({ _id: ObjectID(request.params.id) });
+
+          if (!loweringResult) {
+            return Boom.notFound('No lowering record found for id: ' + request.params.id);
+          }
+
+          lowering = loweringResult;
+        }
+        catch (err) {
+          console.log(err);
+          return Boom.serverUnavailable('unknown error');
+        }
+
+        const query = {};
+
+        // use access control filtering
+        if (useAccessControl && !request.auth.credentials.scope.includes('admin')) {
+          query.$or = [{ cruise_hidden: query.cruise_hidden }, { cruise_access_list: request.auth.credentials.id }];
+        }
+        else if (!request.auth.credentials.scope.includes('admin')) {
+          query.cruise_hidden = false;
+        }
+
+        // time bounds based on lowering start/stop times
+        query.$and = [{ start_ts: { $lte: lowering.start_ts } }, { stop_ts: { $gte: lowering.stop_ts } }];
+
+        try {
+          const cruise = await db.collection(cruisesTable).findOne(query);
+
+          if (cruise) {
+
+            try {
+              cruise.cruise_additional_meta.cruise_files = Fs.readdirSync(LOWERING_PATH + '/' + cruise._id);
+            }
+
+            catch (error) {
+              cruise.cruise_additional_meta.cruise_files = [];
+            }
+
+            return h.response(_renameAndClearFields(cruise)).code(200);
+          }
+
+          return Boom.notFound('No records found');
+          
+        }
+        catch (err) {
+          console.log("ERROR:", err);
+          return Boom.serverUnavailable('database error');
+        }
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: ['admin', 'read_cruises']
+        },
+        validate: {
+          headers: authorizationHeader,
+          params: loweringParam
+        },
+        response: {
+          status: {
+            200: (useAccessControl) ? cruiseSuccessResponse : cruiseSuccessResponseNoAccessControl
+          }
+        },
+        description: 'Return the cruises based on query parameters',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong></p>',
+        tags: ['cruises','auth','api']
+      }
+    });
+
 
     server.route({
       method: 'GET',
@@ -384,7 +473,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: (useAccessControl) ? cruiseResponse : cruiseResponseNoAccessControl
+            200: (useAccessControl) ? cruiseSuccessResponse : cruiseSuccessResponseNoAccessControl
           }
         },
         description: 'Return the cruise based on cruise id',
