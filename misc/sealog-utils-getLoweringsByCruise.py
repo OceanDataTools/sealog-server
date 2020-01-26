@@ -2,7 +2,7 @@
 
 import logging
 import python_sealog
-from python_sealog.cruises import getCruiseUIDByID
+from python_sealog.lowerings import getLoweringsByCruise
 
 # Default logging level
 LOG_LEVEL = logging.INFO
@@ -28,9 +28,9 @@ if __name__ == '__main__':
 
   import argparse
 
-  parser = argparse.ArgumentParser(description='Retrieve Cruise UID from Cruise ID')
+  parser = argparse.ArgumentParser(description='Retrieve Lowerings from Cruise UID')
   parser.add_argument('-d', '--debug', action='store_true', help=' display debug messages')
-  parser.add_argument('cruise_id', help='Cruise ID i.e. "AT42-11".')
+  parser.add_argument('cruise_uid', help='Cruise UID i.e. "5981f167212b348aed7fa9f5".')
 
   args = parser.parse_args()
 
@@ -42,8 +42,8 @@ if __name__ == '__main__':
       handler.setLevel(logging.DEBUG)
     logger.debug("Log level now set to DEBUG")
 
-  cruiseUid = getCruiseUIDByID(args.cruise_id)
-  if cruiseUid != None:
-    print(cruiseUid)
+  lowerings = getLoweringsByCruise(args.cruise_uid)
+  if not lowerings == None:
+    print(lowerings)
   else:
-    logger.error("No cruise found for cruise_id: " + args.cruise_id)
+    logger.error("No lowerings found for cruise_uid: " + args.cruise_uid)

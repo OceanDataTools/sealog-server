@@ -4,7 +4,23 @@ import logging
 
 from .settings import apiServerURL, headers, customVarAPIPath
 
-def getCustomVarUid(var_name):
+def getCustomVar(var_uid):
+
+  try:
+    url = apiServerURL + customVarAPIPath + '/' + var_uid
+    r = requests.get(url, headers=headers)
+    logging.debug(r.text)
+
+    if r.status_code != 404:
+      customVar = json.loads(r.text)
+      logging.debug(json.dumps(customVar))
+      return customVar
+
+  except Exception as error:
+    logging.error('Error retrieving custom variable ID')
+    logging.error(str(error))
+
+def getCustomVarUidByName(var_name):
 
   try:
     url = apiServerURL + customVarAPIPath

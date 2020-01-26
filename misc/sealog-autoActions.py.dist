@@ -13,7 +13,7 @@
 #
 #  Author: Webb Pinner webbpinner@gmail.com
 # Created: 2018-09-26
-# Modified: 2019-10-17
+# Updated: 2020-01-26
 
 import asyncio
 import websockets
@@ -25,7 +25,7 @@ import os
 from pymongo import MongoClient
 
 import python_sealog
-from python_sealog.custom_vars import getCustomVarUid
+from python_sealog.custom_vars import getCustomVarUidByName
 from python_sealog.settings import apiServerURL, wsServerURL, cruisesAPIPath, eventsAPIPath, customVarAPIPath, headers
 
 asnapStatusVarName = 'asnapStatus'
@@ -138,7 +138,7 @@ if __name__ == '__main__':
     
   # Retrieve the asnapStatus ID
   try:
-    asnapStatusVarID = getCustomVarUid(asnapStatusVarName)
+    asnapStatusVarID = getCustomVarUidByName(asnapStatusVarName)
   except Exception as error:
     logger.error("Error retrieving the asnapStatus ID")
     logger.error(str(error))

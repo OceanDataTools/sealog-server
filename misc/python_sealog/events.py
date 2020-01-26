@@ -4,7 +4,23 @@ import logging
 
 from .settings import apiServerURL, headers, eventsAPIPath
 
-def getEventsByCruiseUid(cruise_uid, export_format='json'):
+def getEvent(event_uid):
+
+  try:
+    url = apiServerURL + eventsAPIPath
+    r = requests.get(url, headers=headers)
+
+    if r.status_code != 404:
+      event = json.loads(r.text)
+      logging.debug(json.dumps(event))
+      return event
+  
+  except Exception as error:
+    print(r.text)
+    print(error)
+
+
+def getEventsByCruise(cruise_uid, export_format='json'):
 
   try:
     url = apiServerURL + eventsAPIPath + '/bycruise/' + cruise_uid + '?format=' + export_format
@@ -19,7 +35,8 @@ def getEventsByCruiseUid(cruise_uid, export_format='json'):
     print(r.text)
     print(error)
 
-def getEventsByLoweringUid(lowering_uid, export_format='json'):
+
+def getEventsByLowering(lowering_uid, export_format='json'):
 
   try:
     url = apiServerURL + eventsAPIPath + '/bylowering/' + lowering_uid + '?format=' + export_format

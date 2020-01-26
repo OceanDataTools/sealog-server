@@ -11,6 +11,7 @@
 #
 #  Author: Webb Pinner webbpinner@gmail.com
 # Created: 2019-10-15
+# Updated: 2020-01-26
 
 SCRIPT_BASE=`dirname $0`
 
@@ -19,7 +20,7 @@ GET_EVENT_TEMPLATES_SCRIPT='python3 '${SCRIPT_BASE}'/sealog-utils-getEventTempla
 GET_EVENTS_SCRIPT='python3 '${SCRIPT_BASE}'/sealog-utils-getEvents.py'
 GET_EVENT_AUX_DATA_SCRIPT='python3 '${SCRIPT_BASE}'/sealog-utils-getEventAuxData.py'
 GET_EVENT_EXPORTS_SCRIPT='python3 '${SCRIPT_BASE}'/sealog-utils-getEventExports.py'
-GET_CRUISE_UID_SCRIPT='python3 '${SCRIPT_BASE}'/sealog-utils-getCruiseUid.py'
+GET_CRUISE_UID_SCRIPT='python3 '${SCRIPT_BASE}'/sealog-utils-getCruiseUID.py'
 GET_FRAMEGRAB_SCRIPT='python3 '${SCRIPT_BASE}'/sealog-utils-getFramegrabList.py'
 
 # Root data folder for Sealog

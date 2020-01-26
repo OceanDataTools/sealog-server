@@ -4,7 +4,7 @@ import logging
 
 from .settings import apiServerURL, headers, eventAuxDataAPIPath
 
-def getEventAuxDataByCruiseUid(cruise_uid):
+def getEventAuxDataByCruise(cruise_uid):
 
   try:
     url = apiServerURL + eventAuxDataAPIPath + '/bycruise/' + cruise_uid
@@ -20,7 +20,7 @@ def getEventAuxDataByCruiseUid(cruise_uid):
     print(error)
 
 
-def getEventAuxDataByLoweringUid(lowering_uid):
+def getEventAuxDataByLowering(lowering_uid):
 
   try:
     url = apiServerURL + eventAuxDataAPIPath + '/bylowering/' + lowering_uid

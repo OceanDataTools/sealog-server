@@ -2,7 +2,7 @@
 
 import logging
 import python_sealog
-from python_sealog.events import getEventsByLoweringUid, getEventsByCruiseUid
+from python_sealog.events import getEventsByLowering, getEventsByCruise
 from python_sealog.lowerings import getLoweringUid
 from python_sealog.cruises import getCruiseUid
 
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     lowering_uid = getLoweringUid(args.lowering_id)
     if not lowering_uid == None:
       logger.debug("Lowering UID: " + lowering_uid)
-      events = getEventsByLoweringUid(lowering_uid, args.format)
+      events = getEventsByLowering(lowering_uid, args.format)
       if not events == None:
         print(events)
       else:
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     cruise_uid = getCruiseUid(args.cruise_id)
     if not cruise_uid == None:
       logger.debug("Cruise UID: " + cruise_uid)
-      events = getEventsByCruiseUid(cruise_uid, args.format)
+      events = getEventsByCruise(cruise_uid, args.format)
       if not events == None:
         print(events)
       else:

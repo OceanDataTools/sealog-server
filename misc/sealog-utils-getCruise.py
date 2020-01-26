@@ -2,7 +2,7 @@
 
 import logging
 import python_sealog
-from python_sealog.cruises import getCruise
+from python_sealog.cruises import getCruiseByID
 
 # Default logging level
 LOG_LEVEL = logging.INFO
@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
   import argparse
 
-  parser = argparse.ArgumentParser(description='Retrieve Cruise UID from Cruise ID')
+  parser = argparse.ArgumentParser(description='Retrieve Cruise from Cruise ID')
   parser.add_argument('-d', '--debug', action='store_true', help=' display debug messages')
   parser.add_argument('cruise_id', help='Cruise ID i.e. "AT42-11".')
 
@@ -42,7 +42,7 @@ if __name__ == '__main__':
       handler.setLevel(logging.DEBUG)
     logger.debug("Log level now set to DEBUG")
 
-  cruise = getCruise(args.cruise_id)
+  cruise = getCruiseByID(args.cruise_id)
   if cruise != None:
     print(cruise)
   else:

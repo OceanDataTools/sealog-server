@@ -14,6 +14,7 @@ const {
 
 const {
   cruisesTable,
+  eventsTable,
   loweringsTable,
   usersTable
 } = require('../../../config/db_constants');
@@ -107,6 +108,10 @@ const databaseInsertResponse = Joi.object({
 const cruiseParam = Joi.object({
   id: Joi.string().length(24).required()
 }).label('cruiseParam');
+
+const eventParam = Joi.object({
+  id: Joi.string().length(24).required()
+}).label('eventParam');
 
 const loweringParam = Joi.object({
   id: Joi.string().length(24).required()
@@ -323,7 +328,7 @@ exports.plugin = {
           const cruiseResult = await db.collection(cruisesTable).findOne({ _id: ObjectID(request.params.id) });
 
           if (!cruiseResult) {
-            return Boom.notFound('No cruise record found for id: ' + request.params.id);
+            return Boom.badRequest('No cruise record found for id: ' + request.params.id);
           }
 
           cruise = cruiseResult;
@@ -447,6 +452,88 @@ exports.plugin = {
       }
     });
 
+
+    server.route({
+      method: 'GET',
+      path: '/lowerings/byevent/{id}',
+      async handler(request, h) {
+
+        const db = request.mongo.db;
+        const ObjectID = request.mongo.ObjectID;
+
+        let event = null;
+
+        try {
+          const eventResult = await db.collection(eventsTable).findOne({ _id: ObjectID(request.params.id) });
+
+          if (!eventResult) {
+            return Boom.badRequest('No event record found for id: ' + request.params.id);
+          }
+
+          event = eventResult;
+        }
+        catch (err) {
+          console.log(err);
+          return Boom.serverUnavailable('unknown error');
+        }
+
+        const query = {};
+
+        // use access control filtering
+        if (useAccessControl && !request.auth.credentials.scope.includes('admin')) {
+          query.$or = [{ lowering_hidden: query.lowering_hidden }, { lowering_access_list: request.auth.credentials.id }];
+        }
+        else if (!request.auth.credentials.scope.includes('admin')) {
+          query.lowering_hidden = false;
+        }
+
+        // time bounds based on event start/stop times
+        query.$and = [{ start_ts: { $lte: event.ts } }, { stop_ts: { $gte: event.ts } }];
+
+        try {
+          const lowering = await db.collection(loweringsTable).findOne(query);
+
+          if (lowering) {
+
+            try {
+              lowering.lowering_additional_meta.lowering_files = Fs.readdirSync(LOWERING_PATH + '/' + lowering._id);
+            }
+
+            catch (error) {
+              lowering.lowering_additional_meta.lowering_files = [];
+            }
+
+            return h.response(_renameAndClearFields(lowering)).code(200);
+          }
+
+          return Boom.notFound('No records found');
+          
+        }
+        catch (err) {
+          console.log("ERROR:", err);
+          return Boom.serverUnavailable('database error');
+        }
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: ['admin', 'read_lowerings']
+        },
+        validate: {
+          headers: authorizationHeader,
+          params: eventParam
+        },
+        response: {
+          status: {
+            200: (useAccessControl) ? loweringSuccessResponse : loweringSuccessResponseNoAccessControl
+          }
+        },
+        description: 'Return the lowerings based on query parameters',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong></p>',
+        tags: ['lowerings','auth','api']
+      }
+    });
 
     server.route({
       method: 'GET',

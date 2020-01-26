@@ -2,7 +2,7 @@
 
 import logging
 import python_sealog
-from python_sealog.lowerings import getLowering
+from python_sealog.lowerings import getLoweringByID
 
 # Default logging level
 LOG_LEVEL = logging.INFO
@@ -42,7 +42,7 @@ if __name__ == '__main__':
       handler.setLevel(logging.DEBUG)
     logger.debug("Log level now set to DEBUG")
 
-  lowering = getLowering(args.lowering_id)
+  lowering = getLoweringByID(args.lowering_id)
   if not lowering == None:
     print(lowering)
   else:

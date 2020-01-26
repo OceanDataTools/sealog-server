@@ -2,7 +2,7 @@
 
 import logging
 import python_sealog
-from python_sealog.lowerings import getLoweringIdsByCruise
+from python_sealog.lowerings import getLoweringIDsByCruise
 
 # Default logging level
 LOG_LEVEL = logging.INFO
@@ -28,9 +28,9 @@ if __name__ == '__main__':
 
   import argparse
 
-  parser = argparse.ArgumentParser(description='Retrieve Lowering UID from Lowering ID')
+  parser = argparse.ArgumentParser(description='Retrieve Lowering IDs from Cruise UID')
   parser.add_argument('-d', '--debug', action='store_true', help=' display debug messages')
-  parser.add_argument('cruise_id', help='Lowering ID i.e. "AT42-01".')
+  parser.add_argument('cruise_uid', help='Cruise UID i.e. "5981f167212b348aed7fa9f5".')
 
   args = parser.parse_args()
 
@@ -42,8 +42,8 @@ if __name__ == '__main__':
       handler.setLevel(logging.DEBUG)
     logger.debug("Log level now set to DEBUG")
 
-  lowerings = getLoweringIdsByCruise(args.cruise_id)
+  lowerings = getLoweringIDsByCruise(args.cruise_uid)
   if not lowerings == None:
     print(' '.join(lowerings))
   else:
-    logger.error("No lowerings found for cruise_id: " + args.cruise_id)
+    logger.error("No lowerings found for cruise_uid: " + args.cruise_uid)

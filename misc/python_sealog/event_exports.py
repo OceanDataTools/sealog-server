@@ -4,7 +4,7 @@ import logging
 
 from .settings import apiServerURL, headers, eventExportsAPIPath
 
-def getEventExportsByCruiseUid(cruise_uid, export_format='json'):
+def getEventExportsByCruise(cruise_uid, export_format='json'):
 
   try:
     url = apiServerURL + eventExportsAPIPath + '/bycruise/' + cruise_uid + '?format=' + export_format
@@ -19,7 +19,7 @@ def getEventExportsByCruiseUid(cruise_uid, export_format='json'):
     print(r.text)
     print(error)
 
-def getEventExportsByLoweringUid(lowering_uid, export_format='json'):
+def getEventExportsByLowering(lowering_uid, export_format='json'):
 
   try:
     url = apiServerURL + eventExportsAPIPath + '/bylowering/' + lowering_uid + '?format=' + export_format

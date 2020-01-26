@@ -2,7 +2,8 @@
 
 import logging
 import python_sealog
-from python_sealog.cruises import getCruiseUIDByID
+from python_sealog.lowerings import getLoweringByEvent
+from python_sealog.events import getEvent
 
 # Default logging level
 LOG_LEVEL = logging.INFO
@@ -28,9 +29,9 @@ if __name__ == '__main__':
 
   import argparse
 
-  parser = argparse.ArgumentParser(description='Retrieve Cruise UID from Cruise ID')
+  parser = argparse.ArgumentParser(description='Retrieve Lowering from Event UID')
   parser.add_argument('-d', '--debug', action='store_true', help=' display debug messages')
-  parser.add_argument('cruise_id', help='Cruise ID i.e. "AT42-11".')
+  parser.add_argument('event_uid', help='Event UID i.e. "5981f167212b348aed7fa9ff".')
 
   args = parser.parse_args()
 
@@ -42,8 +43,14 @@ if __name__ == '__main__':
       handler.setLevel(logging.DEBUG)
     logger.debug("Log level now set to DEBUG")
 
-  cruiseUid = getCruiseUIDByID(args.cruise_id)
-  if cruiseUid != None:
-    print(cruiseUid)
+  event = getEvent(args.event_uid)
+
+  if not event:
+    logger.error("No event found for event_uid: " + args.event_uid)
+
   else:
-    logger.error("No cruise found for cruise_id: " + args.cruise_id)
+    lowering = getLoweringByEvent(args.event_uid)
+    if lowering != None:
+      print(lowering)
+    else:
+      logger.error("No lowering found for event_uid: " + args.event_uid)

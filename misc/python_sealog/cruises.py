@@ -2,9 +2,23 @@ import requests
 import json
 import logging
 
-from .settings import apiServerURL, headers, cruisesAPIPath
+from .settings import apiServerURL, headers, cruisesAPIPath, loweringsAPIPath
 
-def getCruiseUid(cruise_id):
+def getCruise(cruise_uid):
+
+  try:
+    url = apiServerURL + cruisesAPIPath + '/' + cruise_uid
+    r = requests.get(url, headers=headers)
+
+    if r.status_code != 404:
+      cruise = json.loads(r.text)
+      logging.debug(json.dumps(cruise))
+      return cruise
+
+  except Exception as error:
+    logging.error(str(error))
+
+def getCruiseUIDByID(cruise_id):
 
   try:
     url = apiServerURL + cruisesAPIPath
@@ -20,7 +34,7 @@ def getCruiseUid(cruise_id):
     logging.error(str(error))
 
 
-def getCruise(cruise_id):
+def getCruiseByID(cruise_id):
 
   try:
     url = apiServerURL + cruisesAPIPath
@@ -34,3 +48,34 @@ def getCruise(cruise_id):
           return cruise
   except Exception as error:
     logging.error(str(error))  
+
+
+def getCruiseByLowering(lowering_uid):
+
+  try:
+    url = apiServerURL + cruisesAPIPath + '/bylowering/' + lowering_uid
+    r = requests.get(url, headers=headers)
+
+    if r.status_code != 404:
+      cruise = json.loads(r.text)
+      logging.debug(json.dumps(cruise))
+      return cruise
+  except Exception as error:
+    print(r.text)
+    print(error)
+
+
+def getCruiseByEvent(event_uid):
+
+  try:
+    url = apiServerURL + cruisesAPIPath + '/byevent/' + event_uid
+    r = requests.get(url, headers=headers)
+
+    if r.status_code != 404:
+      cruise = json.loads(r.text)
+      logging.debug(json.dumps(cruise))
+      return cruise
+
+  except Exception as error:
+    print(r.text)
+    print(error)

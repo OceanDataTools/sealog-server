@@ -4,7 +4,7 @@ import logging
 
 from .settings import apiServerURL, headers, loweringsAPIPath
 
-def getLoweringUid(lowering_id):
+def getLoweringUIDByID(lowering_id):
 
   try:
     url = apiServerURL + loweringsAPIPath
@@ -20,7 +20,7 @@ def getLoweringUid(lowering_id):
     print(error)
 
 
-def getLoweringUidsByCruise(cruise_uid):
+def getLoweringUIDsByCruise(cruise_uid):
 
   try:
     url = apiServerURL + loweringsAPIPath + '/bycruise/' + cruise_uid
@@ -36,7 +36,7 @@ def getLoweringUidsByCruise(cruise_uid):
     print(error)
 
 
-def getLoweringIdsByCruise(cruise_uid):
+def getLoweringIDsByCruise(cruise_uid):
 
   try:
     url = apiServerURL + loweringsAPIPath + '/bycruise/' + cruise_uid
@@ -52,7 +52,22 @@ def getLoweringIdsByCruise(cruise_uid):
     print(error)
 
 
-def getLowering(lowering_id):
+def getLowering(lowering_uid):
+
+  try:
+    url = apiServerURL + loweringsAPIPath + '/' + lowering_uid
+    r = requests.get(url, headers=headers)
+
+    if r.status_code != 404:
+      lowering = json.loads(r.text)
+      logging.debug(json.dumps(lowering))
+      return lowering
+  
+  except Exception as error:
+    print(r.text)
+    print(error)
+
+def getLoweringByID(lowering_id):
 
   try:
     url = apiServerURL + loweringsAPIPath
@@ -80,6 +95,21 @@ def getLoweringsByCruise(cruise_uid):
       lowerings = json.loads(r.text)
       logging.debug(json.dumps(lowerings))
       return lowerings
+
+  except Exception as error:
+    print(r.text)
+    print(error)
+
+def getLoweringByEvent(event_uid):
+
+  try:
+    url = apiServerURL + loweringsAPIPath + '/byevent/' + event_uid
+    r = requests.get(url, headers=headers)
+
+    if r.status_code != 404:
+      lowering = json.loads(r.text)
+      logging.debug(json.dumps(lowering))
+      return lowering
 
   except Exception as error:
     print(r.text)

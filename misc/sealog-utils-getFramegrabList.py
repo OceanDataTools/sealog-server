@@ -2,9 +2,9 @@
 import os
 import logging
 import python_sealog
-from python_sealog.misc import getFramegrabListByLoweringUid, getFramegrabListByCruiseUid, getFramegrabListByFile
-from python_sealog.lowerings import getLoweringUid
-from python_sealog.cruises import getCruiseUid
+from python_sealog.misc import getFramegrabListByLowering, getFramegrabListByCruise, getFramegrabListByFile
+from python_sealog.lowerings import getLoweringUIDByID
+from python_sealog.cruises import getCruiseUIDByID
 
 # Default logging level
 LOG_LEVEL = logging.INFO
@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
   import argparse
 
-  parser = argparse.ArgumentParser(description='Retrieve list of framegrab files by Lowering ID')
+  parser = argparse.ArgumentParser(description='Retrieve list of framegrab files by CruiseID or Lowering ID')
   parser.add_argument('-d', '--debug', action='store_true', help=' display debug messages')
   parser.add_argument('-c', '--cruise_id', help='cruise ID i.e. "RR1801".')
   parser.add_argument('-l', '--lowering_id', help='lowering ID i.e. "J2-1111".')
@@ -49,10 +49,10 @@ if __name__ == '__main__':
   if args.lowering_id and args.cruise_id or args.lowering_id and args.aux_data_file or args.cruise_id and args.aux_data_file:
     logger.error("Must define either a cruise_id, lowering_id or aux data filename")
   elif args.lowering_id:
-    lowering_uid = getLoweringUid(args.lowering_id)
+    lowering_uid = getLoweringUIDByID(args.lowering_id)
     if not lowering_uid == None:
       logger.debug("Lowering UID: " + lowering_uid)
-      framegrabs = getFramegrabListByLoweringUid(lowering_uid)
+      framegrabs = getFramegrabListByLowering(lowering_uid)
       if not framegrabs == None:
         print('\n'.join(framegrabs))
       else:
@@ -60,10 +60,10 @@ if __name__ == '__main__':
     else:
       logger.error("No lowering found for lowering_id: " + args.lowering_id)
   elif args.cruise_id:
-    cruise_uid = getCruiseUid(args.cruise_id)
+    cruise_uid = getCruiseUIDByID(args.cruise_id)
     if not cruise_uid == None:
       logger.debug("Cruise UID: " + cruise_uid)
-      framegrabs = getFramegrabListByCruiseUid(cruise_uid)
+      framegrabs = getFramegrabListByCruise(cruise_uid)
       if not framegrabs == None:
         print('\n'.join(framegrabs))
       else:
