@@ -27,7 +27,6 @@ import sys
 from datetime import datetime
 from pymongo import MongoClient
 
-import python_sealog
 from python_sealog.settings import apiServerURL, wsServerURL, cruisesAPIPath, eventsAPIPath, auxDataAPIPath, headers
 
 DATABASE = 'sealog_udp_cache'

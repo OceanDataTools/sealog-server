@@ -2,7 +2,7 @@
 
 import logging
 import python_sealog
-from python_sealog.lowerings import getLoweringUid
+from python_sealog.lowerings import getLoweringUIDByID
 
 # Default logging level
 LOG_LEVEL = logging.INFO
@@ -42,7 +42,7 @@ if __name__ == '__main__':
       handler.setLevel(logging.DEBUG)
     logger.debug("Log level now set to DEBUG")
 
-  lowering_uid = getLoweringUid(args.lowering_id)
+  lowering_uid = getLoweringUIDByID(args.lowering_id)
   if not lowering_uid == None:
     print(lowering_uid)
   else:

@@ -20,7 +20,7 @@ def getCustomVar(var_uid):
     logging.error('Error retrieving custom variable ID')
     logging.error(str(error))
 
-def getCustomVarUidByName(var_name):
+def getCustomVarUIDByName(var_name):
 
   try:
     url = apiServerURL + customVarAPIPath
