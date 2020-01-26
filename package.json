@@ -1,6 +1,6 @@
 {
   "name": "sealog-server",
-  "version": "1.0.9-rc",
+  "version": "1.0.10-rc",
   "license": "MIT",
   "description": "Sealog event-logging server",
   "bugs": {
