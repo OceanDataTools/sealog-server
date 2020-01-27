@@ -4,8 +4,15 @@
 #          and performs additional actions depending on the recieved
 #          event.
 #
-#          Currently this service listens for "Vehicle in water" and "Vehicle
-#          on deck" events and enables/disables the ASNAP functionality.
+#          This service listens for "Off deck" and "On deck"
+#          milestones and enables/disables the ASNAP functionality
+#          and if a lowering is currently active it will set the
+#          start/stop time to the time of the event.
+#
+#          This service listens for "On bottom" and "Off bottom"
+#          milestones and if a lowering is currently active it will
+#          set the lowering_on_bottom/lowering_off_bottom milestone
+#          times to the time of the event.
 #
 #   Usage: Type python3 sealog-autoActions.py to start the service.
 #
@@ -13,20 +20,19 @@
 #
 #  Author: Webb Pinner webbpinner@gmail.com
 # Created: 2018-09-26
-# Updated: 2020-01-26
+# Updated: 2020-01-27
 
 import asyncio
 import websockets
 import json
 import requests
 import logging
-import sys
-import os
+import datetime
 from pymongo import MongoClient
 
-import python_sealog
-from python_sealog.custom_vars import getCustomVarUidByName
-from python_sealog.settings import apiServerURL, wsServerURL, cruisesAPIPath, eventsAPIPath, customVarAPIPath, headers
+from python_sealog.custom_vars import getCustomVarUIDByName
+from python_sealog.lowerings import getLoweringByEvent
+from python_sealog.settings import apiServerURL, wsServerURL, headers, cruisesAPIPath, customVarAPIPath, eventsAPIPath, loweringsAPIPath
 
 asnapStatusVarName = 'asnapStatus'
 asnapStatusVarID = None
@@ -102,14 +108,79 @@ async def autoActions():
             logger.debug("Event:\n" + json.dumps(eventObj['message'], indent=2))
 
             for option in eventObj['message']['event_options']:
-              if option['event_option_name'] == "milestone" and option['event_option_value'] == "Vehicle in water":
+              if option['event_option_name'] == "milestone" and option['event_option_value'] == "Off deck":
                 logger.info("Turning on ASNAP")
                 payload = { "custom_var_value": "On"}
                 r = requests.patch(apiServerURL + customVarAPIPath + '/' + asnapStatusVarID, headers=headers, data = json.dumps(payload))
-              elif option['event_option_name'] == "milestone" and option['event_option_value'] == "Vehicle on deck":
+
+                lowering = getLoweringByEvent(eventObj['message']['id'])
+                logger.debug("Lowering:\n" + json.dumps(lowering, indent=2))
+                if not lowering:
+                  logger.warning("Can't update lowering record because there is no lowering currently active")
+                  continue
+
+                logger.info("Setting start of lowering " + lowering['lowering_id'] + " to " + eventObj['message']['ts'])
+                payload = { "start_ts": eventObj['message']['ts'] }
+                r = requests.patch(apiServerURL + loweringsAPIPath + '/' + lowering['id'], headers=headers, data = json.dumps(payload))
+
+
+              elif option['event_option_name'] == "milestone" and option['event_option_value'] == "On bottom":
+
+                lowering = getLoweringByEvent(eventObj['message']['id'])
+                logger.debug("Lowering:\n" + json.dumps(lowering, indent=2))
+                if not lowering:
+                  logger.warning("Can't update lowering record because there is no lowering currently active")
+                  continue
+
+                logger.info("Setting on bottom time of lowering " + lowering['lowering_id'] + " to " + eventObj['message']['ts'])
+                payload = { "lowering_additional_meta": lowering['lowering_additional_meta'] }
+                del payload['lowering_additional_meta']['lowering_files']
+                
+                if 'milestones' not in payload['lowering_additional_meta']:
+                  payload['lowering_additional_meta']['milestones'] = { 'lowering_on_bottom': eventObj['message']['ts'] }
+                else:
+                  payload['lowering_additional_meta']['milestones']['lowering_on_bottom'] = eventObj['message']['ts']
+
+                r = requests.patch(apiServerURL + loweringsAPIPath + '/' + lowering['id'], headers=headers, data = json.dumps(payload))
+
+
+
+              elif option['event_option_name'] == "milestone" and option['event_option_value'] == "Off bottom":
+
+                lowering = getLoweringByEvent(eventObj['message']['id'])
+                logger.debug("Lowering:\n" + json.dumps(lowering, indent=2))
+                if not lowering:
+                  logger.warning("Can't update lowering record because there is no lowering currently active")
+                  continue
+
+                logger.info("Setting off bottom time of lowering " + lowering['lowering_id'] + " to " + eventObj['message']['ts'])
+                payload = { "lowering_additional_meta": lowering['lowering_additional_meta'] }
+                del payload['lowering_additional_meta']['lowering_files']
+                
+                if 'milestones' not in payload['lowering_additional_meta']:
+                  payload['lowering_additional_meta']['milestones'] = { 'lowering_off_bottom': eventObj['message']['ts'] }
+                else:
+                  payload['lowering_additional_meta']['milestones']['lowering_off_bottom'] = eventObj['message']['ts']
+
+                r = requests.patch(apiServerURL + loweringsAPIPath + '/' + lowering['id'], headers=headers, data = json.dumps(payload))
+
+
+
+              elif option['event_option_name'] == "milestone" and option['event_option_value'] == "On deck":
                 logger.info("Turning off ASNAP")
                 payload = { "custom_var_value": "Off"}
                 r = requests.patch(apiServerURL + customVarAPIPath + '/' + asnapStatusVarID, headers=headers, data = json.dumps(payload))
+
+                lowering = getLoweringByEvent(eventObj['message']['id'])
+                logger.debug("Lowering:\n" + json.dumps(lowering, indent=2))
+                if not lowering:
+                  logger.warning("Can't update lowering record because there is no lowering currently active")
+                  continue
+
+                logger.info("Setting stop time of lowering " + lowering['lowering_id'] + " to " + eventObj['message']['ts'])
+                payload = { "stop_ts": eventObj['message']['ts'] }
+                r = requests.patch(apiServerURL + loweringsAPIPath + '/' + lowering['id'], headers=headers, data = json.dumps(payload))
+
           else:
             logger.debug("Skipping because event value is not in the include set")
 
@@ -138,7 +209,7 @@ if __name__ == '__main__':
     
   # Retrieve the asnapStatus ID
   try:
-    asnapStatusVarID = getCustomVarUidByName(asnapStatusVarName)
+    asnapStatusVarID = getCustomVarUIDByName(asnapStatusVarName)
   except Exception as error:
     logger.error("Error retrieving the asnapStatus ID")
     logger.error(str(error))

@@ -22,3 +22,5 @@ npm-debug.log
 
 *.pyc
 __pycache__
+
+misc/python_sealog/settings*.py
