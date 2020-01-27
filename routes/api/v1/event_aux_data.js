@@ -118,14 +118,14 @@ const auxDataParam = Joi.object({
   id: Joi.string().length(24).required()
 }).label('auxDataParam');
 
-const auxData_data_array = Joi.object({
+const auxData_data_item = Joi.object({
   data_name: Joi.string().required(),
   data_value: Joi.alternatives().try(
     Joi.string(),
     Joi.number()
   ).required(),
   data_uom:Joi.string().optional()
-}).label('auxData_data_array');
+}).label('auxDataDataItem');
 
 const auxDataQuery = Joi.object({
   offset: Joi.number().integer().min(0).optional(),
@@ -154,20 +154,20 @@ const auxDataCreatePayload = Joi.object({
   id: Joi.string().length(24).optional(),
   event_id: Joi.string().length(24).required(),
   data_source: Joi.string().min(1).max(100).required(),
-  data_array: Joi.array().items(auxData_data_array)
+  data_array: Joi.array().items(auxData_data_item)
 }).label('auxDataCreatePayload');
 
 const auxDataUpdatePayload = Joi.object({
   event_id: Joi.string().length(24).optional(),
   data_source: Joi.string().min(1).max(100).optional(),
-  data_array: Joi.array().items(auxData_data_array).optional()
+  data_array: Joi.array().items(auxData_data_item).optional()
 }).required().min(1).label('auxDataUpdatePayload');
 
 const auxDataSuccessResponse = Joi.object({
   id: Joi.object(),
   event_id: Joi.object(),
   data_source: Joi.string(),
-  data_array: Joi.array().items(auxData_data_array)
+  data_array: Joi.array().items(auxData_data_item)
 }).label('auxDataSuccessResponse');
 
 exports.plugin = {

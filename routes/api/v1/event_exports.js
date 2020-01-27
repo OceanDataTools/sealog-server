@@ -216,7 +216,10 @@ const eventExportSuccessResponse = Joi.object({
     data_source: Joi.string(),
     data_array: Joi.array().items(Joi.object({
       data_name: Joi.string(),
-      data_value: Joi.string(),
+      data_value: Joi.alternatives().try(
+        Joi.string(),
+        Joi.number()
+      ),
       data_uom: Joi.string()
     }))
   }))
