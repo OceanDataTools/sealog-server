@@ -24,3 +24,5 @@ npm-debug.log
 __pycache__
 
 misc/python_sealog/settings*.py
+misc/sealog-auxDataInserter*.py
+misc/sealog-udp2MongoDB*.py
