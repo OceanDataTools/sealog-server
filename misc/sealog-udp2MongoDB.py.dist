@@ -21,7 +21,7 @@ import json
 from pymongo import MongoClient
 
 UDP_IP_ADDRESS = "0.0.0.0"
-UDP_PORT_NO = 10600
+UDP_PORT_NO = 10000
 
 DATABASE = 'sealog_udp_cache'
 COLLECITON = 'udpData'
@@ -50,16 +50,19 @@ logger.addHandler(ch)
 
 def _convertGGA_LL(value, hemisphere):
 
-  deg = ""
+  deg = None
   try:
-    if hemisphere == "E":
-      deg = str(round(int(value[:3]) + float(value[3:])/60, 6))
-    elif hemisphere == "W":
-      deg = str(round((int(value[:3]) + float(value[3:])/60) * -1, 6))
-    elif hemisphere == "N":
-      deg = str(round(int(value[:2]) + float(value[2:])/60, 6))
-    elif hemisphere == "S":
-      deg = str(round((int(value[:2]) + float(value[2:])/60) * -1, 6))
+    if hemisphere == "E" or hemisphere == "e":
+      deg = round(int(value[:3]) + float(value[3:])/60, 6)
+
+    elif hemisphere == "W" or hemisphere == "w":
+      deg = round((int(value[:3]) + float(value[3:])/60) * -1, 6)
+
+    elif hemisphere == "N" or hemisphere == "n":
+      deg = round(int(value[:2]) + float(value[2:])/60, 6)
+
+    elif hemisphere == "S" or hemisphere == "s":
+      deg = round((int(value[:2]) + float(value[2:])/60) * -1, 6)
 
   except Exception as error:
     logger.error("Unable to parse " + value)
@@ -76,11 +79,11 @@ def parseGGA(message, label=None):
 
     record = {
       "label": label,
+      "updated": datetime.datetime.utcnow(),
       "data": {
-        "date_time": datetime.datetime.utcnow().isoformat(),
         "latitude": _convertGGA_LL(msg_array[2],msg_array[3]),
         "longitude": _convertGGA_LL(msg_array[4],msg_array[5]),
-        "depth": str(float(msg_array[9])*-1)
+        "depth": float(msg_array[9]) * -1
       }
     }
 
@@ -100,7 +103,16 @@ def insertUDPData():
   serverSock.bind((UDP_IP_ADDRESS, UDP_PORT_NO))
 
   while True:
-    data, addr = serverSock.recvfrom(1024)
+    bytes, addr = serverSock.recvfrom(1024)
+    data = None
+    try:
+      data = bytes.decode('utf-8')
+    except Exception as error:
+      logger.error("Unable to parse message")
+      logger.error(error)
+      continue
+
+    logger.debug(data)
 
     messageType = None
     for label in validLineLabels:
@@ -112,19 +124,24 @@ def insertUDPData():
       data = data.rstrip()
 
       record = None
-      if(messageType == 'GGA'):
+      if messageType == 'GGA':
         record = parseGGA(data)
       # elif(messageType == 'something'):
       # elif(messageType == 'else'):
 
-      if record:
+      if not record:
+        logger.debug("Message received but no new data to post")
+
+      else:
         logger.debug("Record" + json.dumps(record, indent=2))
 
-        collection.update_one({'label': messageType}, {'$set': record}, upsert=True)        
+        collection.update_one({'label': messageType}, {'$set': record}, upsert=True)
 
 if __name__ == '__main__':
 
   import argparse
+  import sys
+  import os
 
   parser = argparse.ArgumentParser(description='UDP Data Caching Service')
   parser.add_argument('-d', '--debug', action='store_true', help=' display debug messages')

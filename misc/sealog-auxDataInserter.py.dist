@@ -142,7 +142,7 @@ async def auxDataInserter():
 
         if eventObj['type'] and eventObj['type'] == 'ping':
           await websocket.send(json.dumps(ping))
-        elif eventObj['type'] and eventObj['type'] == 'pub'
+        elif eventObj['type'] and eventObj['type'] == 'pub':
 
           if eventObj['message']['event_value'] in EXCLUDE_SET:
             logger.debug("Skipping because event value is in the exclude set")
