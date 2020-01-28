@@ -133,9 +133,11 @@ def insertUDPData():
         logger.debug("Message received but no new data to post")
 
       else:
-        logger.debug("Record" + json.dumps(record, indent=2))
+        collection.update_one({'label': record['label']}, {'$set': record}, upsert=True)
 
-        collection.update_one({'label': messageType}, {'$set': record}, upsert=True)
+        forDebug = record
+        forDebug['updated'] = forDebug['updated'].strftime("%Y-%m-%dT%H:%M:%SZ")
+        logger.debug("Record" + json.dumps(forDebug, indent=2))
 
 if __name__ == '__main__':
 
