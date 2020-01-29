@@ -27,7 +27,7 @@ exports.plugin = {
     try {
       await db.createCollection(eventAuxDataTable);
       // db.event_aux_data.createIndex( { event_id: -1 } )
-      await db[eventAuxDataTable].createIndex({ event_id: -1 })
+      await db[eventAuxDataTable].createIndex({ event_id: -1 });
     }
     catch (err) {
       console.log("ERROR:", err.code);

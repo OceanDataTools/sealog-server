@@ -1,6 +1,8 @@
 const Boom = require('@hapi/boom');
 const Joi = require('@hapi/joi');
 
+const THRESHOLD = 120; //seconds
+
 const {
   useAccessControl
 } = require('../../../config/email_constants');
@@ -174,6 +176,10 @@ exports.plugin = {
   name: 'routes-api-event_aux_data',
   dependencies: ['hapi-mongodb'],
   register: (server, options) => {
+
+    server.subscription('/ws/status/newEventAuxData');
+    server.subscription('/ws/status/updateEventAuxData');
+    server.subscription('/ws/status/deleteEventAuxData');
 
     server.route({
       method: 'GET',
@@ -635,6 +641,14 @@ exports.plugin = {
               if (!result){
                 try {
                   const insertResult = await db.collection(eventAuxDataTable).insertOne(event_aux_data);
+
+                  event_aux_data._id = insertResult.insertedId;
+                  _renameAndClearFields(event_aux_data);
+
+                  const diff = (new Date().getTime() - queryResult.ts.getTime()) / 1000;
+                  if (Math.abs(Math.round(diff)) < THRESHOLD) {
+                    server.publish('/ws/status/newEventAuxData', event_aux_data);
+                  }
               
                   return h.response({ n: insertResult.result.n, ok: insertResult.result.ok, insertedCount: insertResult.insertedCount, insertedId: insertResult.insertedId }).code(201);
 

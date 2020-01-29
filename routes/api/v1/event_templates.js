@@ -35,7 +35,8 @@ const eventTemplateParam = Joi.object({
 const eventTemplateQuery = Joi.object({
   system_template: Joi.boolean().optional(),
   offset: Joi.number().integer().min(0).optional(),
-  limit: Joi.number().integer().min(1).optional()
+  limit: Joi.number().integer().min(1).optional(),
+  sort: Joi.string().valid('event_name').optional()
 }).optional().label('eventTemplateQuery');
 
 const eventTemplateSuccessResponse = Joi.object({
@@ -45,6 +46,7 @@ const eventTemplateSuccessResponse = Joi.object({
   event_free_text_required: Joi.boolean(),
   system_template: Joi.boolean(),
   template_categories: Joi.array().items(Joi.string()),
+  template_style: Joi.object().optional(),
   disabled: Joi.boolean().optional(),
   event_options: Joi.array().items(Joi.object({
     event_option_name: Joi.string(),
@@ -63,6 +65,7 @@ const eventTemplateCreatePayload = Joi.object({
   event_free_text_required: Joi.boolean().required(),
   system_template: Joi.boolean().required(),
   template_categories: Joi.array().items(Joi.string()).optional(),
+  template_style: Joi.object(),
   disabled: Joi.boolean().optional(),
   event_options: Joi.array().items(Joi.object({
     event_option_name: Joi.string().required(),
@@ -80,6 +83,7 @@ const eventTemplateUpdatePayload = Joi.object({
   event_free_text_required: Joi.boolean().optional(),
   system_template: Joi.boolean().optional(),
   template_categories: Joi.array().items(Joi.string()).optional(),
+  template_style: Joi.object().optional(),
   disabled: Joi.boolean().optional(),
   event_options: Joi.array().items(Joi.object({
     event_option_name: Joi.string().required(),
@@ -96,6 +100,10 @@ exports.plugin = {
   dependencies: ['hapi-mongodb'],
   register: (server, options) => {
 
+    server.subscription('/ws/status/newEventTemplates');
+    server.subscription('/ws/status/updateEventTemplates');
+    server.subscription('/ws/status/deleteEventTemplates');
+
     server.route({
       method: 'GET',
       path: '/event_templates',
@@ -109,7 +117,8 @@ exports.plugin = {
 
         const limit = (request.query.limit) ? request.query.limit : 0;
         const offset = (request.query.offset) ? request.query.offset : 0;
-
+        const sort = (request.query.sort) ? { [request.query.sort]: 1 } : {};
+        
         const query = (request.auth.credentials.scope.includes('admin')) ? {} : { disabled: { $eq: false } };
 
         if (typeof request.query.system_template !== 'undefined') {
@@ -117,7 +126,7 @@ exports.plugin = {
         }
 
         try {
-          const results = await db.collection(eventTemplatesTable).find(query).skip(offset).limit(limit).toArray();
+          const results = await db.collection(eventTemplatesTable).find(query).sort(sort).skip(offset).limit(limit).toArray();
 
           if (results.length > 0) {
             results.forEach((result) => {
@@ -249,6 +258,10 @@ exports.plugin = {
         try {
           const result = await db.collection(eventTemplatesTable).insertOne(event_template);
 
+          event_template._id = result.insertedId;
+          _renameAndClearFields(event_template);
+          server.publish('/ws/status/newEventTemplates', event_template);
+
           return h.response({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
 
         }
@@ -315,7 +328,9 @@ exports.plugin = {
         const event_template = request.payload;
 
         try {
-          await db.collection(eventTemplatesTable).updateOne(query, { $set: event_template });
+          const result = await db.collection(eventTemplatesTable).findOneAndUpdate(query, { $set: event_template },{ returnOriginal: false });
+          server.publish('/ws/status/updateEventTemplates', _renameAndClearFields(result.value));
+
           return h.response().code(204);
         }
         catch (err) {
@@ -373,15 +388,17 @@ exports.plugin = {
           if (result.system_template && !request.auth.credentials.scope.includes('admin')) {
             return Boom.unauthorized('user does not have permission to delete system templates');
           }
+        }
+        catch (err) {
+          console.log(err);
+          return Boom.serverUnavailable('database error');
+        }
 
-          try {
-            await db.collection(eventTemplatesTable).deleteOne(query);
-            return h.response(result).code(204);
-          }
-          catch (err) {
-            console.log(err);
-            return Boom.serverUnavailable('database error');
-          }
+        try {
+          const result = await db.collection(eventTemplatesTable).findOneAndDelete(query);
+          server.publish('/ws/status/deleteEventTemplates', _renameAndClearFields(result.value));
+
+          return h.response().code(204);
         }
         catch (err) {
           console.log(err);

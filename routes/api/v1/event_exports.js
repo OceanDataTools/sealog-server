@@ -1,7 +1,7 @@
 const Boom = require('@hapi/boom');
 const Joi = require('@hapi/joi');
 const { parseAsync } = require('json2csv');
-const Extend = require('jquery-extend');
+const Deepcopy = require('deepcopy');
 
 const {
   useAccessControl
@@ -18,7 +18,8 @@ const _flattenJSON = (json) => {
 
   const flattenJSON = json.map((event) => {
 
-    const copiedEvent = Extend(true, {}, event);
+    const copiedEvent = Deepcopy(event);
+
     let enumerator = 0;
     if (copiedEvent.aux_data) {
       

@@ -1,7 +1,7 @@
 const Boom = require('@hapi/boom');
 const Joi = require('@hapi/joi');
 const { parseAsync } = require('json2csv');
-const Extend = require('jquery-extend');
+const Deepcopy = require('deepcopy');
 
 const THRESHOLD = 120; //seconds
 
@@ -21,7 +21,7 @@ const _flattenJSON = (json) => {
 
   const flattenJSON = json.map((event) => {
   
-    const copiedEvent = Extend(true, {}, event);
+    const copiedEvent = Deepcopy(event);
 
     copiedEvent.event_options.map((data) => {
   
