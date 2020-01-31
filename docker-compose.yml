@@ -1,0 +1,21 @@
+version: '3.6'
+
+services:
+  sealog-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: oceandatatools/sealog-server
+    depends_on:
+      - mongo
+    ports:
+      - "8000:8000"  # API
+
+  mongo:
+    image: mongo:4
+    restart: always
+    volumes:
+      - database:/data/db
+
+volumes:
+  database:
