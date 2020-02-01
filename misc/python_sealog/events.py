@@ -16,8 +16,9 @@ def getEvent(event_uid):
       return event
   
   except Exception as error:
-    print(r.text)
-    print(error)
+    logging.error(r.text)
+    logging.debug(str(error))
+    raise error
 
 
 def getEventsByCruise(cruise_uid, export_format='json'):
@@ -32,8 +33,9 @@ def getEventsByCruise(cruise_uid, export_format='json'):
       return events
 
   except Exception as error:
-    print(r.text)
-    print(error)
+    logging.error(r.text)
+    logging.debug(str(error))
+    raise error
 
 
 def getEventsByLowering(lowering_uid, export_format='json'):
@@ -48,5 +50,6 @@ def getEventsByLowering(lowering_uid, export_format='json'):
       return events
 
   except Exception as error:
-    print(r.text)
-    print(error)
+    logging.error(r.text)
+    logging.debug(str(error))
+    raise error

@@ -16,8 +16,9 @@ def getEventAuxDataByCruise(cruise_uid):
       return eventAuxData
 
   except Exception as error:
-    print(r.text)
-    print(error)
+    logging.error(r.text)
+    logging.debug(str(error))
+    raise error
 
 
 def getEventAuxDataByLowering(lowering_uid):
@@ -31,5 +32,6 @@ def getEventAuxDataByLowering(lowering_uid):
     return eventAuxData
 
   except Exception as error:
-    print(r.text)
-    print(error)
+    logging.error(r.text)
+    logging.debug(str(error))
+    raise error

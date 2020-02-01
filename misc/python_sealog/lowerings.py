@@ -16,9 +16,9 @@ def getLoweringUIDByID(lowering_id):
         logging.debug(json.dumps(lowering))
         return lowering['id']
   except Exception as error:
-    print(r.text)
-    print(error)
-
+    logging.error(r.text)
+    logging.debug(str(error))
+    raise error
 
 def getLoweringUIDsByCruise(cruise_uid):
 
@@ -32,8 +32,9 @@ def getLoweringUIDsByCruise(cruise_uid):
       return (lowering['id'] for lowering in lowerings)
 
   except Exception as error:
-    print(r.text)
-    print(error)
+    logging.error(r.text)
+    logging.debug(str(error))
+    raise error
 
 
 def getLoweringIDsByCruise(cruise_uid):
@@ -48,8 +49,9 @@ def getLoweringIDsByCruise(cruise_uid):
       return (lowering['lowering_id'] for lowering in lowerings)
 
   except Exception as error:
-    print(r.text)
-    print(error)
+    logging.error(r.text)
+    logging.debug(str(error))
+    raise error
 
 
 def getLowering(lowering_uid):
@@ -64,8 +66,9 @@ def getLowering(lowering_uid):
       return lowering
   
   except Exception as error:
-    print(r.text)
-    print(error)
+    logging.error(r.text)
+    logging.debug(str(error))
+    raise error
 
 def getLoweringByID(lowering_id):
 
@@ -81,9 +84,9 @@ def getLoweringByID(lowering_id):
           return lowering
   
   except Exception as error:
-    print(r.text)
-    print(error)
-
+    logging.error(r.text)
+    logging.debug(str(error))
+    raise error
 
 def getLoweringsByCruise(cruise_uid):
 
@@ -97,8 +100,9 @@ def getLoweringsByCruise(cruise_uid):
       return lowerings
 
   except Exception as error:
-    print(r.text)
-    print(error)
+    logging.error(r.text)
+    logging.debug(str(error))
+    raise error
 
 def getLoweringByEvent(event_uid):
 
@@ -112,5 +116,6 @@ def getLoweringByEvent(event_uid):
       return lowering
 
   except Exception as error:
-    print(r.text)
-    print(error)
+    logging.error(r.text)
+    logging.debug(str(error))
+    raise error

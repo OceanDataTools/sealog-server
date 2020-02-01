@@ -18,7 +18,8 @@ def getCustomVar(var_uid):
 
   except Exception as error:
     logging.error('Error retrieving custom variable ID')
-    logging.error(str(error))
+    logging.debug(str(error))
+    raise error
 
 def getCustomVarUIDByName(var_name):
 
@@ -35,4 +36,17 @@ def getCustomVarUIDByName(var_name):
 
   except Exception as error:
     logging.error('Error retrieving custom variable ID')
-    logging.error(str(error))
+    logging.debug(str(error))
+    raise error
+
+def setCustomVar(var_uid, value):
+
+  try:
+    payload = { "custom_var_value": value}
+    r = requests.patch(apiServerURL + customVarAPIPath + '/' + var_uid, headers=headers, data = json.dumps(payload))
+    logging.debug(r.text)
+
+  except Exception as error:
+    logging.error('Error updating custom variable ID')
+    logging.debug(str(error))
+    raise error

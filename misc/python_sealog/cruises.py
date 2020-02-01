@@ -17,6 +17,7 @@ def getCruise(cruise_uid):
 
   except Exception as error:
     logging.error(str(error))
+    raise error
 
 def getCruiseUIDByID(cruise_id):
 
@@ -30,8 +31,10 @@ def getCruiseUIDByID(cruise_id):
         if cruise['cruise_id'] == cruise_id:
           logging.debug(json.dumps(cruise))
           return cruise['id']
+
   except Exception as error:
     logging.error(str(error))
+    raise error
 
 
 def getCruiseByID(cruise_id):
@@ -46,8 +49,10 @@ def getCruiseByID(cruise_id):
         if cruise['cruise_id'] == cruise_id:
           logging.debug(json.dumps(cruise))
           return cruise
+
   except Exception as error:
     logging.error(str(error))  
+    raise error
 
 
 def getCruiseByLowering(lowering_uid):
@@ -60,9 +65,11 @@ def getCruiseByLowering(lowering_uid):
       cruise = json.loads(r.text)
       logging.debug(json.dumps(cruise))
       return cruise
+
   except Exception as error:
-    print(r.text)
-    print(error)
+    logging.error(r.text)
+    logging.debug(str(error))
+    raise error
 
 
 def getCruiseByEvent(event_uid):
@@ -77,5 +84,6 @@ def getCruiseByEvent(event_uid):
       return cruise
 
   except Exception as error:
-    print(r.text)
-    print(error)
+    logging.error(r.text)
+    logging.debug(str(error))
+    raise error
