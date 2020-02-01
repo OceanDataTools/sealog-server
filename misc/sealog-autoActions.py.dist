@@ -20,7 +20,7 @@
 #
 #  Author: Webb Pinner webbpinner@gmail.com
 # Created: 2018-09-26
-# Updated: 2020-01-27
+# Updated: 2020-02-01
 
 import asyncio
 import websockets
@@ -28,9 +28,9 @@ import json
 import requests
 import logging
 import datetime
-from pymongo import MongoClient
+import time
 
-from python_sealog.custom_vars import getCustomVarUIDByName
+from python_sealog.custom_vars import getCustomVarUIDByName, setCustomVar
 from python_sealog.lowerings import getLoweringByEvent
 from python_sealog.settings import apiServerURL, wsServerURL, headers, cruisesAPIPath, customVarAPIPath, eventsAPIPath, loweringsAPIPath
 
@@ -62,28 +62,15 @@ auxDataTemplate = {
     'data_array': []
 }
 
-client = MongoClient()
-db = client.datagrabberDB
-collection = db.datagrabberCOLL
-
+# default log level
 LOG_LEVEL = logging.INFO
 
 # create logger
-logger = logging.getLogger(__file__ )
-logger.setLevel(LOG_LEVEL)
+logging.basicConfig(level=LOG_LEVEL,
+                    format='%(asctime)s - %(name)s:%(lineno)s - %(levelname)s - %(message)s'
+                   )
 
-# create console handler and set level to debug
-ch = logging.StreamHandler()
-ch.setLevel(LOG_LEVEL)
-
-# create formatter
-formatter = logging.Formatter('%(asctime)s - %(name)s:%(lineno)s - %(levelname)s - %(message)s')
-
-# add formatter to ch
-ch.setFormatter(formatter)
-
-# add ch to logger
-logger.addHandler(ch)
+logger = logging.getLogger(__file__)
 
 async def autoActions():
   try:
@@ -110,11 +97,11 @@ async def autoActions():
             for option in eventObj['message']['event_options']:
               if option['event_option_name'] == "milestone" and option['event_option_value'] == "Off deck":
                 logger.info("Turning on ASNAP")
-                payload = { "custom_var_value": "On"}
-                r = requests.patch(apiServerURL + customVarAPIPath + '/' + asnapStatusVarID, headers=headers, data = json.dumps(payload))
+                setCustomVar(asnapStatusVarID, "On")
 
                 lowering = getLoweringByEvent(eventObj['message']['id'])
                 logger.debug("Lowering:\n" + json.dumps(lowering, indent=2))
+
                 if not lowering:
                   logger.warning("Can't update lowering record because there is no lowering currently active")
                   continue
@@ -123,11 +110,11 @@ async def autoActions():
                 payload = { "start_ts": eventObj['message']['ts'] }
                 r = requests.patch(apiServerURL + loweringsAPIPath + '/' + lowering['id'], headers=headers, data = json.dumps(payload))
 
-
               elif option['event_option_name'] == "milestone" and option['event_option_value'] == "On bottom":
 
                 lowering = getLoweringByEvent(eventObj['message']['id'])
                 logger.debug("Lowering:\n" + json.dumps(lowering, indent=2))
+
                 if not lowering:
                   logger.warning("Can't update lowering record because there is no lowering currently active")
                   continue
@@ -143,12 +130,11 @@ async def autoActions():
 
                 r = requests.patch(apiServerURL + loweringsAPIPath + '/' + lowering['id'], headers=headers, data = json.dumps(payload))
 
-
-
               elif option['event_option_name'] == "milestone" and option['event_option_value'] == "Off bottom":
 
                 lowering = getLoweringByEvent(eventObj['message']['id'])
                 logger.debug("Lowering:\n" + json.dumps(lowering, indent=2))
+
                 if not lowering:
                   logger.warning("Can't update lowering record because there is no lowering currently active")
                   continue
@@ -164,15 +150,13 @@ async def autoActions():
 
                 r = requests.patch(apiServerURL + loweringsAPIPath + '/' + lowering['id'], headers=headers, data = json.dumps(payload))
 
-
-
               elif option['event_option_name'] == "milestone" and option['event_option_value'] == "On deck":
                 logger.info("Turning off ASNAP")
-                payload = { "custom_var_value": "Off"}
-                r = requests.patch(apiServerURL + customVarAPIPath + '/' + asnapStatusVarID, headers=headers, data = json.dumps(payload))
+                setCustomVar(asnapStatusVarID, "Off")
 
                 lowering = getLoweringByEvent(eventObj['message']['id'])
                 logger.debug("Lowering:\n" + json.dumps(lowering, indent=2))
+
                 if not lowering:
                   logger.warning("Can't update lowering record because there is no lowering currently active")
                   continue
@@ -207,19 +191,30 @@ if __name__ == '__main__':
       handler.setLevel(logging.DEBUG)
     logger.debug("Log level now set to DEBUG")
     
-  # Retrieve the asnapStatus ID
-  try:
-    asnapStatusVarID = getCustomVarUIDByName(asnapStatusVarName)
-  except Exception as error:
-    logger.error("Error retrieving the asnapStatus ID")
-    logger.error(str(error))
-
   # Run the main loop
-  try:
-    asyncio.get_event_loop().run_until_complete(autoActions())
-  except KeyboardInterrupt:
-    print('Interrupted')
+  while True:
+
+    # Wait 5 seconds for the server to complete startup
+    time.sleep(5)
+
+    # Retrieve the asnapStatus ID
     try:
-      sys.exit(0)
-    except SystemExit:
-      os._exit(0)
+      asnapStatusVarID = getCustomVarUIDByName(asnapStatusVarName)
+      logger.debug("Retrieved asnapStatus variable ID from server")
+    except Exception as error:
+      logger.error("Error retrieving the asnapStatus variable ID")
+      logger.debug(str(error))
+      continue
+
+    try:
+      logger.debug("Listening to event websocket feed...")
+      asyncio.get_event_loop().run_until_complete(autoActions())
+    except KeyboardInterrupt:
+      logger.error('Keyboard Interrupted')
+      try:
+        sys.exit(0)
+      except SystemExit:
+        os._exit(0)
+    except Exception as error:
+      logger.error("Lost connection to server, trying again in 5 seconds")
+      logger.debug(str(error))

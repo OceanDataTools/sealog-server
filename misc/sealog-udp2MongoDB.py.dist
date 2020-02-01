@@ -159,11 +159,17 @@ if __name__ == '__main__':
     logger.debug("Log level now set to DEBUG")
     
   # Run the main loop
-  try:
-    insertUDPData()
-  except KeyboardInterrupt:
-    print('Interrupted')
+  while True:
+
+    # Run the main loop
     try:
-      sys.exit(0)
-    except SystemExit:
-      os._exit(0)
+      insertUDPData()
+    except KeyboardInterrupt:
+      print('Interrupted')
+      try:
+        sys.exit(0)
+      except SystemExit:
+        os._exit(0)
+
+    # Wait 5 seconds for the server to complete startup
+    time.sleep(5)

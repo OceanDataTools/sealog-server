@@ -11,36 +11,15 @@
 #
 #  Author: Webb Pinner webbpinner@gmail.com
 # Created: 2018-09-26
-# Updated: 2020-01-26
+# Updated: 2020-02-01
 
 import json
 import requests
 import time
-import sys
-import os
 import logging
-import python_sealog
+
+from python_sealog.custom_vars import getCustomVarUIDByName
 from python_sealog.settings import apiServerURL, cruisesAPIPath, eventsAPIPath, customVarAPIPath, headers
-
-# Default logging level
-LOG_LEVEL = logging.INFO
-
-# create logger
-logger = logging.getLogger(__file__)
-logger.setLevel(LOG_LEVEL)
-
-# create console handler and set level to debug
-ch = logging.StreamHandler()
-ch.setLevel(LOG_LEVEL)
-
-# create formatter
-formatter = logging.Formatter('%(asctime)s - %(name)s:%(lineno)s - %(levelname)s - %(message)s')
-
-# add formatter to ch
-ch.setFormatter(formatter)
-
-# add ch to logger
-logger.addHandler(ch)
 
 asnapStatusVarName = 'asnapStatus'
 
@@ -69,6 +48,16 @@ eventTemplate = {
   "event_free_text": ""
 }
 
+# default log level
+LOG_LEVEL = logging.INFO
+
+# create logger
+logging.basicConfig(level=LOG_LEVEL,
+                    format='%(asctime)s - %(name)s:%(lineno)s - %(levelname)s - %(message)s'
+                   )
+
+logger = logging.getLogger(__file__)
+
 def asnapService(interval):
   """
   This is the main function for this script.  It creates a new event request at the specified interval
@@ -89,7 +78,10 @@ def asnapService(interval):
         elif response[0]['custom_var_value'] == 'Off':
           runFlag = False
     except Exception as error:
-      print(error)
+      logger.error("Error retrieving the asnapStatus variable")
+      logger.debug(str(error))
+      time.sleep(5)
+      continue
 
     if runFlag:
       try:
@@ -97,7 +89,8 @@ def asnapService(interval):
         r = requests.post(apiServerURL + eventsAPIPath, headers=headers, data = json.dumps(eventTemplate))
 
       except Exception as error:
-        print(error)
+        logger.error("Error submitting new ASNAP event")
+        logger.debug(str(error))
 
     time.sleep(interval)
 
@@ -107,6 +100,8 @@ if __name__ == '__main__':
   """
 
   import argparse
+  import os
+  import sys
 
   parser = argparse.ArgumentParser(description='ASNAP event submission service')
   parser.add_argument('-d', '--debug', action='store_true', help=' display debug messages')

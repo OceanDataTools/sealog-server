@@ -26,8 +26,10 @@ exports.plugin = {
     console.log("Creating Event Aux Data Collection");
     try {
       await db.createCollection(eventAuxDataTable);
+
       // db.event_aux_data.createIndex( { event_id: -1 } )
-      await db[eventAuxDataTable].createIndex({ event_id: -1 });
+      const collection = await db.createCollection(eventAuxDataTable);
+      await collection.createIndex({ event_id: -1 });
     }
     catch (err) {
       console.log("ERROR:", err.code);

@@ -14,10 +14,12 @@
 #
 #   Author: Webb Pinner webbpinner@gmail.com
 #  Created: 2020-01-27
+# Modified: 2020-02-01
 
 import asyncio
 import websockets
 import json
+import time
 import requests
 import logging
 from datetime import datetime, timedelta
@@ -27,13 +29,13 @@ from python_sealog.settings import apiServerURL, wsServerURL, eventAuxDataAPIPat
 
 # Names of the appropriate mongoDB database and collection containing the desired real-time data.
 DATABASE = 'sealog_udp_cache'
-COLLECTION = 'ctdData'
+COLLECTION = 'someSensorData'
 
 # Unique label of the record in the DATABASE.COLLECTION containing the desired real-time data
-RECORD_LABEL = "CTD"
+RECORD_LABEL = "someSensor"
 
 # The data_source to use for the auxData records
-AUX_DATA_DATASOURCE = 'vehicleRealtimeCTDData'
+AUX_DATA_DATASOURCE = 'vehicleRealtimeSomeSensorData'
 
 # time afterwhich realtime data is considered stale
 THRESHOLD = 20 # seconds
@@ -69,24 +71,15 @@ client = MongoClient()
 db = client[DATABASE]
 collection = db[COLLECTION]
 
+# default log level
 LOG_LEVEL = logging.INFO
 
 # create logger
-logger = logging.getLogger(__file__ )
-logger.setLevel(LOG_LEVEL)
+logging.basicConfig(level=LOG_LEVEL,
+                    format='%(asctime)s - %(name)s:%(lineno)s - %(levelname)s - %(message)s'
+                   )
 
-# create console handler and set level to debug
-ch = logging.StreamHandler()
-ch.setLevel(LOG_LEVEL)
-
-# create formatter
-formatter = logging.Formatter('%(asctime)s - %(name)s:%(lineno)s - %(levelname)s - %(message)s')
-
-# add formatter to ch
-ch.setFormatter(formatter)
-
-# add ch to logger
-logger.addHandler(ch)
+logger = logging.getLogger(__file__)
 
 
 def auxDataRecordBuilder(event, record):
@@ -103,23 +96,26 @@ def auxDataRecordBuilder(event, record):
     'data_array': []
   }
 
-  if 'conductivity' in record['data']:
-    auxDataRecord['data_array'].append({ 'data_name': "cond",'data_value': record['data']['conductivity'], 'data_uom': 'S/m' })
+  if 'Lat' in record['data']:
+    auxDataRecord['data_array'].append({ 'data_name': "latitude",'data_value': record['data']['Lat'], 'data_uom': 'ddeg' })
 
-  if 'temperature' in record['data']:
-    auxDataRecord['data_array'].append({ 'data_name': "temp",'data_value': record['data']['temperature'], 'data_uom': 'C' })
+  if 'Lon' in record['data']:
+    auxDataRecord['data_array'].append({ 'data_name': "longitude",'data_value': record['data']['Lon'], 'data_uom': 'ddeg' })
  
-  if 'pressure' in record['data']:
-    auxDataRecord['data_array'].append({ 'data_name': "pres",'data_value': record['data']['pressure'], 'data_uom': 'psig' })
+  if 'Depth' in record['data']:
+    auxDataRecord['data_array'].append({ 'data_name': "depth",'data_value': record['data']['Depth'], 'data_uom': 'm' })
 
-  if 'depth' in record['data']:
-    auxDataRecord['data_array'].append({ 'data_name': "depth",'data_value': record['data']['depth'], 'data_uom': 'm' })
+  if 'Alt' in record['data']:
+    auxDataRecord['data_array'].append({ 'data_name': "altitude",'data_value': record['data']['Alt'], 'data_uom': 'm' })
 
-  if 'salinity' in record['data']:
-    auxDataRecord['data_array'].append({ 'data_name': "sal",'data_value': record['data']['salinity'], 'data_uom': 'ppt' })
+  if 'Heading' in record['data']:
+    auxDataRecord['data_array'].append({ 'data_name': "heading",'data_value': record['data']['Heading'], 'data_uom': 'deg' })
 
-  if 'sound_velocity' in record['data']:
-    auxDataRecord['data_array'].append({ 'data_name': "sv",'data_value': record['data']['sound_velocity'], 'data_uom': 'm/s' })
+  if 'Pitch' in record['data']:
+    auxDataRecord['data_array'].append({ 'data_name': "pitch",'data_value': record['data']['Pitch'], 'data_uom': 'deg' })
+
+  if 'Roll' in record['data']:
+    auxDataRecord['data_array'].append({ 'data_name': "roll",'data_value': record['data']['Roll'], 'data_uom': 'deg' })
 
   logger.debug("Aux Data Record:\n" + json.dumps(auxDataRecord, indent=2))
 
@@ -168,7 +164,8 @@ async def auxDataInserter():
               continue
 
           except Exception as error:
-            logger.error("Error retrieving auxData record: " + str(error))
+            logger.error("Error retrieving auxData record")
+            logger.debug(str(error))
             continue
 
           auxDataRecord = auxDataRecordBuilder(eventObj['message'], record)
@@ -181,13 +178,16 @@ async def auxDataInserter():
               logger.debug("Response: " + r.text)
 
             except Exception as error:
-              logger.error("Error submitting auxData record: " + str(error))
+              logger.error("Error submitting auxData record")
+              logger.debug(str(error))
+              raise error
 
           else:
             logger.debug("Skipping because there's no data to add")
 
   except Exception as error:
     logger.error(str(error))
+    raise error
 
 if __name__ == '__main__':
 
@@ -209,11 +209,20 @@ if __name__ == '__main__':
     logger.debug("Log level now set to DEBUG")
   
   # Run the main loop
-  try:
-    asyncio.get_event_loop().run_until_complete(auxDataInserter())
-  except KeyboardInterrupt:
-    print('Interrupted')
+  while True:
+
+    # Wait 5 seconds for the server to complete startup
+    time.sleep(5)
+
     try:
-      sys.exit(0)
-    except SystemExit:
-      os._exit(0)
+      logger.debug("Connecting to event websocket feed...")
+      asyncio.get_event_loop().run_until_complete(auxDataInserter())
+    except KeyboardInterrupt:
+      logger.error('Keyboard Interrupted')
+      try:
+        sys.exit(0)
+      except SystemExit:
+        os._exit(0)
+    except Exception as error:
+      logger.error("Lost connection to server, trying again in 5 seconds")
+      logger.debug(str(error))
