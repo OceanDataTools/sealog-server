@@ -76,8 +76,8 @@ const _flattenJSON = (json) => {
     delete copiedEvent.event_options;
 
     copiedEvent.ts = copiedEvent.ts.toISOString();
-    copiedEvent.id = copiedEvent.id.toString();
-    copiedEvent.event_free_text = "\"" + copiedEvent.event_free_text.replace(/"/g, '\\"') + "\"";
+    copiedEvent.id = copiedEvent.id.id.toString('hex');
+    copiedEvent.event_free_text = copiedEvent.event_free_text.replace(/\"/g, '\\\"');
     return copiedEvent;
   });
 

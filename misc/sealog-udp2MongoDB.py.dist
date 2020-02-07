@@ -26,27 +26,18 @@ UDP_PORT_NO = 10000
 DATABASE = 'sealog_udp_cache'
 COLLECITON = 'udpData'
 
-LOG_LEVEL = logging.INFO
-
 # Valid line headers to process
 validLineLabels = ['GGA']
 
+# default log level
+LOG_LEVEL = logging.INFO
+
 # create logger
-logger = logging.getLogger(__file__ )
-logger.setLevel(LOG_LEVEL)
+logging.basicConfig(level=LOG_LEVEL,
+                    format='%(asctime)s - %(name)s:%(lineno)s - %(levelname)s - %(message)s'
+                   )
 
-# create console handler and set level to debug
-ch = logging.StreamHandler()
-ch.setLevel(LOG_LEVEL)
-
-# create formatter
-formatter = logging.Formatter('%(asctime)s - %(name)s:%(lineno)s - %(levelname)s - %(message)s')
-
-# add formatter to ch
-ch.setFormatter(formatter)
-
-# add ch to logger
-logger.addHandler(ch)
+logger = logging.getLogger(__file__)
 
 def _convertGGA_LL(value, hemisphere):
 
