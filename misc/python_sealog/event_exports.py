@@ -26,9 +26,13 @@ def getEventExportsByLowering(lowering_uid, export_format='json'):
     url = apiServerURL + eventExportsAPIPath + '/bylowering/' + lowering_uid + '?format=' + export_format
     r = requests.get(url, headers=headers)
 
-    events = json.loads(r.text)
-    logging.debug(json.dumps(events))
-    return events
+    logging.debug(r.text)
+
+    if export_format == 'json':
+      events = json.loads(r.text)
+      return events
+
+    return r.text
 
   except Exception as error:
     logging.error(r.text)
