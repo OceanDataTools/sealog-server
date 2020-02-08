@@ -7,7 +7,7 @@ from .settings import apiServerURL, headers, eventAuxDataAPIPath
 dataSourceFilter = ['vehicleRealtimeFramegrabberData']
 imagePath = "/home/sealog/images";
 
-def getFramegrabListByLoweringUid(lowering_uid):
+def getFramegrabListByLowering(lowering_uid):
   logging.debug("Exporting event data")
   query='&data_source='.join(dataSourceFilter)
 
@@ -30,7 +30,7 @@ def getFramegrabListByLoweringUid(lowering_uid):
 
   return framegrabFilenames
 
-def getFramegrabListByCruiseUid(cruise_uid):
+def getFramegrabListByCruise(cruise_uid):
   logging.debug("Exporting event data")
   query='&data_source='.join(dataSourceFilter)
 
