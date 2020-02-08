@@ -42,20 +42,20 @@ getLoweringDataFiles(){
 	${GET_LOWERING_SCRIPT} ${LOWERING_ID} > ${LOWERING_DIR}'/'${LOWERING_ID}'_loweringRecord.json'
 
 	echo "Exporting event data"
-	${GET_EVENTS_SCRIPT} '-l' ${LOWERING_ID} > ${LOWERING_DIR}'/'${LOWERING_ID}'_eventOnlyExport.json'
+	${GET_EVENTS_SCRIPT} -l ${LOWERING_ID} > ${LOWERING_DIR}'/'${LOWERING_ID}'_eventOnlyExport.json'
 
 	echo "Exporting aux data"
-	${GET_EVENT_AUX_DATA_SCRIPT} '-l' ${LOWERING_ID} > ${LOWERING_DIR}'/'${LOWERING_ID}'_auxDataExport.json'
+	${GET_EVENT_AUX_DATA_SCRIPT} -l ${LOWERING_ID} > ${LOWERING_DIR}'/'${LOWERING_ID}'_auxDataExport.json'
 
 	echo "Exporting events with aux data as json"
-	${GET_EVENT_EXPORTS_SCRIPT} '-l' ${LOWERING_ID} > ${LOWERING_DIR}'/'${LOWERING_ID}'_sealogExport.json'
+	${GET_EVENT_EXPORTS_SCRIPT} -l ${LOWERING_ID} > ${LOWERING_DIR}'/'${LOWERING_ID}'_sealogExport.json'
 
 	echo "Exporting events with aux data as csv"
-	${GET_EVENT_EXPORTS_SCRIPT} '-f csv' '-l' ${LOWERING_ID} > ${LOWERING_DIR}'/'${LOWERING_ID}'_sealogExport.csv'
+	${GET_EVENT_EXPORTS_SCRIPT} -f csv -l ${LOWERING_ID} > ${LOWERING_DIR}'/'${LOWERING_ID}'_sealogExport.csv'
 }
 
 getFramegrabs(){
-	${GET_FRAMEGRAB_SCRIPT} '-l' ${LOWERING_ID}
+	${GET_FRAMEGRAB_SCRIPT} -l ${LOWERING_ID}
 }
 
 usage(){
