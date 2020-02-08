@@ -3,8 +3,8 @@
 import logging
 import python_sealog
 from python_sealog.events import getEventsByLowering, getEventsByCruise
-from python_sealog.lowerings import getLoweringUid
-from python_sealog.cruises import getCruiseUid
+from python_sealog.lowerings import getLoweringUIDByID
+from python_sealog.cruises import getCruiseUIDByID
 
 # Default logging level
 LOG_LEVEL = logging.INFO
@@ -51,7 +51,7 @@ if __name__ == '__main__':
   if args.lowering_id and args.cruise_id:
     logger.error("Must define either a cruise_id or Lowering_id")
   elif args.lowering_id:
-    lowering_uid = getLoweringUid(args.lowering_id)
+    lowering_uid = getLoweringUIDByID(args.lowering_id)
     if not lowering_uid == None:
       logger.debug("Lowering UID: " + lowering_uid)
       events = getEventsByLowering(lowering_uid, args.format)
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     else:
       logger.error("No lowering found for lowering_id: " + args.lowering_id)
   elif args.cruise_id:
-    cruise_uid = getCruiseUid(args.cruise_id)
+    cruise_uid = getCruiseUIDByID(args.cruise_id)
     if not cruise_uid == None:
       logger.debug("Cruise UID: " + cruise_uid)
       events = getEventsByCruise(cruise_uid, args.format)
