@@ -2,10 +2,10 @@ import requests
 import json
 import logging
 
-from .settings import apiServerURL, headers, eventAuxDataAPIPath
+from .settings import apiServerURL, apiServerFilePath, headers, eventAuxDataAPIPath
 
 dataSourceFilter = ['vehicleRealtimeFramegrabberData']
-imagePath = "/home/sealog/images";
+imagePath = apiServerFilePath + "/images";
 
 def getFramegrabListByLowering(lowering_uid):
   logging.debug("Exporting event data")
@@ -23,7 +23,7 @@ def getFramegrabListByLowering(lowering_uid):
       for data in framegrabs:
         for framegrab in data['data_array']:
           if framegrab['data_name'] == 'filename':
-            framegrabFilenames.append(imagePath + framegrab['data_value'])
+            framegrabFilenames.append(framegrab['data_value'])
 
   except Exception as error:
     logging.error(str(error))
@@ -46,7 +46,7 @@ def getFramegrabListByCruise(cruise_uid):
       for data in framegrabs:
         for framegrab in data['data_array']:
           if framegrab['data_name'] == 'filename':
-            framegrabFilenames.append(imagePath + framegrab['data_value'])
+            framegrabFilenames.append(framegrab['data_value'])
 
   except Exception as error:
     logging.error(str(error))
@@ -67,7 +67,7 @@ def getFramegrabListByFile(filename):
       if data['data_source'] in dataSourceFilter:
         for framegrab in data['data_array']:
           if framegrab['data_name'] == 'filename':
-            framegrabFilenames.append(imagePath + framegrab['data_value'])
+            framegrabFilenames.append(framegrab['data_value'])
 
   except Exception as error:
     logging.error(str(error))
