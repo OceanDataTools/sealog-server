@@ -80,11 +80,11 @@ if [ $# -ne 1 ]; then
 fi
 
 CRUISE_ID=${1}
-CRUISE_OID=`${GET_CRUISE_UID_SCRIPT} ${1}`
+CRUISE_OID=`${GET_CRUISE_UID_SCRIPT} ${CRUISE_ID}`
 
 if [ -z ${CRUISE_OID} ]; then
 	echo ""
-	echo "Unable to find cruise record for cruise id: ${1}"
+	echo "Unable to find cruise record for cruise id: ${CRUISE_ID}"
 	echo ""
 	exit 1
 fi

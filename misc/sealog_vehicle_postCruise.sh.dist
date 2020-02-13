@@ -19,10 +19,32 @@ BACKUP_LOWERING_SCRIPT=${SCRIPT_BASE}'/sealog_postLowering.sh'
 
 # Root data folder for Sealog
 BACKUP_DIR_ROOT="/home/sealog/sealog-backups"
+FILES_DIR="/home/sealog/sealog-files"
+CRUISE_ID=""
+CRUISE_OID=""
+
+getCruiseNonDataFiles(){
+  echo "Copying non-data lowering files"
+
+    mkdir ${BACKUP_DIR_ROOT}/${CRUISE_ID}/files
+    if [ ! -d ${BACKUP_DIR_ROOT}/${CRUISE_ID}/files ]; then
+            echo "Unable to create non-data files directory... quiting"
+            exit 1
+    fi
+
+  rsync -a ${FILES_DIR}/${CRUISE_OID}/* ${BACKUP_DIR_ROOT}/${CRUISE_ID}/files
+}
+
+getCruiseDataFiles(){
+
+  echo "Exporting cruise record"
+  ${GET_CRUISE_SCRIPT} ${CRUISE_ID} > ${CRUISE_DIR}'/'${CRUISE_ID}'_cruiseRecord.json'
+
+}
 
 usage(){
 cat <<EOF
-Usage: $0 [-?] [-d dest_dir] [-c <cruise_id>
+Usage: $0 [-?] [-d dest_dir] <cruise_id>
 	-d <dest_dir>   Where to store the backup, the default is:
 	                ${BACKUP_DIR_ROOT}
 	<cruise_id>     The cruise id i.e. 'AT42-01'
@@ -53,7 +75,6 @@ if [ $# -ne 1 ]; then
 fi
 
 CRUISE_ID="${1}"
-CRUISE_OID=""
 
 if [ ${CRUISE_ID} != "" ]; then
 	CRUISE_OID=`${GET_CRUISE_UID_SCRIPT} ${CRUISE_ID}`
@@ -66,6 +87,8 @@ if [ ${CRUISE_ID} != "" ]; then
 	fi
 
 fi
+
+getCruiseNonDataFiles
 
 LOWERING_IDS=(`${GET_LOWERING_IDS_SCRIPT} ${CRUISE_OID}`)
 for LOWERING_ID in "${LOWERING_IDS[@]}"
