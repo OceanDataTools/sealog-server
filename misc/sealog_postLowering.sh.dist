@@ -167,14 +167,14 @@ getFramegrabs | awk -v dest=${LOWERING_DIR}/${FRAMEGRAB_DIR} 'BEGIN{printf "#!/b
 pico ${LOWERING_DIR}/${LOWERING_ID}_framegrabCopyScript.sh
 echo ""
 
-read -p "Proceed with copying framegrabs? (Y/N): " confirm && [[ $confirm == [Yy] || $confirm == [Yy][Ee][Ss] ]] || echo "done";echo "";exit 0
+read -p "Proceed with copying framegrabs? (Y/N): " confirm && [[ $confirm == [Yy] || $confirm == [Yy][Ee][Ss] ]] || exit 0
 echo ""
 
 echo "Copying framegrabs"
 chmod +x ${LOWERING_DIR}/${LOWERING_ID}_framegrabCopyScript.sh
 
-which pv
-if [ $? != 0]; then
+which pv > /dev/null
+if [ $? == 0 ]; then
 	pv -p -w 80 ${LOWERING_DIR}/${LOWERING_ID}_framegrabCopyScript.sh | bash > /dev/null
 else
 	/bin/bash ${LOWERING_DIR}/${LOWERING_ID}_framegrabCopyScript.sh
