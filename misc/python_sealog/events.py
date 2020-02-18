@@ -21,7 +21,10 @@ def getEvent(event_uid):
     raise error
 
 
-def getEventsByCruise(cruise_uid, export_format='json'):
+def getEventsByCruise(cruise_uid, export_format='json', filter=''):
+
+  if filter != '':
+      url += '&value=' + filter
 
   try:
     url = apiServerURL + eventsAPIPath + '/bycruise/' + cruise_uid + '?format=' + export_format
@@ -38,10 +41,14 @@ def getEventsByCruise(cruise_uid, export_format='json'):
     raise error
 
 
-def getEventsByLowering(lowering_uid, export_format='json'):
+def getEventsByLowering(lowering_uid, export_format='json', filter=''):
 
   try:
     url = apiServerURL + eventsAPIPath + '/bylowering/' + lowering_uid + '?format=' + export_format
+
+    if filter != '':
+      url += '&value=' + filter
+
     r = requests.get(url, headers=headers)
 
     if r.status_code != 404:

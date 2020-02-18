@@ -4,10 +4,14 @@ import logging
 
 from .settings import apiServerURL, headers, eventExportsAPIPath
 
-def getEventExportsByCruise(cruise_uid, export_format='json'):
+def getEventExportsByCruise(cruise_uid, export_format='json', filter=''):
 
   try:
     url = apiServerURL + eventExportsAPIPath + '/bycruise/' + cruise_uid + '?format=' + export_format
+
+    if filter != '':
+      url += '&value=' + filter
+
     r = requests.get(url, headers=headers)
 
     if r.status_code != 404:
@@ -20,10 +24,14 @@ def getEventExportsByCruise(cruise_uid, export_format='json'):
     logging.debug(str(error))
     raise error
 
-def getEventExportsByLowering(lowering_uid, export_format='json'):
+def getEventExportsByLowering(lowering_uid, export_format='json', filter=''):
 
   try:
     url = apiServerURL + eventExportsAPIPath + '/bylowering/' + lowering_uid + '?format=' + export_format
+
+    if filter != '':
+      url += '&value=' + filter
+
     r = requests.get(url, headers=headers)
 
     logging.debug(r.text)

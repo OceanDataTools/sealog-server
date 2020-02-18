@@ -77,7 +77,7 @@ const _flattenJSON = (json) => {
 
     copiedEvent.ts = copiedEvent.ts.toISOString();
     copiedEvent.id = copiedEvent.id.id.toString('hex');
-    copiedEvent.event_free_text = copiedEvent.event_free_text.replace(/\"/g, '\\\"');
+    copiedEvent.event_free_text = copiedEvent.event_free_text.replace(/"/g, '"');
     return copiedEvent;
   });
 

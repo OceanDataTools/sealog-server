@@ -59,13 +59,13 @@ getLoweringDataFiles(){
 getLoweringNonDataFiles(){
 	echo "Copying non-data lowering files"
 
-    mkdir ${BACKUP_DIR_ROOT}/${LOWERING_ID}/files
-    if [ ! -d ${BACKUP_DIR_ROOT}/${LOWERING_ID}/files ]; then
+    mkdir ${LOWERING_DIR}/files
+    if [ ! -d ${LOWERING_DIR}/files ]; then
             echo "Unable to create non-data files directory... quiting"
             exit 1
     fi
 
-	rsync -a ${FILES_DIR}/${LOWERING_OID}/* ${BACKUP_DIR_ROOT}/${LOWERING_ID}/files
+	rsync -a ${FILES_DIR}/lowerings/${LOWERING_OID}/* ${LOWERING_DIR}/files
 }
 
 getFramegrabs(){
@@ -176,7 +176,7 @@ ${GET_EVENT_TEMPLATES_SCRIPT} > ${LOWERING_DIR}'/'${LOWERING_ID}'_eventTemplates
 
 getLoweringDataFiles
 
-getLoweringNonDataFiles
+getLoweringNonDataFiles ${LOWERING_DIR}
 
 getFramegrabs | awk -v dest=${LOWERING_DIR}/${FRAMEGRAB_DIR} 'BEGIN{printf "#!/bin/bash\nDEST_DIR=%s\n", dest} {printf "cp -v %s ${DEST_DIR}/\n", $0}' > ${LOWERING_DIR}/${LOWERING_ID}_framegrabCopyScript.sh
 pico ${LOWERING_DIR}/${LOWERING_ID}_framegrabCopyScript.sh

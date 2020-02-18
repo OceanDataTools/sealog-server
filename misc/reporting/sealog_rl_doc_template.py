@@ -38,12 +38,12 @@ class FrontCoverTemplate(PageTemplate):
             canvas.drawImage('./assets/images/Subastian_Profile.png', self.pageWidth / 2 - inch - 0 * 400/233, self.pageHeight - 2.5 * inch, width=80 * 400/233, height=80, mask='auto')
 
         canvas.setFont('Helvetica', 10)
-        canvas.line(inch, 120, self.pageWidth - inch, 120)
+        canvas.line(inch, 80, self.pageWidth - inch, 80)
 
-        canvas.drawString(inch, 100, 'Schmidt Ocean Institute')
-        canvas.drawString(inch, 88, '555 Bryant St. #374')
-        canvas.drawString(inch, 76, 'Palo Alto, CA 94301')
-        canvas.drawImage('./assets/images/soi-logo.png', self.pageWidth - inch - 40 * 161/122, 1*inch, width=40 * 161/122, height=40, mask='auto')
+        canvas.drawString(inch, 60, 'Schmidt Ocean Institute')
+        canvas.drawString(inch, 48, '555 Bryant St. #374')
+        canvas.drawString(inch, 36, 'Palo Alto, CA 94301')
+        canvas.drawImage('./assets/images/soi-logo.png', self.pageWidth - inch - 40 * 161/122, 30, width=40 * 161/122, height=40, mask='auto')
 
         canvas.restoreState()
 
@@ -76,17 +76,22 @@ class TOCTemplate(PageTemplate):
         frame1 = Frame(inch,
                        inch,
                        self.pageWidth - 2*inch,
-                       self.pageHeight - 2*inch,
+                       self.pageHeight - 2.25*inch,
                        id='normal')
         PageTemplate.__init__(self, id, [frame1])  # note lack of onPage
 
     def afterDrawPage(self, canvas, doc):
         y = self.pageHeight - 50
         canvas.saveState()
+        # canvas.setFont('Helvetica', 10)
+        # canvas.drawString(inch, y+8, doc.title)
+        # canvas.drawRightString(self.pageWidth - inch, y+8, 'Table of contents')
+        # canvas.line(inch, y, self.pageWidth - inch, y)
+
+        canvas.setFont('Helvetica', 22)
+        canvas.drawCentredString(self.pageWidth / 2, self.pageHeight - 1 * inch, 'Table of Contents')
+
         canvas.setFont('Helvetica', 10)
-        canvas.drawString(inch, y+8, doc.title)
-        canvas.drawRightString(self.pageWidth - inch, y+8, 'Table of contents')
-        canvas.line(inch, y, self.pageWidth - inch, y)
         canvas.drawCentredString(self.pageWidth / 2, 0.75*inch, 'Page %d' % canvas.getPageNumber())
         canvas.restoreState()
 
@@ -140,7 +145,7 @@ class RLDocTemplate(BaseDocTemplate):
     def beforeDocument(self):
         self.canv.showOutline()
         self.title = self.title
-        self.chapter = "(No chapter yet)"
+        self.chapter = ""
         self.seq.reset('section')
         self.seq.reset('chapter')
 

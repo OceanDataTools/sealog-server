@@ -26,13 +26,13 @@ CRUISE_OID=""
 getCruiseNonDataFiles(){
   echo "Copying non-data lowering files"
 
-    mkdir ${BACKUP_DIR_ROOT}/${CRUISE_ID}/files
-    if [ ! -d ${BACKUP_DIR_ROOT}/${CRUISE_ID}/files ]; then
+    mkdir ${CRUISE_DIR}/files
+    if [ ! -d ${CRUISE_DIR}/files ]; then
             echo "Unable to create non-data files directory... quiting"
             exit 1
     fi
 
-  rsync -a ${FILES_DIR}/${CRUISE_OID}/* ${BACKUP_DIR_ROOT}/${CRUISE_ID}/files
+  rsync -a ${FILES_DIR}/cruises/${CRUISE_OID}/* ${CRUISE_DIR}/files
 }
 
 getCruiseDataFiles(){

@@ -81,14 +81,16 @@ def parseGGA(message, label=None):
     return record
 
   except Exception as error:
-    logger.error("Error parsing message")
+    logger.debug("Error parsing message")
 
 
-def insertUDPData():
+def insertUDPData(ignore_stale=False):
 
   client = MongoClient()
   db = client[DATABASE]
   collection = db[COLLECITON]
+
+  previousData = dict()
 
   serverSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
   serverSock.bind((UDP_IP_ADDRESS, UDP_PORT_NO))
@@ -103,13 +105,19 @@ def insertUDPData():
       logger.error(error)
       continue
 
-    logger.debug(data)
+    logger.debug(data.rstrip())
 
     messageType = None
     for label in validLineLabels:
       if data.startswith(label):
         messageType = label
         break
+
+    if ignore_stale and messageType in previousData and previousData[messageType] == data:
+      logger.debug(messageType + ' data stale, not saving to cache')
+      continue
+    elif ignore_stale:
+      previousData[messageType] = data
 
     if(messageType):
       data = data.rstrip()
@@ -138,6 +146,7 @@ if __name__ == '__main__':
 
   parser = argparse.ArgumentParser(description='UDP Data Caching Service')
   parser.add_argument('-d', '--debug', action='store_true', help=' display debug messages')
+  parser.add_argument('-i', '--ignore_stale', action='store_true', default=False, help=' only save the new value if it\'s different than the previously recorded value')
 
   args = parser.parse_args()
 
@@ -154,7 +163,7 @@ if __name__ == '__main__':
 
     # Run the main loop
     try:
-      insertUDPData()
+      insertUDPData(args.ignore_stale)
     except KeyboardInterrupt:
       print('Interrupted')
       try:
