@@ -20,6 +20,22 @@ def getLoweringUIDByID(lowering_id):
     logging.debug(str(error))
     raise error
 
+
+def getLowerings():
+
+  try:
+    url = apiServerURL + loweringsAPIPath
+    r = requests.get(url, headers=headers)
+
+    if r.status_code != 404:
+      lowerings = json.loads(r.text)
+      return lowerings
+
+  except Exception as error:
+    logging.debug(str(error))
+    raise error
+
+
 def getLoweringUIDsByCruise(cruise_uid):
 
   try:
@@ -32,7 +48,6 @@ def getLoweringUIDsByCruise(cruise_uid):
       return (lowering['id'] for lowering in lowerings)
 
   except Exception as error:
-    logging.error(r.text)
     logging.debug(str(error))
     raise error
 

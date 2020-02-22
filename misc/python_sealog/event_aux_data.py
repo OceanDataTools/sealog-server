@@ -4,10 +4,14 @@ import logging
 
 from .settings import apiServerURL, headers, eventAuxDataAPIPath
 
-def getEventAuxDataByCruise(cruise_uid):
+def getEventAuxDataByCruise(cruise_uid, datasource=''):
 
   try:
-    url = apiServerURL + eventAuxDataAPIPath + '/bycruise/' + cruise_uid
+    url = apiServerURL + eventAuxDataAPIPath + '/bycruise/' + cruise_uid;
+
+    if datasource != '':
+      url += '&datasource=' + datasource;
+    
     r = requests.get(url, headers=headers)
 
     if r.status_code != 404:
@@ -21,10 +25,14 @@ def getEventAuxDataByCruise(cruise_uid):
     raise error
 
 
-def getEventAuxDataByLowering(lowering_uid):
+def getEventAuxDataByLowering(lowering_uid, datasource=''):
 
   try:
     url = apiServerURL + eventAuxDataAPIPath + '/bylowering/' + lowering_uid
+    
+    if datasource != '':
+      url += '&datasource=' + datasource;
+
     r = requests.get(url, headers=headers)
 
     eventAuxData = json.loads(r.text)

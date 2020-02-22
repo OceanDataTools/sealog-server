@@ -19,6 +19,20 @@ def getCruise(cruise_uid):
     logging.error(str(error))
     raise error
 
+def getCruises():
+
+  try:
+    url = apiServerURL + cruisesAPIPath
+    r = requests.get(url, headers=headers)
+
+    if r.status_code != 404:
+      cruises = json.loads(r.text)
+      return cruises
+
+  except Exception as error:
+    logging.error(str(error))
+    raise error
+
 def getCruiseUIDByID(cruise_id):
 
   try:

@@ -603,6 +603,69 @@ exports.plugin = {
       }
     });
 
+
+    server.route({
+      method: 'GET',
+      path: '/lowerings/{id}/bump',
+      async handler(request, h) {
+
+        const db = request.mongo.db;
+        const ObjectID = request.mongo.ObjectID;
+
+        const query = {};
+
+        try {
+          query._id = new ObjectID(request.params.id);
+        }
+        catch (err) {
+          return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
+        }
+
+        let lowering = null;
+
+        try {
+          const result = await db.collection(loweringsTable).findOne(query);
+          if (!result) {
+            return Boom.notFound('No record found for id: ' + request.params.id);
+          }
+
+          if (!request.auth.credentials.scope.includes("admin") && result.lowering_hidden && (useAccessControl && typeof result.lowering_access_list !== 'undefined' && !result.lowering_access_list.includes(request.auth.credentials.id))) {
+            return Boom.unauthorized('User not authorized to retrieve this lowering');
+          }
+
+          lowering = result;
+        
+        }
+        catch (err) {
+          console.log("ERROR:", err);
+          return Boom.serverUnavailable('database error');
+        }
+
+        lowering = _renameAndClearFields(lowering);
+        server.publish('/ws/status/updateLowerings', lowering);
+
+        return h.response().code(200);
+      },
+      config: {
+        auth:{
+          strategy: 'jwt',
+          scope: ['admin', 'read_lowerings']
+        },
+        validate: {
+          headers: authorizationHeader,
+          params: loweringParam
+        },
+        response: {
+          status: {}
+        },
+        description: 'Bump the lowering on the updateLowering websocket subscription',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong></p>',
+        tags: ['lowerings','auth','api']
+      }
+    });
+
+
     server.route({
       method: 'POST',
       path: '/lowerings',
@@ -680,6 +743,19 @@ exports.plugin = {
 
         lowering.id = result.insertedId;
         server.publish('/ws/status/newLowerings', lowering);
+
+        const cruiseQuery = { start_ts: { "$lte": lowering.start_ts }, stop_ts: { "$gt": lowering.stop_ts } };
+
+        try {
+          const loweringCruise = await db.collection(cruisesTable).find(cruiseQuery).toArray();
+          loweringCruise.forEach((cruise) => {
+
+            server.publish('/ws/status/updateCruises', cruise);
+          });
+        }
+        catch (err) {
+          return Boom.serverUnavailable('database error', err);
+        }
 
         return h.response({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
         
@@ -821,7 +897,24 @@ exports.plugin = {
         }
 
         const updatedLowering = await db.collection(loweringsTable).findOne(query);
+
+        updatedLowering.id = updatedLowering._id;
+        delete updatedLowering._id;
+
         server.publish('/ws/status/updateLowerings', updatedLowering);
+
+        const cruiseQuery = { start_ts: { "$lte": updatedLowering.start_ts }, stop_ts: { "$gt": updatedLowering.stop_ts } };
+
+        try {
+          const loweringCruise = await db.collection(cruisesTable).find(cruiseQuery).toArray();
+          loweringCruise.forEach((cruise) => {
+
+            server.publish('/ws/status/updateCruises', cruise);
+          });
+        }
+        catch (err) {
+          return Boom.serverUnavailable('database error', err);
+        }
 
         return h.response().code(204);
 

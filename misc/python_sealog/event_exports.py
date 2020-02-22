@@ -15,9 +15,12 @@ def getEventExportsByCruise(cruise_uid, export_format='json', filter=''):
     r = requests.get(url, headers=headers)
 
     if r.status_code != 404:
-      events = json.loads(r.text)
-      logging.debug(json.dumps(events))
-      return events
+
+      if export_format == 'json':
+        events = json.loads(r.text)
+        return events
+
+      return r.text
 
   except Exception as error:
     logging.error(r.text)
@@ -34,13 +37,13 @@ def getEventExportsByLowering(lowering_uid, export_format='json', filter=''):
 
     r = requests.get(url, headers=headers)
 
-    logging.debug(r.text)
+    if r.status_code != 404:
 
-    if export_format == 'json':
-      events = json.loads(r.text)
-      return events
+      if export_format == 'json':
+        events = json.loads(r.text)
+        return events
 
-    return r.text
+      return r.text
 
   except Exception as error:
     logging.error(r.text)

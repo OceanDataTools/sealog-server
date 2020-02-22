@@ -570,6 +570,68 @@ exports.plugin = {
       }
     });
 
+
+    server.route({
+      method: 'GET',
+      path: '/cruises/{id}/bump',
+      async handler(request, h) {
+
+        const db = request.mongo.db;
+        const ObjectID = request.mongo.ObjectID;
+
+        const query = {};
+
+        try {
+          query._id = new ObjectID(request.params.id);
+        }
+        catch (err) {
+          return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
+        }
+
+        let cruise = null;
+
+        try {
+          const result = await db.collection(cruisesTable).findOne(query);
+          if (!result) {
+            return Boom.notFound('No record found for id: ' + request.params.id);
+          }
+
+          if (!request.auth.credentials.scope.includes("admin") && result.cruise_hidden && (useAccessControl && typeof result.cruise_access_list !== 'undefined' && !result.cruise_access_list.includes(request.auth.credentials.id))) {
+            return Boom.unauthorized('User not authorized to retrieve this cruise');
+          }
+
+          cruise = result;
+
+        }
+        catch (err) {
+          return Boom.serverUnavailable('database error', err);
+        }
+
+        cruise = _renameAndClearFields(cruise);
+        server.publish('/ws/status/updateCruises', cruise);
+
+        return h.response().code(200);
+      },
+      config: {
+        auth:{
+          strategy: 'jwt',
+          scope: ['admin', 'read_cruises']
+        },
+        validate: {
+          headers: authorizationHeader,
+          params: cruiseParam
+        },
+        response: {
+          status: {}
+        },
+        description: 'Bump the cruise on the updateCruise websocket subscription',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong></p>',
+        tags: ['cruises','auth','api']
+      }
+    });
+
+
     server.route({
       method: 'POST',
       path: '/cruises',
@@ -647,6 +709,22 @@ exports.plugin = {
 
         cruise.id = result.insertedId;
         server.publish('/ws/status/newCruises', cruise);
+
+        const loweringQuery = { start_ts: { "$gte": cruise.start_ts }, stop_ts: { "$lt": cruise.stop_ts } };
+
+        try {
+          const cruiseLowerings = await db.collection(loweringsTable).find(loweringQuery).toArray();
+          cruiseLowerings.forEach((lowering) => {
+
+            lowering.id = lowering._id;
+            delete lowering._id;
+
+            server.publish('/ws/status/updateLowerings', lowering);
+          });
+        }
+        catch (err) {
+          return Boom.serverUnavailable('database error', err);
+        }
 
         return h.response({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
 
@@ -830,7 +908,28 @@ exports.plugin = {
         }
 
         const updatedCruise = await db.collection(cruisesTable).findOne(query);
+
+        updatedCruise.id = updatedCruise._id;
+        delete updatedCruise._id;
+
         server.publish('/ws/status/updateCruises', updatedCruise);
+
+        const loweringQuery = { start_ts: { "$gte": updatedCruise.start_ts }, stop_ts: { "$lt": updatedCruise.stop_ts } };
+
+        try {
+          const cruiseLowerings = await db.collection(loweringsTable).find(loweringQuery).toArray();
+          console.log(cruiseLowerings);
+          cruiseLowerings.forEach((lowering) => {
+
+            lowering.id = lowering._id;
+            delete lowering._id;
+
+            server.publish('/ws/status/updateLowerings', lowering);
+          });
+        }
+        catch (err) {
+          return Boom.serverUnavailable('database error', err);
+        }
 
         return h.response().code(204);
       },
