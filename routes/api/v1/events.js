@@ -1229,6 +1229,10 @@ exports.plugin = {
           if (time_change) {
             server.publish('/ws/status/deleteEvents', _renameAndClearFields(result.value));
             server.publish('/ws/status/newEvents', _renameAndClearFields(result.value));
+
+            // delete any aux_data
+            await db.collection(eventAuxDataTable).deleteMany( {event_id: result.value._id} );
+
           }
           else {
             server.publish('/ws/status/updateEvents', _renameAndClearFields(result.value));
