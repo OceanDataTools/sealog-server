@@ -1230,11 +1230,17 @@ exports.plugin = {
             server.publish('/ws/status/deleteEvents', _renameAndClearFields(result.value));
 
             // delete any aux_data
-            db.collection(eventAuxDataTable).deleteMany({ event_id: result.value._id });
+            const aux_data_query = { event_id: ObjectID(result.value._id) };
+            // console.log("query:", query);
+            const test = await db.collection(eventAuxDataTable).deleteMany(aux_data_query);
+            // console.log('test:', test);
 
             // if the event is recent, broadcast on mewEvents WS feed
             const diff = (new Date().getTime() - result.value.ts.getTime()) / 1000;
+            // console.log('diff:', diff);
+
             if (Math.abs(Math.round(diff)) < THRESHOLD) {
+              console.log("still new event");
               server.publish('/ws/status/newEvents', _renameAndClearFields(result.value));
             }
 
