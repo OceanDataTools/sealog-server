@@ -1228,10 +1228,15 @@ exports.plugin = {
 
           if (time_change) {
             server.publish('/ws/status/deleteEvents', _renameAndClearFields(result.value));
-            server.publish('/ws/status/newEvents', _renameAndClearFields(result.value));
 
             // delete any aux_data
-            await db.collection(eventAuxDataTable).deleteMany( {event_id: result.value._id} );
+            db.collection(eventAuxDataTable).deleteMany({ event_id: result.value._id });
+
+            // if the event is recent, broadcast on mewEvents WS feed
+            const diff = (new Date().getTime() - result.value.ts.getTime()) / 1000;
+            if (Math.abs(Math.round(diff)) < THRESHOLD) {
+              server.publish('/ws/status/newEvents', _renameAndClearFields(result.value));
+            }
 
           }
           else {
