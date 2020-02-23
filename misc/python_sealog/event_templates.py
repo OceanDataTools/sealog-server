@@ -16,6 +16,5 @@ def getEventTemplates():
       return eventTemplates
 
   except Exception as error:
-    logging.error(r.text)
     logging.debug(str(error))
     raise error
