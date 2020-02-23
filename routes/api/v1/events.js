@@ -1230,8 +1230,12 @@ exports.plugin = {
             server.publish('/ws/status/deleteEvents', _renameAndClearFields(result.value));
 
             // delete any aux_data
-            const aux_data_query = { event_id: ObjectID(result.value._id) };
-            console.log("query:", aux_data_query);
+            const aux_data_query = { event_id: ObjectID(result.value.id) };
+            // console.log("aux_data_query:", aux_data_query);
+            // const find_aux_data = await db.collection(eventAuxDataTable).find(aux_data_query).toArray();
+            // console.log('find_aux_data:', find_aux_data);
+
+            // console.log("query:", aux_data_query);
             const test = await db.collection(eventAuxDataTable).deleteMany(aux_data_query);
             console.log('test:', test);
 
