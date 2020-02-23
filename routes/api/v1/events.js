@@ -1231,7 +1231,7 @@ exports.plugin = {
 
             // delete any aux_data
             const aux_data_query = { event_id: ObjectID(result.value._id) };
-            console.log("query:", query);
+            console.log("query:", aux_data_query);
             const test = await db.collection(eventAuxDataTable).deleteMany(aux_data_query);
             console.log('test:', test);
 
