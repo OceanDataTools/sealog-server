@@ -1,0 +1,127 @@
+#!/usr/bin/env python3
+#
+#  Purpose: This script takes a lowering ID and renav raw CTD file and 
+#           creates new aux_data records within Sealog
+#
+#    Usage: Type python3 merge_ctd.py <lowering_id> <raw_ctd_file> to run the script.
+#            - <lowering_id>: the lowering ID (J2-1042)
+#            - <raw_ctd_file>: the raw_ctd_file name with absolute/relative path (./UDP-SB-CTD-RAW_20200128-234312.Raw)
+#
+#   Author: Webb Pinner webbpinner@gmail.com
+#  Created: 2018-11-07
+# Modified: 2020-02-21
+
+import requests
+import json
+import csv
+import logging
+from datetime import datetime
+
+from python_sealog.settings import apiServerURL, eventAuxDataAPIPath, headers
+from python_sealog.lowerings import getLoweringUIDByID
+from python_sealog.events import getEventsByLowering
+
+# default log level
+LOG_LEVEL = logging.INFO
+
+# create logger
+logging.basicConfig(level=LOG_LEVEL,
+                    format='%(asctime)s - %(name)s:%(lineno)s - %(levelname)s - %(message)s'
+                   )
+
+logger = logging.getLogger(__file__)
+
+auxDataTemplate = {
+    'event_id': None,
+    'data_source': None,
+    'data_array': []
+}
+
+def match_raw_ctd_to_event(raw_ctd_file, events, dryrun):
+
+    # print(json.dumps(events, indent=2))
+    for event in events:
+        event['ts'] = datetime.strptime(event['ts'], '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%Y-%m-%dT%H:%M:%S.000Z')
+
+    # print(events)
+
+    raw_sprint_data_array = []
+
+    with open(raw_ctd_file) as f:
+        reader = csv.reader(f, skipinitialspace=True)
+        # header = next(reader) # skip header
+
+        for row in reader:
+
+            # print(row)
+            
+            raw_ts = datetime.strptime(row[0] + ' ' + row[1], '%m/%d/%Y %H:%M:%S.%f').strftime('%Y-%m-%dT%H:%M:%S.000Z')
+            eventIDArray = filter(lambda event: event['ts'] == raw_ts, events)
+
+            for event in eventIDArray:
+                # print("event:", json.dumps(event))
+                try:
+                    raw_data = {}
+                    raw_data['event_id'] = event['id']
+                    raw_data['data_source'] = "vehicleRealtimeCTDData"
+                    raw_data['data_array'] = []
+                    raw_data['data_array'].append({ 'data_name': "cond",'data_value': float(row[3]), 'data_uom': 'S/m' })
+                    raw_data['data_array'].append({ 'data_name': "temp",'data_value': float(row[4]), 'data_uom': 'C' })
+                    raw_data['data_array'].append({ 'data_name': "pres",'data_value': float(row[5]), 'data_uom': 'psig' })
+                    raw_data['data_array'].append({ 'data_name': "depth",'data_value': float(row[6]), 'data_uom': 'm' })
+                    raw_data['data_array'].append({ 'data_name': "sal",'data_value': float(row[7]), 'data_uom': 'ppt' })
+                    raw_data['data_array'].append({ 'data_name': "sv",'data_value': float(row[8]), 'data_uom': 'm/s' })
+
+                    logger.debug("Adding Aux Data Record to event: " + event['ts'] + ' --> ' + event['event_value'])
+                except:
+                    logger.debug("Unable to process row")
+                    logger.debug(row)
+                    continue
+
+                if not dryrun:
+                    try:
+
+                        r = requests.post(apiServerURL + eventAuxDataAPIPath, headers=headers, data = json.dumps(raw_data))
+                    except Exception as error:
+                        logger.debug("Error: " + error)
+                        logger.debug("Event: " + event)
+
+if __name__ == '__main__':
+
+    import argparse
+    import sys
+    import os
+
+
+    parser = argparse.ArgumentParser(description='Sealog CTD Inserter 2000')
+    parser.add_argument('-d', '--debug', action='store_true', help=' display debug messages')
+    parser.add_argument('-n', '--dryrun', action='store_true', default=False, help=' build new aux data records but do not commit the records to the database')
+    parser.add_argument('lowering_id', help='The lowering to process (i.e. S0314)')
+    parser.add_argument('raw_ctd_file', help='The raw_ctd file containing the CTD data')
+
+    args = parser.parse_args()
+
+    # Turn on debug mode
+    if args.debug:
+        logger.info("Setting log level to DEBUG")
+        logger.setLevel(logging.DEBUG)
+
+        for handler in logger.handlers:
+            handler.setLevel(logging.DEBUG)
+
+        logger.debug("Log level now set to DEBUG")
+
+    if not os.path.isfile(args.raw_ctd_file):
+        logger.debug("ERROR: raw_ctd file " + args.raw_ctd_file + " not found")
+        sys.exit(1)
+
+    lowering_uid = getLoweringUIDByID(args.lowering_id)
+
+    if not lowering_uid:
+        logger.debug("ERROR: lowering " + args.lowering_id + " not found")
+        sys.exit(1)
+
+    logger.debug("lowering_uid: " + lowering_uid)
+    lowering_events = getEventsByLowering(lowering_uid)
+
+    match_raw_ctd_to_event(args.raw_ctd_file, lowering_events, args.dryrun)

@@ -1,0 +1,225 @@
+#!/usr/bin/env python3
+#
+#  Purpose: This service listens for new events submitted to Sealog, creates
+#           an aux_data record containing the specified real-time data and
+#           associates the aux data record with the newly created event.
+#
+#           However if the realtime data is older than 20 seconds this service
+#           will consider the data stale and will not associate it with the
+#           newly created event.
+#
+#    Usage: Type python3 sealog-auxDataInserter.py to start the service.
+#
+#           This serivce runs in the forground. Type ^d to kill the service.
+#
+#   Author: Webb Pinner webbpinner@gmail.com
+#  Created: 2020-01-27
+# Modified: 2020-02-01
+
+import asyncio
+import websockets
+import json
+import time
+import requests
+import logging
+from datetime import datetime, timedelta
+from pymongo import MongoClient
+
+from python_sealog.settings import apiServerURL, wsServerURL, eventAuxDataAPIPath, headers
+
+# Names of the appropriate mongoDB database and collection containing the desired real-time data.
+DATABASE = 'subastian_udp_cache'
+COLLECTION = 'ctdData'
+
+# Unique label of the record in the DATABASE.COLLECTION containing the desired real-time data
+RECORD_LABEL = "CTD"
+
+# The data_source to use for the auxData records
+AUX_DATA_DATASOURCE = 'vehicleRealtimeCTDData'
+
+# time afterwhich realtime data is considered stale
+THRESHOLD = 20 # seconds
+
+# set of events to ignore
+EXCLUDE_SET = ()
+
+
+clientWSID = 'auxData-dataInserter-' + AUX_DATA_DATASOURCE # needs to be unique for all currently active dataInserter scripts.
+
+hello = {
+  'type': 'hello',
+  'id': clientWSID,
+  'auth': {
+    'headers': headers
+  },
+  'version': '2',
+  'subs': ['/ws/status/newEvents']
+}
+
+ping = {
+  'type':'ping',
+  'id':clientWSID
+}
+
+auxDataTemplate = {
+  'event_id': None,
+  'data_source': None,
+  'data_array': []
+}
+
+client = MongoClient()
+db = client[DATABASE]
+collection = db[COLLECTION]
+
+# default log level
+LOG_LEVEL = logging.INFO
+
+# create logger
+logging.basicConfig(level=LOG_LEVEL,
+                    format='%(asctime)s - %(name)s:%(lineno)s - %(levelname)s - %(message)s'
+                   )
+
+logger = logging.getLogger(__file__)
+
+
+def auxDataRecordBuilder(event, record):
+  """
+  Here's where you build the auxData record from the new event and real-time data record
+  """
+
+  if not record:
+    return None
+
+  auxDataRecord = {
+    'event_id': event['id'],
+    'data_source': AUX_DATA_DATASOURCE,
+    'data_array': []
+  }
+
+  if 'conductivity' in record['data']:
+    auxDataRecord['data_array'].append({ 'data_name': "cond",'data_value': record['data']['conductivity'], 'data_uom': 'S/m' })
+
+  if 'temperature' in record['data']:
+    auxDataRecord['data_array'].append({ 'data_name': "temp",'data_value': record['data']['temperature'], 'data_uom': 'C' })
+ 
+  if 'pressure' in record['data']:
+    auxDataRecord['data_array'].append({ 'data_name': "pres",'data_value': record['data']['pressure'], 'data_uom': 'psig' })
+
+  if 'depth' in record['data']:
+    auxDataRecord['data_array'].append({ 'data_name': "depth",'data_value': record['data']['depth'], 'data_uom': 'm' })
+
+  if 'salinity' in record['data']:
+    auxDataRecord['data_array'].append({ 'data_name': "sal",'data_value': record['data']['salinity'], 'data_uom': 'ppt' })
+
+  if 'sound_velocity' in record['data']:
+    auxDataRecord['data_array'].append({ 'data_name': "sv",'data_value': record['data']['sound_velocity'], 'data_uom': 'm/s' })
+
+  logger.debug("Aux Data Record:\n" + json.dumps(auxDataRecord, indent=2))
+
+  if len(auxDataRecord['data_array']) == 0:
+    return None
+
+  return auxDataRecord
+
+
+async def auxDataInserter():
+  try:
+    async with websockets.connect(wsServerURL) as websocket:
+
+      await websocket.send(json.dumps(hello))
+
+      while(True):
+
+        event = await websocket.recv()
+        eventObj = json.loads(event)
+
+        if eventObj['type'] and eventObj['type'] == 'ping':
+          await websocket.send(json.dumps(ping))
+        elif eventObj['type'] and eventObj['type'] == 'pub':
+
+          if eventObj['message']['event_value'] in EXCLUDE_SET:
+            logger.debug("Skipping because event value is in the exclude set")
+            continue
+
+          record = None
+
+          try:
+            record = collection.find_one({"label": RECORD_LABEL})
+
+            logger.debug("Record from database:\n" + json.dumps(record['data'], indent=2))
+
+            if not record:
+              logger.error("No data record found in " + DATABASE + '.' + COLLECTION + ' with a label of ' + RECORD_LABEL )
+              continue
+
+            if not 'updated' in record:
+              logger.error("Data record must contain and 'updated' field containing a datetime object of when the data was last updated")
+              continue
+
+            if record['updated'] < datetime.now()-timedelta(seconds=THRESHOLD):
+              logger.debug("Data record is considered stale, skipping")
+              continue
+
+          except Exception as error:
+            logger.error("Error retrieving auxData record")
+            logger.debug(str(error))
+            continue
+
+          auxDataRecord = auxDataRecordBuilder(eventObj['message'], record)
+
+          if auxDataRecord:
+
+            try:
+              logger.debug("Submitting AuxData record to Sealog Server")
+              r = requests.post(apiServerURL + eventAuxDataAPIPath, headers=headers, data = json.dumps(auxDataRecord))
+              logger.debug("Response: " + r.text)
+
+            except Exception as error:
+              logger.error("Error submitting auxData record")
+              logger.debug(str(error))
+              raise error
+
+          else:
+            logger.debug("Skipping because there's no data to add")
+
+  except Exception as error:
+    logger.error(str(error))
+    raise error
+
+if __name__ == '__main__':
+
+  import argparse
+  import os
+  import sys
+
+  parser = argparse.ArgumentParser(description='Aux Data Inserter Service - ' + AUX_DATA_DATASOURCE)
+  parser.add_argument('-d', '--debug', action='store_true', help=' display debug messages')
+
+  args = parser.parse_args()
+
+  # Turn on debug mode
+  if args.debug:
+    logger.info("Setting log level to DEBUG")
+    logger.setLevel(logging.DEBUG)
+    for handler in logger.handlers:
+      handler.setLevel(logging.DEBUG)
+    logger.debug("Log level now set to DEBUG")
+  
+  # Run the main loop
+  while True:
+
+    # Wait 5 seconds for the server to complete startup
+    time.sleep(5)
+
+    try:
+      logger.debug("Connecting to event websocket feed...")
+      asyncio.get_event_loop().run_until_complete(auxDataInserter())
+    except KeyboardInterrupt:
+      logger.error('Keyboard Interrupted')
+      try:
+        sys.exit(0)
+      except SystemExit:
+        os._exit(0)
+    except Exception as error:
+      logger.error("Lost connection to server, trying again in 5 seconds")
+      logger.debug(str(error))
