@@ -33,7 +33,7 @@ from sealog_build_lowering_sample_report import LoweringSampleReport
 from sealog_build_lowering_summary_report import LoweringSummaryReport
 from sealog_build_lowering_vehicle_report import LoweringVehicleReport
 
-BACKUP_ROOT_DIR = '/Users/webbpinner/sealog-backups'
+BACKUP_ROOT_DIR = '/home/mt/sealog-subastian-backups'
 
 CRUISES_FILE_PATH = os.path.join(apiServerFilePath, 'cruises')
 IMAGES_FILE_PATH = os.path.join(apiServerFilePath, 'images')
