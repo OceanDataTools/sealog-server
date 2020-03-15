@@ -20,6 +20,7 @@
 import asyncio
 import websockets
 import json
+import time
 import os
 import requests
 import logging
@@ -159,11 +160,17 @@ if __name__ == '__main__':
     logger.debug("Log level now set to DEBUG")
   
   # Run the main loop
-  try:
-    asyncio.get_event_loop().run_until_complete(auxDataInserter())
-  except KeyboardInterrupt:
-    print('Interrupted')
+  while True:
+
+    # Wait 5 seconds for the server to complete startup
+    time.sleep(5)
+
+    # Run the main loop
     try:
-      sys.exit(0)
-    except SystemExit:
-      os._exit(0)
+      asyncio.get_event_loop().run_until_complete(auxDataInserter())
+    except KeyboardInterrupt:
+      print('Interrupted')
+      try:
+        sys.exit(0)
+      except SystemExit:
+        os._exit(0)
