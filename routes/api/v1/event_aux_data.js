@@ -174,7 +174,7 @@ const auxDataSuccessResponse = Joi.object({
 
 exports.plugin = {
   name: 'routes-api-event_aux_data',
-  dependencies: ['hapi-mongodb', '@hapi/nes'],
+  dependencies: ['hapi-mongodb', 'nes'],
   register: (server, options) => {
 
     server.subscription('/ws/status/newEventAuxData');
