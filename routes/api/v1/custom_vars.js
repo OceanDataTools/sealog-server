@@ -42,7 +42,7 @@ const customVarUpdatePayload = Joi.object({
 
 exports.plugin = {
   name: 'routes-api-custom_vars',
-  dependencies: ['hapi-mongodb', 'nes'],
+  dependencies: ['hapi-mongodb', '@hapi/nes'],
   register: (server, options) => {
 
     server.subscription('/ws/status/updateCustomVars');

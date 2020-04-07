@@ -97,7 +97,7 @@ const eventTemplateUpdatePayload = Joi.object({
 
 exports.plugin = {
   name: 'routes-api-event_templates',
-  dependencies: ['hapi-mongodb'],
+  dependencies: ['hapi-mongodb', '@hapi/nes'],
   register: (server, options) => {
 
     server.subscription('/ws/status/newEventTemplates');

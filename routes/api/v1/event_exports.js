@@ -249,7 +249,7 @@ const eventExportQuery = Joi.object({
 
 exports.plugin = {
   name: 'routes-api-event-exports',
-  dependencies: ['hapi-mongodb'],
+  dependencies: ['hapi-mongodb', '@hapi/nes'],
   register: (server, options) => {
 
     server.route({
