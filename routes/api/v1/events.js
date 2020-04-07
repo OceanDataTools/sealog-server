@@ -225,7 +225,7 @@ const eventUpdatePayload = Joi.object({
 
 exports.plugin = {
   name: 'routes-api-events',
-  dependencies: ['hapi-mongodb', 'nes'],
+  dependencies: ['hapi-mongodb', '@hapi/nes'],
   register: (server, options) => {
 
     server.subscription('/ws/status/newEvents');

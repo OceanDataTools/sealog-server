@@ -1,6 +1,7 @@
 const Boom = require('@hapi/boom');
 const Joi = require('@hapi/joi');
 
+
 const {
   customVarsTable
 } = require('../../../config/db_constants');
@@ -42,7 +43,7 @@ const customVarUpdatePayload = Joi.object({
 
 exports.plugin = {
   name: 'routes-api-custom_vars',
-  dependencies: ['hapi-mongodb', 'nes'],
+  dependencies: ['hapi-mongodb', '@hapi/nes'],
   register: (server, options) => {
 
     server.subscription('/ws/status/updateCustomVars');
