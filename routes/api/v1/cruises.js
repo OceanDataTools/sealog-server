@@ -193,7 +193,7 @@ const cruiseUpdatePermissionsPayload = Joi.object({
 
 exports.plugin = {
   name: 'routes-api-cruises',
-  dependencies: ['hapi-mongodb', '@hapi/nes'],
+  dependencies: ['hapi-mongodb', 'nes'],
   register: (server, options) => {
 
     server.subscription('/ws/status/newCruises');

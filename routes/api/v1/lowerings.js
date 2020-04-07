@@ -182,7 +182,7 @@ const loweringUpdatePermissionsPayload = Joi.object({
 
 exports.plugin = {
   name: 'routes-api-lowerings',
-  dependencies: ['hapi-mongodb','@hapi/nes'],
+  dependencies: ['hapi-mongodb','nes'],
   register: (server, options) => {
 
     server.subscription('/ws/status/newLowerings');

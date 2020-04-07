@@ -1,6 +1,6 @@
 exports.plugin = {
   name: 'routes-ws-events',
-  dependencies: ['@hapi/nes'],
+  dependencies: ['nes'],
   register: (server, options) => {
 
     server.method('publishNewEvent', ( payload ) => {
