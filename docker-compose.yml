@@ -8,8 +8,24 @@ services:
     image: oceandatatools/sealog-server
     depends_on:
       - mongo
+
+    environment:
+      # Change this value to something random
+      - SEALOG_SECRET=VDESWM31EC+YQ5bLtrIHxl9dnHH67oGx7aMgm27ALjI=
+
+    # To use the debugger, uncomment the following and the port below and visit
+    # chrome://inspect in the Chrome browser
+    #command: node --inspect-brk=0.0.0.0:9229 server.js
+
     ports:
       - "8000:8000"  # API
+    # - "9229:9229"  # Node debugger
+
+    volumes:
+      - sealog-files:/home/sealog/sealog-files
+    # To use custom configuration files in ./config, uncomment the following:
+    # - ./config:/usr/src/app/config
+
 
   mongo:
     image: mongo:4
@@ -17,5 +33,7 @@ services:
     volumes:
       - database:/data/db
 
+
 volumes:
   database:
+  sealog-files:
