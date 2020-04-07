@@ -27,4 +27,4 @@ RUN sed -i \
 EXPOSE 8000
 
 # By default, run in production mode
-CMD [ "npm", "run-script", "start-devel" ]
+CMD [ "npm", "run", "start" ]
