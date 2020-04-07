@@ -79,7 +79,7 @@ const filepondFilePayload = Joi.object({
 
 exports.plugin = {
   name: 'routes-default',
-  dependencies: ['hapi-mongodb', '@hapi/inert'],
+  dependencies: ['hapi-mongodb', 'inert'],
   register: (server, options) => {
 
     server.route({
