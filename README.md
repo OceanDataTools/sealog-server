@@ -2,7 +2,7 @@
 Sealog event-logging server
 Sealog is intended as a general purpose eventlogging framework that is independent of any particular user-interface.  All interactions with the Sealog Server are done via the [Sealog Server's RESTful API](<https://sealog.oceandatatools.org:9200/sealog-server/documentation>).
 
-This allows for users to develop their own user interfaces for adding, editing and exporting events or extend the functionality of other systems to dynamically submit events.  It's even possible to develop hardware-based clients (physical buttons) using cheap network-aware microcontrollers (i.e Ardinuo w/Ethernet Shield).
+This allows for users to develop their own user interfaces for adding, editing and exporting events or extend the functionality of 3rd-party systems to dynamically submit events.  It's even possible to develop hardware-based clients (physical buttons) using cheap network-aware microcontrollers (i.e Ardinuo w/Ethernet Shield).
 
 Almost all calls to the API are authenticated using Java Web Tokens (JWT).  The only exceptions are the requests related to self-registration of new users and requests to obtaining JWTs (using standard user/pass login creditionals).
 
@@ -10,10 +10,10 @@ Almost all calls to the API are authenticated using Java Web Tokens (JWT).  The 
  - 100% of functionality accessable via RESTful API, completely indenpendent of any graphical/CLI front-end.
  - Ad-hoc association of ancilary data with events such as sensor data, navigation, etc. 
  - Ability to filter events based on user, value, keywords and time spans
- - Ability to subscribe to the live eventlog feed (using websockets).
- - Simple exporting of all or a filtered list of events merged with ancilary data is JSON or CSV format
- - Defining event templates for quick event submission
- - role-based authentication using Java Web Tokens (JWT)
+ - Ability to subscribe to the live eventlog feed (via websockets).
+ - Simple exporting of all or a filtered subset of events merged with ancilary data in JSON or CSV format
+ - Defining event templates for enforcing standardized vocabularies and quick event submission
+ - role-based user managment
 
 ## API Documentation
 
@@ -189,9 +189,9 @@ My intention with sealog-server was to create a production quality eventlogging 
 I've also setup a Slack channel for sealog, please contact me at oceandatarat at gmail dot com if you would like an invitation.
 
 # Current Users
-Sealog Server is currently used by the Woods Hole Oceanographic Institution to support science eventlogging for the JASON ROV and Alvin HOV.  Sealog is also used by the URI Inner Space Center for shoreside event logging of the NOAA Ship Okeanos Explorer and E/V Nautilus
+Sealog Server is currently used by the Woods Hole Oceanographic Institution in support of the JASON ROV and Alvin HOV, the Schimdt Ocean Insitute in support of the SuBastian ROV and the URI Inner Space Center providing shoreside event-logging for the NOAA Ship Okeanos Explorer and E/V Nautilus.
 
 # Thanks and acknowledgments
-Sealog is in ongoing development thanks to the generosity of the Schmidt Ocean Institute (SOI) who have supported the project since 2018. I also want to thank the Woods Hole Oceanographic Institution (WHOI) who provided the initial inspiration for the project and were it's first user.
+Sealog is in ongoing development thanks to the generosity of the Schmidt Ocean Institute (SOI) who have supported the project since 2018 and the Woods Hole Oceanographic Institution (WHOI) who provided the initial inspiration for the project and were it's first user.
 
 Lastly I want to thank the UNOLS community who have helped me since the beginning by sharing their wealth of experience and technical ability.
