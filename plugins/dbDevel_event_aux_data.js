@@ -203,6 +203,9 @@ exports.plugin = {
       console.log("Populating Event Aux Collection");
       await collection.insertMany(test_data);
 
+      console.log("Creating additional indexes");
+      await collection.createIndex({ event_id: -1 });
+
     }
     catch (err) {
       console.log("CREATE ERROR:", err.code);
