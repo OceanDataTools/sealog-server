@@ -157,7 +157,7 @@ exports.plugin = {
         description: 'Return the current list of users',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['users','auth','api']
+        tags: ['users','api']
       }
     });
 
@@ -200,7 +200,7 @@ exports.plugin = {
         }
       },
       config: {
-        auth:{
+        auth: {
           strategy: 'jwt',
           scope: ['admin', 'read_users']
         },
@@ -216,7 +216,7 @@ exports.plugin = {
         description: 'Return a user record based on the user id',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['user','auth','api']
+        tags: ['users','api']
       }
     });
 
@@ -353,7 +353,7 @@ exports.plugin = {
         description: 'Create a new user',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['user','auth','api']
+        tags: ['users','api']
       }
     });
 
@@ -471,7 +471,7 @@ exports.plugin = {
         description: 'Update a user record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['user','auth','api']
+        tags: ['users','api']
       }
     });
 
@@ -551,7 +551,7 @@ exports.plugin = {
         description: 'Delete a user record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['user','auth','api']
+        tags: ['users','api']
       }
     });
 
@@ -573,7 +573,7 @@ exports.plugin = {
 
           const user = result;
 
-          return h.response({ token: Jwt.sign( { id:user._id, scope: server.methods._rolesToScope(user.roles), roles: user.roles }, SECRET_KEY) }).code(200);
+          return h.response({ token: Jwt.sign( { id: user._id, scope: server.methods._rolesToScope(user.roles), roles: user.roles }, SECRET_KEY) }).code(200);
         }
         catch (err) {
           console.log("ERROR:", err);
@@ -604,7 +604,7 @@ exports.plugin = {
           <div class="panel-heading"><strong>Status Code: 401</strong> - authenication failed</div>\
           <div class="panel-body">Returns nothing</div>\
         </div>',
-        tags: ['login', 'auth', 'api']
+        tags: ['users', 'api']
       }
     });
   }

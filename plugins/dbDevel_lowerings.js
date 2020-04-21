@@ -100,7 +100,7 @@ exports.plugin = {
 
     console.log("Searching for Lowerings Collection");
     try {
-      const result = await db.listCollections({ name:loweringsTable }).toArray();
+      const result = await db.listCollections({ name: loweringsTable }).toArray();
       if (result.length > 0) {
         console.log("Lowerings Collection is present... dropping it");
         try {

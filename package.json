@@ -8,10 +8,9 @@
   },
   "main": "server.js",
   "scripts": {
-    "test": "lab -v --leaks --timeout 8000",
     "start": "NODE_ENV=production node server.js",
     "start-debug": "NODE_ENV=debug node server.js",
-    "start-test": "NODE_ENV=testing node ./test.js",
+    "start-test": "lab -v **/*.test.js",
     "start-devel": "NODE_ENV=development npm-run-all --parallel lint start:server",
     "start:server": "nodemon server.js",
     "lint": "eslint . --ext .js",

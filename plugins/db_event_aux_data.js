@@ -12,7 +12,7 @@ exports.plugin = {
 
     console.log("Searching for Event Aux Data Collection");
     try {
-      const result = await db.listCollections({ name:eventAuxDataTable }).toArray();
+      const result = await db.listCollections({ name: eventAuxDataTable }).toArray();
       if (result.length > 0) {
         console.log("Collection already exists... we're done here.");
         return;

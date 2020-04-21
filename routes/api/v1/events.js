@@ -198,8 +198,8 @@ const eventCreatePayload = Joi.object({
   ts: Joi.date().iso().optional(),
   event_value: Joi.string().min(1).max(100).required(),
   event_options: Joi.array().items(Joi.object({
-    event_option_name:Joi.string().required(),
-    event_option_value:Joi.string().allow('').required()
+    event_option_name: Joi.string().required(),
+    event_option_value: Joi.string().allow('').required()
   })).optional(),
   event_free_text: Joi.string().allow('').optional()
 }).label('eventCreatePayload');
@@ -217,8 +217,8 @@ const eventUpdatePayload = Joi.object({
   ts: Joi.date().iso().optional(),
   event_value: Joi.string().min(1).max(100).optional(),
   event_options: Joi.array().items(Joi.object({
-    event_option_name:Joi.string().required(),
-    event_option_value:Joi.string().allow('').required()
+    event_option_name: Joi.string().required(),
+    event_option_value: Joi.string().allow('').required()
   })).optional(),
   event_free_text: Joi.string().allow('').optional()
 }).required().min(1).label('eventUpdateResponse');
@@ -374,7 +374,7 @@ exports.plugin = {
         description: 'Export the events for a cruise based on the cruise id',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong>, <strong>event_logger</strong> or <strong>event_watcher</strong></p>',
-        tags: ['events','auth', 'api']
+        tags: ['events', 'api']
       }
     });
 
@@ -491,7 +491,7 @@ exports.plugin = {
         description: 'Return the number of events for a cruise based on the cruise id',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong>, <strong>event_logger</strong> or <strong>event_watcher</strong></p>',
-        tags: ['events','auth', 'api']
+        tags: ['events', 'api']
       }
     });
 
@@ -638,7 +638,7 @@ exports.plugin = {
         description: 'Export the events for a lowering based on the lowering id',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong>, <strong>event_logger</strong> or <strong>event_watcher</strong></p>',
-        tags: ['events','auth', 'api']
+        tags: ['events', 'api']
       }
     });
 
@@ -751,7 +751,7 @@ exports.plugin = {
         description: 'Export the number of events for a lowering based on the lowering id',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong>, <strong>event_logger</strong> or <strong>event_watcher</strong></p>',
-        tags: ['events','auth', 'api']
+        tags: ['events', 'api']
       }
     });
 
@@ -898,7 +898,7 @@ exports.plugin = {
         description: 'Return the events based on query parameters',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong>, <strong>event_logger</strong> or <strong>event_watcher</strong></p>',
-        tags: ['events','auth', 'api']
+        tags: ['events', 'api']
       }
     });
 
@@ -999,7 +999,7 @@ exports.plugin = {
         description: 'Return the number of events based on query parameters',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong>, <strong>event_logger</strong> or <strong>event_watcher</strong></p>',
-        tags: ['events','auth', 'api']
+        tags: ['events', 'api']
       }
     });
 
@@ -1030,7 +1030,7 @@ exports.plugin = {
         }
       },
       config: {
-        auth:{
+        auth: {
           strategy: 'jwt',
           scope: ['admin', 'read_events']
         },
@@ -1046,7 +1046,7 @@ exports.plugin = {
         description: 'Return an event based on the event id',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong>, <strong>event_logger</strong> or <strong>event_watcher</strong></p>',
-        tags: ['events','auth','api']
+        tags: ['events','api']
       }
     });
 
@@ -1152,7 +1152,7 @@ exports.plugin = {
         description: 'Create a new event record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-        tags: ['events','auth','api']
+        tags: ['events','api']
       }
     });
 
@@ -1281,7 +1281,7 @@ exports.plugin = {
         description: 'Update an event record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-        tags: ['events','auth','api']
+        tags: ['events','api']
       }
     });
 
@@ -1365,7 +1365,7 @@ exports.plugin = {
         description: 'Delete an event record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-        tags: ['events','auth','api']
+        tags: ['events','api']
       }
     });
 
@@ -1408,7 +1408,7 @@ exports.plugin = {
         description: 'Delete ALL the event records',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-        tags: ['events','auth','api']
+        tags: ['events','api']
       }
     });
   }

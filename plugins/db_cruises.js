@@ -12,7 +12,7 @@ exports.plugin = {
 
     console.log("Searching for Cruises Collection");
     try {
-      const result = await db.listCollections({ name:cruisesTable }).toArray();
+      const result = await db.listCollections({ name: cruisesTable }).toArray();
       if (result.length > 0 ) {
         console.log("Collection already exists... we're done here.");
         return;

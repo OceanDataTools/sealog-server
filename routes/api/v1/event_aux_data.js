@@ -126,7 +126,7 @@ const auxData_data_item = Joi.object({
     Joi.string(),
     Joi.number()
   ).required(),
-  data_uom:Joi.string().optional()
+  data_uom: Joi.string().optional()
 }).label('auxDataDataItem');
 
 const auxDataQuery = Joi.object({
@@ -288,7 +288,7 @@ exports.plugin = {
         description: 'Return the event_aux_data records for a cruise based on the cruise id',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-        tags: ['event_aux_data','auth','api']
+        tags: ['event_aux_data','api']
       }
     });
 
@@ -389,7 +389,7 @@ exports.plugin = {
         description: 'Return the event_aux_data records for a lowering based on the lowering id',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-        tags: ['event_aux_data','auth','api']
+        tags: ['event_aux_data','api']
       }
     });
 
@@ -526,7 +526,7 @@ exports.plugin = {
         description: 'Return the event_aux_data records based on query parameters',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-        tags: ['event_aux_data','auth','api']
+        tags: ['event_aux_data','api']
       }
     });
 
@@ -554,7 +554,7 @@ exports.plugin = {
         }
       },
       config: {
-        auth:{
+        auth: {
           strategy: 'jwt',
           scope: ['admin', 'read_events']
         },
@@ -570,7 +570,7 @@ exports.plugin = {
         description: 'Return the event_aux_data record based on event_aux_data id',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-        tags: ['event_aux_data','auth', 'api']
+        tags: ['event_aux_data', 'api']
       }
     });
 
@@ -629,7 +629,7 @@ exports.plugin = {
           try {
             const queryResult = await db.collection(eventsTable).findOne(query);
 
-            if (!queryResult){
+            if (!queryResult) {
               return Boom.badRequest('event not found');
             }
 
@@ -638,7 +638,7 @@ exports.plugin = {
             try {
               const result = await db.collection(eventAuxDataTable).findOne(query);
 
-              if (!result){
+              if (!result) {
                 try {
                   const insertResult = await db.collection(eventAuxDataTable).insertOne(event_aux_data);
 
@@ -707,7 +707,7 @@ exports.plugin = {
         description: 'Create a new event_aux_data record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-        tags: ['event_aux_data','auth','api']
+        tags: ['event_aux_data','api']
       }
     });
 
@@ -800,7 +800,7 @@ exports.plugin = {
         description: 'Update a event_aux_data record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-        tags: ['event_aux_data','auth','api']
+        tags: ['event_aux_data','api']
       }
     });
 
@@ -855,7 +855,7 @@ exports.plugin = {
         description: 'Delete an event_aux_data record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-        tags: ['event_aux_data','auth','api']
+        tags: ['event_aux_data','api']
       }
     });
   }

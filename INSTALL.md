@@ -3,19 +3,20 @@
 ### Prerequisites
 
  - [MongoDB](https://www.mongodb.com) >=v3.4.x
- - [nodeJS](https://nodejs.org) >=8.11.x
- - [npm](https://www.npmjs.com) >=5.7.x
+ - [nodeJS](https://nodejs.org) >=12.x
+ - [npm](https://www.npmjs.com) >=6.13.x
  - [git](https://git-scm.com)
  
  
-#### Installing MongoDB 3.4 on Ubuntu 16.04 LTS
+#### Installing MongoDB 3.6 on Ubuntu 18.04 LTS
 
-Recommend using these instuctions up through part one:
-https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-mongodb-on-ubuntu-16-04
+```
+sudo apt-get install mongodb
+```
  
-#### Installing NodeJS/npm on Ubuntu 16.04 LTS
-Recommend using these instuctions, skipping the distro-version section and following the section on “How to install Using a PPA":
-https://www.digitalocean.com/community/tutorials/how-to-install-node-js-on-ubuntu-16-04#how-to-install-using-a-ppa
+#### Installing NodeJS/npm on Ubuntu 18.04 LTS
+Recommend using these instuctions, skipping the distro-version section and following the section on “How to install Using a PPA".  ***NOTE:*** tweak these instructions to install version 12:
+https://www.digitalocean.com/community/tutorials/how-to-install-node-js-on-ubuntu-18-04
 
 ### Clone the repository
 
@@ -82,7 +83,39 @@ cd ./sealog-server
 npm start
 ```
 
-**This will start the server in production mode.**  This mode will connect to a mongo database that was already setup for use with sealog-server.  If no database is found, sealog-server will attempt to create it.  Running in production mode for the first time will create an admin account (jason:dsl!jason) and 1 regular user account (guest).  There is no password set for the regular account.
+**This will start the server in production mode.**  This mode will connect to a mongo database that was already setup for use with sealog-server.  If no database is found, sealog-server will attempt to create it.  Running in production mode for the first time will create an admin account (admin:demo) and 1 regular user account (guest).  There is no password set for the regular account.
+
+To recommended way to setup Sealog to run at boot is to used Supervisor.  To install Supervisor for Ubuntu type:
+
+```
+sudo apt-get install supervisor
+```
+
+Create a supervisor configuration file:
+```
+sudo pico /etc/supervisor/conf.d/sealog-server.conf
+```
+
+Copy/Paste the following into the file (assumes sealog-server is located in `/home/sealog` and that the desired user is `sealog`):
+```
+[program:sealog-server]
+directory=/home/sealog/sealog-server
+command=node server.js
+environment=NODE_ENV="production"
+process_name=sealog-server_%(process_num)s
+numprocs=1
+redirect_stderr=true
+stdout_logfile=/var/log/sealog-server_STDOUT.log
+stderr_logfile=/var/log/sealog-server_STDERR.log
+user=sealog
+autostart=true
+autorestart=true
+```
+
+Start the sealog-server supervisor task:
+```
+sudo supervisorctl start sealog-server:
+```
 
 ## Need to make everything available over port 80?
 
@@ -134,3 +167,5 @@ AND the following line at line 45:
 ```
 //    tls: tlsOptions,
 ```
+
+**Note:** Make sure the user running the sealog-server process has read access to the certificate files.

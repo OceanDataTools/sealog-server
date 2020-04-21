@@ -332,7 +332,7 @@ exports.plugin = {
         description: 'Return the cruises based on query parameters',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['cruises','auth','api']
+        tags: ['cruises','api']
       }
     });
 
@@ -415,7 +415,7 @@ exports.plugin = {
         description: 'Return the cruises based on query parameters',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['cruises','auth','api']
+        tags: ['cruises','api']
       }
     });
 
@@ -498,7 +498,7 @@ exports.plugin = {
         description: 'Return the cruises based on query parameters',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['cruises','auth','api']
+        tags: ['cruises','api']
       }
     });
 
@@ -550,7 +550,7 @@ exports.plugin = {
         return h.response(cruise).code(200);
       },
       config: {
-        auth:{
+        auth: {
           strategy: 'jwt',
           scope: ['admin', 'read_cruises']
         },
@@ -566,7 +566,7 @@ exports.plugin = {
         description: 'Return the cruise based on cruise id',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['cruises','auth','api']
+        tags: ['cruises','api']
       }
     });
 
@@ -613,7 +613,7 @@ exports.plugin = {
         return h.response().code(200);
       },
       config: {
-        auth:{
+        auth: {
           strategy: 'jwt',
           scope: ['admin', 'read_cruises']
         },
@@ -627,7 +627,7 @@ exports.plugin = {
         description: 'Bump the cruise on the updateCruise websocket subscription',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['cruises','auth','api']
+        tags: ['cruises','api']
       }
     });
 
@@ -751,7 +751,7 @@ exports.plugin = {
         description: 'Create a new event template',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['cruises','auth','api']
+        tags: ['cruises','api']
       }
     });
 
@@ -953,7 +953,7 @@ exports.plugin = {
         description: 'Update a cruise record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['cruises','auth','api']
+        tags: ['cruises','api']
       }
     });
 
@@ -1094,7 +1094,7 @@ exports.plugin = {
         description: 'Update a cruise access permissions',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['cruises','auth','api']
+        tags: ['cruises','api']
       }
     });
 
@@ -1154,7 +1154,7 @@ exports.plugin = {
         description: 'Delete a cruise record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['cruises','auth','api']
+        tags: ['cruises','api']
       }
     });
 
@@ -1203,7 +1203,7 @@ exports.plugin = {
         description: 'Delete ALL cruise records',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['cruises','auth','api']
+        tags: ['cruises','api']
       }
     });
   }

@@ -90,7 +90,7 @@ const _rolesToScope = (roles) => {
     return [];
   }
 
-  if (roles.includes("admin")){
+  if (roles.includes("admin")) {
     return ['admin'];
   }
 
@@ -272,7 +272,7 @@ exports.plugin = {
           }
         },
         description: 'This is the route used for registering new users.',
-        tags: ['register', 'api']
+        tags: ['auth', 'api']
       }
     });
 
@@ -348,7 +348,7 @@ exports.plugin = {
         },
         description: 'This is the route used for registering new users.',
         // notes: 'The POST payload must include a username, full name, password, email address and reCaptcha hash key',
-        tags: ['register', 'auth', 'api']
+        tags: ['auth', 'api']
       }
     });
 
@@ -403,7 +403,7 @@ exports.plugin = {
         try {
           await db.collection(usersTable).updateOne({ _id: new ObjectID(user._id) }, { $set: user });
 
-          return h.response({ token: Jwt.sign( { id:user._id, scope: _rolesToScope(user.roles), roles: user.roles }, SECRET_KEY), id: user._id.toString() }).code(200);
+          return h.response({ token: Jwt.sign( { id: user._id, scope: _rolesToScope(user.roles), roles: user.roles }, SECRET_KEY), id: user._id.toString() }).code(200);
         }
         catch (err) {
           return Boom.serverUnavailable('database error', err);
@@ -420,7 +420,7 @@ exports.plugin = {
         },
         description: 'Obtain JWT authenication via user/pass.',
         notes: 'Use this method to obtain a JWT based on the provided username/password.',
-        tags: ['login', 'auth', 'api']
+        tags: ['auth', 'api']
       }
     });
 
@@ -429,7 +429,7 @@ exports.plugin = {
       path: '/auth/validate',
       handler(request, h) {
 
-        return h.response({ status:"valid" }).code(200);
+        return h.response({ status: "valid" }).code(200);
       },
       config: {
         auth: {
@@ -440,7 +440,7 @@ exports.plugin = {
         },
         description: 'This is the route used for verifying the JWT is valid.',
         notes: 'Simple utiliy route that verifies the JWT included in the http call header is valid.',
-        tags: ['login', 'auth', 'api']
+        tags: ['auth', 'api']
       }
     });
 
@@ -507,7 +507,7 @@ exports.plugin = {
           }
         });
 
-        return h.response({ statusCode:200, message:"password reset email sent" }).code(200);
+        return h.response({ statusCode: 200, message: "password reset email sent" }).code(200);
       },
       config: {
         validate: {
@@ -521,7 +521,7 @@ exports.plugin = {
         description: 'Reset the user\'s password.',
         notes: 'Use this method to reset optain a password reset email.\
           To prevent BOT abuse this call also optionally take a recaptcha hash key',
-        tags: ['password reset', 'api']
+        tags: ['auth', 'api']
       }
     });
 
@@ -548,7 +548,7 @@ exports.plugin = {
         }
       },
       config: {
-        auth:{
+        auth: {
           strategy: 'jwt'
           // scope: ['admin', 'read_users']
         },
@@ -563,7 +563,7 @@ exports.plugin = {
         description: 'Return a user record based on the user JWT',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['user','auth','api']
+        tags: ['auth','api']
       }
     });
 
@@ -578,7 +578,7 @@ exports.plugin = {
         try {
           const user = await db.collection(usersTable).findOne({ _id: new ObjectID(request.auth.credentials.id) });
 
-          return h.response({ token: Jwt.sign( { id:user._id, scope: server.methods._rolesToScope(user.roles), roles: user.roles }, SECRET_KEY) }).code(200);
+          return h.response({ token: Jwt.sign( { id: user._id, scope: server.methods._rolesToScope(user.roles), roles: user.roles }, SECRET_KEY) }).code(200);
         }
         catch (err) {
           console.log("ERROR:", err);
@@ -608,7 +608,7 @@ exports.plugin = {
           <div class="panel-heading"><strong>Status Code: 401</strong> - authenication failed</div>\
           <div class="panel-body">Returns nothing</div>\
         </div>',
-        tags: ['login', 'auth', 'api']
+        tags: ['auth', 'api']
       }
     });
   }

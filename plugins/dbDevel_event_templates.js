@@ -12,7 +12,7 @@ exports.plugin = {
 
     const test_data = [
       {
-        "_id" : ObjectID("5a71c3d7fa96aa1977822b2c"),
+        _id: ObjectID("5a71c3d7fa96aa1977822b2c"),
         event_name: 'FISH',
         event_value: 'FISH',
         event_free_text_required: false,
@@ -29,7 +29,7 @@ exports.plugin = {
         }]
       },
       {
-        "_id" : ObjectID("5a71c3d7fa96aa1977822b2d"),
+        _id: ObjectID("5a71c3d7fa96aa1977822b2d"),
         event_name: 'ROCK',
         event_value: 'ROCK',
         event_free_text_required: false,
@@ -46,7 +46,7 @@ exports.plugin = {
         }]
       },
       {
-        "_id" : ObjectID("5a71c3d7fa96aa1977822b2e"),
+        _id: ObjectID("5a71c3d7fa96aa1977822b2e"),
         event_name: 'CORAL',
         event_value: 'CORAL',
         event_free_text_required: false,
@@ -63,7 +63,7 @@ exports.plugin = {
         }]
       },
       {
-        "_id" : ObjectID("5a71c3d7fa96aa1977822b2f"),
+        _id: ObjectID("5a71c3d7fa96aa1977822b2f"),
         event_name: 'CRAB',
         event_value: 'CRAB',
         event_free_text_required: false,
@@ -80,7 +80,7 @@ exports.plugin = {
         }]
       },
       {
-        "_id" : ObjectID("5a71c3d7fa96aa1977822b30"),
+        _id: ObjectID("5a71c3d7fa96aa1977822b30"),
         event_name: 'SQUID',
         event_value: 'SQUID',
         event_free_text_required: false,
@@ -97,7 +97,7 @@ exports.plugin = {
         }]
       },
       {
-        "_id" : ObjectID("5a71c3d7fa96aa1977822b31"),
+        _id: ObjectID("5a71c3d7fa96aa1977822b31"),
         event_name: 'SAMPLE',
         event_value: 'SAMPLE',
         event_free_text_required: false,
@@ -113,7 +113,7 @@ exports.plugin = {
             event_option_values: []
           },
           {
-            event_option_allow_freeform:false,
+            event_option_allow_freeform: false,
             event_option_name: "Sample Type",
             event_option_required: true,
             event_option_type: "dropdown",
@@ -122,7 +122,7 @@ exports.plugin = {
         ]
       },
       {
-        "_id" : ObjectID("5a71c3d7fa96aa1977822b32"),
+        "_id": ObjectID("5a71c3d7fa96aa1977822b32"),
         event_name: 'PROBLEM',
         event_value: 'PROBLEM',
         event_free_text_required: false,
@@ -132,14 +132,14 @@ exports.plugin = {
         event_options: []
       },
       {
-        "_id" : ObjectID("5a71c3d7fa96aa1977822b33"),
+        "_id": ObjectID("5a71c3d7fa96aa1977822b33"),
         event_name: "SUPER_EVENT",
         event_value: "SUPER_EVENT",
         event_free_text_required: false,
         system_template: false,
         template_categories: ['biology','geology','operations'],
         disabled: false,
-        event_options:[
+        event_options: [
           {
             event_option_allow_freeform: false,
             event_option_name: "first text option",
@@ -155,14 +155,14 @@ exports.plugin = {
             event_option_values: []
           },
           {
-            event_option_allow_freeform:false,
+            event_option_allow_freeform: false,
             event_option_name: "first checkbox option",
             event_option_required: false,
             event_option_type: "checkboxes",
             event_option_values: ["1","2","3","4"]
           },
           {
-            event_option_allow_freeform:false,
+            event_option_allow_freeform: false,
             event_option_name: "first select option",
             event_option_required: false,
             event_option_type: "dropdown",
@@ -197,7 +197,7 @@ exports.plugin = {
 
     console.log("Searching for Event Templates Collection");
     try {
-      const result = await db.listCollections({ name:eventTemplatesTable }).toArray();
+      const result = await db.listCollections({ name: eventTemplatesTable }).toArray();
       if (result.length > 0) {
         console.log("Event Templates Collection is present... dropping it");
         try {

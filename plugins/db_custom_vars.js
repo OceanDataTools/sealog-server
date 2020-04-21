@@ -20,7 +20,7 @@ exports.plugin = {
 
     console.log("Searching for Custom Variable Collection");
     try {
-      const result = await db.listCollections({ name:customVarsTable }).toArray();
+      const result = await db.listCollections({ name: customVarsTable }).toArray();
       if (result.length > 0) {
         console.log("Collection already exists... we're done here.");
         return;

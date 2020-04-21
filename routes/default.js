@@ -102,7 +102,7 @@ exports.plugin = {
             })
           }
         },
-        tags: ['default','test']
+        tags: ['misc','api']
       }
     });
 
@@ -132,7 +132,7 @@ exports.plugin = {
         response: {
           status: {}
         },
-        tags: ['default','test','auth']
+        tags: ['misc','api']
       }
     });
 
@@ -154,7 +154,7 @@ exports.plugin = {
           params: fileParam
         },
         description: 'This route is used for serving files associated with cruises.',
-        tags: ['cruises','auth','api','file_get']
+        tags: ['cruises','api','files']
       }
     });
 
@@ -175,13 +175,13 @@ exports.plugin = {
           headers: authorizationHeader
         },
         description: 'This route is used for deleting files managed with filepond not yet fully associated with a cruise.',
-        tags: ['cruises','auth','api','file_delete']
+        tags: ['cruises','api','filepond']
       }
     });
 
     server.route({
       method: 'DELETE',
-      path: CRUISE_ROUTE + '/{file*}',
+      path: CRUISE_ROUTE + '/{param*}',
       async handler(request, h) {
 
         const filePath = Path.join(CRUISE_PATH, request.params.file);
@@ -197,7 +197,7 @@ exports.plugin = {
           headers: authorizationHeader
         },
         description: 'This route is used for deleting files associated with cruises.',
-        tags: ['cruises','auth','api','file_delete']
+        tags: ['cruises','api','files']
       }
     });
 
@@ -241,7 +241,7 @@ exports.plugin = {
         description: 'Upload cruise file via filepond',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>cruise_managers</strong></p>',
-        tags: ['cruises','auth','api', 'file_upload']
+        tags: ['cruises','api', 'filepond']
       }
     });
 
@@ -272,7 +272,7 @@ exports.plugin = {
         description: 'Upload cruise file',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>cruise_managers</strong></p>',
-        tags: ['cruises','auth','api', 'file_upload']
+        tags: ['cruises','api', 'files']
       }
     });
 
@@ -294,7 +294,7 @@ exports.plugin = {
           params: fileParam
         },
         description: 'This route is used for serving files associated with lowerings.',
-        tags: ['lowerings','auth','api','file_get']
+        tags: ['lowerings','api','files']
       }
     });
 
@@ -315,7 +315,7 @@ exports.plugin = {
           headers: authorizationHeader
         },
         description: 'This route is used for deleting files managed with filepond not yet fully associated with a lowering.',
-        tags: ['lowerings','auth','api','file_delete']
+        tags: ['lowerings','api','filepond']
       }
     });
 
@@ -339,8 +339,8 @@ exports.plugin = {
           headers: authorizationHeader,
           params: fileParam
         },
-        description: 'This route is used for deleting files associated with cruises.',
-        tags: ['lowerings','auth','api','file_delete']
+        description: 'This route is used for deleting files associated with lowerings.',
+        tags: ['lowerings','api','files']
       }
     });
 
@@ -380,7 +380,7 @@ exports.plugin = {
         description: 'Upload lowering file via filepond',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>cruise_managers</strong></p>',
-        tags: ['lowerings','auth','api', 'file_upload']
+        tags: ['lowerings','api', 'filepond']
       }
     });
 
@@ -411,7 +411,7 @@ exports.plugin = {
         description: 'Upload lowering file',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>cruise_managers</strong></p>',
-        tags: ['lowerings','auth','api', 'file_upload']
+        tags: ['lowerings','api','files']
       }
     });
 
@@ -433,7 +433,7 @@ exports.plugin = {
           params: fileParam
         },
         description: 'This route is used for serving image files.',
-        tags: ['api','auth']
+        tags: ['api','image_files']
       }
     });
 
@@ -453,7 +453,7 @@ exports.plugin = {
         response: {
           status: {}
         },
-        tags: ['default']
+        tags: ['misc', 'not_found']
       }
     });
 
@@ -478,7 +478,7 @@ exports.plugin = {
             }).label('serverTimeResponse')
           }
         },
-        tags: ['default','api']
+        tags: ['misc','api']
       }
     });
   }

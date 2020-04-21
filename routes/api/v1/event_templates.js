@@ -162,7 +162,7 @@ exports.plugin = {
         description: 'Return the event templates based on query parameters',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-        tags: ['event_templates','auth','api']
+        tags: ['event_templates','api']
       }
     });
 
@@ -198,7 +198,7 @@ exports.plugin = {
         }
       },
       config: {
-        auth:{
+        auth: {
           strategy: 'jwt',
           scope: ['admin', 'read_event_templates']
         },
@@ -214,7 +214,7 @@ exports.plugin = {
         description: 'Return the event template based on the event template id',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-        tags: ['event_templates','auth','api']
+        tags: ['event_templates','api']
       }
     });
 
@@ -292,7 +292,7 @@ exports.plugin = {
         description: 'Create a new event template',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-        tags: ['event_templates','auth','api']
+        tags: ['event_templates','api']
       }
     });
 
@@ -358,7 +358,7 @@ exports.plugin = {
         description: 'Update an event template record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-        tags: ['event_templates','auth','api']
+        tags: ['event_templates','api']
       }
     });
 
@@ -420,7 +420,7 @@ exports.plugin = {
         description: 'Delete an event templates record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-        tags: ['event_templates','auth','api']
+        tags: ['event_templates','api']
       }
     });
   }

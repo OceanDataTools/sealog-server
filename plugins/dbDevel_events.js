@@ -66,7 +66,7 @@ exports.plugin = {
 
     console.log("Searching for Events Collection");
     try {
-      const result = await db.listCollections({ name:eventsTable }).toArray();
+      const result = await db.listCollections({ name: eventsTable }).toArray();
       if (result.length > 0) {
         console.log("Events Collection is present... dropping it");
         try {

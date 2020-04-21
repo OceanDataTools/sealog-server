@@ -1,54 +1,26 @@
 'use strict';
 
-const Glue = require('@hapi/glue');
 const Lab = require('@hapi/lab');
-const Manifest = require('../config/manifest');
-
-const { expect, done } = require('@hapi/code');
-
+const { expect } = require('@hapi/code');
 const { afterEach, beforeEach, describe, it } = exports.lab = Lab.script();
-
-const { init } = require('../server');
-
-const options = {
-  relativeTo: __dirname
-};
+const { init } = require('../lib/server');
 
 describe('GET /', () => {
+  let server;
 
-  Glue.compose(Manifest, options, (err, server) => {
+  beforeEach(async () => {
+    server = await init();
+  });
 
-    if (err) {
-      throw err;
-    }
+  afterEach(async () => {
+    await server.stop();
+  });
 
-    // beforeEach(async () => {
-    //   server = await init();
-    // });
-
-    // afterEach(async () => {
-    //   await server.stop();
-    // });
-
-    // it('responds with 200', async () => {
-    //   const res = await server.inject({
-    //     method: 'get',
-    //     url: '/'
-    //   });
-    //   expect(res.statusCode).to.equal(200);
-    // });
-
-    it('responds with 200', async () => {
-
-      const res = await server.inject({
-        method: "GET",
-        url: "/"
-      }).then((response) => {
-
-        expect(response.result).to.equal("Welcome to server!\n");
-        expect(response.statusCode).to.equal(200);
-        done();
-      });
+  it('responds with 404', async () => {
+    const res = await server.inject({
+      method: 'get',
+      url: '/'
     });
+    expect(res.statusCode).to.equal(404);
   });
 });

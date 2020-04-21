@@ -294,7 +294,7 @@ exports.plugin = {
         const aggregate = [];
         aggregate.push({ $match: query });
         aggregate.push({ $lookup: lookup });
-        aggregate.push({ $sort : { ts : 1 } });
+        aggregate.push({ $sort: { ts: 1 } });
 
         if (request.query.limit) {
           aggregate.push({ $limit: request.query.limit });
@@ -391,7 +391,7 @@ exports.plugin = {
         description: 'Export the events merged with their event_aux_data records for a cruise based on the cruise id',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong>, <strong>event_logger</strong> or <strong>event_watcher</strong></p>',
-        tags: ['events','auth','api']
+        tags: ['event_exports','api']
       }
     });
 
@@ -441,7 +441,7 @@ exports.plugin = {
         const aggregate = [];
         aggregate.push({ $match: query });
         aggregate.push({ $lookup: lookup });
-        aggregate.push({ $sort : { ts : 1 } });
+        aggregate.push({ $sort: { ts: 1 } });
 
         if (request.query.limit) {
           aggregate.push({ $limit: request.query.limit });
@@ -537,7 +537,7 @@ exports.plugin = {
         description: 'Export the events merged with their event_aux_data records for a lowering based on the lowering id',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong>, <strong>event_logger</strong> or <strong>event_watcher</strong></p>',
-        tags: ['events','auth','api']
+        tags: ['event_exports','api']
       }
     });
 
@@ -586,7 +586,7 @@ exports.plugin = {
           const aggregate = [];
           aggregate.push({ $match: query });
           aggregate.push({ $lookup: lookup });
-          aggregate.push({ $sort : { ts : 1 } });
+          aggregate.push({ $sort: { ts: 1 } });
 
           if (request.query.limit) { 
             aggregate.push({ $limit: request.query.limit });
@@ -623,7 +623,7 @@ exports.plugin = {
           const aggregate = [];
           aggregate.push({ $match: query });
           aggregate.push({ $lookup: lookup });
-          aggregate.push({ $sort : { ts : 1 } });
+          aggregate.push({ $sort: { ts: 1 } });
 
           if (request.query.limit) {
             aggregate.push({ $limit: request.query.limit });
@@ -683,7 +683,7 @@ exports.plugin = {
         description: 'Export events merged with their aux_data based on the query parameters',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong>, <strong>event_logger</strong> or <strong>event_watcher</strong></p>',
-        tags: ['events','auth','api']
+        tags: ['event_exports','api']
       }
     });
 
@@ -727,7 +727,7 @@ exports.plugin = {
         }
       },
       config: {
-        auth:{
+        auth: {
           strategy: 'jwt',
           scope: ['admin', 'read_events']
         },
@@ -743,7 +743,7 @@ exports.plugin = {
         description: 'Export an event merged with its aux_data based on event id',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong>, <strong>event_logger</strong> or <strong>event_watcher</strong></p>',
-        tags: ['events','auth','api']
+        tags: ['event_exports','api']
       }
     });
   }

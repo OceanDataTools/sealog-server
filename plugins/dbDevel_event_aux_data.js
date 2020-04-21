@@ -12,7 +12,7 @@ exports.plugin = {
 
     const test_data = [
       {
-        _id : ObjectID("5a7341898c1553258f703ce0"),
+        _id: ObjectID("5a7341898c1553258f703ce0"),
         event_id: ObjectID('5981f167212b348aed7fa9f6'),
         data_source: "vehicleRealtimeNavData",
         data_array: [{
@@ -35,7 +35,7 @@ exports.plugin = {
         }]
       },
       {
-        _id : ObjectID("5a7341898c1553258f703ce1"),
+        _id: ObjectID("5a7341898c1553258f703ce1"),
         event_id: ObjectID('5981f167212b348aed7fa9f6'),
         data_source: "framegrabber",
         data_array: [{
@@ -47,7 +47,7 @@ exports.plugin = {
         }]
       },
       {
-        _id : ObjectID("5a7341898c1553258f703ce2"),
+        _id: ObjectID("5a7341898c1553258f703ce2"),
         event_id: ObjectID('5981f167212b348aed7fa9f6'),
         data_source: "customgrabber",
         data_array: [{
@@ -56,7 +56,7 @@ exports.plugin = {
         }]
       },
       {
-        _id : ObjectID("5a7341898c1553258f703ce3"),
+        _id: ObjectID("5a7341898c1553258f703ce3"),
         event_id: ObjectID('5981f167212b348aed7fa9f7'),
         data_source: "framegrabber",
         data_array: [{
@@ -68,7 +68,7 @@ exports.plugin = {
         }]
       },
       {
-        _id : ObjectID("5a7341898c1553258f703ce4"),
+        _id: ObjectID("5a7341898c1553258f703ce4"),
         event_id: ObjectID('5981f167212b348aed7fa9f7'),
         data_source: "vehicleRealtimeNavData",
         data_array: [{
@@ -90,7 +90,7 @@ exports.plugin = {
         }]
       },
       {
-        _id : ObjectID("5a7341898c1553258f703ce5"),
+        _id: ObjectID("5a7341898c1553258f703ce5"),
         event_id: ObjectID('5981f167212b348aed7fa9f8'),
         data_source: "framegrabber",
         data_array: [{
@@ -102,7 +102,7 @@ exports.plugin = {
         }]
       },
       {
-        _id : ObjectID("5a7341898c1553258f703ce6"),
+        _id: ObjectID("5a7341898c1553258f703ce6"),
         event_id: ObjectID('5981f167212b348aed7fa9f8'),
         data_source: "vehicleRealtimeNavData",
         data_array: [{
@@ -124,7 +124,7 @@ exports.plugin = {
         }]
       },
       {
-        _id : ObjectID("5a7341898c1553258f703ce7"),
+        _id: ObjectID("5a7341898c1553258f703ce7"),
         event_id: ObjectID('5981f167212b348aed7fa9f9'),
         data_source: "framegrabber",
         data_array: [{
@@ -154,7 +154,7 @@ exports.plugin = {
         }]
       },
       {
-        _id : ObjectID("5a7341898c1553258f703ce8"),
+        _id: ObjectID("5a7341898c1553258f703ce8"),
         event_id: ObjectID('5981f167212b348aed7fa9f9'),
         data_source: "vehicleRealtimeNavData",
         data_array: [{
@@ -179,7 +179,7 @@ exports.plugin = {
 
     console.log("Searching for Event Aux Collection");
     try {
-      const result = await db.listCollections({ name:eventAuxDataTable }).toArray();
+      const result = await db.listCollections({ name: eventAuxDataTable }).toArray();
       if (result.length > 0) {
         console.log("Event Aux Collection is present... dropping it");
         try {

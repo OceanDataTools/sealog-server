@@ -310,7 +310,7 @@ exports.plugin = {
         description: 'Return the lowerings based on query parameters',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['lowerings','auth','api']
+        tags: ['lowerings','api']
       }
     });
 
@@ -448,7 +448,7 @@ exports.plugin = {
         description: 'Return the lowerings based on query parameters',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['lowerings','auth','api']
+        tags: ['lowerings','api']
       }
     });
 
@@ -531,7 +531,7 @@ exports.plugin = {
         description: 'Return the lowerings based on query parameters',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['lowerings','auth','api']
+        tags: ['lowerings','api']
       }
     });
 
@@ -583,7 +583,7 @@ exports.plugin = {
         return h.response(lowering).code(200);
       },
       config: {
-        auth:{
+        auth: {
           strategy: 'jwt',
           scope: ['admin', 'read_lowerings']
         },
@@ -599,7 +599,7 @@ exports.plugin = {
         description: 'Return the lowering based on lowering id',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['lowerings','auth','api']
+        tags: ['lowerings','api']
       }
     });
 
@@ -647,7 +647,7 @@ exports.plugin = {
         return h.response().code(200);
       },
       config: {
-        auth:{
+        auth: {
           strategy: 'jwt',
           scope: ['admin', 'read_lowerings']
         },
@@ -661,7 +661,7 @@ exports.plugin = {
         description: 'Bump the lowering on the updateLowering websocket subscription',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['lowerings','auth','api']
+        tags: ['lowerings','api']
       }
     });
 
@@ -782,7 +782,7 @@ exports.plugin = {
         description: 'Create a new event template',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['lowerings','auth','api']
+        tags: ['lowerings','api']
       }
     });
 
@@ -939,7 +939,7 @@ exports.plugin = {
         description: 'Update a lowering record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['lowerings','auth','api']
+        tags: ['lowerings','api']
       }
     });
 
@@ -1061,7 +1061,7 @@ exports.plugin = {
         description: 'Update a lowering access permissions',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['lowerings','auth','api']
+        tags: ['lowerings','api']
       }
     });
 
@@ -1118,7 +1118,7 @@ exports.plugin = {
         description: 'Delete a lowering record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['lowerings','auth','api']
+        tags: ['lowerings','api']
       }
     });
 
@@ -1167,7 +1167,7 @@ exports.plugin = {
         description: 'Delete ALL lowering records',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
-        tags: ['lowerings','auth','api']
+        tags: ['lowerings','api']
       }
     });
   }

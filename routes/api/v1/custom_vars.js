@@ -105,7 +105,7 @@ exports.plugin = {
         description: 'Return the custom vars based on query parameters',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong>, <strong>event_logger</strong> or <strong>event_watcher</strong></p>',
-        tags: ['custom_vars','auth', 'api']
+        tags: ['custom_vars', 'api']
       }
     });
 
@@ -140,7 +140,7 @@ exports.plugin = {
         }
       },
       config: {
-        auth:{
+        auth: {
           strategy: 'jwt',
           scope: ['admin', 'read_events']
         },
@@ -156,7 +156,7 @@ exports.plugin = {
         description: 'Return the custom_var based on custom_var id',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong>, <strong>event_logger</strong> or <strong>event_watcher</strong></p>',
-        tags: ['custom_vars','auth','api']
+        tags: ['custom_vars','api']
       }
     });
 
@@ -194,7 +194,7 @@ exports.plugin = {
         try {
           await db.collection(customVarsTable).updateOne(query, { $set: request.payload });
 
-          const custom_var = { id: request.params.id, custom_var_name, custom_var_value : request.payload.custom_var_value };
+          const custom_var = { id: request.params.id, custom_var_name, custom_var_value: request.payload.custom_var_value };
 
           server.publish('/ws/status/updateCustomVars', custom_var );
 
@@ -221,7 +221,7 @@ exports.plugin = {
         description: 'Update a custom var record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
-        tags: ['custom_vars','auth','api']
+        tags: ['custom_vars','api']
       }
     });
   }
