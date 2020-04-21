@@ -8,49 +8,48 @@ const Pkg = require('../package.json');
 
 const swagger_options = {
   info: {
-      title: 'Sealog Server API Documentation',
-      version: Pkg.version
+    title: 'Sealog Server API Documentation',
+    version: Pkg.version
+  },
+  tags: [
+    {
+      name: 'auth',
+      description: 'the auth api'
     },
-    tags: [
-      {
-        name: 'auth',
-        description: 'the auth api'
-      },
-      {
-        name: 'cruises',
-        description: 'the cruises api'
-      },
-      {
-        name: 'custom_vars',
-        description: 'the custom_vars api'
-      },
-      {
-        name: 'event_aux_data',
-        description: 'the event_aux_data api'
-      },
-      {
-        name: 'event_exports',
-        description: 'the event_exports api'
-      },
-      {
-        name: 'event_templates',
-        description: 'the event_templates api'
-      },
-      {
-        name: 'events',
-        description: 'the events api'
-      },
-      {
-        name: 'lowerings',
-        description: 'the lowerings api'
-      },
-      {
-        name: 'users',
-        description: 'the users api'
-      }
-    ],
-    grouping: 'tags'
-  }
+    {
+      name: 'cruises',
+      description: 'the cruises api'
+    },
+    {
+      name: 'custom_vars',
+      description: 'the custom_vars api'
+    },
+    {
+      name: 'event_aux_data',
+      description: 'the event_aux_data api'
+    },
+    {
+      name: 'event_exports',
+      description: 'the event_exports api'
+    },
+    {
+      name: 'event_templates',
+      description: 'the event_templates api'
+    },
+    {
+      name: 'events',
+      description: 'the events api'
+    },
+    {
+      name: 'lowerings',
+      description: 'the lowerings api'
+    },
+    {
+      name: 'users',
+      description: 'the users api'
+    }
+  ],
+  grouping: 'tags'
 }
 
 const {
