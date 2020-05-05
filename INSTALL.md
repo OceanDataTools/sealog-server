@@ -82,7 +82,7 @@ cd ./sealog-server
 npm start
 ```
 
-**This will start the server in production mode.**  This mode will connect to a mongo database that was already setup for use with sealog-server.  If no database is found, sealog-server will attempt to create it.  Running in production mode for the first time will create an admin account (jason:dsl!jason) and 1 regular user account (guest).  There is no password set for the regular account.
+**This will start the server in production mode.**  This mode will connect to a mongo database that was already setup for use with sealog-server.  If no database is found, sealog-server will attempt to create it.  Running in production mode for the first time will create an admin account (admin:demo) and 1 regular user account (guest).  There is no password set for the regular account.
 
 ## Need to make everything available over port 80?
 
