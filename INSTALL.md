@@ -2,7 +2,7 @@
 
 ### Prerequisites
 
- - [MongoDB](https://www.mongodb.com) >=v3.4.x
+ - [MongoDB](https://www.mongodb.com) >=v3.6.x
  - [nodeJS](https://nodejs.org) >=12.x
  - [npm](https://www.npmjs.com) >=6.13.x
  - [git](https://git-scm.com)
