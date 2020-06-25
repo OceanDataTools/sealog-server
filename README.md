@@ -14,6 +14,11 @@ Almost all calls to the API are authenticated using Java Web Tokens (JWT).  The 
  - Simple exporting of all or a filtered list of events merged with ancilary data is JSON or CSV format
  - Defining event templates for quick event submission
  - role-based authentication using Java Web Tokens (JWT)
+ 
+### Architecture
+The core concept behind the sealog architecture is that the server's functionality remain small and concise.  The sealog-server is simply an API that other programs, scripts and application can leverage to submit and retrieve event data.  Data can be retrieved as needed via the RESTful API or clients can be notificed of changes asynchronously by connecting to the server via websockets and subscribing to one of the many subscription channels.
+
+![Architecture](/docs/sealog-architecture.svg)
 
 ## API Documentation
 
