@@ -22,7 +22,7 @@ The core concept behind the sealog architecture is that the server's functionali
 
 ## API Documentation
 
-Please refer to the [Sealog Server's RESTful API](<https://sealog.oceandatatools.org:9200/sealog-server/documentation>)
+Please refer to the [Sealog Server's RESTful API](<https://sealog-vehicle.oceandatatools.org:9200/sealog-server/documentation>)
 
 ![Sealog Server's RESTful API](/docs/sealog-swagger-screenshot.png)
 
