@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xl="http://www.w3.org/1999/xlink" viewBox="272 203 663 469" width="663" height="469">
+  <defs>
+    <font-face font-family="Helvetica Neue" font-size="16" panose-1="2 0 5 3 0 0 0 2 0 4" units-per-em="1000" underline-position="-100" underline-thickness="50" slope="0" x-height="517" cap-height="714" ascent="951.9958" descent="-212.99744" font-weight="400">
+      <font-face-src>
+        <font-face-name name="HelveticaNeue"/>
+      </font-face-src>
+    </font-face>
+    <marker orient="auto" overflow="visible" markerUnits="strokeWidth" id="FilledArrow_Marker" stroke-linejoin="miter" stroke-miterlimit="10" viewBox="-1 -4 10 8" markerWidth="10" markerHeight="8" color="black">
+      <g>
+        <path d="M 8 0 L 0 -3 L 0 3 Z" fill="currentColor" stroke="currentColor" stroke-width="1"/>
+      </g>
+    </marker>
+    <font-face font-family="Helvetica Neue" font-size="10" panose-1="2 0 5 3 0 0 0 2 0 4" units-per-em="1000" underline-position="-100" underline-thickness="50" slope="0" x-height="517" cap-height="714" ascent="951.9958" descent="-212.99744" font-weight="400">
+      <font-face-src>
+        <font-face-name name="HelveticaNeue"/>
+      </font-face-src>
+    </font-face>
+    <marker orient="auto" overflow="visible" markerUnits="strokeWidth" id="FilledArrow_Marker_2" stroke-linejoin="miter" stroke-miterlimit="10" viewBox="-9 -4 10 8" markerWidth="10" markerHeight="8" color="black">
+      <g>
+        <path d="M -8 0 L 0 3 L 0 -3 Z" fill="currentColor" stroke="currentColor" stroke-width="1"/>
+      </g>
+    </marker>
+  </defs>
+  <metadata> Produced by OmniGraffle 7.16 
+    <dc:date>2020-06-25 13:51:53 +0000</dc:date>
+  </metadata>
+  <g id="Canvas_1" fill="none" stroke-dasharray="none" fill-opacity="1" stroke="none" stroke-opacity="1">
+    <title>Canvas 1</title>
+    <g id="Canvas_1: Layer 1">
+      <title>Layer 1</title>
+      <g id="Graphic_2">
+        <rect x="273.096" y="212" width="111.904" height="437" fill="white"/>
+        <rect x="273.096" y="212" width="111.904" height="437" stroke="gray" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <text transform="translate(278.096 421.276)" fill="black">
+          <tspan font-family="Helvetica Neue" font-size="16" font-weight="400" fill="black" x="0" y="15">Sealog-Server</tspan>
+        </text>
+      </g>
+      <g id="Group_55">
+        <g id="Graphic_11">
+          <rect x="636" y="248" width="129" height="83" fill="white"/>
+          <rect x="636" y="248" width="129" height="83" stroke="gray" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(641 280.276)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="16" font-weight="400" fill="black" x="38.908" y="15">Client</tspan>
+          </text>
+        </g>
+        <g id="Graphic_10">
+          <rect x="624" y="236" width="129" height="83" fill="white"/>
+          <rect x="624" y="236" width="129" height="83" stroke="gray" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(629 268.276)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="16" font-weight="400" fill="black" x="38.908" y="15">Client</tspan>
+          </text>
+        </g>
+        <g id="Graphic_6">
+          <rect x="612" y="224" width="129" height="83" fill="white"/>
+          <rect x="612" y="224" width="129" height="83" stroke="gray" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(617 256.276)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="16" font-weight="400" fill="black" x="34.908" y="15">Clients</tspan>
+          </text>
+        </g>
+        <g id="Line_13">
+          <line x1="387" y1="237.56" x2="602.1" y2="237.56" marker-end="url(#FilledArrow_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        </g>
+        <g id="Line_14">
+          <line x1="386" y1="273.28" x2="601.1" y2="273.28" marker-end="url(#FilledArrow_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        </g>
+        <g id="Line_15">
+          <line x1="611" y1="296.28" x2="395.9" y2="296.28" marker-end="url(#FilledArrow_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        </g>
+        <g id="Graphic_16">
+          <text transform="translate(401.332 208)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="10" font-weight="400" fill="black" x="0" y="10">Pulls template, lowering, cruise and previously </tspan>
+            <tspan font-family="Helvetica Neue" font-size="10" font-weight="400" fill="black" x="0" y="22.28">submitted event data from API</tspan>
+          </text>
+        </g>
+        <g id="Graphic_17">
+          <text transform="translate(401.332 243.72)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="10" font-weight="400" fill="black" x="0" y="10">New/updated events from other clients/bots </tspan>
+            <tspan font-family="Helvetica Neue" font-size="10" font-weight="400" fill="black" x="0" y="22.28">pushed to client via web-sockets</tspan>
+          </text>
+        </g>
+        <g id="Graphic_18">
+          <text transform="translate(401.332 279.28)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="10" font-weight="400" fill="black" x="0" y="10">Events created by client pushed via API</tspan>
+          </text>
+        </g>
+      </g>
+      <g id="Group_54">
+        <g id="Graphic_53">
+          <rect x="636" y="368.98" width="129" height="83" fill="white"/>
+          <rect x="636" y="368.98" width="129" height="83" stroke="gray" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(641 401.256)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="16" font-weight="400" fill="black" x="38.908" y="15">Client</tspan>
+          </text>
+        </g>
+        <g id="Graphic_52">
+          <rect x="624" y="356.98" width="129" height="83" fill="white"/>
+          <rect x="624" y="356.98" width="129" height="83" stroke="gray" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(629 389.256)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="16" font-weight="400" fill="black" x="38.908" y="15">Client</tspan>
+          </text>
+        </g>
+        <g id="Graphic_7">
+          <rect x="612" y="345.98" width="129" height="83" fill="white"/>
+          <rect x="612" y="345.98" width="129" height="83" stroke="gray" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(617 378.256)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="16" font-weight="400" fill="black" x="11.788" y="15">Aux-Data bot</tspan>
+          </text>
+        </g>
+        <g id="Line_23">
+          <line x1="386" y1="370.26" x2="601.1" y2="370.26" marker-end="url(#FilledArrow_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        </g>
+        <g id="Line_22">
+          <line x1="611" y1="410.26" x2="395.9" y2="410.26" marker-end="url(#FilledArrow_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        </g>
+        <g id="Graphic_20">
+          <text transform="translate(401.332 352.7)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="10" font-weight="400" fill="black" x="0" y="10">Listens for new events via web socket</tspan>
+          </text>
+        </g>
+        <g id="Graphic_19">
+          <text transform="translate(401.332 380.26)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="10" font-weight="400" fill="black" x="0" y="10">Submits a new aux_data record containing </tspan>
+            <tspan font-family="Helvetica Neue" font-size="10" font-weight="400" fill="black" x="0" y="22.28">sensor data that is linked to the event via API</tspan>
+          </text>
+        </g>
+        <g id="Graphic_31">
+          <rect x="805" y="345.98" width="129" height="83" fill="white"/>
+          <rect x="805" y="345.98" width="129" height="83" stroke="gray" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(810 369.032)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="16" font-weight="400" fill="black" x="15.348" y="15">Sensor Data </tspan>
+            <tspan font-family="Helvetica Neue" font-size="16" font-weight="400" fill="black" x="36.388" y="33.448">Cache</tspan>
+          </text>
+        </g>
+        <g id="Line_37">
+          <line x1="774.9" y1="386.98" x2="795.1" y2="386.98" marker-end="url(#FilledArrow_Marker)" marker-start="url(#FilledArrow_Marker_2)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        </g>
+      </g>
+      <g id="Group_56">
+        <g id="Graphic_8">
+          <rect x="612" y="466.96" width="129" height="83" fill="white"/>
+          <rect x="612" y="466.96" width="129" height="83" stroke="gray" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(617 499.236)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="16" font-weight="400" fill="black" x="22.748" y="15">Asnap bot</tspan>
+          </text>
+        </g>
+        <g id="Line_39">
+          <line x1="611" y1="535.35" x2="395.9" y2="535.35" marker-end="url(#FilledArrow_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        </g>
+        <g id="Graphic_38">
+          <text transform="translate(401.332 505.35)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="10" font-weight="400" fill="black" x="0" y="10">When specified, submits a new ASNAP event </tspan>
+            <tspan font-family="Helvetica Neue" font-size="10" font-weight="400" fill="black" x="0" y="22.28">record at a predefined interval via API</tspan>
+          </text>
+        </g>
+        <g id="Line_43">
+          <line x1="387" y1="501.24" x2="602.1" y2="501.24" marker-end="url(#FilledArrow_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        </g>
+        <g id="Graphic_41">
+          <text transform="translate(401.332 483.57)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="10" font-weight="400" fill="black" x="0" y="10">Subscribe to the ASNAP flag via websockets</tspan>
+          </text>
+        </g>
+      </g>
+      <g id="Group_57">
+        <g id="Graphic_51">
+          <rect x="826" y="588.16" width="63" height="83" fill="white"/>
+          <rect x="826" y="588.16" width="63" height="83" stroke="gray" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(831 611.212)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="16" font-weight="400" fill="black" x="9.756" y="15">Data </tspan>
+            <tspan font-family="Helvetica Neue" font-size="16" font-weight="400" fill="black" x="12.284" y="33.448">files</tspan>
+          </text>
+        </g>
+        <g id="Graphic_50">
+          <rect x="815" y="576" width="63" height="83" fill="white"/>
+          <rect x="815" y="576" width="63" height="83" stroke="gray" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(820 599.052)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="16" font-weight="400" fill="black" x="9.756" y="15">Data </tspan>
+            <tspan font-family="Helvetica Neue" font-size="16" font-weight="400" fill="black" x="12.284" y="33.448">files</tspan>
+          </text>
+        </g>
+        <g id="Graphic_9">
+          <rect x="612" y="566" width="129" height="83" fill="white"/>
+          <rect x="612" y="566" width="129" height="83" stroke="gray" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(617 579.828)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="16" font-weight="400" fill="black" x="42.756" y="15">Data </tspan>
+            <tspan font-family="Helvetica Neue" font-size="16" font-weight="400" fill="black" x="12.66" y="33.448">management </tspan>
+            <tspan font-family="Helvetica Neue" font-size="16" font-weight="400" fill="black" x="39.5" y="51.895996">script</tspan>
+          </text>
+        </g>
+        <g id="Line_45">
+          <line x1="387" y1="623.55" x2="602.1" y2="623.55" marker-end="url(#FilledArrow_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        </g>
+        <g id="Graphic_44">
+          <text transform="translate(401.332 593.16)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="10" font-weight="400" fill="black" x="0" y="10">Pulls template, lowering, cruise, event and </tspan>
+            <tspan font-family="Helvetica Neue" font-size="10" font-weight="400" fill="black" x="0" y="22.28">aux_data data from API</tspan>
+          </text>
+        </g>
+        <g id="Graphic_49">
+          <rect x="804" y="564.94" width="63" height="83" fill="white"/>
+          <rect x="804" y="564.94" width="63" height="83" stroke="gray" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(809 587.992)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="16" font-weight="400" fill="black" x="9.756" y="15">Data </tspan>
+            <tspan font-family="Helvetica Neue" font-size="16" font-weight="400" fill="black" x="12.284" y="33.448">files</tspan>
+          </text>
+        </g>
+        <g id="Line_48">
+          <line x1="741" y1="605.94" x2="794.1" y2="605.94" marker-end="url(#FilledArrow_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>
