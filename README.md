@@ -1,6 +1,6 @@
 # sealog-server
 Sealog event-logging server
-Sealog is intended as a general purpose eventlogging framework that is independent of any particular user-interface.  All interactions with the Sealog Server are done via the [Sealog Server's RESTful API](<https://sealog.oceandatatools.org:9200/sealog-server/documentation>).
+Sealog is intended as a general purpose eventlogging framework that is independent of any particular user-interface.  All interactions with the Sealog Server are done via the [Sealog Server's RESTful API](<https://sealog-vehicle.oceandatatools.org:9200/sealog-server/documentation>).
 
 This allows for users to develop their own user interfaces for adding, editing and exporting events or extend the functionality of other systems to dynamically submit events.  It's even possible to develop hardware-based clients (physical buttons) using cheap network-aware microcontrollers (i.e Ardinuo w/Ethernet Shield).
 
@@ -40,7 +40,7 @@ Most of the API calls require a JWT to be included with the request header.  Her
 
 From the terminal replaceing `<username>` and `<password>` with the appropriate information:
 ```
-curl -H "Content-Type: application/json" -X POST -d '{"username":<username>,"password":<pasword>}' https://sealog.oceandatatools.org:9200/sealog-server/api/v1/auth/login
+curl -H "Content-Type: application/json" -X POST -d '{"username":<username>,"password":<pasword>}' https://sealog-vehicle.oceandatatools.org:9200/sealog-server/api/v1/auth/login
 ```
 
 This will respond with:
@@ -65,7 +65,7 @@ Submitting an event to the Sealog Server requires a JWT who's associated user in
 
 From the terminal:
 ```
-curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' --header 'Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBjNDVkN2I0LTU4ODEtNGU2NC04ZmQzLTIwNTczMjVlMmFmZSIsInNjb3BlIjpbImV2ZW50X21hbmFnZXIiLCJldmVudF9sb2dnZXIiLCJldmVudF93YXRjaGVyIl0sImlhdCI6MTUwMDAzNTc1NX0.WoOLfXxCIxIZEswy1lsbjm7XxDcbfd_NuZsL2-NB_Qw' -d '{"event_value": "TEST"}' 'https://sealog.oceandatatools.org:9200/sealog-server/api/v1/events'
+curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' --header 'Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBjNDVkN2I0LTU4ODEtNGU2NC04ZmQzLTIwNTczMjVlMmFmZSIsInNjb3BlIjpbImV2ZW50X21hbmFnZXIiLCJldmVudF9sb2dnZXIiLCJldmVudF93YXRjaGVyIl0sImlhdCI6MTUwMDAzNTc1NX0.WoOLfXxCIxIZEswy1lsbjm7XxDcbfd_NuZsL2-NB_Qw' -d '{"event_value": "TEST"}' 'https://sealog-vehicle.oceandatatools.org:9200/sealog-server/api/v1/events'
 ```
 
 This will respond with:
@@ -91,7 +91,7 @@ Submitting an event to sealog using python is very similar to the way it's done 
 import requests
 import json
 
-root_url = 'https://sealog.oceandatatools.org:9200/sealog-server'
+root_url = 'https://sealog-vehicle.oceandatatools.org:9200/sealog-server'
 api_path = '/api/v1/auth/login'
 
 payload = {
@@ -129,7 +129,7 @@ Namespace Examples.System.Net
 
             Public Shared Sub Main()  
             Dim uriString As String
-            uriString = "https://sealog.oceandatatools.org:9200/sealog-server"
+            uriString = "https://sealog-vehicle.oceandatatools.org:9200/sealog-server"
 
             Dim loginPath As String
             loginPath = "/api/v1/auth/login"
