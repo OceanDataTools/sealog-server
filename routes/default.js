@@ -181,7 +181,7 @@ exports.plugin = {
 
     server.route({
       method: 'DELETE',
-      path: CRUISE_ROUTE + '/{param*}',
+      path: CRUISE_ROUTE + '/{file*}',
       async handler(request, h) {
 
         const filePath = Path.join(CRUISE_PATH, request.params.file);
@@ -215,7 +215,6 @@ exports.plugin = {
           return h.response(Path.basename(tmpobj.name)).code(201);
         }
         catch (err) {
-          console.log(err);
           return Boom.serverUnavailable('Upload Error', err);
         }
       },
@@ -227,6 +226,8 @@ exports.plugin = {
         payload: {
           maxBytes: 1024 * 1024 * 20, // 5 Mb
           output: 'stream',
+          parse: true,
+          multipart: true,
           allow: 'multipart/form-data' // important
         },
         validate: {
@@ -234,7 +235,6 @@ exports.plugin = {
           params: filepondFileParam,
           payload: filepondFilePayload,
           failAction: (request, h, err) => {
-
             throw Boom.badRequest(err.message);
           }
         },
@@ -262,6 +262,7 @@ exports.plugin = {
         payload: {
           maxBytes: 1024 * 1024 * 20, // 5 Mb
           output: 'stream',
+          multipart: true,
           allow: 'multipart/form-data' // important
         },
         validate: {
@@ -303,7 +304,7 @@ exports.plugin = {
       path: LOWERING_ROUTE + '/filepond/revert',
       async handler(request, h) {
 
-        await handleFolderDelete(Path.join(Tmp.tmpdir, request.payload));        
+        await handleFolderDelete(Path.join(Tmp.tmpdir, request.payload));
         return h.response().code(204);
       },
       config: {
@@ -319,15 +320,13 @@ exports.plugin = {
       }
     });
 
-
     server.route({
       method: 'DELETE',
-      path: LOWERING_ROUTE + '/{param*}',
+      path: LOWERING_ROUTE + '/{file*}',
       async handler(request, h) {
 
-        const filePath = Path.join(LOWERING_PATH, request.params.param);
+        const filePath = Path.join(LOWERING_PATH, request.params.file);
         await handleFileDelete(filePath);
-
         return h.response().code(204);
       },
       config: {
@@ -336,8 +335,7 @@ exports.plugin = {
           scope: ['admin', 'write_lowerings']
         },
         validate: {
-          headers: authorizationHeader,
-          params: fileParam
+          headers: authorizationHeader
         },
         description: 'This route is used for deleting files associated with lowerings.',
         tags: ['lowerings','api','files']
@@ -358,7 +356,6 @@ exports.plugin = {
           return h.response(Path.basename(tmpobj.name)).code(201);
         }
         catch (err) {
-          console.log(err);
           return Boom.serverUnavailable('Upload Error', err);
         }
       },
@@ -368,14 +365,19 @@ exports.plugin = {
           scope: ['admin', 'write_lowerings']
         },
         payload: {
-          maxBytes: 1024 * 1024 * 20, // 20 Mb
+          maxBytes: 1024 * 1024 * 20, // 5 Mb
           output: 'stream',
+          parse: true,
+          multipart: true,
           allow: 'multipart/form-data' // important
         },
         validate: {
           headers: authorizationHeader,
           params: filepondFileParam,
-          payload: filepondFilePayload
+          payload: filepondFilePayload,
+          failAction: (request, h, err) => {
+            throw Boom.badRequest(err.message);
+          }
         },
         description: 'Upload lowering file via filepond',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
@@ -401,6 +403,7 @@ exports.plugin = {
         payload: {
           maxBytes: 1024 * 1024 * 20, // 5 Mb
           output: 'stream',
+          multipart: true,
           allow: 'multipart/form-data' // important
         },
         validate: {
@@ -411,7 +414,7 @@ exports.plugin = {
         description: 'Upload lowering file',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>cruise_managers</strong></p>',
-        tags: ['lowerings','api','files']
+        tags: ['lowerings','api', 'files']
       }
     });
 

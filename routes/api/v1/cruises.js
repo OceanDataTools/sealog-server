@@ -918,7 +918,7 @@ exports.plugin = {
 
         try {
           const cruiseLowerings = await db.collection(loweringsTable).find(loweringQuery).toArray();
-          console.log(cruiseLowerings);
+          // console.log(cruiseLowerings);
           cruiseLowerings.forEach((lowering) => {
 
             lowering.id = lowering._id;
