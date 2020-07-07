@@ -156,7 +156,7 @@ if [ ! -d ${LOWERING_DIR} ]; then
             echo "Unable to create backup directory... quiting"
             exit 1
     fi
-    mkdir ${LOWERING_DIR}/${FRAMEGRAB_DIR}
+    mkdir -p ${LOWERING_DIR}/${FRAMEGRAB_DIR}
     if [ ! -d ${LOWERING_DIR}/${FRAMEGRAB_DIR} ]; then
             echo "Unable to create framegrab directory... quiting"
             exit 1
