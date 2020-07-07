@@ -178,7 +178,7 @@ getLoweringDataFiles
 
 getLoweringNonDataFiles ${LOWERING_DIR}
 
-getFramegrabs | awk -v dest=${LOWERING_DIR}/${FRAMEGRAB_DIR} 'BEGIN{printf "#!/bin/bash\nDEST_DIR=%s\n", dest} {printf "cp -v %s ${DEST_DIR}/\n", $0}' > ${LOWERING_DIR}/${LOWERING_ID}_framegrabCopyScript.sh
+getFramegrabs | awk -v source=${FILES_DIR}/${FRAMEGRAB_DIR} -v dest=${LOWERING_DIR}/${FRAMEGRAB_DIR} 'BEGIN{printf "#!/bin/bash\nSOURCE_DIR=%s\nDEST_DIR=%s\n", source, dest} {printf "cp -v ${SOURCE_DIR}/%s ${DEST_DIR}/\n", $0}' > ${LOWERING_DIR}/${LOWERING_ID}_framegrabCopyScript.sh
 pico ${LOWERING_DIR}/${LOWERING_ID}_framegrabCopyScript.sh
 echo ""
 
