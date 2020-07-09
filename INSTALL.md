@@ -21,7 +21,7 @@ https://www.digitalocean.com/community/tutorials/how-to-install-node-js-on-ubunt
 ### Clone the repository
 
 ```
-git clone https://github.com/oceandatatools/sealog-server.git
+git clone https://github.com/OceanDataTools/sealog-server.git
 ```
 
 This should clone the repo to a directory called `sealog-server`
