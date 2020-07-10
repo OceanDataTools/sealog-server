@@ -1066,7 +1066,7 @@ exports.plugin = {
             delete event.id;
           }
           catch (err) {
-            console.log("invalid ObjectID");
+            console.log(err);
             return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
           }
 
@@ -1171,7 +1171,7 @@ exports.plugin = {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
-          console.log("invalid ObjectID");
+          console.log(err);
           return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
@@ -1236,15 +1236,14 @@ exports.plugin = {
             // console.log('find_aux_data:', find_aux_data);
 
             // console.log("query:", aux_data_query);
-            const test = await db.collection(eventAuxDataTable).deleteMany(aux_data_query);
-            console.log('test:', test);
-
+            await db.collection(eventAuxDataTable).deleteMany(aux_data_query);
+            
             // if the event is recent, broadcast on mewEvents WS feed
             const diff = (new Date().getTime() - result.value.ts.getTime()) / 1000;
-            console.log('diff:', diff);
+            // console.log('diff:', diff);
 
             if (Math.abs(Math.round(diff)) < THRESHOLD) {
-              console.log("still new event");
+              // console.log("still new event");
               server.publish('/ws/status/newEvents', _renameAndClearFields(result.value));
             }
 
@@ -1285,6 +1284,161 @@ exports.plugin = {
       }
     });
 
+
+    server.route({
+      method: 'DELETE',
+      path: '/events',
+      async handler(request, h) {
+
+        const db = request.mongo.db;
+        // const ObjectID = request.mongo.ObjectID;
+
+        let datasourceIDs = {};
+
+        //Data source filtering
+        if (request.query.datasource) {
+
+          const datasource_query = {};
+
+          if (Array.isArray(request.query.datasource)) {
+            const regex_query = request.query.datasource.map((datasource) => {
+
+              const return_regex = new RegExp(datasource, 'i');
+              return return_regex;
+            });
+
+            datasource_query.data_source  = { $in: regex_query };
+          }
+          else {
+            datasource_query.data_source  = RegExp(request.query.datasource, 'i');
+          }
+
+          try {
+
+            const collection = await db.collection(eventAuxDataTable).find(datasource_query, { _id: 0, event_id: 1 }).toArray();
+
+            const eventIDs = collection.map((x) => x.event_id);
+
+            // console.log("collection:", eventIDs);
+
+            datasourceIDs = { $in: eventIDs };
+
+          }
+          catch (err) {
+            console.log(err);
+            return Boom.serverUnavailable('database error');
+          }
+
+          const query = _buildEventsQuery(request);
+          query._id = datasourceIDs;
+          const limit = (request.query.limit) ? request.query.limit : 0;
+          const offset = (request.query.offset) ? request.query.offset : 0;
+          const sort = (request.query.sort === "newest") ? { ts: -1 } : { ts: 1 };
+
+          let eventIDs = [];
+          
+          // find the events
+          try {
+            const results = await db.collection(eventsTable).find(query).sort(sort).project({ _id: 1 }).skip(offset).limit(limit).toArray(); // should return just the ids
+            // console.log("results:",results);
+
+            if (results.length === 0) {
+              return h.response({ deletedCount: 0 }).code(200);
+            }
+
+            eventIDs = results.map((x) => x._id);
+            // console.log("eventIDs:",eventIDs);
+          }
+          catch (err) {
+            console.log(err);
+            return Boom.serverUnavailable('database error');
+          }
+
+          // delete the aux_data records
+          try {
+            await db.collection(eventAuxDataTable).deleteMany({ event_id: { $in: eventIDs } });
+          }
+          catch (err) {
+            console.log(err);
+            return Boom.serverUnavailable('database error');
+          }          
+
+          // delete the event records
+          try {
+            const results = await db.collection(eventsTable).deleteMany({ _id: { $in: eventIDs } });
+            return h.response({ deletedCount: results.deletedCount }).code(200);
+          }
+          catch (err) {
+            console.log(err);
+            return Boom.serverUnavailable('database error');
+          }
+        }
+        else {
+
+          const query = _buildEventsQuery(request);
+          const limit = (request.query.limit) ? request.query.limit : 0;
+          const offset = (request.query.offset) ? request.query.offset : 0;
+          const sort = (request.query.sort === "newest") ? { ts: -1 } : { ts: 1 };
+
+          let eventIDs = [];
+
+          // find the events
+          try {
+            const results = await db.collection(eventsTable).find(query).sort(sort).project({ _id: 1 }).skip(offset).limit(limit).toArray();
+            // console.log("results:", results);
+
+            if (results.length === 0) {
+              return h.response({ deletedCount: 0 }).code(200);
+            }
+
+            eventIDs = results.map((x) => x._id);
+            // console.log("eventIDs:",eventIDs);
+          }
+          catch (err) {
+            console.log(err);
+            return Boom.serverUnavailable('database error');
+          }
+
+          // delete the aux_data records
+          try {
+            await db.collection(eventAuxDataTable).deleteMany({ event_id: { $in: eventIDs } });
+          }
+          catch (err) {
+            console.log(err);
+            return Boom.serverUnavailable('database error');
+          }          
+
+          // delete the event records
+          try {
+            const results = await db.collection(eventsTable).deleteMany({ _id: { $in: eventIDs } });
+            return h.response({ deletedCount: results.deletedCount }).code(200);
+          }
+          catch (err) {
+            console.log(err);
+            return Boom.serverUnavailable('database error');
+          }          
+        }
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: ['admin']
+        },
+        validate: {
+          headers: authorizationHeader,
+          query: eventQuery
+        },
+        response: {
+          status: {}
+        },
+        description: 'Delete multiple event records',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong></p>',
+        tags: ['events','api']
+      }
+    });
+
+
     server.route({
       method: 'DELETE',
       path: '/events/{id}',
@@ -1299,7 +1453,7 @@ exports.plugin = {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
-          console.log("invalid ObjectID");
+          console.log(err);
           return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
@@ -1407,7 +1561,7 @@ exports.plugin = {
         },
         description: 'Delete ALL the event records',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
-          <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
+          <p>Available to: <strong>admin</strong></p>',
         tags: ['events','api']
       }
     });

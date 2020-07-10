@@ -235,6 +235,7 @@ exports.plugin = {
           params: filepondFileParam,
           payload: filepondFilePayload,
           failAction: (request, h, err) => {
+
             throw Boom.badRequest(err.message);
           }
         },
@@ -376,6 +377,7 @@ exports.plugin = {
           params: filepondFileParam,
           payload: filepondFilePayload,
           failAction: (request, h, err) => {
+            
             throw Boom.badRequest(err.message);
           }
         },
