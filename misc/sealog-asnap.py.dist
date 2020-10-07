@@ -118,7 +118,7 @@ if __name__ == '__main__':
     logger.debug("Log level now set to DEBUG")
 
   if args.interval:
-    interval = args.interval
+    interval = int(args.interval)
     logger.info("Interval set to " + args.interval + " seconds.")
 
   try:
