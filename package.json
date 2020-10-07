@@ -1,6 +1,6 @@
 {
   "name": "sealog-server",
-  "version": "2.0.0-rc5",
+  "version": "2.0.0-rc6",
   "license": "MIT",
   "description": "Sealog event-logging server",
   "bugs": {
@@ -17,7 +17,7 @@
     "lint-fix": "eslint . --ext .js --fix"
   },
   "author": "Webb Pinner",
-  "homepage": "https://github.com/oceandatatools/",
+  "homepage": "https://github.com/oceandatatools/sealog-server",
   "private": false,
   "repository": {
     "type": "git",
@@ -32,30 +32,30 @@
     "@hapi/good": "^9.0.0",
     "@hapi/good-console": "^9.0.0",
     "@hapi/good-squeeze": "^6.0.0",
-    "@hapi/hapi": "^19.1.1",
-    "@hapi/inert": "^6.0.1",
+    "@hapi/hapi": "^19.2.0",
+    "@hapi/inert": "^6.0.2",
     "@hapi/joi": "^17.1.1",
-    "@hapi/nes": "^12.0.2",
-    "@hapi/vision": "^6.0.0",
+    "@hapi/nes": "^12.0.3",
+    "@hapi/vision": "^6.0.1",
     "axios": "^0.19.2",
     "bcryptjs": "^2.4.3",
-    "deepcopy": "^2.0.0",
-    "hapi-auth-jwt2": "^10.1.0",
-    "hapi-mongodb": "^9.0.0",
-    "hapi-swagger": "^13.0.2",
+    "deepcopy": "^2.1.0",
+    "hapi-auth-jwt2": "^10.2.0",
+    "hapi-mongodb": "^9.0.1",
+    "hapi-swagger": "^13.1.0",
     "json2csv": "^5.0.1",
-    "mongodb": "^3.5.9",
-    "nodemailer": "^6.4.10",
+    "mongodb": "^3.6.2",
+    "nodemailer": "^6.4.11",
     "nodemon": "^2.0.4"
   },
   "devDependencies": {
-    "@hapi/code": "^8.0.1",
+    "@hapi/code": "^8.0.2",
     "@hapi/eslint-config-hapi": "^13.0.2",
-    "@hapi/eslint-plugin-hapi": "^4.3.5",
-    "@hapi/lab": "^22.0.4",
+    "@hapi/eslint-plugin-hapi": "^4.3.6",
+    "@hapi/lab": "^22.0.5",
     "blipp": "^4.0.1",
-    "eslint": "^7.3.1",
-    "eslint-plugin-import": "^2.21.2",
+    "eslint": "^7.9.0",
+    "eslint-plugin-import": "^2.22.0",
     "npm-run-all": "^4.1.5"
   }
 }
