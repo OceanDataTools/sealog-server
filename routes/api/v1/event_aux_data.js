@@ -130,6 +130,7 @@ const auxData_data_item = Joi.object({
 }).label('auxDataDataItem');
 
 const auxDataQuery = Joi.object({
+  eventID: Joi.string().length(24).required(),
   offset: Joi.number().integer().min(0).optional(),
   limit: Joi.number().integer().min(1).optional(),
   author: Joi.alternatives().try(
