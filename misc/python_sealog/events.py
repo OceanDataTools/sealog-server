@@ -7,7 +7,7 @@ from .settings import apiServerURL, headers, eventsAPIPath
 def getEvent(event_uid):
 
   try:
-    url = apiServerURL + eventsAPIPath
+    url = apiServerURL + eventsAPIPath + '/' + event_uid
     r = requests.get(url, headers=headers)
 
     if r.status_code != 404:
@@ -27,8 +27,6 @@ def getEventsByCruise(cruise_uid, export_format='json', filter=''):
 
   try:
     url = apiServerURL + eventsAPIPath + '/bycruise/' + cruise_uid + '?format=' + export_format
-    r = requests.get(url, headers=headers)
-
     r = requests.get(url, headers=headers)
 
     if r.status_code != 404:
