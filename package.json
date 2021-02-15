@@ -1,6 +1,6 @@
 {
   "name": "sealog-server",
-  "version": "2.0.0-rc7",
+  "version": "2.0.0",
   "license": "MIT",
   "description": "Sealog event-logging server",
   "bugs": {
@@ -29,33 +29,33 @@
   ],
   "dependencies": {
     "@hapi/glue": "^7.0.0",
-    "@hapi/good": "^9.0.0",
-    "@hapi/good-console": "^9.0.0",
+    "@hapi/good": "^9.0.1",
+    "@hapi/good-console": "^9.0.1",
     "@hapi/good-squeeze": "^6.0.0",
     "@hapi/hapi": "^19.2.0",
-    "@hapi/inert": "^6.0.2",
+    "@hapi/inert": "^6.0.3",
     "@hapi/joi": "^17.1.1",
-    "@hapi/nes": "^12.0.3",
+    "@hapi/nes": "^12.0.4",
     "@hapi/vision": "^6.0.1",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "bcryptjs": "^2.4.3",
     "deepcopy": "^2.1.0",
     "hapi-auth-jwt2": "^10.2.0",
-    "hapi-mongodb": "^9.0.1",
+    "hapi-mongodb": "^9.0.2",
     "hapi-swagger": "^13.1.0",
-    "json2csv": "^5.0.1",
-    "mongodb": "^3.6.2",
-    "nodemailer": "^6.4.11",
-    "nodemon": "^2.0.4"
+    "json2csv": "^5.0.6",
+    "mongodb": "^3.6.4",
+    "nodemailer": "^6.4.18",
+    "nodemon": "^2.0.7"
   },
   "devDependencies": {
     "@hapi/code": "^8.0.2",
     "@hapi/eslint-config-hapi": "^13.0.2",
     "@hapi/eslint-plugin-hapi": "^4.3.6",
     "@hapi/lab": "^22.0.5",
-    "blipp": "^4.0.1",
-    "eslint": "^7.9.0",
-    "eslint-plugin-import": "^2.22.0",
+    "blipp": "^4.0.2",
+    "eslint": "^7.20.0",
+    "eslint-plugin-import": "^2.22.1",
     "npm-run-all": "^4.1.5"
   }
 }
