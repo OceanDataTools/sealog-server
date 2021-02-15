@@ -32,7 +32,8 @@ For Sealog Server installation instruction please look at [INSTALL.md](https://g
 
 ### React/Redux front-end client
 
-[sealog client for vehicles](https://github.com/oceandatatools/sealog-client-vehicle) is a react/redux-based web-client developed for use with sealog-server.
+[sealog client for vehicles](https://github.com/oceandatatools/sealog-client-vehicle) is a react/redux-based web-client developed for use with sealog-server focused on supporting event-logging for underwater vehicles.
+[sealog client for vessels](https://github.com/oceandatatools/sealog-client-vessel) is another react/redux-based web-client developed for use with sealog-server focused on supporting cruise-level event-logging for for research vessels.
 
 ### Obtaining a JWT via the Command-line
 
