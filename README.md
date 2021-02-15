@@ -194,9 +194,10 @@ My intention with sealog-server was to create a production quality eventlogging 
 I've also setup a Slack channel for sealog, please contact me at oceandatarat at gmail dot com if you would like an invitation.
 
 # Current Users
-Sealog Server is currently used by the Woods Hole Oceanographic Institution to support science eventlogging for the JASON ROV and Alvin HOV.  Sealog is also used by the URI Inner Space Center for shoreside event logging of the NOAA Ship Okeanos Explorer and E/V Nautilus
+- ROV Jason and HOV Alvin operated by Woods Hole Oceanographic Institution
+- University of Rhode Island's Inner Space Center in support of the NOAA Ship Okeanos Explorer and E/V Nautilus
+- R/V Falkor and ROV Subastian operated by the Schmidt Ocean Institute
+- R/V OceanXplorer1, ROV Chimaera, HOV Nadir and HOV Neptune operated by OceanX
 
 # Thanks and acknowledgments
-Sealog is in ongoing development thanks to the generosity of the Schmidt Ocean Institute (SOI) who have supported the project since 2018. I also want to thank the Woods Hole Oceanographic Institution (WHOI) who provided the initial inspiration for the project and were it's first user.
-
-Lastly I want to thank the UNOLS community who have helped me since the beginning by sharing their wealth of experience and technical ability.
+Sealog exists thanks to financial support from all of it's users and continues to evolve thanks to the UNOLS community who have helped me since the beginning by sharing their wealth of experience and technical ability.
