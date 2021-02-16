@@ -5,6 +5,9 @@ node_modules
 npm-debug.log
 package-lock.json
 
+# virtual environment
+venv/
+
 # dumb files OS X adds
 .DS_Store
 
