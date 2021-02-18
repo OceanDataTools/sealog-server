@@ -25,9 +25,6 @@ exports.plugin = {
 
     console.log("Creating Event Aux Data Collection");
     try {
-      await db.createCollection(eventAuxDataTable);
-
-      // db.event_aux_data.createIndex( { event_id: -1 } )
       const collection = await db.createCollection(eventAuxDataTable);
 
       console.log("Creating additional indexes");
