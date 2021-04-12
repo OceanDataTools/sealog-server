@@ -1,0 +1,11 @@
+# URL to influx server
+influxServerURL = ""
+
+# Influx server authorization token
+influxToken = ""
+
+# Influx server org containing sensor data
+influxOrg = ""
+
+# Influx server bucket containing sensor data
+influxBucket = ""

@@ -26,19 +26,24 @@ exports.plugin = {
         custom_var_name: 'freeSpacePercentage',
         custom_var_value: '0'
       }
-
     ];
 
     console.log("Searching for Custom Variable Collection");
     try {
       const result = await db.listCollections({ name: customVarsTable }).toArray();
       if (result.length > 0) {
-        console.log("Collection already exists... we're done here.");
-        return;
+        console.log("Collection already exists... dropping it");
+        try {
+          await db.dropCollection(customVarsTable);
+        }
+        catch (err) {
+          console.log("DROP ERROR:", err.code);
+          throw (err);
+        }
       }
     }
     catch (err) {
-      console.log("ERROR:", err.code);
+      console.log("LIST ERROR:", err.code);
       throw (err);
     }
 
@@ -51,7 +56,7 @@ exports.plugin = {
 
     }
     catch (err) {
-      console.log("ERROR:", err.code);
+      console.log("CREATE ERROR:", err.code);
       throw (err);
     }
   }

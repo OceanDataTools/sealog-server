@@ -12,6 +12,8 @@ venv/
 .DS_Store
 
 # Scripts typically customized to the vessel/vehicles individual needs
+misc/influx_sealog/settings*.py
+misc/python_sealog/settings*.py
 misc/sealog-asnap.py
 misc/sealog-cruiseResponder.py
 misc/sealog-loweringResponder.py
@@ -26,7 +28,6 @@ misc/sealog_vehicle_postCruise.sh
 misc/sealog_vessel_postCruise.sh
 misc/sealog-auxDataInserter*.py
 misc/sealog-udp2MongoDB*.py
-misc/python_sealog/settings*.py
 
 # Configuration files custom to the sealog-server instance
 config/db_constants.js

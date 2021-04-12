@@ -58,8 +58,14 @@ const _buildCSVHeaders = (flattenJSON) => {
 const _renameAndClearFields = (doc) => {
 
   //rename id
-  doc.id = doc._id;
-  delete doc._id;
+  if (doc._id) {
+    doc.id = doc._id;
+    delete doc._id;
+  }
+
+  if (doc.id && typeof doc.id === 'object') {
+    doc.id = doc.id.valueOf();
+  }
 
   return doc;
 };
@@ -1224,32 +1230,22 @@ exports.plugin = {
 
         try {
           // const result = await db.collection(eventsTable).findOneAndUpdate(query, { $set: request.payload },{ returnOriginal: false });
-          const result = await db.collection(eventsTable).findOneAndUpdate(query, { $set: event },{ returnOriginal: false });
+          const result = await db.collection(eventsTable).findOneAndUpdate(query, { $set: event },{ returnNewDocument: true });
+          const updatedEvent = _renameAndClearFields(result.value);
 
           if (time_change) {
-            server.publish('/ws/status/deleteEvents', _renameAndClearFields(result.value));
+            server.publish('/ws/status/deleteEvents', updatedEvent);
 
             // delete any aux_data
-            const aux_data_query = { event_id: ObjectID(result.value.id) };
-            // console.log("aux_data_query:", aux_data_query);
-            // const find_aux_data = await db.collection(eventAuxDataTable).find(aux_data_query).toArray();
-            // console.log('find_aux_data:', find_aux_data);
+            const aux_data_query = { event_id: ObjectID(result.value._id) };
 
-            // console.log("query:", aux_data_query);
             await db.collection(eventAuxDataTable).deleteMany(aux_data_query);
-            
-            // if the event is recent, broadcast on mewEvents WS feed
-            const diff = (new Date().getTime() - result.value.ts.getTime()) / 1000;
-            // console.log('diff:', diff);
-
-            if (Math.abs(Math.round(diff)) < THRESHOLD) {
-              // console.log("still new event");
-              server.publish('/ws/status/newEvents', _renameAndClearFields(result.value));
-            }
-
+  
+            server.publish('/ws/status/newEvents', updatedEvent);
+  
           }
           else {
-            server.publish('/ws/status/updateEvents', _renameAndClearFields(result.value));
+            server.publish('/ws/status/updateEvents', updatedEvent);
           }
 
           return h.response().code(204);

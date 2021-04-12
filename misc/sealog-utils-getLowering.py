@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
   import argparse
 
-  parser = argparse.ArgumentParser(description='Retrieve Lowering UID from Lowering ID')
+  parser = argparse.ArgumentParser(description='Retrieve Lowering record from Lowering ID')
   parser.add_argument('-d', '--debug', action='store_true', help=' display debug messages')
   parser.add_argument('lowering_id', help='Lowering ID i.e. "J2-1111".')
 
