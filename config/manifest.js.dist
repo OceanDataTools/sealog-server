@@ -114,6 +114,7 @@ const manifest = {
       },
       { plugin: './plugins/auth' },
       { plugin: './plugins/filesystem_init' },
+      { plugin: './plugins/free_space' },
       { plugin: '@hapi/inert' },
       { plugin: '@hapi/vision' },
       { plugin: '@hapi/nes' },
@@ -175,7 +176,7 @@ if (process.env.NODE_ENV === 'development') { // DEVELOPMENT
 
   manifest.register.plugins.push({ "plugin": "blipp" });
   manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_cruises" });
-  manifest.register.plugins.push({ "plugin": "./plugins/db_custom_vars" });
+  manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_custom_vars" });
   manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_event_aux_data" });
   manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_event_templates" });
   manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_events" });
@@ -210,7 +211,7 @@ if (process.env.NODE_ENV === 'development') { // DEVELOPMENT
 else if (process.env.NODE_ENV === 'test') { // TESTING
 
   manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_cruises" });
-  manifest.register.plugins.push({ "plugin": "./plugins/db_custom_vars" });
+  manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_custom_vars" });
   manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_event_aux_data" });
   manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_event_templates" });
   manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_events" });
