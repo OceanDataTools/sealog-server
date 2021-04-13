@@ -49,27 +49,32 @@ inline_config = '''
             name: latitude
             uom: ddeg
             round: 6
+            modify:
+                -
+                    test:
+                        -
+                            field: S1NorS
+                            eq: "S"
+                    operation:
+                        -
+                            multiply: -1
         S1Longitude:
             name: longitude
             uom: deg
             round: 6
--
-    data_source: realtimeVehiclePosition
-    query_measurements:
-        - seapath2
-    aux_record_lookup:
-        S2HeadingTrue:
-            name: heading
-            uom: deg
-            round: 3
-        S2Latitude:
-            name: latitude
-            uom: ddeg
-            round: 6
-        S2Longitude:
-            name: longitude
-            uom: deg
-            round: 6
+            modify:
+                -
+                    test:
+                        -
+                            field: S1EorW
+                            eq: "W"
+                    operation:
+                        -
+                            multiply: -1
+        S1NorS:
+            no_output: true
+        S1EorW:
+            no_output: true
 '''
 
 # set of events to ignore
@@ -127,20 +132,20 @@ async def auxDataInserter(aux_data_builders):
 
                     # Build the aux_data records for the given event
                     for builder in aux_data_builders:
-                        logger.debug("building Aux Data record")
+                        logger.debug("Building aux data record")
                         record = builder.buildAuxDataRecord(eventObj['message'])
                         if record:
                             try:
-                                logger.debug("Submitting AuxData record to Sealog Server")
+                                logger.debug("Submitting aux data record to Sealog Server")
                                 logger.debug(json.dumps(record))
                                 r = requests.post(apiServerURL + eventAuxDataAPIPath, headers=headers, data = json.dumps(record))
                                 logger.debug("Response: " + r.text)
 
                             except Exception as error:
-                                logger.warning("Error submitting auxData record")
+                                logger.warning("Error submitting aux data record")
                                 logger.debug(str(error))
                         else:
-                            logger.debug("No aux_data for data_source: %s" % builder.data_source)
+                            logger.debug("No aux data for data_source: %s" % builder.data_source)
 
     except Exception as error:
         logger.error(str(error))
@@ -181,6 +186,8 @@ if __name__ == '__main__':
         except yaml.parser.ParserError:
             logging.error("Invalid YAML syntax")
             sys.exit(1)
+
+    logger.debug(json.dumps(aux_data_configs, indent=2))
 
     # create an influxDB Client
     client = InfluxDBClient(url=influxServerURL, token=influxToken, org=influxOrg)
