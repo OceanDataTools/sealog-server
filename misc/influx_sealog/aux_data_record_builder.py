@@ -14,7 +14,7 @@ class SealogInfluxAuxDataRecordBuilder():
         self.query_fields = list(aux_data_config['aux_record_lookup'].keys())
         self.aux_record_lookup = aux_data_config['aux_record_lookup']
         self.datasource = aux_data_config['data_source']
-        self.logger = logging.getLogger('SealogInfluxAuxDataRecordBuilder')
+        self.logger = logging.getLogger(__name__)
 
     @staticmethod
     def _buildQueryRange(ts):
@@ -53,13 +53,51 @@ class SealogInfluxAuxDataRecordBuilder():
             'data_array': []
         }
 
+        influx_data = { 
+        }
+
         for table in influx_query_result:
             for record in table.records:
-                aux_data_record['data_array'].append({
-                    'data_name': self.aux_record_lookup[record.get_field()]['name'],
-                    'data_value': str(round(record.get_value(), self.aux_record_lookup[record.get_field()]['round'])) if 'round' in self.aux_record_lookup[record.get_field()] else str(record.get_value()),
-                    'data_uom': self.aux_record_lookup[record.get_field()]['uom']
-                })
+
+                influx_data[record.get_field()] = record.get_value()
+        
+        logging.debug("raw values: %s" % json.dumps(influx_data, indent=2))
+
+        for key, value in self.aux_record_lookup.items():
+            if "no_output" in value and value['no_output'] == True:
+                continue
+
+            output_value = influx_data[key]
+            
+            if "modify" in value:
+                logging.debug("modify found in record")
+                for mod_op in value['modify']:
+                    if 'test' in mod_op:
+                        logging.debug("test found in mod_op")
+                        test_result = False
+                        for test in mod_op['test']:
+                            logging.debug(json.dumps(test))
+                            
+                            if 'field' in test:
+                                if test['field'] not in influx_data:
+                                    logging.error("test field data not in influx query")
+                                    return None
+                                
+                                if 'eq' in test and influx_data[test['field']] == test['eq']:
+                                    test_result = True
+                                    break
+
+                        if test_result and 'operation' in mod_op:
+                            logging.debug("operation found in mod_op")
+                            for operan in mod_op['operation']:
+                                if 'multiply' in operan:
+                                    output_value *= operan['multiply']
+
+            aux_data_record['data_array'].append({
+                'data_name': value['name'],
+                'data_value': str(round(output_value, value['round'])) if 'round' in value else str(output_value),
+                'data_uom': value['uom'] if 'uom' in value else ''
+            })
 
         if len(aux_data_record['data_array']) > 0:
             return aux_data_record
@@ -67,8 +105,11 @@ class SealogInfluxAuxDataRecordBuilder():
         return None
 
     def buildAuxDataRecord(self, event):
+
+        logging.debug("building query")
         query = self._buildQuery(event['ts'])
 
+        logging.debug("Query: %s" % query)
         # run the query against the influxDB
         try:
             query_result = self.influxdb_client.query(query=query)
