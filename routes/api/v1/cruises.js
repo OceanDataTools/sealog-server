@@ -126,8 +126,8 @@ const cruiseAdditionalMetaCreate = Joi.object({
   cruise_name: Joi.string().optional(),
   cruise_vessel: Joi.string(),
   cruise_pi: Joi.string(),
-  cruise_departure_location: Joi.string().optional(),
-  cruise_arrival_location: Joi.string().optional()
+  cruise_departure_location: Joi.string(),
+  cruise_arrival_location: Joi.string()
 }).options({ allowUnknown: true }).label('cruiseAdditionalMetaCreate');
 
 const cruiseAdditionalMetaUpdate = Joi.object({
