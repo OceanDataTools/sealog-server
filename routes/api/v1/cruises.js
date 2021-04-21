@@ -124,7 +124,9 @@ const userID = Joi.string().label('userID');
 
 const cruiseAdditionalMetaCreate = Joi.object({
   cruise_vessel: Joi.string(),
-  cruise_pi: Joi.string()
+  cruise_pi: Joi.string(),
+  cruise_departure_location: Joi.string().optional(),
+  cruise_arrival_location: Joi.string().optional()
 }).options({ allowUnknown: true }).label('cruiseAdditionalMetaCreate');
 
 const cruiseAdditionalMetaUpdate = Joi.object({
