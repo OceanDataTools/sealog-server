@@ -129,7 +129,9 @@ const cruiseAdditionalMetaCreate = Joi.object({
 
 const cruiseAdditionalMetaUpdate = Joi.object({
   cruise_vessel: Joi.string().optional(),
-  cruise_pi: Joi.string().optional()
+  cruise_pi: Joi.string().optional(),
+  cruise_departure_location: Joi.string().optional(),
+  cruise_arrival_location: Joi.string().optional()
 }).options({ allowUnknown: true }).label('cruiseAdditionalMetaUpdate');
 
 const cruiseQuery = Joi.object({
@@ -650,6 +652,17 @@ exports.plugin = {
           catch (err) {
             return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
           }
+
+          try {
+            const result = await db.collection(cruisesTable).findOne({ '_id': cruise._id });
+
+            if (result) {
+              return Boom.badRequest('Record with the payload id already exists');
+            }
+          }
+          catch (err) {
+            return Boom.serverUnavailable('database error', err);
+          }
         }
 
         // Validate date strings
@@ -708,7 +721,7 @@ exports.plugin = {
         }
 
         cruise.id = result.insertedId;
-        server.publish('/ws/status/newCruises', cruise);
+        server.publish('/ws/status/newCruises', _renameAndClearFields(cruise));
 
         const loweringQuery = { start_ts: { "$gte": cruise.start_ts }, stop_ts: { "$lt": cruise.stop_ts } };
 
