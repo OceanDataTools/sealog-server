@@ -16,6 +16,7 @@ misc/influx_sealog/settings*.py
 misc/python_sealog/settings*.py
 misc/sealog-asnap.py
 misc/sealog-cruiseResponder.py
+misc/sealog-cruiseSync.py
 misc/sealog-loweringResponder.py
 misc/sealog-autoActions.py
 misc/sealog-auxDataInserter-nav.py
@@ -28,6 +29,7 @@ misc/sealog_vehicle_postCruise.sh
 misc/sealog_vessel_postCruise.sh
 misc/sealog-auxDataInserter*.py
 misc/sealog-udp2MongoDB*.py
+misc/sealog_vehicle_data_export.py
 
 # Configuration files custom to the sealog-server instance
 config/db_constants.js

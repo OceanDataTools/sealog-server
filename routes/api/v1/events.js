@@ -1238,11 +1238,11 @@ exports.plugin = {
 
             // delete any aux_data
             const aux_data_query = { event_id: updatedEvent.id };
-            console.log(result.value);
-	    console.log(aux_data_query);
+            // console.log(result.value);
+            // console.log(aux_data_query);
 
-            const del_results = await db.collection(eventAuxDataTable).deleteMany(aux_data_query);
-            console.log(del_results);
+            await db.collection(eventAuxDataTable).deleteMany(aux_data_query);
+            // console.log(del_results);
 
             server.publish('/ws/status/newEvents', updatedEvent);
   
