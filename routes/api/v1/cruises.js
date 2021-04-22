@@ -3,6 +3,8 @@ const Boom = require('@hapi/boom');
 const Fs = require('fs');
 const Tmp = require('tmp');
 const Path = require('path');
+const { parseAsync } = require('json2csv');
+const Deepcopy = require('deepcopy');
 
 const {
   CRUISE_PATH
@@ -81,6 +83,50 @@ const _mvFilesToDir = (sourceDirPath, destDirPath) => {
   }
 };
 
+const _flattenJSON = (json) => {
+
+  const flattenJSON = json.map((cruise) => {
+  
+    const copiedCruise = Deepcopy(cruise);
+
+    Object.keys(copiedCruise.cruise_additional_meta).forEach((key) => {
+      copiedCruise[key] = copiedCruise.cruise_additional_meta[key];
+      if(Array.isArray(copiedCruise[key])) {
+        copiedCruise[key] = copiedCruise[key].join(',')
+      }
+    });
+
+    delete copiedCruise.cruise_additional_meta;
+    delete copiedCruise.cruise_hidden;
+    delete copiedCruise.cruise_access_list;
+    delete copiedCruise.cruise_files;
+
+    copiedCruise.start_ts = copiedCruise.start_ts.toISOString();
+    copiedCruise.stop_ts = copiedCruise.stop_ts.toISOString();
+    copiedCruise.id = copiedCruise.id.id.toString('hex');
+    copiedCruise.cruise_tags = copiedCruise.cruise_tags.join(',');
+
+    return copiedCruise;
+  });
+
+  return flattenJSON;
+};
+
+const _buildCSVHeaders = (flattenJSON) => {
+
+  const csvHeaders = flattenJSON.reduce((headers, cruise) => {
+
+    const keyNames = Object.keys(cruise);
+
+    return headers.concat(keyNames).filter((value, index, self) => {
+
+      return self.indexOf(value) === index;
+    });
+  }, ['id','cruise_id','start_ts','stop_ts','cruise_location','cruise_tags']);
+
+  return csvHeaders.slice(0, 6).concat(csvHeaders.slice(6).sort());
+};
+
 const _renameAndClearFields = (doc) => {
 
   //rename id
@@ -147,9 +193,14 @@ const cruiseQuery = Joi.object({
   cruise_location: Joi.string().optional(),
   cruise_pi: Joi.string().optional(),
   cruise_tags: Joi.array().items(cruiseTag).optional(),
+  format: Joi.string().optional(),
   offset: Joi.number().integer().min(0).optional(),
   limit: Joi.number().integer().min(1).optional()
 }).optional().label('cruiseQuery');
+
+const singleCruiseQuery = Joi.object({
+  format: Joi.string().optional(),
+}).optional().label('singleCruiseQuery');
 
 const cruiseSuccessResponse = Joi.object({
   id: Joi.object(),
@@ -311,6 +362,17 @@ exports.plugin = {
               return _renameAndClearFields(cruise);
             });
 
+            if (request.query.format && request.query.format === "csv") {
+
+              const flattenJSON = _flattenJSON(mod_cruises);
+
+              const csvHeaders = _buildCSVHeaders(flattenJSON);
+
+              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+
+              return h.response(csv_results).code(200);
+            }
+            
             return h.response(mod_cruises).code(200);
           }
  
@@ -332,7 +394,10 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.array().items((useAccessControl) ? cruiseSuccessResponse : cruiseSuccessResponseNoAccessControl)
+            200: Joi.alternatives().try(
+              Joi.string(),
+              Joi.array().items((useAccessControl) ? cruiseSuccessResponse : cruiseSuccessResponseNoAccessControl)
+            )
           }
         },
         description: 'Return the cruises based on query parameters',
@@ -393,6 +458,17 @@ exports.plugin = {
               cruise.cruise_additional_meta.cruise_files = [];
             }
 
+            if (request.query.format && request.query.format === "csv") {
+
+              const flattenJSON = _flattenJSON([_renameAndClearFields(cruise)]);
+
+              const csvHeaders = _buildCSVHeaders(flattenJSON);
+
+              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+
+              return h.response(csv_results).code(200);
+            }
+
             return h.response(_renameAndClearFields(cruise)).code(200);
           }
 
@@ -411,11 +487,15 @@ exports.plugin = {
         },
         validate: {
           headers: authorizationHeader,
-          params: loweringParam
+          params: loweringParam,
+          query: singleCruiseQuery
         },
         response: {
           status: {
-            200: (useAccessControl) ? cruiseSuccessResponse : cruiseSuccessResponseNoAccessControl
+            200: Joi.alternatives().try(
+              Joi.string(),
+              (useAccessControl) ? cruiseSuccessResponse : cruiseSuccessResponseNoAccessControl
+            )
           }
         },
         description: 'Return the cruises based on query parameters',
@@ -476,6 +556,17 @@ exports.plugin = {
               cruise.cruise_additional_meta.cruise_files = [];
             }
 
+            if (request.query.format && request.query.format === "csv") {
+
+              const flattenJSON = _flattenJSON([_renameAndClearFields(cruise)]);
+
+              const csvHeaders = _buildCSVHeaders(flattenJSON);
+
+              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+
+              return h.response(csv_results).code(200);
+            }
+
             return h.response(_renameAndClearFields(cruise)).code(200);
           }
 
@@ -494,11 +585,15 @@ exports.plugin = {
         },
         validate: {
           headers: authorizationHeader,
-          params: eventParam
+          params: eventParam,
+          query: singleCruiseQuery
         },
         response: {
           status: {
-            200: (useAccessControl) ? cruiseSuccessResponse : cruiseSuccessResponseNoAccessControl
+            200: Joi.alternatives().try(
+              Joi.string(),
+              (useAccessControl) ? cruiseSuccessResponse : cruiseSuccessResponseNoAccessControl
+            )
           }
         },
         description: 'Return the cruises based on query parameters',
@@ -552,8 +647,18 @@ exports.plugin = {
           cruise.cruise_additional_meta.cruise_files = [];
         }
 
-        cruise = _renameAndClearFields(cruise);
-        return h.response(cruise).code(200);
+        if (request.query.format && request.query.format === "csv") {
+
+          const flattenJSON = _flattenJSON([_renameAndClearFields(cruise)]);
+
+          const csvHeaders = _buildCSVHeaders(flattenJSON);
+
+          const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+
+          return h.response(csv_results).code(200);
+        }
+
+        return h.response(_renameAndClearFields(cruise)).code(200);
       },
       config: {
         auth: {
@@ -562,11 +667,15 @@ exports.plugin = {
         },
         validate: {
           headers: authorizationHeader,
-          params: cruiseParam
+          params: cruiseParam,
+          query: singleCruiseQuery
         },
         response: {
           status: {
-            200: (useAccessControl) ? cruiseSuccessResponse : cruiseSuccessResponseNoAccessControl
+            200: Joi.alternatives().try(
+              Joi.string(),
+              (useAccessControl) ? cruiseSuccessResponse : cruiseSuccessResponseNoAccessControl
+            )
           }
         },
         description: 'Return the cruise based on cruise id',

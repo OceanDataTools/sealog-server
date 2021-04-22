@@ -3,6 +3,8 @@ const Boom = require('@hapi/boom');
 const Fs = require('fs');
 const Tmp = require('tmp');
 const Path = require('path');
+const { parseAsync } = require('json2csv');
+const Deepcopy = require('deepcopy');
 
 const {
   LOWERING_PATH
@@ -81,6 +83,50 @@ const _mvFilesToDir = (sourceDirPath, destDirPath) => {
   }
 };
 
+const _flattenJSON = (json) => {
+
+  const flattenJSON = json.map((lowering) => {
+  
+    const copiedLowering = Deepcopy(lowering);
+
+    Object.keys(copiedLowering.lowering_additional_meta).forEach((key) => {
+      copiedLowering[key] = copiedLowering.lowering_additional_meta[key];
+      if(Array.isArray(copiedLowering[key])) {
+        copiedLowering[key] = copiedLowering[key].join(',')
+      }
+    });
+
+    delete copiedLowering.lowering_additional_meta;
+    delete copiedLowering.lowering_hidden;
+    delete copiedLowering.lowering_access_list;
+    delete copiedLowering.lowering_files;
+
+    copiedLowering.start_ts = copiedLowering.start_ts.toISOString();
+    copiedLowering.stop_ts = copiedLowering.stop_ts.toISOString();
+    copiedLowering.id = copiedLowering.id.id.toString('hex');
+    copiedLowering.lowering_tags = copiedLowering.lowering_tags.join(',');
+
+    return copiedLowering;
+  });
+
+  return flattenJSON;
+};
+
+const _buildCSVHeaders = (flattenJSON) => {
+
+  const csvHeaders = flattenJSON.reduce((headers, lowering) => {
+
+    const keyNames = Object.keys(lowering);
+
+    return headers.concat(keyNames).filter((value, index, self) => {
+
+      return self.indexOf(value) === index;
+    });
+  }, ['id','lowering_id','start_ts','stop_ts','lowering_location','lowering_tags']);
+
+  return csvHeaders.slice(0, 6).concat(csvHeaders.slice(6).sort());
+};
+
 const _renameAndClearFields = (doc) => {
 
   //rename id
@@ -157,9 +203,14 @@ const loweringQuery = Joi.object({
     loweringTag,
     Joi.array().items(loweringTag)
   ).optional(),
+  format: Joi.string().optional(),
   offset: Joi.number().integer().min(0).optional(),
   limit: Joi.number().integer().min(1).optional()
 }).optional().label('loweringQuery');
+
+const singleLoweringQuery = Joi.object({
+  format: Joi.string().optional(),
+}).optional().label('singleLoweringQuery');
 
 const loweringSuccessResponse = Joi.object({
   id: Joi.object(),
@@ -282,6 +333,17 @@ exports.plugin = {
               return _renameAndClearFields(lowering);
             });
 
+            if (request.query.format && request.query.format === "csv") {
+
+              const flattenJSON = _flattenJSON(mod_lowerings);
+
+              const csvHeaders = _buildCSVHeaders(flattenJSON);
+
+              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+
+              return h.response(csv_results).code(200);
+            }
+
             return h.response(mod_lowerings).code(200);
           }
  
@@ -304,7 +366,10 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.array().items((useAccessControl) ? loweringSuccessResponse : loweringSuccessResponseNoAccessControl )
+            200: Joi.alternatives().try(
+              Joi.string(),
+              Joi.array().items((useAccessControl) ? loweringSuccessResponse : loweringSuccessResponseNoAccessControl)
+            )
           }
         },
         description: 'Return the lowerings based on query parameters',
@@ -419,6 +484,17 @@ exports.plugin = {
               return _renameAndClearFields(result);
             });
 
+            if (request.query.format && request.query.format === "csv") {
+
+              const flattenJSON = _flattenJSON(mod_lowerings);
+
+              const csvHeaders = _buildCSVHeaders(flattenJSON);
+
+              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+
+              return h.response(csv_results).code(200);
+            }
+
             return h.response(mod_lowerings).code(200);
           }
  
@@ -442,7 +518,10 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.array().items((useAccessControl) ? loweringSuccessResponse : loweringSuccessResponseNoAccessControl )
+            200: Joi.alternatives().try(
+              Joi.string(),
+              Joi.array().items((useAccessControl) ? loweringSuccessResponse : loweringSuccessResponseNoAccessControl)
+            )
           }
         },
         description: 'Return the lowerings based on query parameters',
@@ -503,6 +582,17 @@ exports.plugin = {
               lowering.lowering_additional_meta.lowering_files = [];
             }
 
+            if (request.query.format && request.query.format === "csv") {
+
+              const flattenJSON = _flattenJSON([_renameAndClearFields(lowering)]);
+
+              const csvHeaders = _buildCSVHeaders(flattenJSON);
+
+              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+
+              return h.response(csv_results).code(200);
+            }
+
             return h.response(_renameAndClearFields(lowering)).code(200);
           }
 
@@ -521,11 +611,15 @@ exports.plugin = {
         },
         validate: {
           headers: authorizationHeader,
-          params: eventParam
+          params: eventParam,
+          query: singleLoweringQuery
         },
         response: {
           status: {
-            200: (useAccessControl) ? loweringSuccessResponse : loweringSuccessResponseNoAccessControl
+            200: Joi.alternatives().try(
+              Joi.string(),
+              (useAccessControl) ? loweringSuccessResponse : loweringSuccessResponseNoAccessControl
+            )
           }
         },
         description: 'Return the lowerings based on query parameters',
@@ -579,8 +673,18 @@ exports.plugin = {
           lowering.lowering_additional_meta.lowering_files = [];
         }
 
-        lowering = _renameAndClearFields(lowering);
-        return h.response(lowering).code(200);
+        if (request.query.format && request.query.format === "csv") {
+
+              const flattenJSON = _flattenJSON([_renameAndClearFields(lowering)]);
+
+              const csvHeaders = _buildCSVHeaders(flattenJSON);
+
+              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+
+              return h.response(csv_results).code(200);
+            }
+
+        return h.response(_renameAndClearFields(lowering)).code(200);
       },
       config: {
         auth: {
@@ -589,11 +693,15 @@ exports.plugin = {
         },
         validate: {
           headers: authorizationHeader,
-          params: loweringParam
+          params: loweringParam,
+          query: singleLoweringQuery
         },
         response: {
           status: {
-            200: (useAccessControl) ? loweringSuccessResponse : loweringSuccessResponseNoAccessControl
+            200: Joi.alternatives().try(
+              Joi.string(),
+              (useAccessControl) ? loweringSuccessResponse : loweringSuccessResponseNoAccessControl
+            )
           }
         },
         description: 'Return the lowering based on lowering id',
