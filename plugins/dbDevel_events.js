@@ -14,7 +14,7 @@ exports.plugin = {
       {
         _id: ObjectID('5981f167212b348aed7fa9f5'),
         event_author: 'admin',
-        ts: new Date(),
+        ts: new Date("2017/06/14 19:01:00Z"),
         event_value: "FISH",
         event_options: [{
           event_option_name: "status",
@@ -24,7 +24,7 @@ exports.plugin = {
       }, {
         _id: ObjectID('5981f167212b348aed7fa9f6'),
         event_author: 'user',
-        ts: new Date(),
+        ts: new Date("2017/06/14 19:11:00Z"),
         event_value: "CORAL",
         event_options: [{
           event_option_name: "status",
@@ -34,7 +34,7 @@ exports.plugin = {
       }, {
         _id: ObjectID('5981f167212b348aed7fa9f7'),
         event_author: 'user',
-        ts: new Date(),
+        ts: new Date("2017/06/14 19:21:00Z"),
         event_value: "FISH",
         event_options: [{
           event_option_name: "status",
@@ -44,7 +44,7 @@ exports.plugin = {
       }, {
         _id: ObjectID('5981f167212b348aed7fa9f8'),
         event_author: 'admin',
-        ts: new Date(),
+        ts: new Date("2017/06/14 19:31:00Z"),
         event_value: "FISH",
         event_options: [{
           event_option_name: "status",
@@ -54,7 +54,7 @@ exports.plugin = {
       }, {
         _id: ObjectID('5981f167212b348aed7fa9f9'),
         event_author: 'admin',
-        ts: new Date(),
+        ts: new Date("2017/06/14 19:41:00Z"),
         event_value: "FISH",
         event_options: [{
           event_option_name: "status",

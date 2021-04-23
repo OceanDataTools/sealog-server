@@ -4,30 +4,46 @@ import logging
 
 from .settings import apiServerURL, headers, cruisesAPIPath, loweringsAPIPath
 
-def getCruise(cruise_uid):
+def getCruise(cruise_uid, export_format='json'):
 
   try:
-    url = apiServerURL + cruisesAPIPath + '/' + cruise_uid
+    url = apiServerURL + cruisesAPIPath + '/' + cruise_uid + '?format=' + export_format
     r = requests.get(url, headers=headers)
 
-    if r.status_code != 404:
-      cruise = json.loads(r.text)
-      logging.debug(json.dumps(cruise))
-      return cruise
+    if r.status_code == 200:
+      if export_format == 'json':
+        return json.loads(r.text)
+      elif export_format == 'csv':
+        return r.text
+      else:
+        return None
 
   except Exception as error:
     logging.error(str(error))
     raise error
 
-def getCruises():
+def getCruises(export_format='json'):
 
   try:
-    url = apiServerURL + cruisesAPIPath
+    url = apiServerURL + cruisesAPIPath + '?format=' + export_format
     r = requests.get(url, headers=headers)
 
-    if r.status_code != 404:
-      cruises = json.loads(r.text)
-      return cruises
+    if r.status_code == 200:
+      if export_format == 'json':
+        return json.loads(r.text)
+      elif export_format == 'csv':
+        return r.text
+      else:
+        return None
+
+    if r.status_code == 404:
+      if export_format == 'json':
+        return []
+      elif export_format == 'csv':
+        return ""
+      else:
+        return None
+
 
   except Exception as error:
     logging.error(str(error))
@@ -36,68 +52,70 @@ def getCruises():
 def getCruiseUIDByID(cruise_id):
 
   try:
-    url = apiServerURL + cruisesAPIPath
+    url = apiServerURL + cruisesAPIPath + '?cruise_id=' + cruise_id
     r = requests.get(url, headers=headers)
 
-    if r.status_code != 404:
-      cruises = json.loads(r.text)
-      for cruise in cruises:
-        if cruise['cruise_id'] == cruise_id:
-          logging.debug(json.dumps(cruise))
-          return cruise['id']
+    if r.status_code == 200:
+      cruise = json.loads(r.text)[0]
+      return cruise['id']
 
   except Exception as error:
     logging.error(str(error))
     raise error
 
 
-def getCruiseByID(cruise_id):
+def getCruiseByID(cruise_id, export_format='json'):
 
   try:
-    url = apiServerURL + cruisesAPIPath
+    url = apiServerURL + cruisesAPIPath + '?cruise_id=' + cruise_id + '&format=' + export_format
     r = requests.get(url, headers=headers)
 
-    if r.status_code != 404:
-      cruises = json.loads(r.text)
-      for cruise in cruises:
-        if cruise['cruise_id'] == cruise_id:
-          logging.debug(json.dumps(cruise))
-          return cruise
+    if r.status_code == 200:
+      if export_format == 'json':
+        return json.loads(r.text)[0]
+      elif export_format == 'csv':
+        return r.text
+      else:
+        return None
 
   except Exception as error:
     logging.error(str(error))  
     raise error
 
 
-def getCruiseByLowering(lowering_uid):
+def getCruiseByLowering(lowering_uid, export_format='json'):
 
   try:
-    url = apiServerURL + cruisesAPIPath + '/bylowering/' + lowering_uid
+    url = apiServerURL + cruisesAPIPath + '/bylowering/' + lowering_uid + '?format=' + export_format
     r = requests.get(url, headers=headers)
 
-    if r.status_code != 404:
-      cruise = json.loads(r.text)
-      logging.debug(json.dumps(cruise))
-      return cruise
+    if r.status_code == 200:
+      if export_format == 'json':
+        return json.loads(r.text)
+      elif export_format == 'csv':
+        return r.text
+      else:
+        return None
 
   except Exception as error:
-    logging.error(r.text)
-    logging.debug(str(error))
+    logging.error(str(error))
     raise error
 
 
-def getCruiseByEvent(event_uid):
+def getCruiseByEvent(event_uid, export_format='json'):
 
   try:
-    url = apiServerURL + cruisesAPIPath + '/byevent/' + event_uid
+    url = apiServerURL + cruisesAPIPath + '/byevent/' + event_uid + '?format=' + export_format
     r = requests.get(url, headers=headers)
 
-    if r.status_code != 404:
-      cruise = json.loads(r.text)
-      logging.debug(json.dumps(cruise))
-      return cruise
+    if r.status_code == 200:
+      if export_format == 'json':
+        return json.loads(r.text)
+      elif export_format == 'csv':
+        return r.text
+      else:
+        return None
 
   except Exception as error:
-    logging.error(r.text)
-    logging.debug(str(error))
+    logging.error(str(error))
     raise error

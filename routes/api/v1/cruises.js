@@ -90,9 +90,10 @@ const _flattenJSON = (json) => {
     const copiedCruise = Deepcopy(cruise);
 
     Object.keys(copiedCruise.cruise_additional_meta).forEach((key) => {
+
       copiedCruise[key] = copiedCruise.cruise_additional_meta[key];
-      if(Array.isArray(copiedCruise[key])) {
-        copiedCruise[key] = copiedCruise[key].join(',')
+      if (Array.isArray(copiedCruise[key])) {
+        copiedCruise[key] = copiedCruise[key].join(',');
       }
     });
 
@@ -199,7 +200,7 @@ const cruiseQuery = Joi.object({
 }).optional().label('cruiseQuery');
 
 const singleCruiseQuery = Joi.object({
-  format: Joi.string().optional(),
+  format: Joi.string().optional()
 }).optional().label('singleCruiseQuery');
 
 const cruiseSuccessResponse = Joi.object({
@@ -368,7 +369,7 @@ exports.plugin = {
 
               const csvHeaders = _buildCSVHeaders(flattenJSON);
 
-              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
 
               return h.response(csv_results).code(200);
             }
@@ -464,7 +465,7 @@ exports.plugin = {
 
               const csvHeaders = _buildCSVHeaders(flattenJSON);
 
-              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
 
               return h.response(csv_results).code(200);
             }
@@ -562,7 +563,7 @@ exports.plugin = {
 
               const csvHeaders = _buildCSVHeaders(flattenJSON);
 
-              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
 
               return h.response(csv_results).code(200);
             }
@@ -653,7 +654,7 @@ exports.plugin = {
 
           const csvHeaders = _buildCSVHeaders(flattenJSON);
 
-          const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+          const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
 
           return h.response(csv_results).code(200);
         }

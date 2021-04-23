@@ -90,9 +90,10 @@ const _flattenJSON = (json) => {
     const copiedLowering = Deepcopy(lowering);
 
     Object.keys(copiedLowering.lowering_additional_meta).forEach((key) => {
+      
       copiedLowering[key] = copiedLowering.lowering_additional_meta[key];
-      if(Array.isArray(copiedLowering[key])) {
-        copiedLowering[key] = copiedLowering[key].join(',')
+      if (Array.isArray(copiedLowering[key])) {
+        copiedLowering[key] = copiedLowering[key].join(',');
       }
     });
 
@@ -209,7 +210,7 @@ const loweringQuery = Joi.object({
 }).optional().label('loweringQuery');
 
 const singleLoweringQuery = Joi.object({
-  format: Joi.string().optional(),
+  format: Joi.string().optional()
 }).optional().label('singleLoweringQuery');
 
 const loweringSuccessResponse = Joi.object({
@@ -339,7 +340,7 @@ exports.plugin = {
 
               const csvHeaders = _buildCSVHeaders(flattenJSON);
 
-              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
 
               return h.response(csv_results).code(200);
             }
@@ -490,7 +491,7 @@ exports.plugin = {
 
               const csvHeaders = _buildCSVHeaders(flattenJSON);
 
-              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
 
               return h.response(csv_results).code(200);
             }
@@ -588,7 +589,7 @@ exports.plugin = {
 
               const csvHeaders = _buildCSVHeaders(flattenJSON);
 
-              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
 
               return h.response(csv_results).code(200);
             }
@@ -675,14 +676,14 @@ exports.plugin = {
 
         if (request.query.format && request.query.format === "csv") {
 
-              const flattenJSON = _flattenJSON([_renameAndClearFields(lowering)]);
+          const flattenJSON = _flattenJSON([_renameAndClearFields(lowering)]);
 
-              const csvHeaders = _buildCSVHeaders(flattenJSON);
+          const csvHeaders = _buildCSVHeaders(flattenJSON);
 
-              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+          const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
 
-              return h.response(csv_results).code(200);
-            }
+          return h.response(csv_results).code(200);
+        }
 
         return h.response(_renameAndClearFields(lowering)).code(200);
       },
