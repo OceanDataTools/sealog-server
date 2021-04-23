@@ -355,15 +355,6 @@ exports.plugin = {
             const csvHeaders = _buildCSVHeaders(flattenJSON);
             
             const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
-              .then((csv) => {
-
-                return csv;
-              })
-              .catch((err) => {
-
-                console.error(err);
-                throw err;
-              });
 
             return h.response(csv_results).code(200);
           }
@@ -501,15 +492,6 @@ exports.plugin = {
             const csvHeaders = _buildCSVHeaders(flattenJSON);
             
             const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
-              .then((csv) => {
-
-                return csv;
-              })
-              .catch((err) => {
-
-                console.error(err);
-                throw err;
-              });
 
             return h.response(csv_results).code(200);
           }
@@ -642,15 +624,6 @@ exports.plugin = {
                 const csvHeaders = _buildCSVHeaders(flattenJSON);
                 
                 const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
-                  .then((csv) => {
-
-                    return csv;
-                  })
-                  .catch((err) => {
-
-                    console.error(err);
-                    throw err;
-                  });
 
                 return h.response(csv_results).code(200);
               }

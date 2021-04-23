@@ -252,7 +252,7 @@ exports.plugin = {
           const cruiseResult = await db.collection(cruisesTable).findOne({ _id: ObjectID(request.params.id) });
 
           if (!cruiseResult) {
-            return Boom.notFound('No cruise record found for id: ' + request.params.id );
+            return Boom.badRequest('No cruise record found for id: ' + request.params.id );
           }
 
           if (!request.auth.credentials.scope.includes("admin") && cruiseResult.cruise_hidden && (useAccessControl && typeof cruiseResult.cruise_access_list !== 'undefined' && !cruiseResult.cruise_access_list.includes(request.auth.credentials.id))) {
@@ -281,83 +281,62 @@ exports.plugin = {
           return Boom.serverUnavailable('database error');
         }
 
-        if (results.length > 0) {
-        
-          // --------- Data source filtering
-          if (request.query.datasource) {
+        if (results.length === 0) {
+          return Boom.notFound('No records found' );
+        }      
 
-            const datasource_query = {};
+        // --------- Data source filtering
+        if (request.query.datasource) {
 
-            const eventIDs = results.map((event) => event._id);
+          const datasource_query = {};
 
-            datasource_query.event_id = { $in: eventIDs };
+          const eventIDs = results.map((event) => event._id);
 
-            if (Array.isArray(request.query.datasource)) {
-              const regex_query = request.query.datasource.map((datasource) => {
+          datasource_query.event_id = { $in: eventIDs };
 
-                const return_regex = new RegExp(datasource, 'i');
-                return return_regex;
-              });
+          if (Array.isArray(request.query.datasource)) {
+            const regex_query = request.query.datasource.map((datasource) => {
 
-              datasource_query.data_source  = { $in: regex_query };
-            }
-            else {
-              datasource_query.data_source  = RegExp(request.query.datasource, 'i');
-            }
-
-            let aux_data_results = [];
-            try {
-              aux_data_results = await db.collection(eventAuxDataTable).find(datasource_query, { _id: 0, event_id: 1 }).toArray();
-            }
-            catch (err) {
-              console.log(err);
-              return Boom.serverUnavailable('database error');
-            }
-
-            const aux_data_eventID_set = new Set(aux_data_results.map((aux_data) => String(aux_data.event_id)));
-
-            results = results.filter((event) => {
-
-              return (aux_data_eventID_set.has(String(event._id))) ? event : null;
+              const return_regex = new RegExp(datasource, 'i');
+              return return_regex;
             });
 
+            datasource_query.data_source  = { $in: regex_query };
+          }
+          else {
+            datasource_query.data_source  = RegExp(request.query.datasource, 'i');
           }
 
-          results.forEach(_renameAndClearFields);
-
-          if (request.query.format && request.query.format === "csv") {
-            const flattenJSON = _flattenJSON(results);
-            const csvHeaders = _buildCSVHeaders(flattenJSON);
-
-            const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
-              .then((csv) => {
-              
-                return csv;
-              })
-              .catch((err) => {
-              
-                console.error(err);
-                throw err;
-              });
-
-            // const csv_results = await Converter.json2csvAsync(flattenJSON, json2csvOptions)
-            //   .then((csv) => {
-              
-            //     return csv;
-            //   })
-            //   .catch((err) => {
-
-            //     console.log(err);
-            //     throw err;    
-            //   });
-
-            return h.response(csv_results).code(200);
+          let aux_data_results = [];
+          try {
+            aux_data_results = await db.collection(eventAuxDataTable).find(datasource_query, { _id: 0, event_id: 1 }).toArray();
+          }
+          catch (err) {
+            console.log(err);
+            return Boom.serverUnavailable('database error');
           }
 
-          return h.response(results).code(200);
+          const aux_data_eventID_set = new Set(aux_data_results.map((aux_data) => String(aux_data.event_id)));
+
+          results = results.filter((event) => {
+
+            return (aux_data_eventID_set.has(String(event._id))) ? event : null;
+          });
+
         }
 
-        return Boom.notFound('No records found' );
+        results.forEach(_renameAndClearFields);
+
+        if (request.query.format && request.query.format === "csv") {
+          const flattenJSON = _flattenJSON(results);
+          const csvHeaders = _buildCSVHeaders(flattenJSON);
+
+          const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+
+          return h.response(csv_results).code(200);
+        }
+
+        return h.response(results).code(200);
       },
       config: {
         auth: {
@@ -399,7 +378,7 @@ exports.plugin = {
           const cruiseResult = await db.collection(cruisesTable).findOne({ _id: ObjectID(request.params.id) });
 
           if (!cruiseResult) {
-            return Boom.notFound('No record cruise found for id: ' + request.params.id );
+            return Boom.badRequest('No record cruise found for id: ' + request.params.id );
           }
 
           if (!request.auth.credentials.scope.includes("admin") && cruiseResult.cruise_hidden && (useAccessControl && typeof cruiseResult.cruise_access_list !== 'undefined' && !cruiseResult.cruise_access_list.includes(request.auth.credentials.id))) {
@@ -515,7 +494,7 @@ exports.plugin = {
           const loweringResult = await db.collection(loweringsTable).findOne({ _id: ObjectID(request.params.id) });
 
           if (!loweringResult) {
-            return Boom.notFound('No record lowering found for id: ' + request.params.id );
+            return Boom.badRequest('No record lowering found for id: ' + request.params.id );
           }
 
           if (!request.auth.credentials.scope.includes("admin") && loweringResult.lowering_hidden && (useAccessControl && typeof loweringResult.lowering_access_list !== 'undefined' && !loweringResult.lowering_access_list.includes(request.auth.credentials.id))) {
@@ -544,84 +523,63 @@ exports.plugin = {
           return Boom.serverUnavailable('database error');
         }
 
-        if (results.length > 0) {
-        
-          // --------- Data source filtering
-          if (request.query.datasource) {
+        if (results.length === 0) {
+          return Boom.notFound('No records found' );
+        }
+      
+        // --------- Data source filtering
+        if (request.query.datasource) {
 
-            const datasource_query = {};
+          const datasource_query = {};
 
-            const eventIDs = results.map((event) => event._id);
+          const eventIDs = results.map((event) => event._id);
 
-            datasource_query.event_id = { $in: eventIDs };
+          datasource_query.event_id = { $in: eventIDs };
 
-            if (Array.isArray(request.query.datasource)) {
-              const regex_query = request.query.datasource.map((datasource) => {
+          if (Array.isArray(request.query.datasource)) {
+            const regex_query = request.query.datasource.map((datasource) => {
 
-                const return_regex = new RegExp(datasource, 'i');
-                return return_regex;
-              });
-
-              datasource_query.data_source  = { $in: regex_query };
-            }
-            else {
-              datasource_query.data_source  = RegExp(request.query.datasource, 'i');
-            }
-
-            let aux_data_results = [];
-            try {
-              aux_data_results = await db.collection(eventAuxDataTable).find(datasource_query, { _id: 0, event_id: 1 }).toArray();
-            }
-            catch (err) {
-              console.log(err);
-              return Boom.serverUnavailable('database error');
-            }
-
-            const aux_data_eventID_set = new Set(aux_data_results.map((aux_data) => String(aux_data.event_id)));
-
-            results = results.filter((event) => {
-              
-              return (aux_data_eventID_set.has(String(event._id))) ? event : null;
+              const return_regex = new RegExp(datasource, 'i');
+              return return_regex;
             });
 
+            datasource_query.data_source  = { $in: regex_query };
+          }
+          else {
+            datasource_query.data_source  = RegExp(request.query.datasource, 'i');
           }
 
-          results.forEach(_renameAndClearFields);
+          let aux_data_results = [];
+          try {
+            aux_data_results = await db.collection(eventAuxDataTable).find(datasource_query, { _id: 0, event_id: 1 }).toArray();
+          }
+          catch (err) {
+            console.log(err);
+            return Boom.serverUnavailable('database error');
+          }
 
-          if (request.query.format && request.query.format === "csv") {
+          const aux_data_eventID_set = new Set(aux_data_results.map((aux_data) => String(aux_data.event_id)));
 
-            const flattenJSON = _flattenJSON(results);
-            const csvHeaders = _buildCSVHeaders(flattenJSON);
+          results = results.filter((event) => {
             
-            const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
-              .then((csv) => {
+            return (aux_data_eventID_set.has(String(event._id))) ? event : null;
+          });
 
-                return csv;
-              })
-              .catch((err) => {
-
-                console.error(err);
-                throw err;
-              });
-
-            // const csv_results = await Converter.json2csvAsync(flattenJSON, json2csvOptions)
-            //   .then((csv) => {
-              
-            //     return csv;
-            //   })
-            //   .catch((err) => {
-
-            //     console.log(err);
-            //     throw err;    
-            //   });
-
-            return h.response(csv_results).code(200);
-          }
-
-          return h.response(results).code(200);
         }
 
-        return Boom.notFound('No records found' );
+        results.forEach(_renameAndClearFields);
+
+        if (request.query.format && request.query.format === "csv") {
+
+          const flattenJSON = _flattenJSON(results);
+          const csvHeaders = _buildCSVHeaders(flattenJSON);
+          
+          const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+
+          return h.response(csv_results).code(200);
+        }
+
+        return h.response(results).code(200);
       },
       config: {
         auth: {
@@ -663,7 +621,7 @@ exports.plugin = {
           const loweringResult = await db.collection(loweringsTable).findOne({ _id: ObjectID(request.params.id) });
 
           if (!loweringResult) {
-            return Boom.notFound('No record lowering found for id: ' + request.params.id );
+            return Boom.badRequest('No record lowering found for id: ' + request.params.id );
           }
 
           if (!request.auth.credentials.scope.includes("admin") && loweringResult.lowering_hidden && (useAccessControl && typeof loweringResult.lowering_access_list !== 'undefined' && !loweringResult.lowering_access_list.includes(request.auth.credentials.id))) {
@@ -840,43 +798,22 @@ exports.plugin = {
             const results = await db.collection(eventsTable).find(query).sort(sort).skip(offset).limit(limit).toArray();
             // console.log("results:", results);
 
-            if (results.length > 0) {
-
-              results.forEach(_renameAndClearFields);
-
-              if (request.query.format && request.query.format === "csv") {
-                const flattenJSON = _flattenJSON(results);
-                const csvHeaders = _buildCSVHeaders(flattenJSON);
-
-                const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
-                  .then((csv) => {
-
-                    return csv;
-                  })
-                  .catch((err) => {
-
-                    console.error(err);
-                    throw err;
-                  });
-
-                // const csv_results = await Converter.json2csvAsync(flattenJSON, json2csvOptions)
-                //   .then((csv) => {
-                  
-                //     return csv;
-                //   })
-                //   .catch((err) => {
-
-                //     console.log(err);
-                //     throw err;    
-                //   });
-
-                return h.response(csv_results).code(200);
-              }
-
-              return h.response(results).code(200);
+            if (results.length === 0) {
+              return Boom.notFound('No records found' );
             }
 
-            return Boom.notFound('No records found' );
+            results.forEach(_renameAndClearFields);
+
+            if (request.query.format && request.query.format === "csv") {
+              const flattenJSON = _flattenJSON(results);
+              const csvHeaders = _buildCSVHeaders(flattenJSON);
+
+              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+
+              return h.response(csv_results).code(200);
+            }
+
+            return h.response(results).code(200);
           }
           catch (err) {
             console.log(err);
@@ -944,8 +881,6 @@ exports.plugin = {
 
             const eventIDs = collection.map((x) => x.event_id);
 
-            // console.log("collection:", eventIDs);
-
             datasourceIDs = { $in: eventIDs };
 
           }
@@ -959,7 +894,6 @@ exports.plugin = {
 
           try {
             const results = await db.collection(eventsTable).find(query).toArray();
-            // console.log("results:", results);
 
             return h.response({ "events": results.length }).code(200);
             
@@ -976,7 +910,6 @@ exports.plugin = {
 
           try {
             const results = await db.collection(eventsTable).find(query).toArray();
-            // console.log("results:", results);
 
             return h.response({ "events": results.length }).code(200);
           }
@@ -1317,8 +1250,6 @@ exports.plugin = {
             const collection = await db.collection(eventAuxDataTable).find(datasource_query, { _id: 0, event_id: 1 }).toArray();
 
             const eventIDs = collection.map((x) => x.event_id);
-
-            // console.log("collection:", eventIDs);
 
             datasourceIDs = { $in: eventIDs };
 
