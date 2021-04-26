@@ -29,6 +29,7 @@ from python_sealog.event_aux_data import getEventAuxDataByLowering
 from python_sealog.event_exports import getEventExport, getEventExportsByLowering
 from python_sealog.event_templates import getEventTemplates
 from filecroputility import FileCropUtility
+from export_lowering_nav_2_csv import ExportLoweringNav2CSV
 
 from sealog_build_cruise_summary_report_OXR_Argus import CruiseSummaryReport
 from sealog_build_lowering_summary_report_OXR_Argus import LoweringSummaryReport
@@ -349,6 +350,23 @@ def _exportLoweringOpenRVDASDataFiles(cruise, lowering):
       logger.warning("Could not create cropped data file: {}".format(destination_file))
 
 
+def _exportLoweringNavCSVFiles(lowering):
+
+  logger.info("Exporting lowering nav data to csv")
+
+  dest_dir = os.path.join(apiServerFilePath, 'lowerings', lowering['id'])
+  filename = VEHICLE_NAME + '_' + lowering['id'] + '_nav.csv'
+
+  lowering_export = ExportLoweringNav2CSV(lowering['id'])
+
+  try:
+    with open(os.path.join(dest_dir, filename), 'w') as out_file:
+      out_file.write(str(lowering_export))
+
+  except IOError:
+      logging.error("Error saving nav csv export file: %s", os.path.join(dest_dir, filename))
+
+
 def _exportCruiseDataFiles(cruise):
 
   logger.info("Exporting cruise-level data files")
@@ -466,7 +484,6 @@ if __name__ == '__main__':
   parser.add_argument('-L', '--lowering_id', help='export data for the specified lowering (i.e. S0314)')
   parser.add_argument('-C', '--cruise_id', help='export all cruise and lowering data for the specified cruise (i.e. FK200126)')
 
-  
   args = parser.parse_args()
 
   # Turn on debug mode
@@ -569,6 +586,9 @@ if __name__ == '__main__':
         # export lowering cropped data files
         _exportLoweringOpenRVDASDataFiles(current_cruise, lowering)
 
+        # export lowering nav2csv data file
+        _exportLoweringNavCSVFiles(lowering)
+
         # sync data to data warehouse
         if not args.no_transfer:
           _pushToDataWarehouse(current_cruise, lowering)
@@ -640,6 +660,9 @@ if __name__ == '__main__':
 
         # export lowering cropped data files
         _exportLoweringOpenRVDASDataFiles(current_cruise, lowering)
+
+        # export lowering nav2csv data file
+        _exportLoweringNavCSVFiles(lowering)
 
         # sync data to data warehouse
         if not args.no_transfer:
@@ -722,6 +745,9 @@ if __name__ == '__main__':
     # export lowering cropped data files
     _exportLoweringOpenRVDASDataFiles(current_cruise, current_lowering)
 
+    # export lowering nav2csv data file
+    _exportLoweringNavCSVFiles(current_lowering)
+
     # sync data to data warehouse
     if not args.no_transfer:
       _pushToDataWarehouse(current_cruise, current_lowering)
@@ -784,6 +810,9 @@ if __name__ == '__main__':
 
     # export lowering cropped data files
     _exportLoweringOpenRVDASDataFiles(current_cruise, current_lowering)
+
+    # export lowering nav2csv data file
+    _exportLoweringNavCSVFiles(current_lowering)
 
     # sync data to data warehouse
     if not args.no_transfer:
