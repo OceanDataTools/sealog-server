@@ -59,7 +59,7 @@ class ExportLoweringNav2CSV():
         logging.info("Extracting \"lowering_in_water\" and \"lowering_out_of_water\" timestamps")
         try:
             start_ts = datetime.strptime(lowering['lowering_additional_meta']['milestones']['lowering_in_water'], '%Y-%m-%dT%H:%M:%S.%fZ')
-            end_ts = datetime.strptime(lowering['lowering_additional_meta']['milestones']['lowering_out_of_water'], '%Y-%m-%dT%H:%M:%S.%fZ')
+            end_ts = datetime.strptime(lowering['lowering_additional_meta']['milestones']['lowering_on_surface'], '%Y-%m-%dT%H:%M:%S.%fZ')
         except:
             logging.error("Problem extracting \"lowering_in_water\" and \"lowering_out_of_water\" timestamps")
             return None
