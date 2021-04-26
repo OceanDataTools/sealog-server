@@ -355,7 +355,7 @@ def _exportLoweringNavCSVFiles(lowering):
   logger.info("Exporting lowering nav data to csv")
 
   dest_dir = os.path.join(apiServerFilePath, 'lowerings', lowering['id'])
-  filename = VEHICLE_NAME + '_' + lowering['id'] + '_nav.csv'
+  filename = VEHICLE_NAME + '_' + lowering['lowering_id'] + '_nav.csv'
 
   lowering_export = ExportLoweringNav2CSV(lowering['lowering_id'])
 
