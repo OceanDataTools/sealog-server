@@ -315,7 +315,7 @@ def _exportLoweringSealogDataFiles(cruise, lowering):
   # logger.debug(output)
 
   logger.info("Export Nav CSV")
-  output = subprocess.call(['rsync','-avi','--progress', '--delete', '--include=*.csv', '--exclude=*', os.path.join(apiServerFilePath, 'lowerings', lowering['id'], ''), os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], _exportDirName(cruise['cruise_id'], lowering['lowering_id']))])
+  output = subprocess.call(['rsync','-avi','--progress', '--include=' + VEHICLE_NAME + '_' + lowering['lowering_id'] + '_nav.csv', '--exclude=*', os.path.join(apiServerFilePath, 'lowerings', lowering['id'], ''), os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], _exportDirName(cruise['cruise_id'], lowering['lowering_id']))])
 
   # logger.info("Export Files")
   # output = subprocess.call(['rsync','-avi','--progress', '--delete', '--include=*.json', '--include=*.kml', '--exclude=*', os.path.join(apiServerFilePath, 'lowerings', lowering['id'], ''), os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], _exportDirName(cruise['cruise_id'], lowering['lowering_id']), FILES_DIRNAME)])
