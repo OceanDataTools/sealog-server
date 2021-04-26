@@ -107,7 +107,7 @@ class ExportLoweringNav2CSV():
 
 
     def __str__(self):
-        return self.data.to_csv(index=False, na_rep='NAN', date_format='%Y-%m-%dT%H:%M:%SZ')
+        return self.data.to_csv(index=False, na_rep='', date_format='%Y-%m-%dT%H:%M:%SZ')
 
 
 # -------------------------------------------------------------------------------------
