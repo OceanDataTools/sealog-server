@@ -357,7 +357,7 @@ def _exportLoweringNavCSVFiles(lowering):
   dest_dir = os.path.join(apiServerFilePath, 'lowerings', lowering['id'])
   filename = VEHICLE_NAME + '_' + lowering['id'] + '_nav.csv'
 
-  lowering_export = ExportLoweringNav2CSV(lowering['id'])
+  lowering_export = ExportLoweringNav2CSV(lowering['lowering_id'])
 
   try:
     with open(os.path.join(dest_dir, filename), 'w') as out_file:
