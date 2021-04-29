@@ -2,8 +2,9 @@
 '''
 FILE:           sealog_vehicle_data_export.py
 
-DESCRIPTION:    This script exports all the data for a given lowering, creates all the reports for that lowering,
-                and pushes the data to the OpenVDM data directory for that lowering.
+DESCRIPTION:    This script exports all the data for a given lowering, creates
+                all the reports for that lowering, and pushes the data to the
+                OpenVDM data directory for that lowering.
 
 BUGS:
 NOTES:
@@ -195,6 +196,7 @@ def _build_lowering_marker(lowering): #pylint: disable=redefined-outer-name
         logging.debug(str(err))
 
     return None
+
 
 def _export_lowering_markers_file(cruise):
 
@@ -512,7 +514,6 @@ if __name__ == '__main__':
         logging.error("Can not specify a lowering {(}-l{)} and cruise {(}-c{)}")
         sys.exit(0)
 
-
     # Verify source directories
     success, msg = _verify_source_directories()
     if not success:
@@ -523,7 +524,6 @@ if __name__ == '__main__':
     if not os.path.isdir(BACKUP_ROOT_DIR):
         logging.error("cannot find backup directory: %s", BACKUP_ROOT_DIR)
         sys.exit(1)
-
 
     # Current Cruise Specified
     # ========================
