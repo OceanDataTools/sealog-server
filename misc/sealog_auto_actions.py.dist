@@ -1,0 +1,218 @@
+
+#!/usr/bin/env python3
+'''
+FILE:           sealog_auto_actions.py
+
+DESCRIPTION:    This service listens for new events submitted to Sealog
+                and performs additional actions depending on the recieved
+                event.
+
+                This service listens for "Off deck" and "On deck"
+                milestones and enables/disables the ASNAP functionality
+                and if a lowering is currently active it will set the
+                start/stop time to the time of the event.
+
+                This service listens for "On bottom" and "Off bottom"
+                milestones and if a lowering is currently active it will
+                set the lowering_on_bottom/lowering_off_bottom milestone
+                times to the time of the event.
+
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    0.2
+CREATED:    2018-09-26
+REVISION:   2021-04-27
+
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2021
+'''
+
+import asyncio
+import json
+import logging
+import time
+import requests
+import websockets
+
+from python_sealog.custom_vars import get_custom_var_uid_by_name, set_custom_var
+from python_sealog.lowerings import get_lowering_by_event
+from python_sealog.settings import API_SERVER_URL, WS_SERVER_URL, HEADERS, LOWERINGS_API_PATH
+
+ASNAP_STATUS_VAR_NAME = 'asnapStatus'
+
+INCLUDE_SET = ('VEHICLE')
+
+CLIENT_WSID = 'autoActions'
+
+HELLO = {
+    'type': 'hello',
+    'id': CLIENT_WSID,
+    'auth': {
+        'headers': HEADERS
+    },
+    'version': '2',
+    'subs': ['/ws/status/newEvents', '/ws/status/updateEvents']
+}
+
+PING = {
+    'type':'ping',
+    'id':CLIENT_WSID
+}
+
+AUX_DATA_TEMPLATE = {
+    'event_id': None,
+    'data_source': None,
+    'data_array': []
+}
+
+async def auto_actions(): #pylint: disable=too-many-branches, too-many-statements
+    '''
+    Listen to the new and updated events and respond as instructed based on the
+    event and it's options
+    '''
+    try:
+
+        # retrieve the asnap UID
+        asnap_status_var_uid = get_custom_var_uid_by_name(ASNAP_STATUS_VAR_NAME)
+
+        async with websockets.connect(WS_SERVER_URL) as websocket:
+
+            await websocket.send(json.dumps(HELLO))
+
+            while True:
+
+                event = await websocket.recv()
+                event_obj = json.loads(event)
+
+                if event_obj['type'] and event_obj['type'] == 'ping':
+                    await websocket.send(json.dumps(PING))
+
+                elif event_obj['type'] and event_obj['type'] == 'pub':
+                    if event_obj['message']['event_value'] not in INCLUDE_SET:
+                        logging.debug("Skipping because event value is not in the include set")
+                        continue
+
+                    logging.debug("Event:\n%s", json.dumps(event_obj['message'], indent=2))
+
+                    for option in event_obj['message']['event_options']:
+                        if option['event_option_name'] == "milestone" and option['event_option_value'] == "Off deck":
+                            logging.info("Turning on ASNAP")
+                            set_custom_var(asnap_status_var_uid, "On")
+
+                            lowering = get_lowering_by_event(event_obj['message']['id'])
+                            logging.debug("Lowering:\n%s", json.dumps(lowering, indent=2))
+
+                            if not lowering:
+                                logging.warning("Can't update lowering record because there is no lowering currently active")
+                                continue
+
+                            logging.info("Setting start of lowering " + lowering['lowering_id'] + " to " + event_obj['message']['ts'])
+                            payload = { "start_ts": event_obj['message']['ts'] }
+                            requests.patch(API_SERVER_URL + LOWERINGS_API_PATH + '/' + lowering['id'], headers=HEADERS, data = json.dumps(payload))
+
+                        elif option['event_option_name'] == "milestone" and option['event_option_value'] == "On bottom":
+
+                            lowering = get_lowering_by_event(event_obj['message']['id'])
+                            logging.debug("Lowering:\n%s", json.dumps(lowering, indent=2))
+
+                            if not lowering:
+                                logging.warning("Can't update lowering record because there is no lowering currently active")
+                                continue
+
+                            logging.info("Setting on bottom time of lowering " + lowering['lowering_id'] + " to " + event_obj['message']['ts'])
+                            payload = { "lowering_additional_meta": lowering['lowering_additional_meta'] }
+                            del payload['lowering_additional_meta']['lowering_files']
+
+                            if 'milestones' not in payload['lowering_additional_meta']:
+                                payload['lowering_additional_meta']['milestones'] = { 'lowering_on_bottom': event_obj['message']['ts'] }
+                            else:
+                                payload['lowering_additional_meta']['milestones']['lowering_on_bottom'] = event_obj['message']['ts']
+
+                            requests.patch(API_SERVER_URL + LOWERINGS_API_PATH + '/' + lowering['id'], headers=HEADERS, data = json.dumps(payload))
+
+                        elif option['event_option_name'] == "milestone" and option['event_option_value'] == "Off bottom":
+
+                            lowering = get_lowering_by_event(event_obj['message']['id'])
+                            logging.debug("Lowering:\n%s", json.dumps(lowering, indent=2))
+
+                            if not lowering:
+                                logging.warning("Can't update lowering record because there is no lowering currently active")
+                                continue
+
+                            logging.info("Setting off bottom time of lowering " + lowering['lowering_id'] + " to " + event_obj['message']['ts'])
+                            payload = { "lowering_additional_meta": lowering['lowering_additional_meta'] }
+                            del payload['lowering_additional_meta']['lowering_files']
+
+                            if 'milestones' not in payload['lowering_additional_meta']:
+                                payload['lowering_additional_meta']['milestones'] = { 'lowering_off_bottom': event_obj['message']['ts'] }
+                            else:
+                                payload['lowering_additional_meta']['milestones']['lowering_off_bottom'] = event_obj['message']['ts']
+
+                            requests.patch(API_SERVER_URL + LOWERINGS_API_PATH + '/' + lowering['id'], headers=HEADERS, data = json.dumps(payload))
+
+                        elif option['event_option_name'] == "milestone" and option['event_option_value'] == "On deck":
+                            logging.info("Turning off ASNAP")
+                            set_custom_var(asnap_status_var_uid, "Off")
+
+                            lowering = get_lowering_by_event(event_obj['message']['id'])
+                            logging.debug("Lowering:\n%s", json.dumps(lowering, indent=2))
+
+                            if not lowering:
+                                logging.warning("Can't update lowering record because there is no lowering currently active")
+                                continue
+
+                            logging.info("Setting stop time of lowering " + lowering['lowering_id'] + " to " + event_obj['message']['ts'])
+                            payload = { "stop_ts": event_obj['message']['ts'] }
+                            requests.patch(API_SERVER_URL + LOWERINGS_API_PATH + '/' + lowering['id'], headers=HEADERS, data = json.dumps(payload))
+
+    except Exception as error:
+        logging.error(str(error))
+
+
+# -------------------------------------------------------------------------------------
+# Required python code for running the script as a stand-alone utility
+# -------------------------------------------------------------------------------------
+if __name__ == '__main__':
+
+    import argparse
+    import os
+    import sys
+
+    parser = argparse.ArgumentParser(description='Auto-Actions Service')
+    parser.add_argument('-v', '--verbosity', dest='verbosity',
+                        default=0, action='count',
+                        help='Increase output verbosity')
+
+    parsed_args = parser.parse_args()
+
+    ############################
+    # Set up logging before we do any other argument parsing (so that we
+    # can log problems with argument parsing).
+
+    LOGGING_FORMAT = '%(asctime)-15s %(levelname)s - %(message)s'
+    logging.basicConfig(format=LOGGING_FORMAT)
+
+    LOG_LEVELS = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
+    parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
+    logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
+
+    # Run the main loop
+    while True:
+
+        # Wait 5 seconds for the server to complete startup
+        time.sleep(5)
+
+        try:
+            logging.debug("Listening to event websocket feed...")
+            asyncio.get_event_loop().run_until_complete(auto_actions())
+        except KeyboardInterrupt:
+            logging.error('Keyboard Interrupted')
+            try:
+                sys.exit(0)
+            except SystemExit:
+                os._exit(0) # pylint: disable=protected-access
+        except Exception as error:
+            logging.error("Lost connection to server, trying again in 5 seconds")
+            logging.debug(str(error))

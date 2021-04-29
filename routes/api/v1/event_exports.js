@@ -354,7 +354,7 @@ exports.plugin = {
             const flattenJSON = _flattenJSON(results);
             const csvHeaders = _buildCSVHeaders(flattenJSON);
             
-            const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+            const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
 
             return h.response(csv_results).code(200);
           }
@@ -491,7 +491,7 @@ exports.plugin = {
             const flattenJSON = _flattenJSON(results);
             const csvHeaders = _buildCSVHeaders(flattenJSON);
             
-            const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+            const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
 
             return h.response(csv_results).code(200);
           }
@@ -623,7 +623,7 @@ exports.plugin = {
                 const flattenJSON = _flattenJSON(results);
                 const csvHeaders = _buildCSVHeaders(flattenJSON);
                 
-                const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders })
+                const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
 
                 return h.response(csv_results).code(200);
               }

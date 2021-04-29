@@ -1,0 +1,193 @@
+#!/usr/bin/env python3
+'''
+FILE:           cache_udp_data.py
+
+DESCRIPTION:    This service listens to the specified UDP port. When it
+                receives messages matching the specified headers it parses
+                those messages and caches the specifed values to a MongoDB
+                collection.
+
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    0.2
+CREATED:    2018-09-26
+REVISION:   2021-04-27
+
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2021
+'''
+
+import socket
+import logging
+import datetime
+import time
+import json
+
+from pymongo import MongoClient
+
+UDP_IP_ADDRESS = "0.0.0.0"
+UDP_PORT_NO = 10000
+
+DATABASE = 'sealog_udp_cache'
+COLLECITON = 'udpData'
+
+# Valid line headers to process
+validLineLabels = ['GGA']
+
+def _convert_gga_ll(value, hemisphere):
+    '''
+    Convert the gga-style coordinate and hemisphere to ddeg
+    '''
+
+    try:
+        if hemisphere in ('E', 'e'):
+            deg = round(int(value[:3]) + float(value[3:])/60, 6)
+
+        elif hemisphere in ('W', 'w'):
+            deg = round((int(value[:3]) + float(value[3:])/60) * -1, 6)
+
+        elif hemisphere in ('N', 'n'):
+            deg = round(int(value[:2]) + float(value[2:])/60, 6)
+
+        elif hemisphere in ('S', 's'):
+            deg = round((int(value[:2]) + float(value[2:])/60) * -1, 6)
+
+        return deg
+
+    except Exception as err:
+        logging.error("Unable to convert position: %s %s", value, hemisphere)
+        logging.debug(str(err))
+
+    return None
+
+
+def parse_gga(message, label=None):
+    '''
+    Parse the GGA message
+    '''
+
+    try:
+        msg_array = message.split(",")
+
+        label = label or msg_array[0]
+
+        record = {
+            "label": label,
+            "updated": datetime.datetime.utcnow(),
+            "data": {
+                "latitude": _convert_gga_ll(msg_array[2],msg_array[3]),
+                "longitude": _convert_gga_ll(msg_array[4],msg_array[5]),
+                "depth": float(msg_array[9]) * -1
+            }
+        }
+
+        return record
+
+    except Exception as err:
+        logging.warning("Error parsing message: %s", message)
+        logging.debug(str(err))
+
+    return None
+
+
+def insert_udp_data(ignore_stale=False):
+    '''
+    Insert the parsed data to the MongoDB
+    '''
+
+    client = MongoClient()
+    collection = client[DATABASE][COLLECITON]
+
+    previous_data = dict()
+
+    server_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    server_sock.bind((UDP_IP_ADDRESS, UDP_PORT_NO))
+
+    while True:
+        raw_bytes, _ = server_sock.recvfrom(1024)
+        data = None
+        try:
+            data = raw_bytes.decode('utf-8')
+        except Exception as error:
+            logging.error("Unable to parse message")
+            logging.error(error)
+            continue
+
+        logging.debug(data.rstrip())
+
+        message_type = None
+        for label in validLineLabels:
+            if data.startswith(label):
+                message_type = label
+                break
+
+        if ignore_stale and message_type in previous_data and previous_data[message_type] == data:
+            logging.debug("%s data stale, not saving to cache", message_type)
+            continue
+
+        if ignore_stale:
+            previous_data[message_type] = data
+
+        if message_type is not None:
+            data = data.rstrip()
+
+            record = None
+            if message_type == 'GGA':
+                record = parse_gga(data)
+            # elif(message_type == 'something'):
+            # elif(message_type == 'else'):
+
+            if not record:
+                logging.debug("Message received but no new data to post")
+
+            else:
+                collection.update_one({'label': record['label']}, {'$set': record}, upsert=True)
+
+                for_debug = record
+                for_debug['updated'] = for_debug['updated'].strftime("%Y-%m-%dT%H:%M:%SZ")
+                logging.debug("Record: \n%s", json.dumps(for_debug, indent=2))
+
+if __name__ == '__main__':
+
+    import argparse
+    import sys
+    import os
+
+    parser = argparse.ArgumentParser(description='UDP Data Caching Service')
+    parser.add_argument('-v', '--verbosity', dest='verbosity',
+                        default=0, action='count',
+                        help='Increase output verbosity')
+    parser.add_argument('-i', '--ignore_stale', action='store_true',
+                        default=False,
+                        help='only save the new value if it\'s different than the previously recorded value')
+
+    parsed_args = parser.parse_args()
+
+    ############################
+    # Set up logging before we do any other argument parsing (so that we
+    # can log problems with argument parsing).
+
+    LOGGING_FORMAT = '%(asctime)-15s %(levelname)s - %(message)s'
+    logging.basicConfig(format=LOGGING_FORMAT)
+
+    LOG_LEVELS = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
+    parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
+    logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
+
+    # Run the main loop
+    while True:
+
+        # Run the main loop
+        try:
+            insert_udp_data(parsed_args.ignore_stale)
+        except KeyboardInterrupt:
+            print('Interrupted')
+            try:
+                sys.exit(0)
+            except SystemExit:
+                os._exit(0) # pylint: disable=protected-access
+
+        # Wait 5 seconds for the server to complete startup
+        time.sleep(5)

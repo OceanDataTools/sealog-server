@@ -1,207 +1,221 @@
-
 #!/usr/bin/env python3
+'''
+FILE:           test_python_sealog.py
 
-# For this to pass the server must be run in devel mode
-#> npm run start-devel
+DESCRIPTION:    This script attempts to test all the functions in the
+                python_sealog wrapper.  For this to pass the server must be run
+                in devel mode, i.e. npm run start-devel
 
-from python_sealog.cruises import getCruises, getCruise, getCruiseUIDByID, getCruiseByID, getCruiseByLowering, getCruiseByEvent
-from python_sealog.lowerings import getLowerings, getLowering, getLoweringUIDByID, getLoweringByID, getLoweringsByCruise, getLoweringUIDsByCruise, getLoweringIDsByCruise, getLoweringByEvent
-from python_sealog.events import getEvent, getEventsByCruise, getEventsByLowering
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    0.2
+CREATED:    2021-04-21
+REVISION:   2021-04-27
 
-cruise_uid = '5981f167212b348aed7fa9f5'
-cruise_id = 'AT37-13'
-lowering_uid = '6981f167212b348aed7fa9f5'
-lowering_id = '4928'
-event_uid = '5981f167212b348aed7fa9f5'
-event_filter = 'FISH'
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2021
+'''
+
+from python_sealog.cruises import get_cruises, get_cruise, get_cruise_uid_by_id, get_cruise_by_id, get_cruise_by_lowering, get_cruise_by_event
+from python_sealog.lowerings import get_lowerings, get_lowering, get_lowering_uid_by_id, get_lowering_by_id, get_lowerings_by_cruise, get_lowering_uids_by_cruise, get_lowering_ids_by_cruise, get_lowering_by_event
+from python_sealog.events import get_event, get_events_by_cruise, get_events_by_lowering
+
+CRUISE_UID = '5981f167212b348aed7fa9f5'
+CRUISE_ID = 'AT37-13'
+LOWERING_UID = '6981f167212b348aed7fa9f5'
+LOWERING_ID = '4928'
+EVENT_UID = '5981f167212b348aed7fa9f5'
+EVENT_FILTER = 'FISH'
 
 print("Cruises")
-print("getCruises() ", end='')
-if getCruises() is not None:
-	print('PASS')
+print("get_cruises() ", end='')
+if get_cruises() is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getCruises(export_format='csv') ", end='')
-if getCruises(export_format='csv') is not None:
-	print('PASS')
+print("get_cruises(export_format='csv') ", end='')
+if get_cruises(export_format='csv') is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getCruise(cruise_uid) ", end='')
-if getCruise(cruise_uid) is not None:
-	print('PASS')
+print("get_cruise(CRUISE_UID) ", end='')
+if get_cruise(CRUISE_UID) is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getCruise(cruise_uid, export_format='csv') ", end='')
-if getCruise(cruise_uid, export_format='csv') is not None:
-	print('PASS')
+print("get_cruise(CRUISE_UID, export_format='csv') ", end='')
+if get_cruise(CRUISE_UID, export_format='csv') is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getCruiseUIDByID(cruise_id) ", end='')
-if getCruiseUIDByID(cruise_id) is not None:
-	print('PASS')
+print("get_cruise_uid_by_id(CRUISE_ID) ", end='')
+if get_cruise_uid_by_id(CRUISE_ID) is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getCruiseByID(cruise_id) ", end='')
-if getCruiseByID(cruise_id) is not None:
-	print('PASS')
+print("get_cruise_by_id(CRUISE_ID) ", end='')
+if get_cruise_by_id(CRUISE_ID) is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getCruiseByID(cruise_id, export_format='csv') ", end='')
-if getCruiseByID(cruise_id, export_format='csv') is not None:
-	print('PASS')
+print("get_cruise_by_id(CRUISE_ID, export_format='csv') ", end='')
+if get_cruise_by_id(CRUISE_ID, export_format='csv') is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getCruiseByLowering(lowering_uid) ", end='')
-if getCruiseByLowering(lowering_uid) is not None:
-	print('PASS')
+print("get_cruise_by_lowering(LOWERING_UID) ", end='')
+if get_cruise_by_lowering(LOWERING_UID) is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getCruiseByLowering(lowering_uid, export_format='csv') ", end='')
-if getCruiseByLowering(lowering_uid, export_format='csv') is not None:
-	print('PASS')
+print("get_cruise_by_lowering(LOWERING_UID, export_format='csv') ", end='')
+if get_cruise_by_lowering(LOWERING_UID, export_format='csv') is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getCruiseByEvent(event_uid) ", end='')
-if getCruiseByEvent(event_uid) is not None:
-	print('PASS')
+print("get_cruise_by_event(EVENT_UID) ", end='')
+if get_cruise_by_event(EVENT_UID) is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getCruiseByEvent(event_uid, export_format='csv') ", end='')
-if getCruiseByEvent(event_uid, export_format='csv') is not None:
-	print('PASS')
+print("get_cruise_by_event(EVENT_UID, export_format='csv') ", end='')
+if get_cruise_by_event(EVENT_UID, export_format='csv') is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
 print()
 print("Lowerings")
-print("getLowerings() ", end='')
-if getLowerings() is not None:
-	print('PASS')
+print("get_lowerings() ", end='')
+if get_lowerings() is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getLowerings(export_format='csv') ", end='')
-if getLowerings(export_format='csv') is not None:
-	print('PASS')
+print("get_lowerings(export_format='csv') ", end='')
+if get_lowerings(export_format='csv') is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getLoweringUIDByID(lowering_id) ", end='')
-if getLoweringUIDByID(lowering_id) is not None:
-	print('PASS')
+print("get_lowering_uid_by_id(LOWERING_ID) ", end='')
+if get_lowering_uid_by_id(LOWERING_ID) is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getLoweringUIDsByCruise(cruise_uid) ", end='')
-if getLoweringUIDsByCruise(cruise_uid) is not None:
-	print('PASS')
+print("get_lowering_uids_by_cruise(CRUISE_UID) ", end='')
+if get_lowering_uids_by_cruise(CRUISE_UID) is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getLoweringIDsByCruise(cruise_uid) ", end='')
-if getLoweringIDsByCruise(cruise_uid) is not None:
-	print('PASS')
+print("get_lowering_ids_by_cruise(CRUISE_UID) ", end='')
+if get_lowering_ids_by_cruise(CRUISE_UID) is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getLowering(lowering_uid) ", end='')
-if getLowering(lowering_uid) is not None:
-	print('PASS')
+print("get_lowering(LOWERING_UID) ", end='')
+if get_lowering(LOWERING_UID) is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getLowering(lowering_uid, export_format='csv') ", end='')
-if getLowering(lowering_uid, export_format='csv') is not None:
-	print('PASS')
+print("get_lowering(LOWERING_UID, export_format='csv') ", end='')
+if get_lowering(LOWERING_UID, export_format='csv') is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getLoweringByID(lowering_id) ", end='')
-if getLoweringByID(lowering_id) is not None:
-	print('PASS')
+print("get_lowering_by_id(LOWERING_ID) ", end='')
+if get_lowering_by_id(LOWERING_ID) is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getLoweringByID(lowering_id, export_format='csv') ", end='')
-if getLoweringByID(lowering_id, export_format='csv') is not None:
-	print('PASS')
+print("get_lowering_by_id(LOWERING_ID, export_format='csv') ", end='')
+if get_lowering_by_id(LOWERING_ID, export_format='csv') is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getLoweringsByCruise(cruise_uid) ", end='')
-if getLoweringsByCruise(cruise_uid) is not None:
-	print('PASS')
+print("get_lowerings_by_cruise(CRUISE_UID) ", end='')
+if get_lowerings_by_cruise(CRUISE_UID) is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getLoweringsByCruise(cruise_uid, export_format='csv') ", end='')
-if getLoweringsByCruise(cruise_uid, export_format='csv') is not None:
-	print('PASS')
+print("get_lowerings_by_cruise(CRUISE_UID, export_format='csv') ", end='')
+if get_lowerings_by_cruise(CRUISE_UID, export_format='csv') is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getLoweringByEvent(event_uid) ", end='')
-if getLoweringByEvent(event_uid) is not None:
-	print('PASS')
+print("get_lowering_by_event(EVENT_UID) ", end='')
+if get_lowering_by_event(EVENT_UID) is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
-print("getLoweringByEvent(event_uid, export_format='csv') ", end='')
-if getLoweringByEvent(event_uid, export_format='csv') is not None:
-	print('PASS')
+print("get_lowering_by_event(EVENT_UID, export_format='csv') ", end='')
+if get_lowering_by_event(EVENT_UID, export_format='csv') is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')
 
 
 print()
 print("Events")
-print("getEvent(event_uid) ", end='')
-if getEvent(event_uid) is not None:
-	print('PASS')
+print("get_event(EVENT_UID) ", end='')
+if get_event(EVENT_UID) is not None:
+    print('PASS')
 else:
-	print('FAIL')
-print("getEvent(event_uid, export_format='csv') ", end='')
-if getEvent(event_uid, export_format='csv') is not None:
-	print('PASS')
+    print('FAIL')
+print("get_event(EVENT_UID, export_format='csv') ", end='')
+if get_event(EVENT_UID, export_format='csv') is not None:
+    print('PASS')
 else:
-	print('FAIL')
-print("getEventsByCruise(cruise_uid) ", end='')
-if getEventsByCruise(cruise_uid) is not None:
-	print('PASS')
+    print('FAIL')
+print("get_events_by_cruise(CRUISE_UID) ", end='')
+if get_events_by_cruise(CRUISE_UID) is not None:
+    print('PASS')
 else:
-	print('FAIL')
-print("getEventsByCruise(cruise_uid, export_format='csv') ", end='')
-if getEventsByCruise(cruise_uid, export_format='csv') is not None:
-	print('PASS')
+    print('FAIL')
+print("get_events_by_cruise(CRUISE_UID, export_format='csv') ", end='')
+if get_events_by_cruise(CRUISE_UID, export_format='csv') is not None:
+    print('PASS')
 else:
-	print('FAIL')
-print("getEventsByCruise(cruise_uid, export_format='csv', filter=event_filter) ", end='')
-if getEventsByCruise(cruise_uid, export_format='csv', filter=event_filter) is not None:
-	print('PASS')
+    print('FAIL')
+print("get_events_by_cruise(CRUISE_UID, export_format='csv', event_filter=EVENT_FILTER) ", end='')
+if get_events_by_cruise(CRUISE_UID, export_format='csv', event_filter=EVENT_FILTER) is not None:
+    print('PASS')
 else:
-	print('FAIL')
-print("getEventsByLowering(lowering_uid) ", end='')
-if getEventsByLowering(lowering_uid) is not None:
-	print('PASS')
+    print('FAIL')
+print("get_events_by_lowering(LOWERING_UID) ", end='')
+if get_events_by_lowering(LOWERING_UID) is not None:
+    print('PASS')
 else:
-	print('FAIL')
-print("getEventsByLowering(lowering_uid, export_format='csv') ", end='')
-if getEventsByLowering(lowering_uid, export_format='csv') is not None:
-	print('PASS')
+    print('FAIL')
+print("get_events_by_lowering(LOWERING_UID, export_format='csv') ", end='')
+if get_events_by_lowering(LOWERING_UID, export_format='csv') is not None:
+    print('PASS')
 else:
-	print('FAIL')
-print("getEventsByLowering(lowering_uid, export_format='csv', filter=event_filter) ", end='')
-if getEventsByLowering(lowering_uid, export_format='csv', filter=event_filter) is not None:
-	print('PASS')
+    print('FAIL')
+print("get_events_by_lowering(LOWERING_UID, export_format='csv', event_filter=EVENT_FILTER) ", end='')
+if get_events_by_lowering(LOWERING_UID, export_format='csv', event_filter=EVENT_FILTER) is not None:
+    print('PASS')
 else:
-	print('FAIL')
+    print('FAIL')

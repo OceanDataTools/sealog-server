@@ -1,24 +1,43 @@
-apiServerURL = 'http://localhost:8000/sealog-server'
-wsServerURL = 'ws://localhost:8000/ws'
+#!/usr/bin/env python3
+'''
+FILE:           settings.py
 
-cruisesAPIPath = '/api/v1/cruises'
+DESCRIPTION:    This file contains the settings used by the wrapper functions
+				to communicate with the sealog-server API
 
-customVarAPIPath = '/api/v1/custom_vars'
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    0.1
+CREATED:    2021-01-01
+REVISION:
 
-eventsAPIPath = '/api/v1/events'
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2021
+'''
 
-eventAuxDataAPIPath = '/api/v1/event_aux_data'
+API_SERVER_URL = 'http://localhost:8000/sealog-server'
+WS_SERVER_URL = 'ws://localhost:8000/ws'
 
-eventExportsAPIPath = '/api/v1/event_exports'
+CRUISES_API_PATH = '/api/v1/cruises'
 
-eventTemplatesAPIPath = '/api/v1/event_templates'
+CUSTOM_VAR_API_PATH = '/api/v1/custom_vars'
 
-loweringsAPIPath = '/api/v1/lowerings'
+EVENTS_API_PATH = '/api/v1/events'
 
-apiServerFilePath = '/home/sealog/sealog-files'
+EVENT_AUX_DATA_API_PATH = '/api/v1/event_aux_data'
 
-token = ''
+EVENT_EXPORTS_API_PATH = '/api/v1/event_exports'
 
-headers = {
-  "authorization": token
+EVENT_TEMPLATES_API_PATH = '/api/v1/event_templates'
+
+LOWERINGS_API_PATH = '/api/v1/lowerings'
+
+API_SERVER_FILE_PATH = '/home/oceanx/sealog-files-nadir'
+
+TOKEN = ''
+
+HEADERS = {
+  "authorization": TOKEN
 }
