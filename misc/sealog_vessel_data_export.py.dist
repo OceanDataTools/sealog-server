@@ -49,13 +49,6 @@ REPORTS_DIRNAME = 'Reports'
 IMAGES_DIRNAME = 'Images'
 FILES_DIRNAME = 'Files'
 
-def _export_dir_name(cruise_id, lowering_id):
-    if lowering_id[1:].isnumeric():
-        return cruise_id + '_' + lowering_id
-
-    return lowering_id
-
-
 def _verify_source_directories():
 
     if not os.path.isdir(CRUISES_FILE_PATH):
@@ -173,36 +166,6 @@ def _export_cruise_sealog_data_files(cruise): #pylint: disable=too-many-statemen
     except Exception as err:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(err))
-
-
-def _export_cruise_data_files(cruise):
-
-    logging.info("Exporting cruise-level data files")
-
-    filename = cruise['cruise_id'] + '_cruiseRecord.json'
-    dest_filepath = os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], filename)
-
-    logging.info("Export Cruise Record: %s", filename)
-    try:
-        with open(dest_filepath, 'w') as file:
-            file.write(json.dumps(cruise))
-    except Exception as err:
-        logging.error('could not create data file: %s', dest_filepath)
-        logging.debug(str(err))
-
-    filename = cruise['cruise_id'] + '_eventTemplates.json'
-    dest_filepath = os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], filename)
-
-    logging.info("Export Event Templates: %s", filename)
-    try:
-        with open(dest_filepath, 'w') as file:
-            file.write(json.dumps(get_event_templates()))
-    except Exception as err:
-        logging.error('could not create data file: %s', dest_filepath)
-        logging.debug(str(err))
-
-    logging.info("Export Reports")
-    subprocess.call(['rsync','-avi','--progress', '--delete', '--include=*.pdf', '--exclude=*', os.path.join(API_SERVER_FILE_PATH, 'cruises', cruise['id'], ''), os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], REPORTS_DIRNAME)])
 
 
 def _push_2_data_warehouse(cruise):
