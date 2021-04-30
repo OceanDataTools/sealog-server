@@ -341,7 +341,7 @@ def _export_lowering_openrvdas_data_files(cruise, lowering): #pylint: disable=re
         destination_file = os.path.join(CROPPED_DATA_DIR,cruise['cruise_id'],lowering['lowering_id'],OPENRVDAS_DEST_DIR,data_file_def['output_prefix'] + lowering['lowering_id'] + '.txt')
 
         logging.debug('Source regex: %s', source_regex)
-        logging.debug('Source files: %s', source_files)
+        logging.debug('Source files: \n\t%s', '\n\t'.join(source_files))
         logging.debug('Destination file: %s', destination_file)
 
         try:
