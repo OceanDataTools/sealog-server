@@ -332,7 +332,6 @@ def _export_lowering_openrvdas_data_files(cruise, lowering): #pylint: disable=re
     logging.info("Exporting lowering-level OpenRVDAS data files")
 
     fcu = FileCropUtility(datetime.strptime(lowering['start_ts'], '%Y-%m-%dT%H:%M:%S.%fZ'), datetime.strptime(lowering['stop_ts'], '%Y-%m-%dT%H:%M:%S.%fZ'))
-    # fcu.getLogger().setLevel(log_level)
 
     for data_file_def in DATA_FILES_DEFS:
 
@@ -347,7 +346,7 @@ def _export_lowering_openrvdas_data_files(cruise, lowering): #pylint: disable=re
         try:
             culled_files = fcu.cull_files(source_files)
             logging.debug("Culled Files:\n\t%s",'\n\t'.join(culled_files))
-            
+
             if len(culled_files) > 0:
                 with open(destination_file, 'w') as file:
                     for line in fcu.crop_file_data(culled_files):
