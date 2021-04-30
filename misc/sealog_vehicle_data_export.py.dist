@@ -43,6 +43,7 @@ from sealog_build_lowering_vehicle_report_OXR_Argus import LoweringVehicleReport
 
 BACKUP_ROOT_DIR = '/home/oceanx/sealog-backups-argus'
 VEHICLE_NAME = 'Chimaera'
+NAV_DATASOURCE = 'vehicleRealtimeNavData'
 
 RAW_DATA_DIR = '/mnt/nfs/CruiseData/'
 CROPPED_DATA_DIR = '/home/oceanx/cropped_data-argus'
@@ -182,8 +183,8 @@ def _build_lowering_marker(lowering): #pylint: disable=redefined-outer-name
     try:
         on_bottom_event_export = get_event_export(on_bottom_event['id'])
         # logging.debug(on_bottom_event_export)
-        vehicle_realtime_nav_data = list(filter(lambda aux_data: aux_data['data_source'] == 'vehicleRealtimeNavData', on_bottom_event_export['aux_data']))[0]
-        # logging.debug(vehicleRealtimeNavData)
+        vehicle_realtime_nav_data = list(filter(lambda aux_data: aux_data['data_source'] == NAV_DATASOURCE, on_bottom_event_export['aux_data']))[0]
+        # logging.debug(vehicle_realtime_nav_data)
         lat = list(filter(lambda data_item: data_item['data_name'] == 'latitude', vehicle_realtime_nav_data['data_array']))[0]['data_value']
         lon = list(filter(lambda data_item: data_item['data_name'] == 'longitude', vehicle_realtime_nav_data['data_array']))[0]['data_value']
         depth = list(filter(lambda data_item: data_item['data_name'] == 'depth', vehicle_realtime_nav_data['data_array']))[0]['data_value']

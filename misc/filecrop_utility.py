@@ -78,9 +78,9 @@ class FileCropUtility():
 
             if not ((self.start_dt - last_ts).total_seconds() > 0 or (first_ts - self.stop_dt).total_seconds() > 0):
                 logging.debug("    ** Include this file **")
-                culled_files.append(file)
+                culled_files.append(data_file)
 
-        logging.debug("Culled file list: %s", ', '.join(culled_files))
+        logging.debug("Culled file list: \n\t%s", '\n\t'.join(culled_files))
         return culled_files
 
     def crop_file_data(self, data_files):

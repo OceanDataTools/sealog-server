@@ -129,6 +129,7 @@ class ExportLoweringNav2CSV():
         self.data.reset_index(inplace=True)
 
         # rename columns
+        self.data = self.data[self.raw_columns]
         self.data.columns = self.proc_columns
 
         # round data
