@@ -1,4 +1,5 @@
 const Nodemailer = require('nodemailer');
+const { randomAsciiString } = require('../../../lib/utils');
 
 const Bcrypt = require('bcryptjs');
 const Joi = require('@hapi/joi');
@@ -291,6 +292,7 @@ exports.plugin = {
         });
         
         user.password = hashedPassword;
+        user.loginToken = randomAsciiString(20);
 
         let result = null;
 

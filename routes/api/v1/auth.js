@@ -1,6 +1,7 @@
 
 const Nodemailer = require('nodemailer');
 const SECRET_KEY = require('../../../config/secret');
+const { randomAsciiString } = require('../../../lib/utils');
 
 const Bcrypt = require('bcryptjs');
 const Boom = require('@hapi/boom');
@@ -11,7 +12,6 @@ const Crypto = require('crypto');
 
 const resetPasswordTokenExpires = 15; //minutes
 
-const { randomAsciiString } = require('../../../lib/utils');
 
 const {
   usersTable
