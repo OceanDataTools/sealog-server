@@ -106,6 +106,7 @@ exports.plugin = {
       delete doc.password;
       delete doc.resetPasswordToken;
       delete doc.resetPasswordExpires;
+      delete doc.loginToken;
 
       return doc;
     };
@@ -598,6 +599,59 @@ exports.plugin = {
         description: 'This is the route used for retrieving a user\'s JWT based on the user\'s ID.',
         notes: '<div class="panel panel-default">\
           <div class="panel-heading"><strong>Status Code: 200</strong> - authenication successful</div>\
+          <div class="panel-body">Returns JSON object conatining user information</div>\
+        </div>\
+        <div class="panel panel-default">\
+          <div class="panel-heading"><strong>Status Code: 401</strong> - authenication failed</div>\
+          <div class="panel-body">Returns nothing</div>\
+        </div>',
+        tags: ['users', 'api']
+      }
+    });
+
+    server.route({
+      method: 'GET',
+      path: '/users/{id}/loginToken',
+      async handler(request, h) {
+
+        if (request.auth.credentials.id !== request.params.id && !request.auth.credentials.roles.includes('admin')) {
+          return Boom.unauthorized('Only admins and the owner of this user can access this user\'s token.');
+        }
+
+        try {
+          const result = await db.collection(usersTable).findOne({ _id: new ObjectID(request.params.id) });
+
+          if (!result) {
+            return Boom.notFound('No user found for id: ' + request.params.id);
+          }
+
+          const user = result;
+
+          return h.response({ loginToken: user.loginToken }).code(200);
+        }
+        catch (err) {
+          console.log("ERROR:", err);
+          Boom.serverUnavailable('database error');
+        }
+      },
+      config: {
+        auth: {
+          strategy: 'jwt'
+        },
+        validate: {
+          headers: authorizationHeader,
+          params: userParam
+        },
+        response: {
+          status: {
+            200: Joi.object({
+              loginToken: Joi.string().regex(/^[A-Za-z0-9-]*$/)
+            }).label('user loginToken')
+          }
+        },
+        description: 'This is the route used for retrieving a user\'s loginToken based on the user\'s ID.',
+        notes: '<div class="panel panel-default">\
+          <div class="panel-heading"><strong>Status Code: 200</strong> - request successful</div>\
           <div class="panel-body">Returns JSON object conatining user information</div>\
         </div>\
         <div class="panel panel-default">\
