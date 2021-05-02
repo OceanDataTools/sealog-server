@@ -30,12 +30,12 @@ from python_sealog.event_aux_data import get_event_aux_data_by_cruise
 from python_sealog.event_exports import get_event_exports_by_cruise
 from python_sealog.event_templates import get_event_templates
 
-BACKUP_ROOT_DIR = '/home/oceanx/sealog-backups-oxr'
-VESSEL_NAME = 'OceanXplorer1'
+EXPORT_ROOT_DIR = '/home/sealog/sealog-export'
+VESSEL_NAME = 'Discoverer'
 
-OPENVDM_IP='openvdm.oceanxplorer.org'
-OPENVDM_USER='oceanx'
-OPENVDM_SSH_KEY='/home/oceanx/.ssh/id_rsa_openvdm'
+OPENVDM_IP='openvdm.oceandatatools.org'
+OPENVDM_USER='survey'
+OPENVDM_SSH_KEY='/home/sealog/.ssh/id_rsa_openvdm'
 CRUISEDATA_DIR_ON_DATA_WAREHOUSE='/mnt/vault/FTPRoot/CruiseData'
 SEALOG_DIR='Sealog'
 
@@ -63,25 +63,25 @@ def _verify_source_directories():
     return True, ''
 
 
-def _build_cruise_backup_dirs(cruise):
+def _build_cruise_export_dirs(cruise):
 
-    logging.info("Building cruise-level backup directories")
+    logging.info("Building cruise-level export directories")
 
     try:
-        os.mkdir(os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id']))
+        os.mkdir(os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id']))
     except FileExistsError:
-        logging.debug("cruise backup directory already exists")
+        logging.debug("cruise export directory already exists")
     except Exception as err:
-        logging.error("Could not create cruise backup directory")
+        logging.error("Could not create cruise export directory")
         logging.debug(str(err))
         sys.exit(1)
 
     try:
-        os.mkdir(os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], REPORTS_DIRNAME))
+        os.mkdir(os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], REPORTS_DIRNAME))
     except FileExistsError:
-        logging.debug("cruise backup reports directory already exists")
+        logging.debug("cruise export reports directory already exists")
     except Exception as err:
-        logging.error("Could not create cruise reports backup directory")
+        logging.error("Could not create cruise reports export directory")
         logging.debug(str(err))
         sys.exit(1)
 
@@ -91,7 +91,7 @@ def _export_cruise_sealog_data_files(cruise): #pylint: disable=too-many-statemen
     logging.info("Exporting cruise-level data files")
 
     filename = VESSEL_NAME + '_' + cruise['cruise_id'] + '_cruiseRecord.json'
-    dest_filepath = os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], filename)
+    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], filename)
 
     logging.info("Export Cruise Record: %s", filename)
     try:
@@ -102,7 +102,7 @@ def _export_cruise_sealog_data_files(cruise): #pylint: disable=too-many-statemen
         logging.debug(str(err))
 
     filename = VESSEL_NAME + '_' + cruise['cruise_id'] + '_eventOnlyExport.json'
-    dest_filepath = os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], filename)
+    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], filename)
 
     logging.info("Export Events (json-format): %s", filename)
     try:
@@ -113,7 +113,7 @@ def _export_cruise_sealog_data_files(cruise): #pylint: disable=too-many-statemen
         logging.debug(str(err))
 
     filename = VESSEL_NAME + '_' + cruise['cruise_id'] + '_eventOnlyExport.csv'
-    dest_filepath = os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], filename)
+    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], filename)
 
     logging.info("Export Events (csv-format): %s", filename)
     try:
@@ -124,7 +124,7 @@ def _export_cruise_sealog_data_files(cruise): #pylint: disable=too-many-statemen
         logging.debug(str(err))
 
     filename = VESSEL_NAME + '_' + cruise['cruise_id'] + '_auxDataExport.json'
-    dest_filepath = os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], filename)
+    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], filename)
 
     logging.info("Export Aux Data: %s", filename)
     try:
@@ -135,7 +135,7 @@ def _export_cruise_sealog_data_files(cruise): #pylint: disable=too-many-statemen
         logging.debug(str(err))
 
     filename = VESSEL_NAME + '_' + cruise['cruise_id'] + '_sealogExport.json'
-    dest_filepath = os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], filename)
+    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], filename)
 
     logging.info("Export Events with Aux Data (json-format): %s", filename)
     try:
@@ -146,7 +146,7 @@ def _export_cruise_sealog_data_files(cruise): #pylint: disable=too-many-statemen
         logging.debug(str(err))
 
     filename = VESSEL_NAME + '_' + cruise['cruise_id'] + '_sealogExport.csv'
-    dest_filepath = os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], filename)
+    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], filename)
 
     logging.info("Export Events with Aux Data (csv-format): %s", filename)
     try:
@@ -157,7 +157,7 @@ def _export_cruise_sealog_data_files(cruise): #pylint: disable=too-many-statemen
         logging.debug(str(err))
 
     filename = VESSEL_NAME + '_' + cruise['cruise_id'] + '_eventTemplates.json'
-    dest_filepath = os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], filename)
+    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], filename)
 
     logging.info("Export Event Templates: %s", filename)
     try:
@@ -175,7 +175,7 @@ def _push_2_data_warehouse(cruise):
         logging.debug(' '.join(command))
         subprocess.call(command)
 
-    command = ['rsync','-trimv','--progress', '--delete', '-e', 'ssh -i ' + OPENVDM_SSH_KEY, os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], ''), OPENVDM_USER + '@' + OPENVDM_IP + ':' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE,cruise['cruise_id'],SEALOG_DIR, '')]
+    command = ['rsync','-trimv','--progress', '--delete', '-e', 'ssh -i ' + OPENVDM_SSH_KEY, os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], ''), OPENVDM_USER + '@' + OPENVDM_IP + ':' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE,cruise['cruise_id'],SEALOG_DIR, '')]
     logging.debug(' '.join(command))
     subprocess.call(command)
 
@@ -215,9 +215,9 @@ if __name__ == '__main__':
         logging.error(msg)
         sys.exit(0)
 
-    # Verify backup root directory
-    if not os.path.isdir(BACKUP_ROOT_DIR):
-        logging.error("cannot find backup directory: %s", BACKUP_ROOT_DIR)
+    # Verify export root directory
+    if not os.path.isdir(EXPORT_ROOT_DIR):
+        logging.error("cannot find export directory: %s", EXPORT_ROOT_DIR)
         sys.exit(1)
 
     # Current Cruise Specified
@@ -245,8 +245,8 @@ if __name__ == '__main__':
             logging.debug(str(err))
             sys.exit(1)
 
-        # build cruise backup dir
-        _build_cruise_backup_dirs(current_cruise)
+        # build cruise export dirs
+        _build_cruise_export_dirs(current_cruise)
 
         # export cruise data files
         _export_cruise_sealog_data_files(current_cruise)
@@ -279,8 +279,8 @@ if __name__ == '__main__':
             logging.debug(str(err))
             sys.exit(1)
 
-        # build cruise backup dir
-        _build_cruise_backup_dirs(current_cruise)
+        # build cruise export dirs
+        _build_cruise_export_dirs(current_cruise)
 
         # export cruise data files
         _export_cruise_sealog_data_files(current_cruise)

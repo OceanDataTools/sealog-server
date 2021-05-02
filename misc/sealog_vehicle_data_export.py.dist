@@ -37,31 +37,28 @@ from python_sealog.event_templates import get_event_templates
 from filecrop_utility import FileCropUtility
 from sealog_lowering_nav_2_csv import ExportLoweringNav2CSV
 
-from sealog_build_cruise_summary_report_OXR_Argus import CruiseSummaryReport
-from sealog_build_lowering_summary_report_OXR_Argus import LoweringSummaryReport
-from sealog_build_lowering_vehicle_report_OXR_Argus import LoweringVehicleReport
+from sealog_build_cruise_summary_report import CruiseSummaryReport
+from sealog_build_lowering_summary_report import LoweringSummaryReport
+from sealog_build_lowering_vehicle_report import LoweringVehicleReport
 
-BACKUP_ROOT_DIR = '/home/oceanx/sealog-backups-argus'
-VEHICLE_NAME = 'Chimaera'
+EXPORT_ROOT_DIR = '/home/sealog/sealog-export'
+VEHICLE_NAME = 'Explorer'
 NAV_DATASOURCE = 'vehicleRealtimeNavData'
 
 RAW_DATA_DIR = '/mnt/nfs/CruiseData/'
-CROPPED_DATA_DIR = '/home/oceanx/cropped_data-argus'
+CROPPED_DATA_DIR = '/home/sealog/cropped_data'
 OPENRVDAS_SOURCE_DIR = 'Vessel/OpenRVDAS/raw'
 OPENRVDAS_DEST_DIR = 'OpenRVDAS/raw'
 
 POST_CRUISE_REPORT_DIR = 'Documents/PostCruise_Reports'
 
 DATA_FILES_DEFS = [
-    { 'source_regex': 'HiPAP_Argus_PSIMSSB*', 'output_prefix': 'HiPAP_Argus_PSIMSSB_'},
-    { 'source_regex': 'Qinsy_Argus_GGA*', 'output_prefix': 'Qinsy_Argus_GGA_'},
-    { 'source_regex': 'VideoLogger_Argus_GGA*', 'output_prefix': 'VideoLogger_Argus_GGA_'},
-    { 'source_regex': 'VideoLogger_Argus_NAV*', 'output_prefix': 'VideoLogger_Argus_NAV_'}
+    { 'source_regex': 'GGA_*', 'output_prefix': 'GGA_'}
 ]
 
 OPENVDM_IP='openvdm.oceanxplorer.org'
-OPENVDM_USER='oceanx'
-OPENVDM_SSH_KEY='/home/oceanx/.ssh/id_rsa_openvdm'
+OPENVDM_USER='survey'
+OPENVDM_SSH_KEY='/home/sealog/.ssh/id_rsa_openvdm'
 CRUISEDATA_DIR_ON_DATA_WAREHOUSE='/mnt/vault/FTPRoot/CruiseData'
 OPENVDM_VEHICLE_DIR='Vehicles/' + VEHICLE_NAME
 SEALOG_DIR='Sealog'
@@ -97,75 +94,75 @@ def _verify_source_directories():
     return True, ''
 
 
-def _build_cruise_backup_dirs(cruise):
+def _build_cruise_export_dirs(cruise):
 
-    logging.info("Building cruise-level backup directories")
+    logging.info("Building cruise-level export directories")
 
     try:
-        os.mkdir(os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id']))
+        os.mkdir(os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id']))
     except FileExistsError:
-        logging.debug("cruise backup directory already exists")
+        logging.debug("cruise export directory already exists")
     except Exception as err:
-        logging.error("Could not create cruise backup directory")
+        logging.error("Could not create cruise export directory")
         logging.debug(str(err))
         sys.exit(1)
 
     try:
-        os.mkdir(os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], REPORTS_DIRNAME))
+        os.mkdir(os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], REPORTS_DIRNAME))
     except FileExistsError:
-        logging.debug("cruise backup reports directory already exists")
+        logging.debug("cruise export reports directory already exists")
     except Exception as err:
-        logging.error("Could not create cruise reports backup directory")
+        logging.error("Could not create cruise reports export directory")
         logging.debug(str(err))
         sys.exit(1)
 
     try:
         os.mkdir(os.path.join(CROPPED_DATA_DIR, cruise['cruise_id']))
     except FileExistsError:
-        logging.debug("cruise cropped data backup directory already exists")
+        logging.debug("cruise cropped data export directory already exists")
     except Exception as err:
-        logging.error("Could not create cruise cropped data backup directory")
+        logging.error("Could not create cruise cropped data export directory")
         logging.debug(str(err))
         sys.exit(1)
 
 
-def _build_lowering_backup_dirs(cruise, lowering): #pylint: disable=redefined-outer-name
+def _build_lowering_export_dirs(cruise, lowering): #pylint: disable=redefined-outer-name
 
-    logging.info("Building lowering-level backup directories")
+    logging.info("Building lowering-level export directories")
 
     try:
-        os.mkdir(os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id'])))
+        os.mkdir(os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id'])))
     except FileExistsError:
-        logging.debug("lowering backup directory already exists")
+        logging.debug("lowering export directory already exists")
     except Exception as err:
-        logging.error("Could not create lowering backup directory")
+        logging.error("Could not create lowering export directory")
         logging.debug(str(err))
         sys.exit(1)
 
     try:
-        os.mkdir(os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), REPORTS_DIRNAME))
+        os.mkdir(os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), REPORTS_DIRNAME))
     except FileExistsError:
-        logging.debug("lowering backup reports directory already exists")
+        logging.debug("lowering export reports directory already exists")
     except Exception as err:
-        logging.error("Could not create lowering reports backup directory")
+        logging.error("Could not create lowering reports export directory")
         logging.debug(str(err))
         sys.exit(1)
 
     try:
-        os.mkdir(os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), IMAGES_DIRNAME))
+        os.mkdir(os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), IMAGES_DIRNAME))
     except FileExistsError:
-        logging.debug("lowering backup images directory already exists")
+        logging.debug("lowering export images directory already exists")
     except Exception as err:
-        logging.error("Could not create lowering images backup directory")
+        logging.error("Could not create lowering images export directory")
         logging.debug(str(err))
         sys.exit(1)
 
     try:
         os.makedirs(os.path.join(CROPPED_DATA_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), OPENRVDAS_DEST_DIR))
     except FileExistsError:
-        logging.debug("lowering backup directory already exists")
+        logging.debug("lowering export directory already exists")
     except Exception as err:
-        logging.error("Could not create lowering backup directory")
+        logging.error("Could not create lowering export directory")
         logging.debug(str(err))
         sys.exit(1)
 
@@ -233,7 +230,7 @@ def _export_lowering_sealog_data_files(cruise, lowering): # pylint: disable=too-
     logging.info("Exporting lowering-level data files")
 
     filename = VEHICLE_NAME + '_' + lowering['lowering_id'] + '_loweringRecord.json'
-    dest_filepath = os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), filename)
+    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), filename)
 
     logging.info("Export Lowering Record: %s", filename)
     try:
@@ -244,7 +241,7 @@ def _export_lowering_sealog_data_files(cruise, lowering): # pylint: disable=too-
         logging.debug(str(err))
 
     filename = VEHICLE_NAME + '_' + lowering['lowering_id'] + '_eventOnlyExport.json'
-    dest_filepath = os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), filename)
+    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), filename)
 
     logging.info("Export Events (json-format): %s", filename)
     try:
@@ -255,7 +252,7 @@ def _export_lowering_sealog_data_files(cruise, lowering): # pylint: disable=too-
         logging.debug(str(err))
 
     filename = VEHICLE_NAME + '_' + lowering['lowering_id'] + '_eventOnlyExport.csv'
-    dest_filepath = os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), filename)
+    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), filename)
 
     logging.info("Export Events (csv-format): %s", filename)
     try:
@@ -266,7 +263,7 @@ def _export_lowering_sealog_data_files(cruise, lowering): # pylint: disable=too-
         logging.debug(str(err))
 
     filename = VEHICLE_NAME + '_' + lowering['lowering_id'] + '_auxDataExport.json'
-    dest_filepath = os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), filename)
+    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), filename)
 
     logging.info("Export Aux Data: %s", filename)
     try:
@@ -277,7 +274,7 @@ def _export_lowering_sealog_data_files(cruise, lowering): # pylint: disable=too-
         logging.debug(str(err))
 
     filename = VEHICLE_NAME + '_' + lowering['lowering_id'] + '_sealogExport.json'
-    dest_filepath = os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), filename)
+    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), filename)
 
     logging.info("Export Events with Aux Data (json-format): %s", filename)
     try:
@@ -288,7 +285,7 @@ def _export_lowering_sealog_data_files(cruise, lowering): # pylint: disable=too-
         logging.debug(str(err))
 
     filename = VEHICLE_NAME + '_' + lowering['lowering_id'] + '_sealogExport.csv'
-    dest_filepath = os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), filename)
+    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), filename)
 
     logging.info("Export Events with Aux Data (csv-format): %s", filename)
     try:
@@ -299,7 +296,7 @@ def _export_lowering_sealog_data_files(cruise, lowering): # pylint: disable=too-
         logging.debug(str(err))
 
     filename = VEHICLE_NAME + '_' + lowering['lowering_id'] + '_eventTemplates.json'
-    dest_filepath = os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), filename)
+    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), filename)
 
     logging.info("Export Event Templates: %s", filename)
     try:
@@ -318,13 +315,13 @@ def _export_lowering_sealog_data_files(cruise, lowering): # pylint: disable=too-
             framegrab = os.path.basename(framegrab)
             file.write(str.encode(framegrab + '\n'))
 
-        subprocess.call(['rsync','-avi','--progress', '--delete', '--files-from=' + file.name , os.path.join(API_SERVER_FILE_PATH, 'images', ''), os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), IMAGES_DIRNAME)])
+        subprocess.call(['rsync','-avi','--progress', '--delete', '--files-from=' + file.name , os.path.join(API_SERVER_FILE_PATH, 'images', ''), os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), IMAGES_DIRNAME)])
 
     logging.info("Export Reports")
-    subprocess.call(['rsync','-avi','--progress', '--delete', '--include=*.pdf', '--exclude=*', os.path.join(API_SERVER_FILE_PATH, 'lowerings', lowering['id'], ''), os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), REPORTS_DIRNAME)])
+    subprocess.call(['rsync','-avi','--progress', '--delete', '--include=*.pdf', '--exclude=*', os.path.join(API_SERVER_FILE_PATH, 'lowerings', lowering['id'], ''), os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), REPORTS_DIRNAME)])
 
     logging.info("Export Nav CSV")
-    subprocess.call(['rsync','-avi','--progress', os.path.join(API_SERVER_FILE_PATH, 'lowerings', lowering['id'], VEHICLE_NAME + '_' + lowering['lowering_id'] + '_nav.csv'), os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']))])
+    subprocess.call(['rsync','-avi','--progress', os.path.join(API_SERVER_FILE_PATH, 'lowerings', lowering['id'], VEHICLE_NAME + '_' + lowering['lowering_id'] + '_nav.csv'), os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']))])
 
 
 def _export_lowering_openrvdas_data_files(cruise, lowering): #pylint: disable=redefined-outer-name
@@ -381,7 +378,7 @@ def _export_cruise_data_files(cruise):
     logging.info("Exporting cruise-level data files")
 
     filename = VEHICLE_NAME + '_' + cruise['cruise_id'] + '_cruiseRecord.json'
-    dest_filepath = os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], filename)
+    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], filename)
 
     logging.info("Export Cruise Record: %s", filename)
     try:
@@ -392,7 +389,7 @@ def _export_cruise_data_files(cruise):
         logging.debug(str(err))
 
     filename = VEHICLE_NAME + '_' + cruise['cruise_id'] + '_eventTemplates.json'
-    dest_filepath = os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], filename)
+    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], filename)
 
     logging.info("Export Event Templates: %s", filename)
     try:
@@ -403,7 +400,7 @@ def _export_cruise_data_files(cruise):
         logging.debug(str(err))
 
     logging.info("Export Reports")
-    subprocess.call(['rsync','-avi','--progress', '--delete', '--include=*.pdf', '--exclude=*', os.path.join(API_SERVER_FILE_PATH, 'cruises', cruise['id'], ''), os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], REPORTS_DIRNAME)])
+    subprocess.call(['rsync','-avi','--progress', '--delete', '--include=*.pdf', '--exclude=*', os.path.join(API_SERVER_FILE_PATH, 'cruises', cruise['id'], ''), os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], REPORTS_DIRNAME)])
 
 
 def _build_cruise_reports(cruise):
@@ -467,11 +464,11 @@ def _push_2_data_warehouse(cruise, lowering): #pylint: disable=redefined-outer-n
         logging.debug(' '.join(command))
         subprocess.call(command)
 
-    command = ['rsync','-trimv','--progress', '-e', 'ssh -i ' + OPENVDM_SSH_KEY, os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], REPORTS_DIRNAME, ''), OPENVDM_USER + '@' + OPENVDM_IP + ':' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE,cruise['cruise_id'], POST_CRUISE_REPORT_DIR, '')]
+    command = ['rsync','-trimv','--progress', '-e', 'ssh -i ' + OPENVDM_SSH_KEY, os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], REPORTS_DIRNAME, ''), OPENVDM_USER + '@' + OPENVDM_IP + ':' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE,cruise['cruise_id'], POST_CRUISE_REPORT_DIR, '')]
     logging.debug(' '.join(command))
     subprocess.call(command)
 
-    command = ['rsync','-trimv','--progress', '--delete', '-e', 'ssh -i ' + OPENVDM_SSH_KEY, os.path.join(BACKUP_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), ''), OPENVDM_USER + '@' + OPENVDM_IP + ':' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE,cruise['cruise_id'],OPENVDM_VEHICLE_DIR,_export_dir_name(cruise['cruise_id'], lowering['lowering_id']),SEALOG_DIR, '')]
+    command = ['rsync','-trimv','--progress', '--delete', '-e', 'ssh -i ' + OPENVDM_SSH_KEY, os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), ''), OPENVDM_USER + '@' + OPENVDM_IP + ':' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE,cruise['cruise_id'],OPENVDM_VEHICLE_DIR,_export_dir_name(cruise['cruise_id'], lowering['lowering_id']),SEALOG_DIR, '')]
     logging.debug(' '.join(command))
     subprocess.call(command)
 
@@ -521,9 +518,9 @@ if __name__ == '__main__':
         logging.error(msg)
         sys.exit(0)
 
-    # Verify backup root directory
-    if not os.path.isdir(BACKUP_ROOT_DIR):
-        logging.error("cannot find backup directory: %s", BACKUP_ROOT_DIR)
+    # Verify export root directory
+    if not os.path.isdir(EXPORT_ROOT_DIR):
+        logging.error("cannot find export directory: %s", EXPORT_ROOT_DIR)
         sys.exit(1)
 
     # Current Cruise Specified
@@ -553,8 +550,8 @@ if __name__ == '__main__':
         # build cruise report
         _build_cruise_reports(current_cruise)
 
-        # build cruise backup dir
-        _build_cruise_backup_dirs(current_cruise)
+        # build cruise export dirs
+        _build_cruise_export_dirs(current_cruise)
 
         # export cruise data files
         _export_cruise_data_files(current_cruise)
@@ -585,8 +582,8 @@ if __name__ == '__main__':
                 # build lowering reports
                 _build_lowering_reports(lowering)
 
-                # build lowering backup dir
-                _build_lowering_backup_dirs(current_cruise, lowering)
+                # build lowering export dirs
+                _build_lowering_export_dirs(current_cruise, lowering)
 
                 # export lowering nav2csv data file
                 _export_lowering_nav_csv_files(lowering)
@@ -628,8 +625,8 @@ if __name__ == '__main__':
         # build cruise report
         _build_cruise_reports(current_cruise)
 
-        # build cruise backup dir
-        _build_cruise_backup_dirs(current_cruise)
+        # build cruise export dirs
+        _build_cruise_export_dirs(current_cruise)
 
         # export cruise data files
         _export_cruise_data_files(current_cruise)
@@ -660,8 +657,8 @@ if __name__ == '__main__':
                 # build lowering reports
                 _build_lowering_reports(lowering)
 
-                # build lowering backup dir
-                _build_lowering_backup_dirs(current_cruise, lowering)
+                # build lowering export dirs
+                _build_lowering_export_dirs(current_cruise, lowering)
 
                 # export lowering nav2csv data file
                 _export_lowering_nav_csv_files(lowering)
@@ -722,8 +719,8 @@ if __name__ == '__main__':
         # build cruise report
         _build_cruise_reports(current_cruise)
 
-        # build cruise backup dir
-        _build_cruise_backup_dirs(current_cruise)
+        # build cruise export dirs
+        _build_cruise_export_dirs(current_cruise)
 
         # export cruise data files
         _export_cruise_data_files(current_cruise)
@@ -744,8 +741,8 @@ if __name__ == '__main__':
         # build lowering reports
         _build_lowering_reports(current_lowering)
 
-        # build lowering backup dir
-        _build_lowering_backup_dirs(current_cruise, current_lowering)
+        # build lowering export dirs
+        _build_lowering_export_dirs(current_cruise, current_lowering)
 
         # export lowering nav2csv data file
         _export_lowering_nav_csv_files(current_lowering)
@@ -788,8 +785,8 @@ if __name__ == '__main__':
                 # build cruise report
         _build_cruise_reports(current_cruise)
 
-        # build cruise backup dir
-        _build_cruise_backup_dirs(current_cruise)
+        # build cruise export dirs
+        _build_cruise_export_dirs(current_cruise)
 
         # export cruise data files
         _export_cruise_data_files(current_cruise)
@@ -810,8 +807,8 @@ if __name__ == '__main__':
         # build lowering reports
         _build_lowering_reports(current_lowering)
 
-        # build lowering backup dir
-        _build_lowering_backup_dirs(current_cruise, current_lowering)
+        # build lowering export dirs
+        _build_lowering_export_dirs(current_cruise, current_lowering)
 
         # export lowering nav2csv data file
         _export_lowering_nav_csv_files(current_lowering)
