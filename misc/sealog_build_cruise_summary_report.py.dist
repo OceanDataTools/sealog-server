@@ -19,12 +19,13 @@ LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for det
 import logging
 from io import BytesIO
 from datetime import datetime
-from reportlab.platypus import Paragraph, Spacer, NextPageTemplate
+
+from reportlab.platypus import Paragraph, PageBreak, Spacer, NextPageTemplate, Image
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
+
 from reporting.sealog_doc_template import RLDocTemplate
 from reporting.sealog_report_builder import CruiseReportCreator
-
 
 from python_sealog.cruises import get_cruise_uid_by_id
 from python_sealog.settings import API_SERVER_FILE_PATH
@@ -34,7 +35,7 @@ PAGE_WIDTH, PAGE_HEIGHT = PAGE_SIZE
 BASE_MARGIN = 5 * mm
 
 AUTHOR = "OceanDataTools.org"
-
+VEHICLE_NAME = 'Explorer'
 
 class CruiseSummaryReport(CruiseReportCreator): # pylint: disable=too-few-public-methods
     '''
@@ -56,13 +57,15 @@ class CruiseSummaryReport(CruiseReportCreator): # pylint: disable=too-few-public
             topMargin=BASE_MARGIN,
             bottomMargin=BASE_MARGIN,
             title="Cruise Summary Report: %s" % self.cruise_record['cruise_id'],
+            subtitle="Remotely Operated Vehicle: " + VEHICLE_NAME,
             author=AUTHOR
         )
 
-        # Build the cruise stats table
+        logging.info("Building stats table")
         stat_table = self._build_stat_table()
 
-        logging.debug("Building flowables array")
+        logging.info("Building Dive Locations")
+        dive_locations_image = self._build_lowerings_map()
 
         flowables = []
 
@@ -77,6 +80,16 @@ class CruiseSummaryReport(CruiseReportCreator): # pylint: disable=too-few-public
         flowables.append(Paragraph("Dive Stats:", self.cover_header))
         flowables.append(Spacer(PAGE_WIDTH, 5 * mm))
         flowables.append(stat_table)
+        flowables.append(NextPageTemplate('Normal'))
+        flowables.append(PageBreak())
+
+        if dive_locations_image:
+            dive_locations = Image(dive_locations_image)
+            dive_locations.hAlign = 'CENTER'
+
+            flowables.append(Paragraph("Dive Locations:", self.heading_1))
+            flowables.append(Spacer(PAGE_WIDTH, 5 * mm))
+            flowables.append(dive_locations)
 
         doc.multiBuild(
             flowables
@@ -97,10 +110,11 @@ if __name__ == '__main__':
     import os
     import sys
 
-    parser = argparse.ArgumentParser(description='Build Cruise Summary Report')
+    parser = argparse.ArgumentParser(description='Build Cruise Summary Report for %s' % VEHICLE_NAME)
     parser.add_argument('-v', '--verbosity', dest='verbosity',
                         default=0, action='count',
                         help='Increase output verbosity')
+    parser.add_argument('-o','--output_dir', help='output directory to save report')
     parser.add_argument('cruise_id', help='cruise_id to build report for (i.e. FK200126).')
 
     parsed_args = parser.parse_args()
@@ -116,25 +130,25 @@ if __name__ == '__main__':
     parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
     logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
 
-    cruise_uid = get_cruise_uid_by_id(parsed_args.cruise_id)
     # verify lowering exists
+    cruise_uid = get_cruise_uid_by_id(parsed_args.cruise_id)
+
     if cruise_uid is None:
         logging.error("No cruise found for cruise_id: %s", parsed_args.cruise_id)
         sys.exit(0)
 
     try:
         summary_report = CruiseSummaryReport(cruise_uid)
-        REPORT_FILEPATH = os.path.join(API_SERVER_FILE_PATH, 'cruises', cruise_uid, parsed_args.cruise_id + '_Cruise_Summary_Report.pdf')
+        OUTPUT_PATH = parsed_args.output_dir if parsed_args.output_dir else os.path.join(API_SERVER_FILE_PATH, 'cruises', cruise_uid)
+        REPORT_FILENAME = parsed_args.cruise_id + '_' + VEHICLE_NAME + '_Cruise_Summary_Report.pdf'
 
         try:
-            with open(REPORT_FILEPATH, 'wb') as file:
+            with open(os.path.join(OUTPUT_PATH, REPORT_FILENAME), 'wb') as file:
                 file.write(summary_report.export_pdf())
 
         except Exception as error:
-            logging.error("Unable to build report: %s", REPORT_FILEPATH)
-            logging.debug(str(error))
-            raise error
-
+            logging.error("Unable to build report")
+            logging.error(str(error))
     except KeyboardInterrupt:
         logging.warning('Interrupted')
         try:

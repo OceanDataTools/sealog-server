@@ -22,13 +22,14 @@ from reportlab.lib.units import cm
 from reportlab.lib.sequencer import Sequencer
 from reportlab.lib.pagesizes import A4
 
+PAGE_SIZE = A4
 
 class FrontCoverTemplate(PageTemplate):
     '''
     Template for cover page layout
     '''
 
-    def __init__(self, page_id, page_size=A4, title='Title Goes Here', subtitle=None):
+    def __init__(self, page_id, page_size=PAGE_SIZE, title='Title Goes Here', subtitle=None):
 
         self.page_width = page_size[0]
         self.page_height = page_size[1]
@@ -41,6 +42,7 @@ class FrontCoverTemplate(PageTemplate):
                        self.page_height - 7 * cm, id='cover')
         PageTemplate.__init__(self, page_id, [frame1])  # note lack of onPage
 
+
     def afterDrawPage(self, canv, doc):
         '''
         Actions to take after drawPage
@@ -48,14 +50,13 @@ class FrontCoverTemplate(PageTemplate):
 
         canv.saveState()
         canv.setFont('Helvetica', 24)
-
         canv.drawCentredString(self.page_width / 2, self.page_height - 2.5 * cm, self.title)
 
         if self.subtitle:
-            canv.setFont('Helvetica-Oblique', 20)
-            canv.drawCentredString(self.page_width / 2, self.page_height - 3.15 * cm, self.subtitle)
+            canv.setFont('Helvetica-Oblique', 16)
+            canv.drawCentredString(self.page_width / 2, self.page_height - 3.25 * cm, self.subtitle)
             canv.setFont('Helvetica', 10)
-            canv.drawCentredString(self.page_width / 2, self.page_height - 3.75 * cm, 'Generated: ' + datetime.utcnow().replace(microsecond=0).strftime("%c"))
+            canv.drawCentredString(self.page_width / 2, self.page_height - 3.85 * cm, 'Generated: ' + datetime.utcnow().replace(microsecond=0).strftime("%c"))
 
         else:
             canv.setFont('Helvetica', 10)
@@ -76,7 +77,8 @@ class OneColumnTemplate(PageTemplate):
     Template for 1-column page layout
     '''
 
-    def __init__(self, page_id, page_size=A4):
+    def __init__(self, page_id, page_size=PAGE_SIZE):
+
         self.page_width = page_size[0]
         self.page_height = page_size[1]
         frame1 = Frame(2.5 * cm,
@@ -85,6 +87,7 @@ class OneColumnTemplate(PageTemplate):
                        self.page_height - 5 * cm,
                        id='normal')
         PageTemplate.__init__(self, page_id, [frame1])  # note lack of onPage
+
 
     def afterDrawPage(self, canv, doc):
         '''
@@ -100,12 +103,14 @@ class OneColumnTemplate(PageTemplate):
         canv.drawCentredString(self.page_width / 2, 2 * cm, 'Page %d' % canv.getPageNumber())
         canv.restoreState()
 
+
 class TOCTemplate(PageTemplate):
     '''
     Template for table of contents
     '''
 
-    def __init__(self, page_id, page_size=A4):
+    def __init__(self, page_id, page_size=PAGE_SIZE):
+
         self.page_width = page_size[0]
         self.page_height = page_size[1]
         frame1 = Frame(2.5 * cm,
@@ -114,6 +119,7 @@ class TOCTemplate(PageTemplate):
                        self.page_height - 5.5 * cm,
                        id='normal')
         PageTemplate.__init__(self, page_id, [frame1])  # note lack of onPage
+
 
     def afterDrawPage(self, canv, doc):
         '''
@@ -128,12 +134,14 @@ class TOCTemplate(PageTemplate):
         canv.drawCentredString(self.page_width / 2, 2 * cm, 'Page %d' % canv.getPageNumber())
         canv.restoreState()
 
+
 class TwoColumnTemplate(PageTemplate):
     '''
     Template for 2-column page layout
     '''
 
-    def __init__(self, page_id, page_size=A4):
+    def __init__(self, page_id, page_size=PAGE_SIZE):
+
         self.page_width = page_size[0]
         self.page_height = page_size[1]
         col_width = 0.5 * (self.page_width - 6 * cm)
@@ -148,6 +156,7 @@ class TwoColumnTemplate(PageTemplate):
                        self.page_height - 5 * cm,
                        id='rightCol')
         PageTemplate.__init__(self, page_id, [frame1, frame2])  # note lack of onPage
+
 
     def afterDrawPage(self, canv, doc):
         '''
@@ -171,7 +180,6 @@ class RLDocTemplate(BaseDocTemplate):
 
     def __init__(self, *args, **kwargs):
 
-
         self.title = kwargs.get('title')
 
         try:
@@ -184,6 +192,7 @@ class RLDocTemplate(BaseDocTemplate):
 
         super().__init__(*args, **kwargs)
 
+
     def afterInit(self):
         '''
         Actions to take after init
@@ -195,6 +204,7 @@ class RLDocTemplate(BaseDocTemplate):
         self.addPageTemplates(TwoColumnTemplate('TwoColumn'))
         self.seq = Sequencer()
 
+
     def beforeDocument(self):
         '''
         Actions to take before build document
@@ -203,6 +213,7 @@ class RLDocTemplate(BaseDocTemplate):
         self.canv.showOutline()
         self.seq.reset('section')
         self.seq.reset('chapter')
+
 
     def afterFlowable(self, flowable):
         '''
