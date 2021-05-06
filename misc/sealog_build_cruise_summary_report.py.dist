@@ -1,0 +1,143 @@
+#!/usr/bin/env python3
+'''
+FILE:           sealog_build_cruise_summary_report.py
+
+DESCRIPTION:    Build the cruise summary report.
+
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    0.1
+CREATED:    2021-05-03
+REVISION:
+
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2021
+'''
+
+import logging
+from io import BytesIO
+from datetime import datetime
+from reportlab.platypus import Paragraph, Spacer, NextPageTemplate
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
+from reporting.sealog_doc_template import RLDocTemplate
+from reporting.sealog_report_builder import CruiseReportCreator
+
+
+from python_sealog.cruises import get_cruise_uid_by_id
+from python_sealog.settings import API_SERVER_FILE_PATH
+
+PAGE_SIZE = A4
+PAGE_WIDTH, PAGE_HEIGHT = PAGE_SIZE
+BASE_MARGIN = 5 * mm
+
+AUTHOR = "OceanDataTools.org"
+
+
+class CruiseSummaryReport(CruiseReportCreator): # pylint: disable=too-few-public-methods
+    '''
+    Class to build the cruise summary report
+    '''
+
+    def export_pdf(self):
+        '''
+        Exports the report in pdf format as a bytes stream
+        '''
+
+        report_buffer = BytesIO()
+
+        doc = RLDocTemplate(
+            report_buffer,
+            pagesize=PAGE_SIZE,
+            leftMargin=BASE_MARGIN,
+            rightMargin=BASE_MARGIN,
+            topMargin=BASE_MARGIN,
+            bottomMargin=BASE_MARGIN,
+            title="Cruise Summary Report: %s" % self.cruise_record['cruise_id'],
+            author=AUTHOR
+        )
+
+        # Build the cruise stats table
+        stat_table = self._build_stat_table()
+
+        logging.debug("Building flowables array")
+
+        flowables = []
+
+        flowables.append(NextPageTemplate('Normal'))
+        flowables.append(Paragraph("Cruise Summary:", self.cover_header))
+        flowables.append(Paragraph("<b>Cruise ID:</b> %s" % self.cruise_record['cruise_id'], self.body_text))
+        flowables.append(Paragraph("<b>Cruise PI:</b> %s" % self.cruise_record['cruise_additional_meta']['cruise_pi'] or '', self.body_text))
+        flowables.append(Paragraph("<b>Cruise Description:</b> %s" % self.cruise_record['cruise_additional_meta']['cruise_description'] or '', self.body_text))
+        flowables.append(Paragraph("<b>Cruise Location:</b> %s" % self.cruise_record['cruise_location'] or '', self.body_text))
+        flowables.append(Paragraph("<b>Cruise Ports:</b> %s" % self.cruise_record['cruise_additional_meta']['cruise_departure_location'] or '' + " --> " + self.cruise_record['cruise_additional_meta']['cruise_arrival_location'] or '', self.body_text))
+        flowables.append(Paragraph("<b>Cruise Dates:</b> %s --> %s" % (datetime.fromisoformat(self.cruise_record['start_ts'][:-1]).strftime('%Y-%m-%d'), datetime.fromisoformat(self.cruise_record['stop_ts'][:-1]).strftime('%Y-%m-%d')), self.body_text))
+        flowables.append(Paragraph("Dive Stats:", self.cover_header))
+        flowables.append(Spacer(PAGE_WIDTH, 5 * mm))
+        flowables.append(stat_table)
+
+        doc.multiBuild(
+            flowables
+        )
+
+        pdf_data = report_buffer.getvalue()
+        report_buffer.close()
+
+        return pdf_data
+
+
+# -------------------------------------------------------------------------------------
+# Required python code for running the script as a stand-alone utility
+# -------------------------------------------------------------------------------------
+if __name__ == '__main__':
+
+    import argparse
+    import os
+    import sys
+
+    parser = argparse.ArgumentParser(description='Build Cruise Summary Report')
+    parser.add_argument('-v', '--verbosity', dest='verbosity',
+                        default=0, action='count',
+                        help='Increase output verbosity')
+    parser.add_argument('cruise_id', help='cruise_id to build report for (i.e. FK200126).')
+
+    parsed_args = parser.parse_args()
+
+    ############################
+    # Set up logging before we do any other argument parsing (so that we
+    # can log problems with argument parsing).
+
+    LOGGING_FORMAT = '%(asctime)-15s %(levelname)s - %(message)s'
+    logging.basicConfig(format=LOGGING_FORMAT)
+
+    LOG_LEVELS = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
+    parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
+    logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
+
+    cruise_uid = get_cruise_uid_by_id(parsed_args.cruise_id)
+    # verify lowering exists
+    if cruise_uid is None:
+        logging.error("No cruise found for cruise_id: %s", parsed_args.cruise_id)
+        sys.exit(0)
+
+    try:
+        summary_report = CruiseSummaryReport(cruise_uid)
+        REPORT_FILEPATH = os.path.join(API_SERVER_FILE_PATH, 'cruises', cruise_uid, parsed_args.cruise_id + '_Cruise_Summary_Report.pdf')
+
+        try:
+            with open(REPORT_FILEPATH, 'wb') as file:
+                file.write(summary_report.export_pdf())
+
+        except Exception as error:
+            logging.error("Unable to build report: %s", REPORT_FILEPATH)
+            logging.debug(str(error))
+            raise error
+
+    except KeyboardInterrupt:
+        logging.warning('Interrupted')
+        try:
+            sys.exit(0)
+        except SystemExit:
+            os._exit(0) # pylint: disable=protected-access

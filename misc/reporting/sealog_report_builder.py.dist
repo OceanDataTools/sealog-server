@@ -1,0 +1,1184 @@
+#!/usr/bin/env python3
+'''
+FILE:           sealog_report_builder.py
+
+DESCRIPTION:    Contains the classes used for build cruise summary and lowering
+                summary reports
+
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    0.1
+CREATED:    2021-05-03
+REVISION:
+
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2021
+'''
+
+import csv
+import sys
+import math
+import shutil
+import logging
+import tempfile
+from io import BytesIO
+from datetime import datetime, timedelta
+
+from os.path import dirname, realpath
+sys.path.append(dirname(dirname(realpath(__file__))))
+
+from reportlab.platypus import Paragraph, Table
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import cm, mm
+from reportlab.lib import colors
+
+import cartopy.crs as ccrs
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+
+import numpy as np
+from svglib.svglib import svg2rlg
+
+from python_sealog.lowerings import get_lowering, get_lowerings_by_cruise
+from python_sealog.cruises import get_cruise, get_cruise_by_lowering
+from python_sealog.events import get_events_by_lowering
+from python_sealog.event_exports import get_event_exports_by_lowering
+from python_sealog.event_templates import get_event_templates
+
+from reporting.reporting_utils import strfdelta
+
+PAGE_SIZE = A4
+PAGE_WIDTH, PAGE_HEIGHT= PAGE_SIZE
+BASE_MARGIN = 5 * mm
+
+POS_DATA_SOURCES = ['vehicleRealtimeNavData','vehicleRealtimeUSBLData']
+
+class CruiseReportCreator: # pylint: disable=too-many-instance-attributes,too-few-public-methods,too-many-statements
+    '''
+    Creates the cruise summary report
+    '''
+
+    def __init__(self, cruise_uid):
+
+        # Setup ReportLab styles for the report
+        sample_style_sheet = getSampleStyleSheet()
+        self.body_text = sample_style_sheet['BodyText']
+        self.heading_1 = sample_style_sheet['Heading1']
+        self.heading_2 = sample_style_sheet['Heading2']
+        self.cover_header = ParagraphStyle(
+                                        'CoverHeader',
+                                        parent=sample_style_sheet['BodyText'],
+                                        fontSize=12,
+                                        fontName='Helvetica-Bold'
+                                       )
+        self.table_text = ParagraphStyle(
+                                        'TableText',
+                                        parent=sample_style_sheet['BodyText'],
+                                        fontSize=8,
+                                        spaceAfter=2
+                                       )
+        self.table_text_centered = ParagraphStyle(
+                                        'TableTextCentered',
+                                        parent=sample_style_sheet['BodyText'],
+                                        fontSize=8,
+                                        spaceAfter=2,
+                                        alignment=1
+                                       )
+        self.event_table_text = ParagraphStyle(
+                                        'EventTableText',
+                                        parent=sample_style_sheet['Normal'],
+                                        alignment=0,
+                                        fontSize=5,
+                                        leading=8
+                                       )
+        self.summary_table_text = ParagraphStyle(
+                                        'SummaryTableText',
+                                        parent=sample_style_sheet['Normal'],
+                                        alignment=1,
+                                        fontSize=5,
+                                        leading=8
+                                       )
+        self.summary_table_d2d_text = ParagraphStyle(
+                                        'SummaryD2DTableText',
+                                        parent=sample_style_sheet['Normal'],
+                                        alignment=1,
+                                        fontSize=9,
+                                        leading=8
+                                       )
+        self.sample_table_text = ParagraphStyle(
+                                        'SampleTableText',
+                                        parent=sample_style_sheet['BodyText'],
+                                        fontSize=5,
+                                        # spaceAfter=2,
+                                        leading=5
+                                       )
+        self.toc_heading_1 = ParagraphStyle(
+                                            'TOCHeading1',
+                                            parent=sample_style_sheet['Heading1'],
+                                            fontSize=12,
+                                            leftIndent=20,
+                                            firstLineIndent=-20,
+                                            spaceBefore=10,
+                                            leading=16
+                                        )
+        self.toc_heading_2 = ParagraphStyle(
+                                            'TOCHeading2',
+                                            parent=sample_style_sheet['Heading2'],
+                                            fontSize=10,
+                                            leftIndent=40,
+                                            firstLineIndent=-20,
+                                            spaceBefore=0,
+                                            leading=12
+                                        )
+
+        # Retrieve the cruise record from the sealog-server.
+        logging.info("Retrieving Cruise Record")
+        self.cruise_record = get_cruise(cruise_uid)
+
+        # Retrieve the lowering records from the sealog-server. Need to reverse
+        # the order to get oldest first.
+        logging.info("Retrieving Lowering Records")
+        self.lowering_records = get_lowerings_by_cruise(cruise_uid) if self.cruise_record else list()
+        self.lowering_records.reverse()
+
+        # Modify the lowering records such that the milestones are datetime
+        # objects, the max depth is a number and the bounding box is a list of
+        # 4 floating point numbers.  Also add the various dive durations as
+        # timedelta objects.
+        for lowering in self.lowering_records:
+            logging.info("Lowering: %s", lowering['lowering_id'])
+            lowering['stats'], lowering['milestones'] = self._build_lowering_stats(lowering)
+
+
+    def __del__(self):
+
+        try:
+            shutil.rmtree(self.tmp_dir, ignore_errors=True)
+        except AttributeError:
+            pass
+
+    @staticmethod
+    def _build_lowering_stats(lowering): # pylint: disable=too-many-branches,too-many-statements
+        '''
+        # Return the stats and milestone from the lowering record but with the
+        # milestones as datetime objects, the max depth as a float, the
+        # bounding box as a list of 4 floats and the various dive durations as
+        # timedelta objects added to stats.
+        '''
+
+        logging.info('Processing lowering milestones and stats data')
+
+        lowering_milestones = dict(
+            start_dt = None,
+            descending_dt = None,
+            on_bottom_dt = None,
+            off_bottom_dt = None,
+            on_surface_dt = None,
+            stop_dt = None
+        )
+
+        lowering_stats = dict(
+            max_depth = 0,
+            bounding_box = None,
+            total_duration = None,
+            deployment_duration = None,
+            descent_duration = None,
+            on_bottom_duration = None,
+            ascent_duration = None,
+            recovery_duration = None,
+            samples_collected = 0
+        )
+
+        try:
+            lowering_milestones['start_dt'] = datetime.fromisoformat(lowering['start_ts'][:-1])
+        except ValueError:
+            pass
+
+        try:
+            lowering_milestones['stop_dt'] = datetime.fromisoformat(lowering['stop_ts'][:-1])
+        except ValueError:
+            pass
+
+        if 'milestones' in lowering['lowering_additional_meta']:
+            if 'lowering_descending' in lowering['lowering_additional_meta']['milestones']:
+                try:
+                    lowering_milestones['descending_dt'] = datetime.fromisoformat(lowering['lowering_additional_meta']['milestones']['lowering_descending'][:-1])
+                except ValueError:
+                    pass
+
+            if 'lowering_on_bottom' in lowering['lowering_additional_meta']['milestones']:
+                try:
+                    lowering_milestones['on_bottom_dt'] = datetime.fromisoformat(lowering['lowering_additional_meta']['milestones']['lowering_on_bottom'][:-1])
+                except ValueError:
+                    pass
+
+            if 'lowering_off_bottom' in lowering['lowering_additional_meta']['milestones']:
+                try:
+                    lowering_milestones['off_bottom_dt'] = datetime.fromisoformat(lowering['lowering_additional_meta']['milestones']['lowering_off_bottom'][:-1])
+                except ValueError:
+                    pass
+
+            if 'lowering_on_surface' in lowering['lowering_additional_meta']['milestones']:
+                try:
+                    lowering_milestones['on_surface_dt'] = datetime.fromisoformat(lowering['lowering_additional_meta']['milestones']['lowering_on_surface'][:-1])
+                except ValueError:
+                    pass
+
+        if 'stats' in lowering['lowering_additional_meta']:
+
+            if 'max_depth' in lowering['lowering_additional_meta']['stats']:
+                try:
+                    lowering_stats['max_depth'] = float(lowering['lowering_additional_meta']['stats']['max_depth'])
+                except ValueError:
+                    pass
+
+            if 'bounding_box' in lowering['lowering_additional_meta']['stats']:
+                try:
+                    lowering_stats['bounding_box'] = [float(elem) for elem in lowering['lowering_additional_meta']['stats']['bounding_box']]
+                except ValueError:
+                    pass
+
+        # total_duration
+        lowering_stats['total_duration'] = lowering_milestones['stop_dt'] - lowering_milestones['start_dt']
+
+        # deployment_duration
+        if lowering_milestones['start_dt'] and lowering_milestones['descending_dt']:
+            lowering_stats['deployment_duration'] = lowering_milestones['descending_dt'] - lowering_milestones['start_dt']
+
+        # descent_duration
+        if lowering_milestones['descending_dt'] and lowering_milestones['on_bottom_dt']:
+            lowering_stats['descent_duration'] = lowering_milestones['on_bottom_dt'] - lowering_milestones['descending_dt']
+
+        # on_bottom_duration
+        if lowering_milestones['on_bottom_dt'] and lowering_milestones['off_bottom_dt']:
+            lowering_stats['on_bottom_duration'] = lowering_milestones['off_bottom_dt'] - lowering_milestones['on_bottom_dt']
+
+        # ascent_duration
+        if lowering_milestones['off_bottom_dt'] and lowering_milestones['on_surface_dt']:
+            lowering_stats['ascent_duration'] = lowering_milestones['on_surface_dt'] - lowering_milestones['off_bottom_dt']
+
+        # recovery_duration
+        if lowering_milestones['on_surface_dt'] and lowering_milestones['stop_dt']:
+            lowering_stats['recovery_duration'] = lowering_milestones['stop_dt'] - lowering_milestones['on_surface_dt']
+
+        # sample events
+        event_data = get_events_by_lowering(lowering['id'], event_filter="SAMPLE")
+
+        # filter out events that include the value "SAMPLE" but are not
+        # "SAMPLE". i.e. "SAMPLE_INSITU"
+        if len(event_data) > 0:
+            event_data = list(filter(lambda event: event['event_value'] == "SAMPLE", event_data))
+            lowering_stats['samples_collected'] = len(event_data)
+
+        return lowering_stats, lowering_milestones
+
+
+    def _build_stat_table(self):
+        '''
+        Build the lowering stats reportlab table
+        '''
+
+        logging.info('Building lowering stats table')
+
+        # This is the data that will be used to populate the lowering stats
+        # table.  This first list will become the table header.
+        stat_data = [
+            [
+                'Dive ID',
+                'Location',
+                'Deck to Deck',
+                'Deployment',
+                'Descent',
+                'Seabed',
+                'Ascent',
+                'Recovery',
+                'Max Depth',
+                'Samples'
+            ]
+        ]
+
+        # This dict will contain the running totals for all the lowering
+        # records.
+        totals = dict(
+            {
+                'total_duration': timedelta(),
+                'deployment_duration': timedelta(),
+                'descent_duration': timedelta(),
+                'on_bottom_duration': timedelta(),
+                'ascent_duration': timedelta(),
+                'recovery_duration': timedelta(),
+                'max_depth': 0,
+                'samples_collected': 0,
+            }
+        )
+
+        # Loop through the lowering records.
+        for lowering in self.lowering_records:
+
+            # Add row to lowering stats data using the lowering record.
+            stat_data.append( [
+                lowering['lowering_id'],
+                lowering['lowering_location'],
+                strfdelta(lowering['stats']['total_duration'],fmt='{D:02}d {H:02}:{M:02}:{S:02}'),
+                strfdelta(lowering['stats']['deployment_duration'],fmt='{D:02}d {H:02}:{M:02}:{S:02}'),
+                strfdelta(lowering['stats']['descent_duration'],fmt='{D:02}d {H:02}:{M:02}:{S:02}'),
+                strfdelta(lowering['stats']['on_bottom_duration'],fmt='{D:02}d {H:02}:{M:02}:{S:02}'),
+                strfdelta(lowering['stats']['ascent_duration'],fmt='{D:02}d {H:02}:{M:02}:{S:02}'),
+                strfdelta(lowering['stats']['recovery_duration'],fmt='{D:02}d {H:02}:{M:02}:{S:02}'),
+                str(lowering['stats']['max_depth']) + 'm' if lowering['stats']['max_depth'] else '',
+                str(lowering['stats']['samples_collected']) if lowering['stats']['samples_collected'] else '0'
+            ])
+
+            # Update the totals using the lowering record.
+            totals['total_duration'] += lowering['stats']['total_duration'] if lowering['stats']['total_duration'] else timedelta()
+            totals['deployment_duration'] += lowering['stats']['deployment_duration'] if lowering['stats']['deployment_duration'] else timedelta()
+            totals['descent_duration'] += lowering['stats']['descent_duration'] if lowering['stats']['descent_duration'] else timedelta()
+            totals['on_bottom_duration'] += lowering['stats']['on_bottom_duration'] if lowering['stats']['on_bottom_duration'] else timedelta()
+            totals['ascent_duration'] += lowering['stats']['ascent_duration'] if lowering['stats']['ascent_duration'] else timedelta()
+            totals['recovery_duration'] += lowering['stats']['recovery_duration'] if lowering['stats']['recovery_duration'] else timedelta()
+            if lowering['stats']['max_depth']:
+                totals['max_depth'] = lowering['stats']['max_depth'] if lowering['stats']['max_depth'] > totals['max_depth'] else totals['max_depth']
+
+            if lowering['stats']['samples_collected']:
+                totals['samples_collected'] += lowering['stats']['samples_collected']
+
+        # Add the totals as the last row in the stats data.
+        stat_data.append([
+            'Totals',
+            str(len(self.lowering_records)) + ' Dives',
+            strfdelta(totals['total_duration'],fmt='{D:02}d {H:02}:{M:02}:{S:02}'),
+            strfdelta(totals['deployment_duration'],fmt='{D:02}d {H:02}:{M:02}:{S:02}'),
+            strfdelta(totals['descent_duration'],fmt='{D:02}d {H:02}:{M:02}:{S:02}'),
+            strfdelta(totals['on_bottom_duration'],fmt='{D:02}d {H:02}:{M:02}:{S:02}'),
+            strfdelta(totals['ascent_duration'],fmt='{D:02}d {H:02}:{M:02}:{S:02}'),
+            strfdelta(totals['recovery_duration'],fmt='{D:02}d {H:02}:{M:02}:{S:02}'),
+            str(totals['max_depth']) + 'm',
+            totals['samples_collected']
+
+        ])
+
+        # Use the lowering stats data to build the reportlab table object.
+        stat_table = Table(stat_data, style=[
+                            ('BOX',(0,0),(-1,-1),1,colors.black),
+                            ('GRID',(0,0),(-1,-1),1,colors.black),
+                            ('FONTSIZE',(0,0),(-1,-1),6),
+                            ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'),
+                            ('FONTNAME',(0,-1),(-1,-1),'Helvetica-Bold'),
+                            ('LEADING',(0,0),(-1,-1),6),
+                            ('ALIGN',(0,0),(-1,-1),'CENTER'),
+                            ('BACKGROUND',(0,0),(-1,0),colors.lightgrey),
+                            ('BACKGROUND',(0,-1),(-1,-1),colors.lightgrey)
+                        ])
+
+        return stat_table
+
+
+    def _build_lowerings_map(self):
+        '''
+        TODO
+        This function would build a map showing the on_bottom location of all the lowerings.
+        '''
+        logging.info('Building lowering trackline')
+
+
+class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-few-public-methods
+    '''
+    Creates the lowering summary report
+    '''
+
+    def __init__(self, lowering_uid):
+        sample_style_sheet = getSampleStyleSheet()
+        self.body_text = sample_style_sheet['BodyText']
+        self.heading_1 = sample_style_sheet['Heading1']
+        self.heading_2 = sample_style_sheet['Heading2']
+        self.cover_header = ParagraphStyle(
+                                        'CoverHeader',
+                                        parent=sample_style_sheet['BodyText'],
+                                        fontSize=12,
+                                        fontName='Helvetica-Bold'
+                                       )
+        self.table_text = ParagraphStyle(
+                                        'TableText',
+                                        parent=sample_style_sheet['BodyText'],
+                                        fontSize=8,
+                                        spaceAfter=2
+                                       )
+        self.table_text_centered = ParagraphStyle(
+                                        'TableTextCentered',
+                                        parent=sample_style_sheet['BodyText'],
+                                        fontSize=8,
+                                        spaceAfter=2,
+                                        alignment=1
+                                       )
+        self.event_table_text = ParagraphStyle(
+                                        'EventTableText',
+                                        parent=sample_style_sheet['Normal'],
+                                        alignment=0,
+                                        fontSize=5,
+                                        leading=8
+                                       )
+        self.summary_table_text = ParagraphStyle(
+                                        'SummaryTableText',
+                                        parent=sample_style_sheet['Normal'],
+                                        alignment=1,
+                                        fontSize=5,
+                                        leading=8
+                                       )
+        self.summary_table_d2d_text = ParagraphStyle(
+                                        'SummaryD2DTableText',
+                                        parent=sample_style_sheet['Normal'],
+                                        alignment=1,
+                                        fontSize=9,
+                                        leading=8
+                                       )
+        self.sample_table_text = ParagraphStyle(
+                                        'SampleTableText',
+                                        parent=sample_style_sheet['BodyText'],
+                                        fontSize=5,
+                                        # spaceAfter=2,
+                                        leading=5
+                                       )
+        self.toc_heading_1 = ParagraphStyle(
+                                            'TOCHeading1',
+                                            parent=sample_style_sheet['Heading1'],
+                                            fontSize=12,
+                                            leftIndent=20,
+                                            firstLineIndent=-20,
+                                            spaceBefore=10,
+                                            leading=16
+                                        )
+        self.toc_heading_2 = ParagraphStyle(
+                                            'TOCHeading2',
+                                            parent=sample_style_sheet['Heading2'],
+                                            fontSize=10,
+                                            leftIndent=40,
+                                            firstLineIndent=-20,
+                                            spaceBefore=0,
+                                            leading=12
+                                        )
+
+        # Date/Time format to use when converting datetime object to strings.
+        self.time_format = '%Y-%m-%d %H:%M:%S'
+
+        # Make a tmp directory.  This will be used for storing intermediate
+        # files such as thumbnail images.
+        self.tmp_dir = tempfile.mkdtemp()
+
+        # Class properties to store the lowering events/aux_data as a numpy
+        # array and the header record for that numpy array.
+        self.lowering_data = None
+        self.lowering_data_headers = None
+
+        # Retrieve the cruise and lowering records for the lowering_id
+        self.lowering_record = get_lowering(lowering_uid)
+        self.cruise_record = get_cruise_by_lowering(lowering_uid)
+
+        # Import the events and aux data for the lowering.
+        self._import_lowering_data()
+
+        # Modify the lowering record such that the milestones are datetime
+        # objects, the max depth is a number and the bounding box is a list of
+        # 4 floating point numbers.  Also add the various dive durations as
+        # timedelta objects.
+        self._build_lowering_stats()
+
+
+    def __del__(self):
+
+        # Delete the temporary directory that was created to store the
+        # intermediate files.
+        try:
+            shutil.rmtree(self.tmp_dir, ignore_errors=True)
+        except AttributeError:
+            pass
+
+
+    def _import_lowering_data(self):
+        '''
+        Ingest the events and aux_data for the lowering.  Build the
+        lowering_data numpy array and lowering_data_header list.
+        '''
+
+        logging.info("Processing lowering event data")
+
+        event_export_data = get_event_exports_by_lowering(self.lowering_record['id'], export_format='csv')
+
+        # Build a temp file containing the csv export of the lowering data.
+        # Use this file to extract the header data (first row of file) and to
+        # import the data into a numpy array.
+        with tempfile.TemporaryFile(mode='w+') as file:
+
+            file.write(event_export_data)
+            file.seek(0)
+
+            reader = csv.reader(file, delimiter=',')
+            self.lowering_data_headers = next(reader)
+            self.lowering_data = np.array(list(reader))
+
+        # Converting ts column in the lowering_data from string to datetime
+        for row in range(len(self.lowering_data)):
+            date = datetime.fromisoformat(self.lowering_data[row][self.lowering_data_headers.index( 'ts' )][:-1])
+            self.lowering_data[[row],[self.lowering_data_headers.index( 'ts' )]] = np.datetime64(date)
+
+
+    def _build_lowering_stats(self): # pylint: disable=too-many-branches,too-many-statements
+        '''
+        builds the lowering stats and lowering milestones object for the given lowering.
+        '''
+
+        logging.info('Processing lowering milestone and stats data')
+
+        lowering_milestones = dict(
+            start_dt = None,
+            descending_dt = None,
+            on_bottom_dt = None,
+            off_bottom_dt = None,
+            on_surface_dt = None,
+            stop_dt = None
+        )
+
+        lowering_stats = dict(
+            max_depth = None,
+            bounding_box = None,
+            total_duration = None,
+            deployment_duration = None,
+            descent_duration = None,
+            on_bottom_duration = None,
+            ascent_duration = None,
+            recovery_duration = None,
+            samples_collected = 0
+        )
+
+        try:
+            lowering_milestones['start_dt'] = datetime.fromisoformat(self.lowering_record['start_ts'][:-1])
+        except ValueError:
+            pass
+
+        try:
+            lowering_milestones['stop_dt'] = datetime.fromisoformat(self.lowering_record['stop_ts'][:-1])
+        except ValueError:
+            pass
+
+        if 'milestones' in self.lowering_record['lowering_additional_meta']:
+            if 'lowering_descending' in self.lowering_record['lowering_additional_meta']['milestones']:
+                try:
+                    lowering_milestones['descending_dt'] = datetime.fromisoformat(self.lowering_record['lowering_additional_meta']['milestones']['lowering_descending'][:-1])
+                except ValueError:
+                    pass
+
+            if 'lowering_on_bottom' in self.lowering_record['lowering_additional_meta']['milestones']:
+                try:
+                    lowering_milestones['on_bottom_dt'] = datetime.fromisoformat(self.lowering_record['lowering_additional_meta']['milestones']['lowering_on_bottom'][:-1])
+                except ValueError:
+                    pass
+
+            if 'lowering_off_bottom' in self.lowering_record['lowering_additional_meta']['milestones']:
+                try:
+                    lowering_milestones['off_bottom_dt'] = datetime.fromisoformat(self.lowering_record['lowering_additional_meta']['milestones']['lowering_off_bottom'][:-1])
+                except ValueError:
+                    pass
+
+            if 'lowering_on_surface' in self.lowering_record['lowering_additional_meta']['milestones']:
+                try:
+                    lowering_milestones['on_surface_dt'] = datetime.fromisoformat(self.lowering_record['lowering_additional_meta']['milestones']['lowering_on_surface'][:-1])
+                except ValueError:
+                    pass
+
+        if 'stats' in self.lowering_record['lowering_additional_meta']:
+
+            if 'max_depth' in self.lowering_record['lowering_additional_meta']['stats']:
+                try:
+                    lowering_stats['max_depth'] = float(self.lowering_record['lowering_additional_meta']['stats']['max_depth'])
+                except ValueError:
+                    pass
+
+            if 'bounding_box' in self.lowering_record['lowering_additional_meta']['stats']:
+                try:
+                    lowering_stats['bounding_box'] = [float(elem) for elem in self.lowering_record['lowering_additional_meta']['stats']['bounding_box']]
+                except ValueError:
+                    pass
+
+        # total_duration
+        lowering_stats['total_duration'] = lowering_milestones['stop_dt'] - lowering_milestones['start_dt']
+
+        # deployment_duration
+        if lowering_milestones['start_dt'] and lowering_milestones['descending_dt']:
+            lowering_stats['deployment_duration'] = lowering_milestones['descending_dt'] - lowering_milestones['start_dt']
+
+        # descent_duration
+        if lowering_milestones['descending_dt'] and lowering_milestones['on_bottom_dt']:
+            lowering_stats['descent_duration'] = lowering_milestones['on_bottom_dt'] - lowering_milestones['descending_dt']
+
+        # on_bottom_duration
+        if lowering_milestones['on_bottom_dt'] and lowering_milestones['off_bottom_dt']:
+            lowering_stats['on_bottom_duration'] = lowering_milestones['off_bottom_dt'] - lowering_milestones['on_bottom_dt']
+
+        # ascent_duration
+        if lowering_milestones['off_bottom_dt'] and lowering_milestones['on_surface_dt']:
+            lowering_stats['ascent_duration'] = lowering_milestones['on_surface_dt'] - lowering_milestones['off_bottom_dt']
+
+        # recovery_duration
+        if lowering_milestones['on_surface_dt'] and lowering_milestones['stop_dt']:
+            lowering_stats['recovery_duration'] = lowering_milestones['stop_dt'] - lowering_milestones['on_surface_dt']
+
+        # sample events
+        event_data = get_events_by_lowering(self.lowering_record['id'], event_filter="SAMPLE")
+
+        # filter out events that include the value "SAMPLE" but are not
+        # "SAMPLE". i.e. "SAMPLE_INSITU"
+        if len(event_data) > 0:
+            event_data = list(filter(lambda event: event['event_value'] == "SAMPLE", event_data))
+            lowering_stats['samples_collected'] = len(event_data)
+
+        # Add milestones and stats to class lowering_record
+        self.lowering_record['milestones'] = lowering_milestones
+        self.lowering_record['stats'] = lowering_stats
+
+
+    def _build_stat_table(self):
+        '''
+        Build the lowering stats reportlab table
+        '''
+
+        logging.info('Building lowering stats table')
+
+        stat_data = [
+            [
+                Paragraph('''<b>Start of Dive:</b>''', self.table_text),
+                self.lowering_record['milestones']['start_dt'].strftime(self.time_format),
+                Paragraph('''<b>Total Duration:</b>''',self.table_text),
+                strfdelta(self.lowering_record['stats']['total_duration'])
+            ],
+            [
+                Paragraph('''<b>On Bottom /<br/>@ Target Depth:</b>''', self.table_text),
+                self.lowering_record['milestones']['on_bottom_dt'].strftime(self.time_format) if self.lowering_record['milestones']['on_bottom_dt'] else '',
+                Paragraph('''<b>Decent Duration:</b>''',self.table_text),
+                strfdelta(self.lowering_record['stats']['descent_duration'])
+            ],
+            [
+                Paragraph('''<b>Off Bottom:</b>''',self.table_text),
+                self.lowering_record['milestones']['off_bottom_dt'].strftime(self.time_format) if self.lowering_record['milestones']['off_bottom_dt'] else '',
+                Paragraph('''<b>On bottom /<br/>@ Target Depth Duration:</b>''',self.table_text),
+                strfdelta(self.lowering_record['stats']['on_bottom_duration'])
+            ],
+            [
+                Paragraph('''<b>End of Dive:</b>''',self.table_text),
+                self.lowering_record['milestones']['stop_dt'].strftime(self.time_format),
+                Paragraph('''<b>Ascent Duration:</b>''',self.table_text),
+                strfdelta(self.lowering_record['stats']['ascent_duration'])
+            ],
+            [
+                Paragraph('''<b>Max Depth:</b>''',self.table_text),
+                str(self.lowering_record['stats']['max_depth']) + ' meters' if self.lowering_record['stats']['max_depth'] else '',
+                Paragraph('''<b>Samples Collected:</b>''',self.table_text),
+                str(self.lowering_record['stats']['samples_collected']) if self.lowering_record['stats']['samples_collected'] else '0'
+            ],
+            [
+                Paragraph('''<b>Bounding Box:</b>''',self.table_text),
+                ', '.join([str(pos) for pos in self.lowering_record['stats']['bounding_box']]) if self.lowering_record['stats']['bounding_box'] else ''
+            ]
+        ]
+
+        stat_table = Table(stat_data, colWidths=[2.8*cm,3*cm,4*cm,2.5*cm], style=[
+                            ('BOX',(0,0),(-1,-1),1,colors.black),
+                            ('LINEAFTER',(1,0),(1,4),1,colors.black),
+                            ('LINEBELOW',(0,0),(-1,-1),1,colors.black),
+                            ('FONTSIZE',(0,0),(-1,-1),8),
+                            ('SPAN',(1,-1),(-1,-1)),
+                            ('VALIGN',(0,0),(-1,-1),'TOP'),
+                            ('NOSPLIT',(0,0),(-1,-1))
+                        ])
+
+        return stat_table
+
+
+    def _build_summary_table(self):
+        '''
+        Build the lowering summary reportlab table
+        '''
+
+        logging.info('Building lowering summary table')
+
+        summary_data = [
+            [
+                'Stage',
+                'Date/Time',
+                'Stage Duration',
+                'Total'
+            ],
+            [
+                'Off-Deck',
+                self.lowering_record['milestones']['start_dt'].strftime(self.time_format),
+                Paragraph('<b>Deployment:</b><br/>' + strfdelta(self.lowering_record['stats']['deployment_duration'], fmt='{D:02}d {H:02}:{M:02}:{S:02}'), self.table_text_centered) if self.lowering_record['stats']['deployment_duration'] else Paragraph('<b>Deployment</b><br/>n/a', self.table_text_centered),
+                Paragraph('<b>Deck-to-deck:</b><br/>' + strfdelta(self.lowering_record['stats']['total_duration'], fmt='{D:02}d {H:02}:{M:02}:{S:02}'), self.summary_table_d2d_text) if self.lowering_record['stats']['total_duration'] else Paragraph('<b>Deck-to-deck:</b><br/>n/a', self.summary_table_d2d_text)
+            ],
+            [
+                'Descending',
+                self.lowering_record['milestones']['descending_dt'].strftime(self.time_format)
+            ],
+            [
+                '',
+                '',
+                Paragraph('<b>Descent: </b>' + strfdelta(self.lowering_record['stats']['descent_duration'], fmt='{D:02}d {H:02}:{M:02}:{S:02}'), self.table_text) if self.lowering_record['stats']['descent_duration'] else Paragraph('<b>Descent:</b><br/>n/a', self.table_text_centered)
+            ],
+            [
+                'On Bottom/@ Depth', self.lowering_record['milestones']['on_bottom_dt'].strftime(self.time_format) if self.lowering_record['milestones']['on_bottom_dt'] else '',
+                Paragraph('<b>On Bottom/@ Depth:</b><br/>' + strfdelta(self.lowering_record['stats']['on_bottom_duration'], fmt='{D:02}d {H:02}:{M:02}:{S:02}'), self.table_text_centered) if self.lowering_record['stats']['on_bottom_duration'] else Paragraph('<b>On Bottom/@Target Depth:</b><br/>n/a', self.table_text_centered)
+            ],
+            [
+                'Off Bottom/@ Depth', self.lowering_record['milestones']['off_bottom_dt'].strftime(self.time_format) if self.lowering_record['milestones']['off_bottom_dt'] else ''
+            ],
+            [
+                '',
+                '',
+                Paragraph('<b>Ascent: </b>' + strfdelta(self.lowering_record['stats']['ascent_duration'], fmt='{D:02}d {H:02}:{M:02}:{S:02}'), self.table_text_centered) if self.lowering_record['stats']['ascent_duration'] else Paragraph('<b>Ascent:</b><br/>n/a', self.table_text_centered)
+            ],
+            [
+                'On Surface', self.lowering_record['milestones']['on_surface_dt'].strftime(self.time_format) if self.lowering_record['milestones']['on_surface_dt'] else '',
+                Paragraph('<b>Recovery:</b><br/>' + strfdelta(self.lowering_record['stats']['recovery_duration'], fmt='{D:02}d {H:02}:{M:02}:{S:02}'), self.table_text_centered) if self.lowering_record['stats']['recovery_duration'] else Paragraph('<b>Recovery:</b><br/>n/a', self.table_text_centered)
+            ],
+            [
+                'On-Deck',
+                self.lowering_record['milestones']['stop_dt'].strftime(self.time_format) if self.lowering_record['milestones']['stop_dt'] else ''
+            ]
+        ]
+
+        summary_table = Table(summary_data, colWidths=[3*cm, 3*cm, 3.5*cm, 3.25*cm], style=[
+                                ('BOX',(0,0),(-1,-1),.5,colors.black),
+                                ('GRID',(0,1),(-1,-1),.5,colors.black),
+                                # ('SPAN',(0,0),(-1,0)),
+                                ('SPAN',(2,1),(2,2)),
+                                ('SPAN',(0,3),(1,3)),
+                                ('BACKGROUND', (0, 3), (2, 3), colors.lightgrey),
+                                ('SPAN',(2,4),(2,5)),
+                                ('SPAN',(0,6),(1,6)),
+                                ('BACKGROUND', (0, 6), (2, 6), colors.lightgrey),
+                                ('SPAN',(2,7),(2,-1)),
+                                ('SPAN',(3,1),(3,-1)),
+                                ('FONTSIZE',(0,0),(-1,-1),8),
+                                ('LEADING',(0,0),(-1,-1),8),
+                                ('ALIGNMENT',(0,0),(-1,-1),'CENTER'),
+                                ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
+                                ('BOTTOMPADDING',(0,0),(-1,-1),2),
+                                ('TOPPADDING',(0,0),(-1,-1),2),
+                                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey)
+                            ])
+
+        return summary_table
+
+
+    def _build_depth_plot(self):
+        '''
+        Build the lowering depth plot and return it as a SVG image
+        '''
+
+        logging.info('Building lowering depth profile')
+
+        depth_data_source = None
+
+        for data_source in POS_DATA_SOURCES:
+            if data_source + '.depth_value' in self.lowering_data_headers:
+                depth_data_source = data_source
+                break
+
+            logging.warning("No %s depth data captured, can't build depth profile from this source.", data_source)
+
+        if depth_data_source is None:
+            return None
+
+        idx=(self.lowering_data[:,self.lowering_data_headers.index( 'ts' )].astype('datetime64') >= np.datetime64(self.lowering_record['milestones']['descending_dt'])) & (self.lowering_data[:,self.lowering_data_headers.index( 'ts' )].astype('datetime64') < np.datetime64(self.lowering_record['milestones']['on_surface_dt']))
+
+        profile_data = self.lowering_data[idx,:]
+
+        start_ts = next((datetime.fromisoformat(ts[0]) for ts in profile_data[:,[self.lowering_data_headers.index( 'ts' )]].astype(datetime) if ts is not None), None)
+
+        fig_depth_plot, ax_depth_plot = plt.subplots(figsize=(7,2.5))
+
+        x_ts = [ datetime.utcfromtimestamp((datetime.fromisoformat(tsStr[0]) - start_ts).total_seconds()) for tsStr in profile_data[:,[self.lowering_data_headers.index( 'ts' )]].astype(datetime)]
+        y_depth = [ float(depthStr[0]) if depthStr[0] else None for depthStr in profile_data[:,[self.lowering_data_headers.index( depth_data_source + '.depth_value' )]]]
+
+        ax_depth_plot.plot(x_ts,y_depth)
+        ax_depth_plot.invert_yaxis()
+        ax_depth_plot.xaxis.set_major_locator(mdates.HourLocator(interval=4))
+        ax_depth_plot.set(ylabel='Depth [m]', title='Depth Profile')
+
+        formatter = mdates.DateFormatter("%H:00")
+        ax_depth_plot.xaxis.set_major_formatter(formatter)
+
+        ax_depth_plot.yaxis.grid(linestyle='--')
+
+        imgdata = BytesIO()
+
+        fig_depth_plot.tight_layout()
+        fig_depth_plot.savefig(imgdata, format='svg')
+        plt.close(fig_depth_plot)
+        imgdata.seek(0)
+
+        svg_2_image_file = svg2rlg(imgdata)
+
+        return svg_2_image_file
+
+
+    def _build_dive_track(self): # pylint: disable=too-many-locals
+        '''
+        Build the lowering dive track and return it as a SVG image
+        '''
+
+        logging.info('Building lowering trackline')
+
+        trackline_data_source = None
+
+        for data_source in POS_DATA_SOURCES:
+            if data_source + '.depth_value' in self.lowering_data_headers:
+                trackline_data_source = data_source
+                break
+
+            logging.warning("No %s lat/lng data captured, can't build dive track from this source.", data_source)
+
+        if trackline_data_source is None:
+            return None
+
+        if not self.lowering_record['stats']['bounding_box']:
+            logging.warning("No bounding box defined, can't build dive track.")
+            return None
+
+        fig_dive_track = plt.figure()
+        ax_dive_track = plt.axes(projection=ccrs.PlateCarree())
+
+        lower_left = (math.ceil(self.lowering_record['stats']['bounding_box'][1] * 2000)/2000.0, math.floor(self.lowering_record['stats']['bounding_box'][2] * 2000)/2000.0)
+        upper_right = (math.floor(self.lowering_record['stats']['bounding_box'][3] * 2000)/2000.0, math.ceil(self.lowering_record['stats']['bounding_box'][0] * 2000)/2000.0)
+        east_west = upper_right[0] - lower_left[0]
+        south_north = upper_right[1] - lower_left[1]
+        side = max(east_west,south_north)
+        mid_x, mid_y = lower_left[0]+east_west/2.0, lower_left[1]+south_north/2.0  #center location
+
+        ax_dive_track.set_extent([mid_x-side/2.0, mid_x+side/2.0, mid_y-side/2.0, mid_y+side/2.0])   # map coordinates, meters
+
+        lons = np.array([ float(lonStr[0]) if lonStr[0] else None for lonStr in self.lowering_data[:,[self.lowering_data_headers.index( trackline_data_source + '.longitude_value' )]]])
+        lons = lons[lons != np.array(None)]
+
+        lats = np.array([ float(latStr[0]) if latStr[0] else None for latStr in self.lowering_data[:,[self.lowering_data_headers.index( trackline_data_source + '.latitude_value' )]]])
+        lats = lats[lats != np.array(None)]
+
+        ax_dive_track.plot(lons,lats,linewidth=1,color='r',transform=ccrs.PlateCarree())
+
+        ax_dive_track.plot(lons[0], lats[0], linestyle='none', marker="o", markersize=12, alpha=0.6, c="green", markeredgecolor="black", markeredgewidth=1)
+        ax_dive_track.annotate('Start', (lons[0],lats[0]))
+
+        ax_dive_track.plot(lons[-1], lats[-1], linestyle='none', marker="o", markersize=12, alpha=0.6, c="red", markeredgecolor="black", markeredgewidth=1)
+        ax_dive_track.annotate('End', (lons[-1],lats[-1]))
+
+        ax_dive_track.coastlines()
+        ax_dive_track.gridlines(draw_labels=True, dms=False, x_inline=False, y_inline=False)
+
+        imgdata = BytesIO()
+
+        fig_dive_track.tight_layout()
+        fig_dive_track.savefig(imgdata, format='svg')
+        plt.close(fig_dive_track)
+        imgdata.seek(0)
+
+        svg_2_image_file = svg2rlg(imgdata)
+
+        return svg_2_image_file
+
+
+    def _build_sample_table(self):
+        '''
+        Build the reportlab sample table (does not include the framegrab)
+        '''
+
+        logging.info('Building table of sample events')
+
+        idx=(self.lowering_data[:,self.lowering_data_headers.index( 'event_value' )] == "SAMPLE")
+
+        sample_data = self.lowering_data[idx,:]
+
+        if len(sample_data) == 0:
+            logging.warning("No SAMPLE events captured, can't build sample table.")
+            return None
+
+        sample_table_data = [
+            ['SampleID:', 'Date/Time:', 'Location:', 'Type:', 'Lat:', 'Lon:', 'Depth:', 'Text:', 'Comment:']
+        ]
+
+        for row in range(len(sample_data)):
+            sample_table_data.append(
+                [
+                    Paragraph(sample_data[row,self.lowering_data_headers.index('event_option.id')], self.sample_table_text) if 'event_option.id' in self.lowering_data_headers else '',
+                    datetime.fromisoformat(sample_data[row,self.lowering_data_headers.index('ts')]).strftime('%Y-%m-%d\n%H:%M:%S'),
+                    Paragraph(sample_data[row,self.lowering_data_headers.index('event_option.storage_location')], self.sample_table_text) if 'event_option.storage_location' in self.lowering_data_headers else '',
+                    Paragraph(sample_data[row,self.lowering_data_headers.index('event_option.type')], self.sample_table_text) if 'event_option.type' in self.lowering_data_headers else '',
+                    Paragraph(sample_data[row,self.lowering_data_headers.index('vehicleRealtimeNavData.latitude_value')] + ' ' + sample_data[row,self.lowering_data_headers.index('vehicleRealtimeNavData.latitude_uom')], self.sample_table_text) if 'vehicleRealtimeNavData.latitude_value' in self.lowering_data_headers else 'No Data',
+                    Paragraph(sample_data[row,self.lowering_data_headers.index('vehicleRealtimeNavData.longitude_value')] + ' ' + sample_data[row,self.lowering_data_headers.index('vehicleRealtimeNavData.longitude_uom')], self.sample_table_text) if 'vehicleRealtimeNavData.longitude_value' in self.lowering_data_headers else 'No Data',
+                    Paragraph(sample_data[row,self.lowering_data_headers.index('vehicleRealtimeNavData.depth_value')] + ' ' + sample_data[row,self.lowering_data_headers.index('vehicleRealtimeNavData.depth_uom')], self.sample_table_text) if 'vehicleRealtimeNavData.depth_value' in self.lowering_data_headers else 'No Data',
+                    Paragraph(sample_data[row,self.lowering_data_headers.index('event_free_text')], self.sample_table_text),
+                    Paragraph(sample_data[row,self.lowering_data_headers.index('event_option.event_comment')], self.sample_table_text) if 'event_option.event_comment' in self.lowering_data_headers else ''
+                ]
+            )
+
+        sample_table = Table(sample_table_data, style=[
+                                                        ('BOX',(0,0),(-1,-1),1,colors.black),
+                                                        ('GRID',(0,0),(-1,-1),1,colors.black),
+                                                        ('VALIGN',(0,0),(-1,-1), 'TOP'),
+                                                        ('FONTSIZE',(0,0),(-1,-1),5),
+                                                        ('LEADING',(0,0),(-1,-1),5),
+                                                        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey)
+                                                      ])
+
+        return sample_table
+
+
+    def _build_free_form_table(self):
+        '''
+        Build the reportlab table of freeform events
+        '''
+
+        logging.info('Building table of free_form events')
+
+        idx=(self.lowering_data[:,self.lowering_data_headers.index( 'event_value' )] == "FREE_FORM")
+
+        free_form_data = self.lowering_data[idx,:]
+
+        if len(free_form_data) == 0:
+            logging.warning("No FREE_FORM events captured, can't build FREE_FORM tables.")
+            return list()
+
+        free_form_table_data = [
+            ['Date/Time:', 'Author', 'Lat:', 'Lon:', 'Depth:', 'Text:', 'Comment:']
+        ]
+
+        for row in range(len(free_form_data)):
+            free_form_table_data.append(
+                [
+                    datetime.fromisoformat(free_form_data[row,self.lowering_data_headers.index('ts')]).strftime('%Y-%m-%d\n%H:%M:%S'),
+                    Paragraph(free_form_data[row,self.lowering_data_headers.index('event_author')], self.sample_table_text),
+                    Paragraph(free_form_data[row,self.lowering_data_headers.index('vehicleRealtimeNavData.latitude_value')] + ' ' + free_form_data[row,self.lowering_data_headers.index('vehicleRealtimeNavData.latitude_uom')], self.sample_table_text) if 'vehicleRealtimeNavData.latitude_value' in self.lowering_data_headers else 'No Data',
+                    Paragraph(free_form_data[row,self.lowering_data_headers.index('vehicleRealtimeNavData.longitude_value')] + ' ' + free_form_data[row,self.lowering_data_headers.index('vehicleRealtimeNavData.longitude_uom')], self.sample_table_text) if 'vehicleRealtimeNavData.longitude_value' in self.lowering_data_headers else 'No Data',
+                    Paragraph(free_form_data[row,self.lowering_data_headers.index('vehicleRealtimeNavData.depth_value')] + ' ' + free_form_data[row,self.lowering_data_headers.index('vehicleRealtimeNavData.depth_uom')], self.sample_table_text) if 'vehicleRealtimeNavData.depth_value' in self.lowering_data_headers else 'No Data',
+                    Paragraph(free_form_data[row,self.lowering_data_headers.index('event_free_text')], self.sample_table_text),
+                    Paragraph(free_form_data[row,self.lowering_data_headers.index('event_option.event_comment')], self.sample_table_text) if 'event_option.event_comment' in self.lowering_data_headers else ''
+                ]
+            )
+
+        free_form_table = Table(free_form_table_data, style=[
+                                                        ('BOX',(0,0),(-1,-1),1,colors.black),
+                                                        ('GRID',(0,0),(-1,-1),1,colors.black),
+                                                        ('VALIGN',(0,0),(-1,-1), 'TOP'),
+                                                        ('FONTSIZE',(0,0),(-1,-1),5),
+                                                        ('LEADING',(0,0),(-1,-1),5),
+                                                        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey)
+                                                      ])
+
+        return free_form_table
+
+
+    def _build_event_breakdown_table(self):
+        '''
+        Build the table that shows the breakdown of events as a percentage of
+        all the events logged for that lowering.
+        '''
+
+        logging.info('Building event breakdown table')
+
+        (unique, counts) = np.unique(self.lowering_data[:, self.lowering_data_headers.index('event_value')], return_counts=True)
+        frequencies = np.asarray((unique, counts)).T
+
+
+        event_breakdown_table_data = [
+            [Paragraph('''<b>Event Value:</b>''',self.body_text), Paragraph('''<b>Count:</b>''',self.body_text),Paragraph('''<b>%:</b>''',self.body_text)]
+        ]
+
+        for row in range(len(frequencies)):
+
+            event_breakdown_table_data.append([
+                frequencies[row,0],
+                frequencies[row,1],
+                (100 * frequencies[row,1].astype('int')/len(self.lowering_data)).round(2)
+            ])
+
+        event_breakdown_table_data.append([
+            'Total:',
+            frequencies[:,1].astype('int').sum(),
+            '100.0'
+        ])
+
+
+
+        event_breakdown_table = Table(event_breakdown_table_data, colWidths=[5*cm,1.9*cm,1.9*cm], style=[
+                                        ('BOX',(0,0),(-1,-1),1,colors.black),
+                                        ('LINEAFTER',(0,0),(-1,-1),1,colors.black),
+                                        ('LINEBELOW',(0,0),(-1,-1),1,colors.black),
+                                        ('FONTNAME', (0,-1), (-1,-1), 'Helvetica-Bold'),
+                                        ('NOSPLIT', (0, 0), (-1, -1))
+                                    ])
+
+        return event_breakdown_table
+
+
+    def _build_non_system_events_tables(self): # pylint: disable=too-many-locals
+        '''
+        Build the reportlab tables for each of the event_values created from
+        non-system event templates.
+        '''
+
+        logging.info('Building tables of events created from non-system event templates')
+
+        event_templates = get_event_templates()
+        event_template_values = [ template['event_value'] for template in filter(lambda event_template: not event_template['system_template'], event_templates)]
+        event_template_values.sort()
+
+        # event_exclude_list = list('FREE_FORM', 'ASNAP')
+        event_value_tables_tables = list()
+
+        #for each event template
+        for event_template_value in event_template_values:
+
+            template = next((template for template in filter(lambda event_template, template_value=event_template_value: event_template['event_value'] == template_value, event_templates)), None)
+            event_option_headers = ([option['event_option_name'] for option in template['event_options']])
+
+            idx=(self.lowering_data[:,self.lowering_data_headers.index( 'event_value' )] == event_template_value)
+
+            event_value_data = self.lowering_data[idx,:]
+
+            if len(event_value_data) == 0:
+                logging.warning("No %s events captured, can't build %s tables.", event_template_value, event_template_value)
+                event_value_tables_tables.append(list())
+                continue
+
+            table_header = ['Date/time', 'Author']
+            table_header += event_option_headers
+            table_header += ['Lat:', 'Lon:', 'Depth:', 'Text:', 'Comment:']
+
+            event_value_table_data = list()
+            event_value_table_data.append(table_header)
+
+            # for each row of event template data
+            for row in range(len(event_value_data)):
+
+                event_value_table_row = list()
+                ts = datetime.fromisoformat(event_value_data[row,self.lowering_data_headers.index('ts')]).strftime('%Y-%m-%d\n%H:%M:%S') # pylint: disable=invalid-name
+                event_value_table_row += [
+                    ts,
+                    Paragraph(event_value_data[row,self.lowering_data_headers.index('event_author')], self.sample_table_text),
+                ]
+
+                if len(event_option_headers) > 0:
+                    for option in enumerate(event_option_headers):
+                        event_value_table_row += [Paragraph(event_value_data[row,self.lowering_data_headers.index('event_option.' + event_option_headers[option].lower().replace(' ', '_'))], self.sample_table_text)] if 'event_option.' + event_option_headers[option].lower().replace(' ', '_') in self.lowering_data_headers else ['']
+
+                event_value_table_row += [
+                    Paragraph(event_value_data[row,self.lowering_data_headers.index('vehicleRealtimeNavData.latitude_value')] + ' ' + event_value_data[row,self.lowering_data_headers.index('vehicleRealtimeNavData.latitude_uom')], self.sample_table_text) if 'vehicleRealtimeNavData.latitude_value' in self.lowering_data_headers else 'No Data',
+                    Paragraph(event_value_data[row,self.lowering_data_headers.index('vehicleRealtimeNavData.longitude_value')] + ' ' + event_value_data[row,self.lowering_data_headers.index('vehicleRealtimeNavData.longitude_uom')], self.sample_table_text) if 'vehicleRealtimeNavData.longitude_value' in self.lowering_data_headers else 'No Data',
+                    Paragraph(event_value_data[row,self.lowering_data_headers.index('vehicleRealtimeNavData.depth_value')] + ' ' + event_value_data[row,self.lowering_data_headers.index('vehicleRealtimeNavData.depth_uom')], self.sample_table_text) if 'vehicleRealtimeNavData.depth_value' in self.lowering_data_headers else 'No Data',
+                    Paragraph(event_value_data[row,self.lowering_data_headers.index('event_free_text')], self.sample_table_text),
+                    Paragraph(event_value_data[row,self.lowering_data_headers.index('event_option.event_comment')], self.sample_table_text) if 'event_option.event_comment' in self.lowering_data_headers else ''
+                ]
+
+                event_value_table_data.append(event_value_table_row)
+
+            event_value_table = Table(event_value_table_data, style=[
+                                                                        ('BOX',(0,0),(-1,-1),1,colors.black),
+                                                                        ('GRID',(0,0),(-1,-1),1,colors.black),
+                                                                        ('BACKGROUND', (0,0),(-1,0), colors.lightgrey),
+                                                                        ('VALIGN',(0,0),(-1,-1), 'TOP'),
+                                                                        ('FONTSIZE',(0,0),(-1,-1),6),
+                                                                        ('LEADING',(0,0),(-1,-1),8),
+                                                                        ('BOTTOMPADDING',(0,0),(-1,-1),0),
+                                                                        ('TOPPADDING',(0,0),(-1,-1),2),
+                                                                    ])
+
+            event_value_tables_tables.append(event_value_table)
+
+        return event_value_tables_tables, event_template_values
+
+
+    def _build_events_table(self): # pylint: disable=too-many-locals
+        '''
+        Build the reportlab table that lists the events created by non-system
+        event templates.
+        '''
+
+        logging.info('Building table of events')
+
+        event_exclude_list = ['ASNAP']
+
+        table_header = ['Event', 'Date/time', 'Author', 'Lat/Lng', 'Depth', 'Text/Comment:']
+
+        event_table_data = list()
+        event_table_data.append(table_header)
+
+        for event in self.lowering_data:
+            if event[self.lowering_data_headers.index('event_value')] in event_exclude_list:
+                continue
+
+            position = event[self.lowering_data_headers.index('vehicleRealtimeNavData.latitude_value')] if 'vehicleRealtimeNavData.latitude_value' in self.lowering_data_headers else 'No Data'
+            position += ','
+            position += event[self.lowering_data_headers.index('vehicleRealtimeNavData.longitude_value')] if 'vehicleRealtimeNavData.longitude_value' in self.lowering_data_headers else 'No Data'
+            position = '' if position == ',' else position
+
+            event_table_data.append([
+                Paragraph(event[self.lowering_data_headers.index('event_value')], self.sample_table_text),
+                Paragraph(datetime.fromisoformat(event[self.lowering_data_headers.index('ts')]).strftime('%Y-%m-%dT%H:%M:%S'), self.sample_table_text),
+                Paragraph(event[self.lowering_data_headers.index('event_author')], self.sample_table_text),
+                Paragraph(position, self.sample_table_text),
+                Paragraph(event[self.lowering_data_headers.index('vehicleRealtimeNavData.depth_value')] + ' ' + event[self.lowering_data_headers.index('vehicleRealtimeNavData.depth_uom')], self.sample_table_text) if 'vehicleRealtimeNavData.depth_value' in self.lowering_data_headers else 'No Data',
+                Paragraph("%s %s" % (event[self.lowering_data_headers.index('event_free_text')], event[self.lowering_data_headers.index('event_option.event_comment')] if 'event_option.event_comment' in self.lowering_data_headers else ''), self.sample_table_text)
+            ])
+
+        event_table = Table(event_table_data, colWidths=[2*cm,2.2*cm,1.8*cm,3*cm,1.5*cm,5.5*cm], style=[
+                            ('BOX',(0,0),(-1,-1),1,colors.black),
+                            ('GRID',(0,0),(-1,-1),1,colors.black),
+                            ('VALIGN',(0,0),(-1,-1), 'TOP'),
+                            ('FONTSIZE',(0,0),(-1,-1),5),
+                            ('LEADING',(0,0),(-1,-1),5),
+                            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey)
+                        ])
+
+        return event_table
+
+
+    def _build_problem_tables(self):
+        '''
+        Build the reportlab table for the problem events.
+        '''
+
+        logging.info('Building table of problem events')
+
+        idx=(self.lowering_data[:,self.lowering_data_headers.index( 'event_value' )] == "PROBLEM")
+
+        problem_data = self.lowering_data[idx,:]
+
+        if len(problem_data) == 0:
+            logging.warning("No PROBLEM events captured, can't build problem table.")
+            return list()
+
+        problem_tables = list()
+
+        for row in range(len(problem_data)):
+
+            problem_table_data = [
+                [Paragraph('''<b>Type:</b>''',self.event_table_text), problem_data[row,self.lowering_data_headers.index('event_option.type')],Paragraph('''<b>Date/Time:</b>''',self.event_table_text), problem_data[row,self.lowering_data_headers.index('ts')].astype('datetime64[s]')],
+                [Paragraph('''<b>Text:</b>''',self.event_table_text), problem_data[row,self.lowering_data_headers.index('event_free_text')], ''],
+                [Paragraph('''<b>Comment:</b>''',self.event_table_text), problem_data[row,self.lowering_data_headers.index('event_option.event_comment')] if 'event_option.event_comment' in self.lowering_data_headers else '', '']
+            ]
+
+            problem_table = Table(problem_table_data, colWidths=[24,40,24,40], style=[
+                                    ('BOX',(0,0),(-1,-1),1,colors.black),
+                                    ('LINEAFTER',(1,0),(1,0),1,colors.black),
+                                    ('LINEBELOW',(0,0),(-1,-1),1,colors.black),
+                                    ('VALIGN',(0,0),(-1,-1), 'TOP'),
+                                    ('SPAN',(1,1),(-1,1)),
+                                    ('SPAN',(1,2),(-1,2)),
+                                    ('NOSPLIT', (0, 0), (-1, -1)),
+                                    ('LEADING',(0,0),(-1,-1),8),
+                                    ('BOTTOMPADDING',(0,0),(-1,-1),0),
+                                    ('TOPPADDING',(0,0),(-1,-1),2),
+                                 ])
+
+            problem_tables.append(problem_table)
+
+        return problem_tables

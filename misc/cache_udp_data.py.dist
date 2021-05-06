@@ -31,7 +31,7 @@ UDP_IP_ADDRESS = "0.0.0.0"
 UDP_PORT_NO = 10000
 
 DATABASE = 'sealog_udp_cache'
-COLLECITON = 'udpData'
+COLLECTION = 'udpData'
 
 # Valid line headers to process
 validLineLabels = ['GGA']
@@ -98,7 +98,7 @@ def insert_udp_data(ignore_stale=False):
     '''
 
     client = MongoClient()
-    collection = client[DATABASE][COLLECITON]
+    collection = client[DATABASE][COLLECTION]
 
     previous_data = dict()
 

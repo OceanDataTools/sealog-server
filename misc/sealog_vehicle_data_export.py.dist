@@ -56,7 +56,7 @@ DATA_FILES_DEFS = [
     { 'source_regex': 'GGA_*', 'output_prefix': 'GGA_'}
 ]
 
-OPENVDM_IP='openvdm.oceanxplorer.org'
+OPENVDM_IP='openvdm.oceandatatools.org'
 OPENVDM_USER='survey'
 OPENVDM_SSH_KEY='/home/sealog/.ssh/id_rsa_openvdm'
 CRUISEDATA_DIR_ON_DATA_WAREHOUSE='/mnt/vault/FTPRoot/CruiseData'

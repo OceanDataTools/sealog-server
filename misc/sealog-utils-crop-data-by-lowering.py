@@ -7,13 +7,6 @@ from filecroputility import FileCropUtility
 from datetime import datetime, timezone
 from python_sealog.lowerings import getLoweringByID
 
-LOG_LEVELS = {0:logging.WARNING, 1:logging.INFO, 2:logging.DEBUG}
-
-
-
-# create formatter
-formatter = logging.Formatter('%(levelname)s - %(message)s')
-
 def is_valid_file(parser, file):
   if not os.path.exists(file):
     parser.error("The file %s does not exist!" % file)
@@ -67,12 +60,13 @@ if __name__ == '__main__':
   ############################
   # Set up logging before we do any other argument parsing (so that we
   # can log problems with argument parsing).
-  log_level = LOG_LEVELS[min(args.verbosity, max(LOG_LEVELS))]
-  logging.getLogger().setLevel(log_level)
 
-  ch = logging.StreamHandler()
-  ch.setFormatter(formatter)
-  logging.root.handlers = [ch]
+  LOGGING_FORMAT = '%(asctime)-15s %(levelname)s - %(message)s'
+  logging.basicConfig(format=LOGGING_FORMAT)
+
+  LOG_LEVELS = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
+  parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
+  logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
 
   logging.debug("Files:\n\t{}".format("\n\t".join(args.input_files)))
 

@@ -15,11 +15,17 @@ venv/
 misc/cache_udp_data*.py
 misc/influx_sealog/settings*.py
 misc/python_sealog/settings*.py
+misc/reporting/sealog_doc_template*.py
+misc/reporting/sealog_report_builder*.py
 misc/sealog_asnap.py
-misc/sealog_auto_actions.py
+misc/sealog_auto_actions*.py
+misc/sealog_aux_data_inserter*.py
+misc/sealog_aux_data_inserter*.py
 misc/sealog_aux_data_inserter_nav.py
 misc/sealog_auxDataInserter*.py
 misc/sealog_backupDB.sh
+misc/sealog_build_cruise_summary_report*.py
+misc/sealog_build_lowering_summary_report*.py
 misc/sealog_cruise_responder.py
 misc/sealog_cruise_sync.py
 misc/sealog_lowering_responder.py
@@ -28,8 +34,13 @@ misc/sealog_preLowering.sh
 misc/sealog_restoreDBfromBackup.sh
 misc/sealog_udp2MongoDB.py
 misc/sealog_vehicle_data_export.py
-misc/sealog_vehicle_postCruise.sh
 misc/sealog_vessel_postCruise.sh
+
+# files that need to be updated to the v2.1 standard or deleted
+misc/merge_*
+misc/sealog-auxDataInserter*
+misc/sealog-udp2MongoDB*
+misc/sealog-utils*
 
 # Configuration files custom to the sealog-server instance
 config/db_constants.js
