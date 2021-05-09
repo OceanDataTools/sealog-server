@@ -85,12 +85,12 @@ class ExportLoweringNav2CSV():
 
         logging.debug("Lowering:\n%s", json.dumps(lowering, indent=2))
 
-        logging.info("Extracting \"lowering_in_water\" and \"lowering_out_of_water\" timestamps")
+        logging.info("Extracting \"lowering_descending\" and \"lowering_on_surface\" timestamps")
         try:
-            start_ts = datetime.strptime(lowering['lowering_additional_meta']['milestones']['lowering_in_water'], '%Y-%m-%dT%H:%M:%S.%fZ')
+            start_ts = datetime.strptime(lowering['lowering_additional_meta']['milestones']['lowering_descending'], '%Y-%m-%dT%H:%M:%S.%fZ')
             end_ts = datetime.strptime(lowering['lowering_additional_meta']['milestones']['lowering_on_surface'], '%Y-%m-%dT%H:%M:%S.%fZ')
         except Exception as err:
-            logging.error("Problem extracting \"lowering_in_water\" and \"lowering_out_of_water\" timestamps")
+            logging.error("Problem extracting \"lowering_descending\" and \"lowering_on_surface\" timestamps")
             logging.debug(str(err))
             return None
 
@@ -118,7 +118,7 @@ class ExportLoweringNav2CSV():
         logging.debug("Data:\n%s", self.data.head())
 
         # crop the events
-        logging.info("Cropping lowering events to \"lowering_in_water\" and \"lowering_out_of_water\" timestamps")
+        logging.info("Cropping lowering events to \"lowering_descending\" and \"lowering_on_surface\" timestamps")
         self.data = self.data[(self.data['ts'] >= start_ts)]
         self.data = self.data[(self.data['ts'] <= end_ts)]
 

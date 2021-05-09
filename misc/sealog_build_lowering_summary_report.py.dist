@@ -24,6 +24,7 @@ from reportlab.platypus import NextPageTemplate, Paragraph, PageBreak, Spacer, I
 from reportlab.platypus.tableofcontents import TableOfContents
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm, mm
+
 from reporting.sealog_doc_template import RLDocTemplate
 from reporting.sealog_report_builder import LoweringReportCreator
 
@@ -35,7 +36,7 @@ PAGE_WIDTH, PAGE_HEIGHT= PAGE_SIZE
 BASE_MARGIN = 1 * cm
 
 AUTHOR = "OceanDataTools.org"
-
+VEHICLE_NAME = 'Explorer'
 
 class LoweringSummaryReport(LoweringReportCreator): # pylint: disable=too-few-public-methods
     '''
@@ -57,6 +58,7 @@ class LoweringSummaryReport(LoweringReportCreator): # pylint: disable=too-few-pu
             topMargin=BASE_MARGIN,
             bottomMargin=BASE_MARGIN,
             title="Lowering Summary Report: %s_%s" % (self.cruise_record['cruise_id'], self.lowering_record['lowering_id']),
+            subtitle="Remotely Operated Vehicle: " + VEHICLE_NAME,
             author=AUTHOR
         )
 
@@ -110,7 +112,9 @@ class LoweringSummaryReport(LoweringReportCreator): # pylint: disable=too-few-pu
 
         if dive_track_filename:
             flowables.append(Paragraph("Trackline:", self.heading_2))
+            flowables.append(Spacer(PAGE_WIDTH, 1 * cm))
             flowables.append(dive_track)
+            flowables.append(Spacer(PAGE_WIDTH, 1 * cm))
 
         if depth_plot_filename:
             flowables.append(Paragraph("Depth Profile:", self.heading_2))
@@ -150,7 +154,7 @@ class LoweringSummaryReport(LoweringReportCreator): # pylint: disable=too-few-pu
                 flowables.append(Spacer(PAGE_WIDTH, 1 * cm))
             flowables.append(PageBreak())
 
-        logging.debug('Building report')
+        logging.info('Building report')
 
         doc.multiBuild(
             flowables
@@ -173,6 +177,7 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbosity', dest='verbosity',
                         default=0, action='count',
                         help='Increase output verbosity')
+    parser.add_argument('-o','--output_dir', help='output directory to save report')
     parser.add_argument('lowering_id', help='lowering_id to build report for (i.e. S0312).')
 
     parsed_args = parser.parse_args()
@@ -197,16 +202,17 @@ if __name__ == '__main__':
 
     try:
         summary_report = LoweringSummaryReport(lowering_uid)
-        REPORT_FILEPATH = os.path.join(API_SERVER_FILE_PATH, 'lowerings', lowering_uid, parsed_args.lowering_id + '_Lowering_Summary_Report.pdf')
+        OUTPUT_PATH = parsed_args.output_dir if parsed_args.output_dir else os.path.join(API_SERVER_FILE_PATH, 'lowerings', lowering_uid)
+        REPORT_FILENAME = parsed_args.lowering_id + '_Lowering_Summary_Report.pdf'
 
         try:
-            with open(REPORT_FILEPATH, 'wb') as file:
+            with open(os.path.join(OUTPUT_PATH, REPORT_FILENAME), 'wb') as file:
                 file.write(summary_report.export_pdf())
 
-        except Exception as error:
-            logging.error("Unable to build report: %s", REPORT_FILEPATH)
-            logging.debug(str(error))
-            raise error
+        except Exception as err:
+            logging.error("Unable to build report: %s", os.path.join(OUTPUT_PATH, REPORT_FILENAME))
+            logging.debug(str(err))
+            raise err
 
     except KeyboardInterrupt:
         logging.warning('Interrupted')

@@ -135,12 +135,12 @@ class CruiseReportCreator: # pylint: disable=too-many-instance-attributes,too-fe
                                         )
 
         # Retrieve the cruise record from the sealog-server.
-        logging.info("Retrieving Cruise Record")
+        logging.info("Retrieving cruise record")
         self.cruise_record = get_cruise(cruise_uid)
 
         # Retrieve the lowering records from the sealog-server. Need to reverse
         # the order to get oldest first.
-        logging.info("Retrieving Lowering Records")
+        logging.info("Retrieving corresponding lowering records")
         self.lowering_records = get_lowerings_by_cruise(cruise_uid) if self.cruise_record else list()
         self.lowering_records.reverse()
 
@@ -149,7 +149,6 @@ class CruiseReportCreator: # pylint: disable=too-many-instance-attributes,too-fe
         # 4 floating point numbers.  Also add the various dive durations as
         # timedelta objects.
         for lowering in self.lowering_records:
-            logging.info("Lowering: %s", lowering['lowering_id'])
             lowering['stats'], lowering['milestones'] = self._build_lowering_stats(lowering)
 
 
@@ -163,13 +162,13 @@ class CruiseReportCreator: # pylint: disable=too-many-instance-attributes,too-fe
     @staticmethod
     def _build_lowering_stats(lowering): # pylint: disable=too-many-branches,too-many-statements
         '''
-        # Return the stats and milestone from the lowering record but with the
-        # milestones as datetime objects, the max depth as a float, the
-        # bounding box as a list of 4 floats and the various dive durations as
-        # timedelta objects added to stats.
+        Return the stats and milestone from the lowering record but with the
+        milestones as datetime objects, the max depth as a float, the
+        bounding box as a list of 4 floats and the various dive durations as
+        timedelta objects added to stats.
         '''
 
-        logging.info('Processing lowering milestones and stats data')
+        logging.info('Processing %s milestones and stats data', lowering['lowering_id'])
 
         lowering_milestones = dict(
             start_dt = None,
@@ -209,11 +208,15 @@ class CruiseReportCreator: # pylint: disable=too-many-instance-attributes,too-fe
                     lowering_milestones['descending_dt'] = datetime.fromisoformat(lowering['lowering_additional_meta']['milestones']['lowering_descending'][:-1])
                 except ValueError:
                     pass
+                except TypeError:
+                    pass
 
             if 'lowering_on_bottom' in lowering['lowering_additional_meta']['milestones']:
                 try:
                     lowering_milestones['on_bottom_dt'] = datetime.fromisoformat(lowering['lowering_additional_meta']['milestones']['lowering_on_bottom'][:-1])
                 except ValueError:
+                    pass
+                except TypeError:
                     pass
 
             if 'lowering_off_bottom' in lowering['lowering_additional_meta']['milestones']:
@@ -221,11 +224,15 @@ class CruiseReportCreator: # pylint: disable=too-many-instance-attributes,too-fe
                     lowering_milestones['off_bottom_dt'] = datetime.fromisoformat(lowering['lowering_additional_meta']['milestones']['lowering_off_bottom'][:-1])
                 except ValueError:
                     pass
+                except TypeError:
+                    pass
 
             if 'lowering_on_surface' in lowering['lowering_additional_meta']['milestones']:
                 try:
                     lowering_milestones['on_surface_dt'] = datetime.fromisoformat(lowering['lowering_additional_meta']['milestones']['lowering_on_surface'][:-1])
                 except ValueError:
+                    pass
+                except TypeError:
                     pass
 
         if 'stats' in lowering['lowering_additional_meta']:
@@ -235,11 +242,15 @@ class CruiseReportCreator: # pylint: disable=too-many-instance-attributes,too-fe
                     lowering_stats['max_depth'] = float(lowering['lowering_additional_meta']['stats']['max_depth'])
                 except ValueError:
                     pass
+                except TypeError:
+                    pass
 
             if 'bounding_box' in lowering['lowering_additional_meta']['stats']:
                 try:
                     lowering_stats['bounding_box'] = [float(elem) for elem in lowering['lowering_additional_meta']['stats']['bounding_box']]
                 except ValueError:
+                    pass
+                except TypeError:
                     pass
 
         # total_duration
@@ -381,7 +392,7 @@ class CruiseReportCreator: # pylint: disable=too-many-instance-attributes,too-fe
         Build a map show the lowering locations
         '''
 
-        logging.info('Building lowering trackline')
+        logging.info('Building map of lowering locations')
 
         bbox = []
         dive_centers = []
@@ -389,7 +400,6 @@ class CruiseReportCreator: # pylint: disable=too-many-instance-attributes,too-fe
         for lowering in self.lowering_records:
 
             if 'stats' in lowering and 'bounding_box' in lowering['stats'] and isinstance(lowering['stats']['bounding_box'], list) and len(lowering['stats']['bounding_box']) > 0:
-                # print(lowering['stats']['bounding_box'])
 
                 dive_labels.append(lowering['lowering_id'])
                 dive_centers.append([(lowering['stats']['bounding_box'][0] + lowering['stats']['bounding_box'][2])/2,(lowering['stats']['bounding_box'][1] + lowering['stats']['bounding_box'][3])/2])
@@ -419,7 +429,7 @@ class CruiseReportCreator: # pylint: disable=too-many-instance-attributes,too-fe
         upper_right = (math.floor(bbox[3] * 50)/50, math.ceil(bbox[0] * 50)/50.0)
         east_west = upper_right[0] - lower_left[0]
         south_north = upper_right[1] - lower_left[1]
-        side = max(abs(east_west),abs(south_north)) * 1.1
+        side = max(abs(east_west),abs(south_north)) * 1.25
         mid_x, mid_y = lower_left[0]+east_west/2.0, lower_left[1]+south_north/2.0  #center location
 
         ax_dive_locations.set_extent([mid_x-side/2.0, mid_x+side/2.0, mid_y-side/2.0, mid_y+side/2.0])   # map coordinates, meters
@@ -433,14 +443,14 @@ class CruiseReportCreator: # pylint: disable=too-many-instance-attributes,too-fe
 
         imgdata = BytesIO()
 
-        # fig_dive_locations.tight_layout()
+        fig_dive_locations.tight_layout()
         fig_dive_locations.savefig(imgdata, format='svg')
         plt.close(fig_dive_locations)
         imgdata.seek(0)
 
-        svg_2_img_file = svg2rlg(imgdata)
+        svg_2_image_file = svg2rlg(imgdata)
 
-        return svg_2_img_file
+        return svg_2_image_file
 
 
 class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-few-public-methods
@@ -532,7 +542,10 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
         self.lowering_data_headers = None
 
         # Retrieve the cruise and lowering records for the lowering_id
+        logging.info("Retrieving lowering record")
         self.lowering_record = get_lowering(lowering_uid)
+
+        logging.info("Retrieving corresponding cruise record")
         self.cruise_record = get_cruise_by_lowering(lowering_uid)
 
         # Import the events and aux data for the lowering.
@@ -561,7 +574,7 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
         lowering_data numpy array and lowering_data_header list.
         '''
 
-        logging.info("Processing lowering event data")
+        logging.info("Processing %s event data", self.lowering_record['lowering_id'])
 
         event_export_data = get_event_exports_by_lowering(self.lowering_record['id'], export_format='csv')
 
@@ -588,7 +601,7 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
         builds the lowering stats and lowering milestones object for the given lowering.
         '''
 
-        logging.info('Processing lowering milestone and stats data')
+        logging.info("Processing %s milestone and stats data", self.lowering_record['lowering_id'])
 
         lowering_milestones = dict(
             start_dt = None,
@@ -627,11 +640,15 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
                     lowering_milestones['descending_dt'] = datetime.fromisoformat(self.lowering_record['lowering_additional_meta']['milestones']['lowering_descending'][:-1])
                 except ValueError:
                     pass
+                except TypeError:
+                    pass
 
             if 'lowering_on_bottom' in self.lowering_record['lowering_additional_meta']['milestones']:
                 try:
                     lowering_milestones['on_bottom_dt'] = datetime.fromisoformat(self.lowering_record['lowering_additional_meta']['milestones']['lowering_on_bottom'][:-1])
                 except ValueError:
+                    pass
+                except TypeError:
                     pass
 
             if 'lowering_off_bottom' in self.lowering_record['lowering_additional_meta']['milestones']:
@@ -639,11 +656,15 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
                     lowering_milestones['off_bottom_dt'] = datetime.fromisoformat(self.lowering_record['lowering_additional_meta']['milestones']['lowering_off_bottom'][:-1])
                 except ValueError:
                     pass
+                except TypeError:
+                    pass
 
             if 'lowering_on_surface' in self.lowering_record['lowering_additional_meta']['milestones']:
                 try:
                     lowering_milestones['on_surface_dt'] = datetime.fromisoformat(self.lowering_record['lowering_additional_meta']['milestones']['lowering_on_surface'][:-1])
                 except ValueError:
+                    pass
+                except TypeError:
                     pass
 
         if 'stats' in self.lowering_record['lowering_additional_meta']:
@@ -653,11 +674,15 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
                     lowering_stats['max_depth'] = float(self.lowering_record['lowering_additional_meta']['stats']['max_depth'])
                 except ValueError:
                     pass
+                except TypeError:
+                    pass
 
             if 'bounding_box' in self.lowering_record['lowering_additional_meta']['stats']:
                 try:
                     lowering_stats['bounding_box'] = [float(elem) for elem in self.lowering_record['lowering_additional_meta']['stats']['bounding_box']]
                 except ValueError:
+                    pass
+                except TypeError:
                     pass
 
         # total_duration
@@ -702,7 +727,7 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
         Build the lowering stats reportlab table
         '''
 
-        logging.info('Building lowering stats table')
+        logging.info('Building %s stats table', self.lowering_record['lowering_id'])
 
         stat_data = [
             [
@@ -714,7 +739,7 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
             [
                 Paragraph('''<b>On Bottom /<br/>@ Target Depth:</b>''', self.table_text),
                 self.lowering_record['milestones']['on_bottom_dt'].strftime(self.time_format) if self.lowering_record['milestones']['on_bottom_dt'] else '',
-                Paragraph('''<b>Decent Duration:</b>''',self.table_text),
+                Paragraph('''<b>Descent Duration:</b>''',self.table_text),
                 strfdelta(self.lowering_record['stats']['descent_duration'])
             ],
             [
@@ -759,7 +784,7 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
         Build the lowering summary reportlab table
         '''
 
-        logging.info('Building lowering summary table')
+        logging.info("Building %s summary table", self.lowering_record['lowering_id'])
 
         summary_data = [
             [
@@ -781,7 +806,7 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
             [
                 '',
                 '',
-                Paragraph('<b>Descent: </b>' + strfdelta(self.lowering_record['stats']['descent_duration'], fmt='{D:02}d {H:02}:{M:02}:{S:02}'), self.table_text) if self.lowering_record['stats']['descent_duration'] else Paragraph('<b>Descent:</b><br/>n/a', self.table_text_centered)
+                Paragraph('<b>Descent: </b>' + strfdelta(self.lowering_record['stats']['descent_duration'], fmt='{D:02}d {H:02}:{M:02}:{S:02}'), self.table_text_centered) if self.lowering_record['stats']['descent_duration'] else Paragraph('<b>Descent:</b><br/>n/a', self.table_text_centered)
             ],
             [
                 'On Bottom/@ Depth', self.lowering_record['milestones']['on_bottom_dt'].strftime(self.time_format) if self.lowering_record['milestones']['on_bottom_dt'] else '',
@@ -808,7 +833,6 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
         summary_table = Table(summary_data, colWidths=[3*cm, 3*cm, 3.5*cm, 3.25*cm], style=[
                                 ('BOX',(0,0),(-1,-1),.5,colors.black),
                                 ('GRID',(0,1),(-1,-1),.5,colors.black),
-                                # ('SPAN',(0,0),(-1,0)),
                                 ('SPAN',(2,1),(2,2)),
                                 ('SPAN',(0,3),(1,3)),
                                 ('BACKGROUND', (0, 3), (2, 3), colors.lightgrey),
@@ -834,7 +858,7 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
         Build the lowering depth plot and return it as a SVG image
         '''
 
-        logging.info('Building lowering depth profile')
+        logging.info("Building %s depth profile", self.lowering_record['lowering_id'])
 
         depth_data_source = None
 
@@ -886,7 +910,7 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
         Build the lowering dive track and return it as a SVG image
         '''
 
-        logging.info('Building lowering trackline')
+        logging.info('Building %s trackline', self.lowering_record['lowering_id'])
 
         trackline_data_source = None
 
@@ -911,7 +935,7 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
         upper_right = (math.floor(self.lowering_record['stats']['bounding_box'][3] * 2000)/2000.0, math.ceil(self.lowering_record['stats']['bounding_box'][0] * 2000)/2000.0)
         east_west = upper_right[0] - lower_left[0]
         south_north = upper_right[1] - lower_left[1]
-        side = max(east_west,south_north)
+        side = max(abs(east_west),abs(south_north))
         mid_x, mid_y = lower_left[0]+east_west/2.0, lower_left[1]+south_north/2.0  #center location
 
         ax_dive_track.set_extent([mid_x-side/2.0, mid_x+side/2.0, mid_y-side/2.0, mid_y+side/2.0])   # map coordinates, meters
@@ -950,7 +974,7 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
         Build the reportlab sample table (does not include the framegrab)
         '''
 
-        logging.info('Building table of sample events')
+        logging.info('Building %s table of sample events', self.lowering_record['lowering_id'])
 
         position_data_source = None
 
@@ -989,13 +1013,13 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
             )
 
         sample_table = Table(sample_table_data, style=[
-                                                        ('BOX',(0,0),(-1,-1),1,colors.black),
-                                                        ('GRID',(0,0),(-1,-1),1,colors.black),
-                                                        ('VALIGN',(0,0),(-1,-1), 'TOP'),
-                                                        ('FONTSIZE',(0,0),(-1,-1),5),
-                                                        ('LEADING',(0,0),(-1,-1),5),
-                                                        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey)
-                                                      ])
+                                ('BOX',(0,0),(-1,-1),1,colors.black),
+                                ('GRID',(0,0),(-1,-1),1,colors.black),
+                                ('VALIGN',(0,0),(-1,-1), 'TOP'),
+                                ('FONTSIZE',(0,0),(-1,-1),5),
+                                ('LEADING',(0,0),(-1,-1),5),
+                                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey)
+                              ])
 
         return sample_table
 
@@ -1005,7 +1029,7 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
         Build the reportlab table of freeform events
         '''
 
-        logging.info('Building table of free_form events')
+        logging.info('Building %s table of free_form events', self.lowering_record['lowering_id'])
 
         idx=(self.lowering_data[:,self.lowering_data_headers.index( 'event_value' )] == "FREE_FORM")
 
@@ -1042,13 +1066,13 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
             )
 
         free_form_table = Table(free_form_table_data, style=[
-                                                        ('BOX',(0,0),(-1,-1),1,colors.black),
-                                                        ('GRID',(0,0),(-1,-1),1,colors.black),
-                                                        ('VALIGN',(0,0),(-1,-1), 'TOP'),
-                                                        ('FONTSIZE',(0,0),(-1,-1),5),
-                                                        ('LEADING',(0,0),(-1,-1),5),
-                                                        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey)
-                                                      ])
+                                ('BOX',(0,0),(-1,-1),1,colors.black),
+                                ('GRID',(0,0),(-1,-1),1,colors.black),
+                                ('VALIGN',(0,0),(-1,-1), 'TOP'),
+                                ('FONTSIZE',(0,0),(-1,-1),5),
+                                ('LEADING',(0,0),(-1,-1),5),
+                                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey)
+                              ])
 
         return free_form_table
 
@@ -1059,7 +1083,7 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
         all the events logged for that lowering.
         '''
 
-        logging.info('Building event breakdown table')
+        logging.info('Building %s event breakdown table', self.lowering_record['lowering_id'])
 
         (unique, counts) = np.unique(self.lowering_data[:, self.lowering_data_headers.index('event_value')], return_counts=True)
         frequencies = np.asarray((unique, counts)).T
@@ -1087,8 +1111,9 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
 
         event_breakdown_table = Table(event_breakdown_table_data, colWidths=[5*cm,1.9*cm,1.9*cm], style=[
                                         ('BOX',(0,0),(-1,-1),1,colors.black),
-                                        ('LINEAFTER',(0,0),(-1,-1),1,colors.black),
-                                        ('LINEBELOW',(0,0),(-1,-1),1,colors.black),
+                                        ('GRID', (0,0),(-1,-1),1,colors.black),
+                                        ('BACKGROUND', (0,0),(-1,0), colors.lightgrey),
+                                        ('BACKGROUND', (0,-1),(-1,-1), colors.lightgrey),
                                         ('FONTNAME', (0,-1), (-1,-1), 'Helvetica-Bold'),
                                         ('NOSPLIT', (0, 0), (-1, -1))
                                     ])
@@ -1102,13 +1127,16 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
         non-system event templates.
         '''
 
-        logging.info('Building tables of events created from non-system event templates')
+        logging.info('Building %s tables of events created from non-system event templates', self.lowering_record['lowering_id'])
 
         event_templates = get_event_templates()
-        event_template_values = [ template['event_value'] for template in filter(lambda event_template: not event_template['system_template'], event_templates)]
+        event_template_values = [ template['event_value'] for template in event_templates if not template['system_template']]
+        event_template_values = list(set(event_template_values))
         event_template_values.sort()
 
-        # event_exclude_list = list('FREE_FORM', 'ASNAP')
+        # event_exclude_list = ['SAMPLE', 'PROBLEM']
+        # event_template_values = [ event_value for event_value in event_template_values if event_value not in event_exclude_list]
+
         event_value_tables_tables = list()
 
         position_data_source = None
@@ -1124,7 +1152,7 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
         for event_template_value in event_template_values:
 
             template = next((template for template in filter(lambda event_template, template_value=event_template_value: event_template['event_value'] == template_value, event_templates)), None)
-            event_option_headers = ([option['event_option_name'] for option in template['event_options']])
+            event_option_headers = ([option['event_option_name'].replace(" ", "_").lower() for option in template['event_options']])
 
             idx=(self.lowering_data[:,self.lowering_data_headers.index( 'event_value' )] == event_template_value)
 
@@ -1136,7 +1164,7 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
                 continue
 
             table_header = ['Date/time', 'Author']
-            table_header += event_option_headers
+            table_header += [event_option.replace("_", " ").capitalize() for event_option in event_option_headers]
             table_header += ['Lat:', 'Lon:', 'Depth:', 'Text:', 'Comment:']
 
             event_value_table_data = list()
@@ -1153,8 +1181,8 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
                 ]
 
                 if len(event_option_headers) > 0:
-                    for option in enumerate(event_option_headers):
-                        event_value_table_row += [Paragraph(event_value_data[row,self.lowering_data_headers.index('event_option.' + event_option_headers[option].lower().replace(' ', '_'))], self.sample_table_text)] if 'event_option.' + event_option_headers[option].lower().replace(' ', '_') in self.lowering_data_headers else ['']
+                    for idx, option in enumerate(event_option_headers):
+                        event_value_table_row += [Paragraph(event_value_data[row,self.lowering_data_headers.index('event_option.' + option)], self.sample_table_text)] if 'event_option.' + option in self.lowering_data_headers else ['']
 
                 event_value_table_row += [
                     Paragraph(event_value_data[row,self.lowering_data_headers.index(position_data_source + '.latitude_value')] + ' ' + event_value_data[row,self.lowering_data_headers.index(position_data_source + '.latitude_uom')], self.sample_table_text) if position_data_source + '.latitude_value' in self.lowering_data_headers and len(event_value_data[row,self.lowering_data_headers.index(position_data_source + '.latitude_value')]) > 0 else 'No Data',
@@ -1171,10 +1199,7 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
                                         ('GRID',(0,0),(-1,-1),1,colors.black),
                                         ('BACKGROUND', (0,0),(-1,0), colors.lightgrey),
                                         ('VALIGN',(0,0),(-1,-1), 'TOP'),
-                                        ('FONTSIZE',(0,0),(-1,-1),6),
-                                        ('LEADING',(0,0),(-1,-1),8),
-                                        ('BOTTOMPADDING',(0,0),(-1,-1),0),
-                                        ('TOPPADDING',(0,0),(-1,-1),2),
+                                        ('FONTSIZE',(0,0),(-1,-1),7)
                                     ])
 
             event_value_tables_tables.append(event_value_table)
@@ -1184,11 +1209,19 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
 
     def _build_events_table(self): # pylint: disable=too-many-locals
         '''
-        Build the reportlab table that lists the events created by non-system
-        event templates.
+        Build the table that displays all the events.
         '''
 
-        logging.info('Building table of events')
+        logging.info('Building %s table of events', self.lowering_record['lowering_id'])
+
+        position_data_source = None
+
+        for data_source in POS_DATA_SOURCES:
+            if data_source + '.depth_value' in self.lowering_data_headers:
+                position_data_source = data_source
+                break
+
+            logging.warning("No %s position data captured, can't instert position data from this source.", data_source)
 
         event_exclude_list = ['ASNAP']
 
@@ -1201,9 +1234,9 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
             if event[self.lowering_data_headers.index('event_value')] in event_exclude_list:
                 continue
 
-            position = event[self.lowering_data_headers.index('vehicleRealtimeNavData.latitude_value')] if 'vehicleRealtimeNavData.latitude_value' in self.lowering_data_headers else 'No Data'
+            position = event[self.lowering_data_headers.index(position_data_source + '.latitude_value')] if position_data_source + '.latitude_value' in self.lowering_data_headers else 'No Data'
             position += ','
-            position += event[self.lowering_data_headers.index('vehicleRealtimeNavData.longitude_value')] if 'vehicleRealtimeNavData.longitude_value' in self.lowering_data_headers else 'No Data'
+            position += event[self.lowering_data_headers.index(position_data_source + '.longitude_value')] if position_data_source + '.longitude_value' in self.lowering_data_headers else 'No Data'
             position = '' if position == ',' else position
 
             event_table_data.append([
@@ -1211,7 +1244,7 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
                 Paragraph(datetime.fromisoformat(event[self.lowering_data_headers.index('ts')]).strftime('%Y-%m-%dT%H:%M:%S'), self.sample_table_text),
                 Paragraph(event[self.lowering_data_headers.index('event_author')], self.sample_table_text),
                 Paragraph(position, self.sample_table_text),
-                Paragraph(event[self.lowering_data_headers.index('vehicleRealtimeNavData.depth_value')] + ' ' + event[self.lowering_data_headers.index('vehicleRealtimeNavData.depth_uom')], self.sample_table_text) if 'vehicleRealtimeNavData.depth_value' in self.lowering_data_headers else 'No Data',
+                Paragraph(event[self.lowering_data_headers.index(position_data_source + '.depth_value')] + ' ' + event[self.lowering_data_headers.index(position_data_source + '.depth_uom')], self.sample_table_text) if position_data_source + '.depth_value' in self.lowering_data_headers else 'No Data',
                 Paragraph("%s %s" % (event[self.lowering_data_headers.index('event_free_text')], event[self.lowering_data_headers.index('event_option.event_comment')] if 'event_option.event_comment' in self.lowering_data_headers else ''), self.sample_table_text)
             ])
 
@@ -1232,7 +1265,7 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
         Build the reportlab table for the problem events.
         '''
 
-        logging.info('Building table of problem events')
+        logging.info('Building %s table of problem events', self.lowering_record['lowering_id'])
 
         idx=(self.lowering_data[:,self.lowering_data_headers.index( 'event_value' )] == "PROBLEM")
 
@@ -1247,22 +1280,25 @@ class LoweringReportCreator: # pylint: disable=too-many-instance-attributes,too-
         for row in range(len(problem_data)):
 
             problem_table_data = [
-                [Paragraph('''<b>Type:</b>''',self.event_table_text), problem_data[row,self.lowering_data_headers.index('event_option.type')],Paragraph('''<b>Date/Time:</b>''',self.event_table_text), problem_data[row,self.lowering_data_headers.index('ts')].astype('datetime64[s]')],
-                [Paragraph('''<b>Text:</b>''',self.event_table_text), problem_data[row,self.lowering_data_headers.index('event_free_text')], ''],
-                [Paragraph('''<b>Comment:</b>''',self.event_table_text), problem_data[row,self.lowering_data_headers.index('event_option.event_comment')] if 'event_option.event_comment' in self.lowering_data_headers else '', '']
+                [
+                    Paragraph('<b>Type:</b> %s' % problem_data[row,self.lowering_data_headers.index('event_option.type')], self.body_text),
+                    Paragraph('<b>Date/Time:</b> %s' % problem_data[row,self.lowering_data_headers.index('ts')].astype('datetime64[s]'), self.body_text)
+                ],
+                [
+                    Paragraph('<b>Text:</b> %s' % problem_data[row,self.lowering_data_headers.index('event_free_text')], self.body_text),
+                    ''
+                ],
+                [
+                    Paragraph('<b>Comment:</b> %s' % problem_data[row,self.lowering_data_headers.index('event_option.event_comment')] if 'event_option.event_comment' in self.lowering_data_headers else '', self.body_text),
+                    ''
+                ]
             ]
 
-            problem_table = Table(problem_table_data, colWidths=[24,40,24,40], style=[
+            problem_table = Table(problem_table_data, style=[
                                     ('BOX',(0,0),(-1,-1),1,colors.black),
-                                    ('LINEAFTER',(1,0),(1,0),1,colors.black),
-                                    ('LINEBELOW',(0,0),(-1,-1),1,colors.black),
-                                    ('VALIGN',(0,0),(-1,-1), 'TOP'),
-                                    ('SPAN',(1,1),(-1,1)),
-                                    ('SPAN',(1,2),(-1,2)),
-                                    ('NOSPLIT', (0, 0), (-1, -1)),
-                                    ('LEADING',(0,0),(-1,-1),8),
-                                    ('BOTTOMPADDING',(0,0),(-1,-1),0),
-                                    ('TOPPADDING',(0,0),(-1,-1),2),
+                                    ('GRID',(0,0),(-1,-1),1,colors.black),
+                                    ('SPAN',(0,1),(-1,1)),
+                                    ('SPAN',(0,2),(-1,2)),
                                  ])
 
             problem_tables.append(problem_table)

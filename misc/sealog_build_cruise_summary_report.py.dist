@@ -21,8 +21,8 @@ from io import BytesIO
 from datetime import datetime
 
 from reportlab.platypus import Paragraph, PageBreak, Spacer, NextPageTemplate, Image
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import mm
+from reportlab.lib.pagesizes import landscape, A4
+from reportlab.lib.units import cm, mm
 
 from reporting.sealog_doc_template import RLDocTemplate
 from reporting.sealog_report_builder import CruiseReportCreator
@@ -30,7 +30,7 @@ from reporting.sealog_report_builder import CruiseReportCreator
 from python_sealog.cruises import get_cruise_uid_by_id
 from python_sealog.settings import API_SERVER_FILE_PATH
 
-PAGE_SIZE = A4
+PAGE_SIZE = landscape(A4)
 PAGE_WIDTH, PAGE_HEIGHT = PAGE_SIZE
 BASE_MARGIN = 5 * mm
 
@@ -47,6 +47,8 @@ class CruiseSummaryReport(CruiseReportCreator): # pylint: disable=too-few-public
         Exports the report in pdf format as a bytes stream
         '''
 
+        logging.info("Compiling report")
+
         report_buffer = BytesIO()
 
         doc = RLDocTemplate(
@@ -61,10 +63,8 @@ class CruiseSummaryReport(CruiseReportCreator): # pylint: disable=too-few-public
             author=AUTHOR
         )
 
-        logging.info("Building stats table")
         stat_table = self._build_stat_table()
 
-        logging.info("Building Dive Locations")
         dive_locations_image = self._build_lowerings_map()
 
         flowables = []
@@ -85,6 +85,7 @@ class CruiseSummaryReport(CruiseReportCreator): # pylint: disable=too-few-public
 
         if dive_locations_image:
             dive_locations = Image(dive_locations_image)
+            dive_locations._restrictSize(PAGE_WIDTH - 1 * cm, PAGE_HEIGHT - 7 * cm) # pylint: disable=protected-access
             dive_locations.hAlign = 'CENTER'
 
             flowables.append(Paragraph("Dive Locations:", self.heading_1))
@@ -146,9 +147,11 @@ if __name__ == '__main__':
             with open(os.path.join(OUTPUT_PATH, REPORT_FILENAME), 'wb') as file:
                 file.write(summary_report.export_pdf())
 
-        except Exception as error:
-            logging.error("Unable to build report")
-            logging.error(str(error))
+        except Exception as err:
+            logging.error("Unable to build report: %s", os.path.join(OUTPUT_PATH, REPORT_FILENAME))
+            logging.debug(str(err))
+            raise err
+
     except KeyboardInterrupt:
         logging.warning('Interrupted')
         try:

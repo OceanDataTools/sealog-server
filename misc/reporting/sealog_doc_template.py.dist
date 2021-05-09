@@ -29,10 +29,10 @@ class FrontCoverTemplate(PageTemplate):
     Template for cover page layout
     '''
 
-    def __init__(self, page_id, page_size=PAGE_SIZE, title='Title Goes Here', subtitle=None):
+    def __init__(self, page_id, pagesize=PAGE_SIZE, title='Title Goes Here', subtitle=None):
 
-        self.page_width = page_size[0]
-        self.page_height = page_size[1]
+        self.page_width = pagesize[0]
+        self.page_height = pagesize[1]
         self.title = title
         self.subtitle = subtitle
 
@@ -77,10 +77,10 @@ class OneColumnTemplate(PageTemplate):
     Template for 1-column page layout
     '''
 
-    def __init__(self, page_id, page_size=PAGE_SIZE):
+    def __init__(self, page_id, pagesize=PAGE_SIZE):
 
-        self.page_width = page_size[0]
-        self.page_height = page_size[1]
+        self.page_width = pagesize[0]
+        self.page_height = pagesize[1]
         frame1 = Frame(2.5 * cm,
                        2.5 * cm,
                        self.page_width - 5 * cm,
@@ -109,10 +109,10 @@ class TOCTemplate(PageTemplate):
     Template for table of contents
     '''
 
-    def __init__(self, page_id, page_size=PAGE_SIZE):
+    def __init__(self, page_id, pagesize=PAGE_SIZE):
 
-        self.page_width = page_size[0]
-        self.page_height = page_size[1]
+        self.page_width = pagesize[0]
+        self.page_height = pagesize[1]
         frame1 = Frame(2.5 * cm,
                        2.5 * cm,
                        self.page_width - 5 * cm,
@@ -140,10 +140,10 @@ class TwoColumnTemplate(PageTemplate):
     Template for 2-column page layout
     '''
 
-    def __init__(self, page_id, page_size=PAGE_SIZE):
+    def __init__(self, page_id, pagesize=PAGE_SIZE):
 
-        self.page_width = page_size[0]
-        self.page_height = page_size[1]
+        self.page_width = pagesize[0]
+        self.page_height = pagesize[1]
         col_width = 0.5 * (self.page_width - 6 * cm)
         frame1 = Frame(2.5 * cm,
                        2.5 * cm,
@@ -187,6 +187,11 @@ class RLDocTemplate(BaseDocTemplate):
         except KeyError:
             self.subtitle = None
 
+        try:
+            self.pagesize = kwargs.get('pagesize')
+        except KeyError:
+            self.pagesize = PAGE_SIZE
+
         self.chapter = ''
         self.section = ''
 
@@ -198,10 +203,10 @@ class RLDocTemplate(BaseDocTemplate):
         Actions to take after init
         '''
 
-        self.addPageTemplates(FrontCoverTemplate('Cover', title=self.title, subtitle=self.subtitle))
-        self.addPageTemplates(TOCTemplate('TOC'))
-        self.addPageTemplates(OneColumnTemplate('Normal'))
-        self.addPageTemplates(TwoColumnTemplate('TwoColumn'))
+        self.addPageTemplates(FrontCoverTemplate('Cover', title=self.title, subtitle=self.subtitle, pagesize=self.pagesize))
+        self.addPageTemplates(TOCTemplate('TOC', pagesize=self.pagesize))
+        self.addPageTemplates(OneColumnTemplate('Normal', pagesize=self.pagesize))
+        self.addPageTemplates(TwoColumnTemplate('TwoColumn', pagesize=self.pagesize))
         self.seq = Sequencer()
 
 

@@ -411,11 +411,11 @@ def _build_cruise_reports(cruise):
 
     report_filename =    VEHICLE_NAME + '_' + cruise['cruise_id'] + '_Cruise_Summary_Report.pdf'
     logging.info("Building Cruise Summary Report: %s", report_filename)
-    cruise_summary_report = CruiseSummaryReport(cruise['id'], VEHICLE_NAME)
+    cruise_summary_report = CruiseSummaryReport(cruise['id'])
 
     try:
         with open(os.path.join(report_dest_dir, report_filename), 'wb') as file:
-            file.write(cruise_summary_report.build_pdf())
+            file.write(cruise_summary_report.export_pdf())
 
     except Exception as err:
         logging.error("Unable to build report")
@@ -430,11 +430,11 @@ def _build_lowering_reports(lowering): #pylint: disable=redefined-outer-name
 
     summary_report_filename = VEHICLE_NAME + '_' + lowering['lowering_id'] + '_Dive_Summary_Report.pdf'
     logging.info("Building Lowering Summary Report: %s", summary_report_filename)
-    lowering_summary_report = LoweringSummaryReport(lowering['id'], VEHICLE_NAME)
+    lowering_summary_report = LoweringSummaryReport(lowering['id'])
 
     try:
         with open(os.path.join(report_dest_dir, summary_report_filename), 'wb') as file:
-            file.write(lowering_summary_report.build_pdf())
+            file.write(lowering_summary_report.export_pdf())
 
     except Exception as err:
         logging.error("Unable to build report")
@@ -442,11 +442,11 @@ def _build_lowering_reports(lowering): #pylint: disable=redefined-outer-name
 
     vehicle_report_filename = VEHICLE_NAME + '_' + lowering['lowering_id'] + '_Dive_Vehicle_Report.pdf'
     logging.info("Building Lowering Vehicle Report: %s", vehicle_report_filename)
-    lowering_vehicle_report = LoweringVehicleReport(lowering['id'], VEHICLE_NAME)
+    lowering_vehicle_report = LoweringVehicleReport(lowering['id'])
 
     try:
         with open(os.path.join(report_dest_dir, vehicle_report_filename), 'wb') as file:
-            file.write(lowering_vehicle_report.build_pdf())
+            file.write(lowering_vehicle_report.export_pdf())
 
     except Exception as err:
         logging.error("Unable to build report")
