@@ -2,9 +2,7 @@
 '''
 FILE:           sealog_vehicle_data_export.py
 
-DESCRIPTION:    This script exports all the data for a given lowering, creates
-                all the reports for that lowering, and pushes the data to the
-                OpenVDM data directory for that lowering.
+DESCRIPTION:    This script exports all the data for a given lowering.
 
 BUGS:
 NOTES:
@@ -34,41 +32,14 @@ from python_sealog.events import get_events_by_lowering
 from python_sealog.event_aux_data import get_event_aux_data_by_lowering
 from python_sealog.event_exports import get_event_export, get_event_exports_by_lowering
 from python_sealog.event_templates import get_event_templates
-from filecrop_utility import FileCropUtility
-from sealog_lowering_nav_2_csv import ExportLoweringNav2CSV
-
-from sealog_build_cruise_summary_report import CruiseSummaryReport
-from sealog_build_lowering_summary_report import LoweringSummaryReport
 
 EXPORT_ROOT_DIR = '/home/sealog/sealog-export'
 VEHICLE_NAME = 'Explorer'
-NAV_DATASOURCE = 'vehicleRealtimeNavData'
-
-RAW_DATA_DIR = '/mnt/nfs/CruiseData/'
-CROPPED_DATA_DIR = '/home/sealog/cropped_data'
-OPENRVDAS_SOURCE_DIR = 'Vessel/OpenRVDAS/raw'
-OPENRVDAS_DEST_DIR = 'OpenRVDAS/raw'
-
-POST_CRUISE_REPORT_DIR = 'Documents/PostCruise_Reports'
-
-DATA_FILES_DEFS = [
-    { 'source_regex': 'GGA_*', 'output_prefix': 'GGA_'}
-]
-
-OPENVDM_IP='openvdm.oceandatatools.org'
-OPENVDM_USER='survey'
-OPENVDM_SSH_KEY='/home/sealog/.ssh/id_rsa_openvdm'
-CRUISEDATA_DIR_ON_DATA_WAREHOUSE='/mnt/vault/FTPRoot/CruiseData'
-OPENVDM_VEHICLE_DIR='Vehicles/' + VEHICLE_NAME
-SEALOG_DIR='Sealog'
-
-CREATE_DEST_DIR = False
 
 CRUISES_FILE_PATH = os.path.join(API_SERVER_FILE_PATH, 'cruises')
 IMAGES_FILE_PATH = os.path.join(API_SERVER_FILE_PATH, 'images')
 LOWERINGS_FILE_PATH = os.path.join(API_SERVER_FILE_PATH, 'lowerings')
 
-REPORTS_DIRNAME = 'Reports'
 IMAGES_DIRNAME = 'Images'
 FILES_DIRNAME = 'Files'
 
@@ -106,24 +77,6 @@ def _build_cruise_export_dirs(cruise):
         logging.debug(str(err))
         sys.exit(1)
 
-    try:
-        os.mkdir(os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], REPORTS_DIRNAME))
-    except FileExistsError:
-        logging.debug("cruise export reports directory already exists")
-    except Exception as err:
-        logging.error("Could not create cruise reports export directory")
-        logging.debug(str(err))
-        sys.exit(1)
-
-    try:
-        os.mkdir(os.path.join(CROPPED_DATA_DIR, cruise['cruise_id']))
-    except FileExistsError:
-        logging.debug("cruise cropped data export directory already exists")
-    except Exception as err:
-        logging.error("Could not create cruise cropped data export directory")
-        logging.debug(str(err))
-        sys.exit(1)
-
 
 def _build_lowering_export_dirs(cruise, lowering): #pylint: disable=redefined-outer-name
 
@@ -139,15 +92,6 @@ def _build_lowering_export_dirs(cruise, lowering): #pylint: disable=redefined-ou
         sys.exit(1)
 
     try:
-        os.mkdir(os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), REPORTS_DIRNAME))
-    except FileExistsError:
-        logging.debug("lowering export reports directory already exists")
-    except Exception as err:
-        logging.error("Could not create lowering reports export directory")
-        logging.debug(str(err))
-        sys.exit(1)
-
-    try:
         os.mkdir(os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), IMAGES_DIRNAME))
     except FileExistsError:
         logging.debug("lowering export images directory already exists")
@@ -155,73 +99,6 @@ def _build_lowering_export_dirs(cruise, lowering): #pylint: disable=redefined-ou
         logging.error("Could not create lowering images export directory")
         logging.debug(str(err))
         sys.exit(1)
-
-    try:
-        os.makedirs(os.path.join(CROPPED_DATA_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), OPENRVDAS_DEST_DIR))
-    except FileExistsError:
-        logging.debug("lowering export directory already exists")
-    except Exception as err:
-        logging.error("Could not create lowering export directory")
-        logging.debug(str(err))
-        sys.exit(1)
-
-
-def _build_lowering_marker(lowering): #pylint: disable=redefined-outer-name
-
-    try:
-        on_bottom_event = list(filter(lambda event: event['ts'] == lowering['lowering_additional_meta']['milestones']['lowering_on_bottom'], get_events_by_lowering(lowering['id'])))[0]
-
-    except Exception as err:
-        logging.warning('Could not find on_bottom milestone for lowering %s', lowering['lowering_id'])
-        logging.debug(str(err))
-        return None
-
-    try:
-        on_bottom_event_export = get_event_export(on_bottom_event['id'])
-        # logging.debug("on_bottom_event_export: %s", json.dumps(on_bottom_event_export, indent=2))
-        vehicle_realtime_nav_data = list(filter(lambda aux_data: aux_data['data_source'] == NAV_DATASOURCE, on_bottom_event_export['aux_data']))[0]
-        # logging.debug("vehicle_realtime_nav_data: %s", vehicle_realtime_nav_data)
-        lat = list(filter(lambda data_item: data_item['data_name'] == 'latitude', vehicle_realtime_nav_data['data_array']))[0]['data_value']
-        lon = list(filter(lambda data_item: data_item['data_name'] == 'longitude', vehicle_realtime_nav_data['data_array']))[0]['data_value']
-        depth = list(filter(lambda data_item: data_item['data_name'] == 'depth', vehicle_realtime_nav_data['data_array']))[0]['data_value']
-
-        # DiveID,lat,Lon,depth.txt
-        return lowering['lowering_id'] + ',' + str(lat) + ',' + str(lon) + ',' + str(depth * -1)
-
-    except Exception as err:
-        logging.warning('Could not extract nav data from on_bottom event for lowering: %s', lowering['lowering_id'])
-        logging.debug(str(err))
-
-    return None
-
-
-def _export_lowering_markers_file(cruise):
-
-    logging.info("Exporting lowering markers file")
-
-    cruise_lowerings = get_lowerings_by_cruise(cruise['id'])
-
-    lowering_markers = []
-
-    for cruise_lowering in cruise_lowerings:
-
-        lowering_marker = _build_lowering_marker(cruise_lowering)
-        # logging.debug(lowering_marker)
-
-        if lowering_marker:
-            lowering_markers.append(lowering_marker)
-
-    filename = VEHICLE_NAME + '_' + cruise['cruise_id'] + '_loweringMarkers.txt'
-    dest_filepath = os.path.join(API_SERVER_FILE_PATH, 'cruises', cruise['id'], filename)
-
-    try:
-        with open(dest_filepath, 'w') as file:
-            for marker in lowering_markers:
-                # logging.debug(marker)
-                file.write(marker + '\r\n')
-    except Exception as err:
-        logging.error('could not create data file: %s', dest_filepath)
-        logging.debug(str(err))
 
 
 def _export_lowering_sealog_data_files(cruise, lowering): # pylint: disable=too-many-statements, redefined-outer-name
@@ -316,63 +193,8 @@ def _export_lowering_sealog_data_files(cruise, lowering): # pylint: disable=too-
 
         subprocess.call(['rsync','-avi','--progress', '--delete', '--files-from=' + file.name , os.path.join(API_SERVER_FILE_PATH, 'images', ''), os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), IMAGES_DIRNAME)])
 
-    logging.info("Export Reports")
-    subprocess.call(['rsync','-avi','--progress', '--delete', '--include=*.pdf', '--exclude=*', os.path.join(API_SERVER_FILE_PATH, 'lowerings', lowering['id'], ''), os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), REPORTS_DIRNAME)])
 
-    logging.info("Export Nav CSV")
-    subprocess.call(['rsync','-avi','--progress', os.path.join(API_SERVER_FILE_PATH, 'lowerings', lowering['id'], VEHICLE_NAME + '_' + lowering['lowering_id'] + '_nav.csv'), os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']))])
-
-
-def _export_lowering_openrvdas_data_files(cruise, lowering): #pylint: disable=redefined-outer-name
-
-    logging.info("Exporting lowering-level OpenRVDAS data files")
-
-    fcu = FileCropUtility(datetime.strptime(lowering['start_ts'], '%Y-%m-%dT%H:%M:%S.%fZ'), datetime.strptime(lowering['stop_ts'], '%Y-%m-%dT%H:%M:%S.%fZ'))
-
-    for data_file_def in DATA_FILES_DEFS:
-
-        source_regex = os.path.join(RAW_DATA_DIR,cruise['cruise_id'], OPENRVDAS_SOURCE_DIR, data_file_def['source_regex'])
-        source_files = glob.glob(os.path.join(RAW_DATA_DIR,cruise['cruise_id'], OPENRVDAS_SOURCE_DIR, data_file_def['source_regex']))
-        destination_file = os.path.join(CROPPED_DATA_DIR,cruise['cruise_id'],lowering['lowering_id'],OPENRVDAS_DEST_DIR,data_file_def['output_prefix'] + lowering['lowering_id'] + '.txt')
-
-        logging.debug('Source regex: %s', source_regex)
-        logging.debug('Source files: \n\t%s', '\n\t'.join(source_files))
-        logging.debug('Destination file: %s', destination_file)
-
-        try:
-            culled_files = fcu.cull_files(source_files)
-            logging.debug("Culled Files:\n\t%s",'\n\t'.join(culled_files))
-
-            if len(culled_files) > 0:
-                with open(destination_file, 'w') as file:
-                    for line in fcu.crop_file_data(culled_files):
-                        file.write(line)
-            else:
-                logging.warning("No files containing data in the specified range")
-
-        except Exception as err:
-            logging.warning("Could not create cropped data file: %s", destination_file)
-            logging.debug(str(err))
-
-
-def _export_lowering_nav_csv_files(lowering): #pylint: disable=redefined-outer-name
-
-    logging.info("Exporting lowering nav data to csv")
-
-    dest_dir = os.path.join(API_SERVER_FILE_PATH, 'lowerings', lowering['id'])
-    filename = VEHICLE_NAME + '_' + lowering['lowering_id'] + '_nav.csv'
-
-    lowering_export = ExportLoweringNav2CSV(lowering['lowering_id'])
-
-    try:
-        with open(os.path.join(dest_dir, filename), 'w') as out_file:
-            out_file.write(str(lowering_export))
-
-    except IOError:
-        logging.error("Error saving nav csv export file: %s", os.path.join(dest_dir, filename))
-
-
-def _export_cruise_data_files(cruise):
+def _export_cruise_sealog_data_files(cruise):
 
     logging.info("Exporting cruise-level data files")
 
@@ -398,73 +220,6 @@ def _export_cruise_data_files(cruise):
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(err))
 
-    logging.info("Export Reports")
-    subprocess.call(['rsync','-avi','--progress', '--delete', '--include=*.pdf', '--exclude=*', os.path.join(API_SERVER_FILE_PATH, 'cruises', cruise['id'], ''), os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], REPORTS_DIRNAME)])
-
-
-def _build_cruise_reports(cruise):
-
-    logging.info("Building cruise reports")
-
-    report_dest_dir = os.path.join(API_SERVER_FILE_PATH, 'cruises', cruise['id'])
-
-    report_filename =    VEHICLE_NAME + '_' + cruise['cruise_id'] + '_Cruise_Summary_Report.pdf'
-    logging.info("Building Cruise Summary Report: %s", report_filename)
-    cruise_summary_report = CruiseSummaryReport(cruise['id'])
-
-    try:
-        with open(os.path.join(report_dest_dir, report_filename), 'wb') as file:
-            file.write(cruise_summary_report.export_pdf())
-
-    except Exception as err:
-        logging.error("Unable to build report")
-        logging.debug(str(err))
-
-
-def _build_lowering_reports(lowering): #pylint: disable=redefined-outer-name
-
-    logging.info("Building lowering reports")
-
-    report_dest_dir = os.path.join(API_SERVER_FILE_PATH, 'lowerings', lowering['id'])
-
-    summary_report_filename = VEHICLE_NAME + '_' + lowering['lowering_id'] + '_Dive_Summary_Report.pdf'
-    logging.info("Building Lowering Summary Report: %s", summary_report_filename)
-    lowering_summary_report = LoweringSummaryReport(lowering['id'])
-
-    try:
-        with open(os.path.join(report_dest_dir, summary_report_filename), 'wb') as file:
-            file.write(lowering_summary_report.export_pdf())
-
-    except Exception as err:
-        logging.error("Unable to build report")
-        logging.debug(str(err))
-
-
-def _push_2_data_warehouse(cruise, lowerings): #pylint: disable=redefined-outer-name
-
-
-    command = ['rsync','-trimv','--progress', '-e', 'ssh -i ' + OPENVDM_SSH_KEY, os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], REPORTS_DIRNAME, ''), OPENVDM_USER + '@' + OPENVDM_IP + ':' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE,cruise['cruise_id'], POST_CRUISE_REPORT_DIR, '')]
-    logging.debug(' '.join(command))
-    subprocess.call(command)
-
-    for lowering in lowerings:
-        if CREATE_DEST_DIR:
-            command = ['ssh', '-i', OPENVDM_SSH_KEY, OPENVDM_USER + '@' + OPENVDM_IP, 'cd ' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE,cruise['cruise_id'],OPENVDM_VEHICLE_DIR) + '; test -d ' + os.path.join(_export_dir_name(cruise['cruise_id'], lowering['lowering_id']),SEALOG_DIR) + ' || mkdir -p ' + os.path.join(_export_dir_name(cruise['cruise_id'], lowering['lowering_id']),SEALOG_DIR) + '']
-            logging.debug(' '.join(command))
-            subprocess.call(command)
-
-            command = ['ssh', '-i', OPENVDM_SSH_KEY, OPENVDM_USER + '@' + OPENVDM_IP, 'cd ' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE,cruise['cruise_id'],OPENVDM_VEHICLE_DIR) + '; test -d ' + os.path.join(_export_dir_name(cruise['cruise_id'], lowering['lowering_id']),OPENRVDAS_DEST_DIR) + ' || mkdir -p ' + os.path.join(_export_dir_name(cruise['cruise_id'], lowering['lowering_id']),OPENRVDAS_DEST_DIR) + '']
-            logging.debug(' '.join(command))
-            subprocess.call(command)
-
-        command = ['rsync','-trimv','--progress', '--delete', '-e', 'ssh -i ' + OPENVDM_SSH_KEY, os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), ''), OPENVDM_USER + '@' + OPENVDM_IP + ':' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE,cruise['cruise_id'],OPENVDM_VEHICLE_DIR,_export_dir_name(cruise['cruise_id'], lowering['lowering_id']),SEALOG_DIR, '')]
-        logging.debug(' '.join(command))
-        subprocess.call(command)
-
-        command = ['rsync','-trimv','--progress', '--delete', '-e', 'ssh -i ' + OPENVDM_SSH_KEY, os.path.join(CROPPED_DATA_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), OPENRVDAS_DEST_DIR, ''), OPENVDM_USER + '@' + OPENVDM_IP + ':' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE,cruise['cruise_id'],OPENVDM_VEHICLE_DIR,_export_dir_name(cruise['cruise_id'], lowering['lowering_id']),OPENRVDAS_DEST_DIR, '')]
-        logging.debug(' '.join(command))
-        subprocess.call(command)
-
 
 if __name__ == '__main__':
 
@@ -475,7 +230,6 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbosity', dest='verbosity',
                         default=0, action='count',
                         help='Increase output verbosity')
-    parser.add_argument('-n', '--no-transfer', action='store_true', default=False, help='build reports and export data but do not push to data warehouse')
     parser.add_argument('-c', '--current_cruise', action='store_true', default=False, help=' export the data for the most recent cruise')
     parser.add_argument('-L', '--lowering_id', help='export data for the specified lowering (i.e. S0314)')
     parser.add_argument('-C', '--cruise_id', help='export all cruise and lowering data for the specified cruise (i.e. FK200126)')
@@ -572,17 +326,11 @@ if __name__ == '__main__':
         logging.error('Cannot find source directory for cruise: %s', cruise_source_dir)
         sys.exit(1)
 
-    # build cruise report
-    _build_cruise_reports(cruise)
-
     # build cruise export dirs
     _build_cruise_export_dirs(cruise)
 
     # export cruise data files
-    _export_cruise_data_files(cruise)
-
-    # export lowering markers file
-    _export_lowering_markers_file(cruise)
+    _export_cruise_sealog_data_files(cruise)
 
     # for each lowering in cruise
     for lowering in lowerings:
@@ -596,23 +344,10 @@ if __name__ == '__main__':
             logging.error('Cannot find source directory for lowering: %s', lowering_source_dir)
             sys.exit(1)
 
-        # build lowering reports
-        _build_lowering_reports(lowering)
-
         # build lowering export dirs
         _build_lowering_export_dirs(cruise, lowering)
 
-        # export lowering nav2csv data file
-        _export_lowering_nav_csv_files(lowering)
-
         # export lowering data files
         _export_lowering_sealog_data_files(cruise, lowering)
-
-        # export lowering cropped data files
-        _export_lowering_openrvdas_data_files(cruise, lowering)
-
-    # sync data to data warehouse
-    if not parsed_args.no_transfer:
-        _push_2_data_warehouse(cruise, lowerings)
 
     logging.debug("Done")

@@ -2,9 +2,7 @@
 '''
 FILE:           sealog_vessel_data_export.py
 
-DESCRIPTION:    This script exports all the data for a given cruise, creates
-                all the reports for that cruise, and pushes the data to the
-                OpenVDM data directory for that lowering.
+DESCRIPTION:    This script exports all the data for a given cruise.
 
 BUGS:
 NOTES:
@@ -33,32 +31,12 @@ from python_sealog.event_templates import get_event_templates
 EXPORT_ROOT_DIR = '/home/sealog/sealog-export'
 VESSEL_NAME = 'Discoverer'
 
-OPENVDM_IP='openvdm.oceandatatools.org'
-OPENVDM_USER='survey'
-OPENVDM_SSH_KEY='/home/sealog/.ssh/id_rsa_openvdm'
-CRUISEDATA_DIR_ON_DATA_WAREHOUSE='/mnt/vault/FTPRoot/CruiseData'
-SEALOG_DIR='Sealog'
-
-CREATE_DEST_DIR = False
-
 CRUISES_FILE_PATH = os.path.join(API_SERVER_FILE_PATH, 'cruises')
-IMAGES_FILE_PATH = os.path.join(API_SERVER_FILE_PATH, 'images')
-LOWERINGS_FILE_PATH = os.path.join(API_SERVER_FILE_PATH, 'lowerings')
-
-REPORTS_DIRNAME = 'Reports'
-IMAGES_DIRNAME = 'Images'
-FILES_DIRNAME = 'Files'
 
 def _verify_source_directories():
 
     if not os.path.isdir(CRUISES_FILE_PATH):
         return False, "cannot find cruises file path"
-
-    if not os.path.isdir(IMAGES_FILE_PATH):
-        return False, "cannot find images file path"
-
-    if not os.path.isdir(LOWERINGS_FILE_PATH):
-        return False, "cannot find lowerings file path"
 
     return True, ''
 
@@ -73,15 +51,6 @@ def _build_cruise_export_dirs(cruise):
         logging.debug("cruise export directory already exists")
     except Exception as err:
         logging.error("Could not create cruise export directory")
-        logging.debug(str(err))
-        sys.exit(1)
-
-    try:
-        os.mkdir(os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], REPORTS_DIRNAME))
-    except FileExistsError:
-        logging.debug("cruise export reports directory already exists")
-    except Exception as err:
-        logging.error("Could not create cruise reports export directory")
         logging.debug(str(err))
         sys.exit(1)
 
@@ -168,17 +137,6 @@ def _export_cruise_sealog_data_files(cruise): #pylint: disable=too-many-statemen
         logging.debug(str(err))
 
 
-def _push_2_data_warehouse(cruise):
-
-    if CREATE_DEST_DIR:
-        command = ['ssh', '-i', OPENVDM_SSH_KEY, OPENVDM_USER + '@' + OPENVDM_IP, 'cd ' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE, cruise['cruise_id']) + '; test -d ' + SEALOG_DIR + ' || mkdir -p ' + SEALOG_DIR + '']
-        logging.debug(' '.join(command))
-        subprocess.call(command)
-
-    command = ['rsync','-trimv','--progress', '--delete', '-e', 'ssh -i ' + OPENVDM_SSH_KEY, os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], ''), OPENVDM_USER + '@' + OPENVDM_IP + ':' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE,cruise['cruise_id'],SEALOG_DIR, '')]
-    logging.debug(' '.join(command))
-    subprocess.call(command)
-
 if __name__ == '__main__':
 
     import argparse
@@ -188,8 +146,7 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbosity', dest='verbosity',
                         default=0, action='count',
                         help='Increase output verbosity')
-    parser.add_argument('-n', '--no-transfer', action='store_true', default=False, help='build reports and export data but do not push to data warehouse')
-    parser.add_argument('-C', '--cruise_id', help='export all cruise and lowering data for the specified cruise (i.e. FK200126)')
+    parser.add_argument('-C', '--cruise_id', help='export data for the specified cruise (i.e. SL200329)')
 
     parsed_args = parser.parse_args()
 
@@ -250,8 +207,5 @@ if __name__ == '__main__':
 
     # export cruise data files
     _export_cruise_sealog_data_files(cruise)
-
-    if not parsed_args.no_transfer:
-        _push_2_data_warehouse(cruise)
 
     logging.debug("Done")

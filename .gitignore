@@ -24,9 +24,7 @@ misc/sealog_aux_data_inserter*.py
 misc/sealog_aux_data_inserter_nav.py
 misc/sealog_auxDataInserter*.py
 misc/sealog_backupDB.sh
-misc/sealog_build_cruise_summary_report*.py
-misc/sealog_build_lowering_summary_report*.py
-misc/sealog_build_lowering_vehicle_report*.py
+misc/sealog_build_*_report*.py
 misc/sealog_cruise_responder.py
 misc/sealog_cruise_sync.py
 misc/sealog_lowering_responder.py
@@ -34,7 +32,8 @@ misc/sealog_postLowering.sh
 misc/sealog_preLowering.sh
 misc/sealog_restoreDBfromBackup.sh
 misc/sealog_udp2MongoDB.py
-misc/sealog_vehicle_data_export.py
+misc/sealog_*_data_export_full.py*
+misc/sealog_*_data_export.py
 misc/sealog_vessel_postCruise.sh
 
 # files that need to be updated to the v2.1 standard or deleted
