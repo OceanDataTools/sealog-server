@@ -392,6 +392,10 @@ class CruiseReportCreator: # pylint: disable=too-many-instance-attributes,too-fe
         Build a map show the lowering locations
         '''
 
+        if len(self.lowering_records) == 0:
+            logging.warning("No lowerings found for cruise")
+            return None
+
         logging.info('Building map of lowering locations')
 
         bbox = []
