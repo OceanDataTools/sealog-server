@@ -439,41 +439,32 @@ def _build_lowering_reports(lowering): #pylint: disable=redefined-outer-name
         logging.error("Unable to build report")
         logging.debug(str(err))
 
-    vehicle_report_filename = VEHICLE_NAME + '_' + lowering['lowering_id'] + '_Dive_Vehicle_Report.pdf'
-    logging.info("Building Lowering Vehicle Report: %s", vehicle_report_filename)
-    lowering_vehicle_report = LoweringVehicleReport(lowering['id'])
 
-    try:
-        with open(os.path.join(report_dest_dir, vehicle_report_filename), 'wb') as file:
-            file.write(lowering_vehicle_report.export_pdf())
+def _push_2_data_warehouse(cruise, lowerings): #pylint: disable=redefined-outer-name
 
-    except Exception as err:
-        logging.error("Unable to build report")
-        logging.debug(str(err))
-
-
-def _push_2_data_warehouse(cruise, lowering): #pylint: disable=redefined-outer-name
-
-    if CREATE_DEST_DIR:
-        command = ['ssh', '-i', OPENVDM_SSH_KEY, OPENVDM_USER + '@' + OPENVDM_IP, 'cd ' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE,cruise['cruise_id'],OPENVDM_VEHICLE_DIR) + '; test -d ' + os.path.join(_export_dir_name(cruise['cruise_id'], lowering['lowering_id']),SEALOG_DIR) + ' || mkdir -p ' + os.path.join(_export_dir_name(cruise['cruise_id'], lowering['lowering_id']),SEALOG_DIR) + '']
-        logging.debug(' '.join(command))
-        subprocess.call(command)
-
-        command = ['ssh', '-i', OPENVDM_SSH_KEY, OPENVDM_USER + '@' + OPENVDM_IP, 'cd ' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE,cruise['cruise_id'],OPENVDM_VEHICLE_DIR) + '; test -d ' + os.path.join(_export_dir_name(cruise['cruise_id'], lowering['lowering_id']),OPENRVDAS_DEST_DIR) + ' || mkdir -p ' + os.path.join(_export_dir_name(cruise['cruise_id'], lowering['lowering_id']),OPENRVDAS_DEST_DIR) + '']
-        logging.debug(' '.join(command))
-        subprocess.call(command)
 
     command = ['rsync','-trimv','--progress', '-e', 'ssh -i ' + OPENVDM_SSH_KEY, os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], REPORTS_DIRNAME, ''), OPENVDM_USER + '@' + OPENVDM_IP + ':' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE,cruise['cruise_id'], POST_CRUISE_REPORT_DIR, '')]
     logging.debug(' '.join(command))
     subprocess.call(command)
 
-    command = ['rsync','-trimv','--progress', '--delete', '-e', 'ssh -i ' + OPENVDM_SSH_KEY, os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), ''), OPENVDM_USER + '@' + OPENVDM_IP + ':' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE,cruise['cruise_id'],OPENVDM_VEHICLE_DIR,_export_dir_name(cruise['cruise_id'], lowering['lowering_id']),SEALOG_DIR, '')]
-    logging.debug(' '.join(command))
-    subprocess.call(command)
+    for lowering in lowerings:
+        if CREATE_DEST_DIR:
+            command = ['ssh', '-i', OPENVDM_SSH_KEY, OPENVDM_USER + '@' + OPENVDM_IP, 'cd ' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE,cruise['cruise_id'],OPENVDM_VEHICLE_DIR) + '; test -d ' + os.path.join(_export_dir_name(cruise['cruise_id'], lowering['lowering_id']),SEALOG_DIR) + ' || mkdir -p ' + os.path.join(_export_dir_name(cruise['cruise_id'], lowering['lowering_id']),SEALOG_DIR) + '']
+            logging.debug(' '.join(command))
+            subprocess.call(command)
 
-    command = ['rsync','-trimv','--progress', '--delete', '-e', 'ssh -i ' + OPENVDM_SSH_KEY, os.path.join(CROPPED_DATA_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), OPENRVDAS_DEST_DIR, ''), OPENVDM_USER + '@' + OPENVDM_IP + ':' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE,cruise['cruise_id'],OPENVDM_VEHICLE_DIR,_export_dir_name(cruise['cruise_id'], lowering['lowering_id']),OPENRVDAS_DEST_DIR, '')]
-    logging.debug(' '.join(command))
-    subprocess.call(command)
+            command = ['ssh', '-i', OPENVDM_SSH_KEY, OPENVDM_USER + '@' + OPENVDM_IP, 'cd ' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE,cruise['cruise_id'],OPENVDM_VEHICLE_DIR) + '; test -d ' + os.path.join(_export_dir_name(cruise['cruise_id'], lowering['lowering_id']),OPENRVDAS_DEST_DIR) + ' || mkdir -p ' + os.path.join(_export_dir_name(cruise['cruise_id'], lowering['lowering_id']),OPENRVDAS_DEST_DIR) + '']
+            logging.debug(' '.join(command))
+            subprocess.call(command)
+
+        command = ['rsync','-trimv','--progress', '--delete', '-e', 'ssh -i ' + OPENVDM_SSH_KEY, os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), ''), OPENVDM_USER + '@' + OPENVDM_IP + ':' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE,cruise['cruise_id'],OPENVDM_VEHICLE_DIR,_export_dir_name(cruise['cruise_id'], lowering['lowering_id']),SEALOG_DIR, '')]
+        logging.debug(' '.join(command))
+        subprocess.call(command)
+
+        command = ['rsync','-trimv','--progress', '--delete', '-e', 'ssh -i ' + OPENVDM_SSH_KEY, os.path.join(CROPPED_DATA_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), OPENRVDAS_DEST_DIR, ''), OPENVDM_USER + '@' + OPENVDM_IP + ':' + os.path.join(CRUISEDATA_DIR_ON_DATA_WAREHOUSE,cruise['cruise_id'],OPENVDM_VEHICLE_DIR,_export_dir_name(cruise['cruise_id'], lowering['lowering_id']),OPENRVDAS_DEST_DIR, '')]
+        logging.debug(' '.join(command))
+        subprocess.call(command)
+
 
 if __name__ == '__main__':
 
@@ -595,7 +586,7 @@ if __name__ == '__main__':
 
     # for each lowering in cruise
     for lowering in lowerings:
-        logging.info("Lowering: %s", lowering['lowering_id'])
+        logging.info("Exporting data for lowering: %s", lowering['lowering_id'])
 
         # lowering source dir
         lowering_source_dir = os.path.join(LOWERINGS_FILE_PATH, lowering['id'])
@@ -622,6 +613,6 @@ if __name__ == '__main__':
 
     # sync data to data warehouse
     if not parsed_args.no_transfer:
-        _push_2_data_warehouse(cruise, lowering)
+        _push_2_data_warehouse(cruise, lowerings)
 
     logging.debug("Done")

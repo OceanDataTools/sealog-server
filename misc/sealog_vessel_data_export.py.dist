@@ -189,7 +189,6 @@ if __name__ == '__main__':
                         default=0, action='count',
                         help='Increase output verbosity')
     parser.add_argument('-n', '--no-transfer', action='store_true', default=False, help='build reports and export data but do not push to data warehouse')
-    parser.add_argument('-c', '--current_cruise', action='store_true', default=False, help=' export the data for the most recent cruise')
     parser.add_argument('-C', '--cruise_id', help='export all cruise and lowering data for the specified cruise (i.e. FK200126)')
 
     parsed_args = parser.parse_args()
@@ -205,19 +204,15 @@ if __name__ == '__main__':
     parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
     logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
 
-    if parsed_args.current_cruise and parsed_args.cruise_id:
-        logging.error("Can not specify current_cruise and also a cruise {(-c)}")
-        sys.exit(0)
-
     cruise = None
 
-    # if exporting the current cruise
-    if parsed_args.current_cruise:
-        cruise = next(iter(get_cruises()), None)
-
     # if exporting a specific current cruise
-    elif parsed_args.cruise_id:
+    if parsed_args.cruise_id:
         cruise = get_cruise_by_id(parsed_args.cruise_id)
+
+    # if exporting the current cruise
+    else:
+        cruise = next(iter(get_cruises()), None)
 
     # if no cruise found, exit
     if cruise is None:
