@@ -199,6 +199,7 @@ I've also setup a Slack channel for sealog, please contact me at oceandatarat at
 - University of Rhode Island's Inner Space Center in support of the NOAA Ship Okeanos Explorer and E/V Nautilus
 - R/V Falkor and ROV Subastian operated by the Schmidt Ocean Institute
 - R/V OceanXplorer1, ROV Chimaera, HOV Nadir and HOV Neptune operated by OceanX
+- ROV Hercules, Ocean Exploration Trust
 - ROV Lu'ukai, University of Hawaii
 
 # Thanks and acknowledgments
