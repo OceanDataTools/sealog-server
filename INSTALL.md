@@ -275,7 +275,20 @@ or
 cp ~/sealog-server/misc/sealog_vessel_data_export.py.dist ~/sealog-server/misc/sealog_data_export.py
 ```
 
-Next the boilerplate file needs to be customized for the actual installation.
+Next the `sealog_data_export.py` file needs to be customized for the actual installation.  Open the file and change the following variables to match the desired behavior.
+
+Sealog for Vehicles:
+```
+EXPORT_ROOT_DIR = '/home/sealog/sealog-export'
+VEHICLE_NAME = 'Explorer'
+```
+
+Sealog for Vessels:
+```
+EXPORT_ROOT_DIR = '/home/sealog/sealog-export'
+VESSEL_NAME = 'Discoverer'
+```
+
 
 
 
