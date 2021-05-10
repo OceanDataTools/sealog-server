@@ -420,8 +420,6 @@ class CruiseReportCreator: # pylint: disable=too-many-instance-attributes,too-fe
                 if lowering['stats']['bounding_box'][3] < bbox[3]:
                     bbox[3] = lowering['stats']['bounding_box'][3]
 
-        logging.debug('Building dive track')
-
         fig_dive_locations = plt.figure()
         ax_dive_locations = plt.axes(projection=ccrs.PlateCarree())
 

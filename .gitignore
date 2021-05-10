@@ -26,6 +26,7 @@ misc/sealog_auxDataInserter*.py
 misc/sealog_backupDB.sh
 misc/sealog_build_cruise_summary_report*.py
 misc/sealog_build_lowering_summary_report*.py
+misc/sealog_build_lowering_vehicle_report*.py
 misc/sealog_cruise_responder.py
 misc/sealog_cruise_sync.py
 misc/sealog_lowering_responder.py

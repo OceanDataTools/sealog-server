@@ -12,7 +12,7 @@ AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
 VERSION:    0.3
 CREATED:    2018-11-07
-REVISION:   2021-04-27
+REVISION:   2021-05-10
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2021
@@ -209,6 +209,21 @@ if __name__ == '__main__':
         logging.error("Can not specify current_cruise and also a cruise {(-c)}")
         sys.exit(0)
 
+    cruise = None
+
+    # if exporting the current cruise
+    if parsed_args.current_cruise:
+        cruise = next(iter(get_cruises()), None)
+
+    # if exporting a specific current cruise
+    elif parsed_args.cruise_id:
+        cruise = get_cruise_by_id(parsed_args.cruise_id)
+
+    # if no cruise found, exit
+    if cruise is None:
+        logging.error("Cruise %s not found", parsed_args.cruise_id)
+        sys.exit(0)
+
     # Verify source directories
     success, msg = _verify_source_directories()
     if not success:
@@ -220,73 +235,28 @@ if __name__ == '__main__':
         logging.error("cannot find export directory: %s", EXPORT_ROOT_DIR)
         sys.exit(1)
 
-    # Current Cruise Specified
-    # ========================
-    if parsed_args.current_cruise:
+    logging.info("Cruise ID: %s", cruise['cruise_id'])
+    if 'cruise_name' in cruise['cruise_additional_meta']:
+        logging.info("Cruise Name: %s", cruise['cruise_additional_meta']['cruise_name'])
 
-        # retrieve current cruise record
-        current_cruise = next(iter(get_cruises()), None)
-        if not current_cruise:
-            logging.error("Cruise not found.")
-            sys.exit(1)
+    # cruise source dir
+    cruise_source_dir = os.path.join(CRUISES_FILE_PATH, cruise['id'])
 
-        logging.info("Cruise ID: %s", current_cruise['cruise_id'])
-        if 'cruise_name' in current_cruise['cruise_additional_meta']:
-            logging.info("Cruise Name: %s", current_cruise['cruise_additional_meta']['cruise_name'])
+    #verify cruise source directory exists
+    try:
+        os.path.isdir(cruise_source_dir)
+    except Exception as err:
+        logging.error('cannot find source directory for cruise: %s', cruise_source_dir)
+        logging.debug(str(err))
+        sys.exit(1)
 
-        # current_cruise source dir
-        cruise_source_dir = os.path.join(CRUISES_FILE_PATH, current_cruise['id'])
+    # build cruise export dirs
+    _build_cruise_export_dirs(cruise)
 
-        #verify current_cruise source directory exists
-        try:
-            os.path.isdir(cruise_source_dir)
-        except Exception as err:
-            logging.error('cannot find source directory for cruise: %s', cruise_source_dir)
-            logging.debug(str(err))
-            sys.exit(1)
+    # export cruise data files
+    _export_cruise_sealog_data_files(cruise)
 
-        # build cruise export dirs
-        _build_cruise_export_dirs(current_cruise)
-
-        # export cruise data files
-        _export_cruise_sealog_data_files(current_cruise)
-
-        if not parsed_args.no_transfer:
-            _push_2_data_warehouse(current_cruise)
-
-    # Specified Cruise ID
-    # ========================
-    elif parsed_args.cruise_id:
-
-        # retrieve specified cruise record
-        current_cruise = get_cruise_by_id(parsed_args.cruise_id)
-        if not current_cruise:
-            logging.error("Cruise not found.")
-            sys.exit(1)
-
-        logging.info("Cruise ID: %s", current_cruise['cruise_id'])
-        if 'cruise_name' in current_cruise['cruise_additional_meta']:
-            logging.info("Cruise Name: %s", current_cruise['cruise_additional_meta']['cruise_name'])
-
-        # current_cruise source dir
-        cruise_source_dir = os.path.join(CRUISES_FILE_PATH, current_cruise['id'])
-
-        #verify current_cruise source directory exists
-        try:
-            os.path.isdir(cruise_source_dir)
-        except Exception as err:
-            logging.error('cannot find source directory for cruise: %s', cruise_source_dir)
-            logging.debug(str(err))
-            sys.exit(1)
-
-        # build cruise export dirs
-        _build_cruise_export_dirs(current_cruise)
-
-        # export cruise data files
-        _export_cruise_sealog_data_files(current_cruise)
-
-        # sync data to data warehouse
-        if not parsed_args.no_transfer:
-            _push_2_data_warehouse(current_cruise)
+    if not parsed_args.no_transfer:
+        _push_2_data_warehouse(cruise)
 
     logging.debug("Done")

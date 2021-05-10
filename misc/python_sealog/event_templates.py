@@ -23,10 +23,14 @@ import requests
 
 from .settings import API_SERVER_URL, HEADERS, EVENT_TEMPLATES_API_PATH
 
-def get_event_templates():
+def get_event_templates(system=True, non_system=True):
     '''
     Return the event_export for the event with the given event_uid.
     '''
+
+    if not system and not non_system:
+        logging.warning("Requesting no system templates and no non-system templates will always result in no templates")
+        return []
 
     try:
         url = API_SERVER_URL + EVENT_TEMPLATES_API_PATH
@@ -34,6 +38,13 @@ def get_event_templates():
 
         if req.status_code != 404:
             event_templates = json.loads(req.text)
+
+            if not system:
+                event_templates = [template for template in event_templates if not template['system_template']]
+
+            if not non_system:
+                event_templates = [template for template in event_templates if template['system_template']]
+
             logging.debug(json.dumps(event_templates))
             return event_templates
 
@@ -43,5 +54,5 @@ def get_event_templates():
         logging.debug(str(error))
         raise error
 
-    return None
+    return []
     

@@ -64,6 +64,19 @@ exports.plugin = {
     try {
       const result = await db.listCollections({ name: usersTable }).toArray();
       if (result.length > 0) {
+
+        // Database migration logic
+        const users = await db.collection(usersTable).find().toArray();
+
+        users.forEach(async (user) => {
+        
+          // Add loginToken to users if not present
+          if ( user.loginToken === undefined ) {
+            console.log('Mirgation: Adding missing loginToken to user');
+            await db.collection(usersTable).updateOne( { _id: user._id }, { $set: { 'loginToken': randomAsciiString(20) } } );
+          }
+        });
+
         console.log("Collection already exists... we're done here.");
         return;
       }

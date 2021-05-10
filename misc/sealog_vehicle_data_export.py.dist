@@ -10,9 +10,9 @@ BUGS:
 NOTES:
 AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
-VERSION:    0.3
+VERSION:    0.4
 CREATED:    2018-11-07
-REVISION:   2021-04-27
+REVISION:   2021-05-10
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2021
@@ -39,7 +39,6 @@ from sealog_lowering_nav_2_csv import ExportLoweringNav2CSV
 
 from sealog_build_cruise_summary_report import CruiseSummaryReport
 from sealog_build_lowering_summary_report import LoweringSummaryReport
-from sealog_build_lowering_vehicle_report import LoweringVehicleReport
 
 EXPORT_ROOT_DIR = '/home/sealog/sealog-export'
 VEHICLE_NAME = 'Explorer'
@@ -503,14 +502,63 @@ if __name__ == '__main__':
     parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
     logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
 
-    if parsed_args.current_cruise:
-        if parsed_args.lowering_id or parsed_args.cruise_id:
-            logging.error("Can not specify current_cruise and also a lowering {(}-l{)} or cruise {(}-c{)}")
-            sys.exit(0)
+    if parsed_args.current_cruise and ( parsed_args.lowering_id or parsed_args.cruise_id ):
+        logging.error("Can not specify current_cruise and also a lowering {(}-l{)} or cruise {(}-c{)}")
+        sys.exit(0)
 
-    elif parsed_args.lowering_id and parsed_args.cruise_id:
+    if parsed_args.lowering_id and parsed_args.cruise_id:
         logging.error("Can not specify a lowering {(}-l{)} and cruise {(}-c{)}")
         sys.exit(0)
+
+    cruise = None
+    lowerings = []
+
+    # if exporting all lowerings for the current cruise
+    if parsed_args.current_cruise:
+        cruise = next(iter(get_cruises()), None)
+
+        if cruise is None:
+            logging.error("There are no cruises available for export")
+            sys.exit(0)
+
+        lowerings = get_lowerings_by_cruise(cruise['id'])
+
+    # if exporting for all lowering from a specific cruise
+    elif parsed_args.cruise_id:
+        cruise = get_cruise_by_id(parsed_args.cruise_id)
+
+        if cruise is None:
+            logging.error("Cruise %s not found", parsed_args.cruise_id)
+            sys.exit(0)
+
+        lowerings = get_lowerings_by_cruise(cruise['id'])
+
+    # if exporting for a specific lowering
+    elif parsed_args.lowering_id:
+        lowerings = [get_lowering_by_id(parsed_args.lowering_id)]
+
+        if lowerings[0] is None:
+            logging.error("Lowering %s not found", parsed_args.lowering_id)
+            sys.exit(0)
+
+        cruise = get_cruise_by_lowering(lowerings[0]['id'])
+        
+    # if exporting for the most recent lowering
+    else:
+        lowerings = [next(iter(get_lowerings()), None)]
+
+        if lowerings[0] is None:
+            logging.error("There are no lowerings available for export")
+            sys.exit(0)
+
+        cruise = get_cruise_by_lowering(lowerings[0]['id'])
+
+    if len(lowerings) == 0:
+        logging.warning("There are no lowerings for the specified cruise")
+
+    logging.info("Exporting the follow data:")
+    logging.info("\tCruise: %s", cruise['cruise_id'])
+    logging.info("\tLowering(s): %s", ', '.join([lowering['lowering_id'] for lowering in lowerings]) if len(lowerings) > 0 else "\t NONE")
 
     # Verify source directories
     success, msg = _verify_source_directories()
@@ -520,307 +568,60 @@ if __name__ == '__main__':
 
     # Verify export root directory
     if not os.path.isdir(EXPORT_ROOT_DIR):
-        logging.error("cannot find export directory: %s", EXPORT_ROOT_DIR)
+        logging.error("Cannot find export directory: %s", EXPORT_ROOT_DIR)
         sys.exit(1)
 
-    # Current Cruise Specified
-    # ========================
-    if parsed_args.current_cruise:
+    # current_cruise source dir
+    cruise_source_dir = os.path.join(CRUISES_FILE_PATH, cruise['id'])
 
-        # retrieve current cruise record
-        current_cruise = next(iter(get_cruises()), None)
-        if not current_cruise:
-            logging.error("Cruise not found.")
-            sys.exit(1)
+    #verify cruise source directory exists
+    try:
+        os.path.isdir(cruise_source_dir)
+    except Exception as err:
+        logging.error('Cannot find source directory for cruise: %s', cruise_source_dir)
+        sys.exit(1)
 
-        logging.info("Cruise ID: %s", current_cruise['cruise_id'])
-        if 'cruise_name' in current_cruise['cruise_additional_meta']:
-            logging.info("Cruise Name: %s", current_cruise['cruise_additional_meta']['cruise_name'])
+    # build cruise report
+    _build_cruise_reports(cruise)
 
-        # current_cruise source dir
-        cruise_source_dir = os.path.join(CRUISES_FILE_PATH, current_cruise['id'])
+    # build cruise export dirs
+    _build_cruise_export_dirs(cruise)
 
-        #verify current_cruise source directory exists
-        try:
-            os.path.isdir(cruise_source_dir)
-        except Exception as err:
-            logging.error('cannot find source directory for cruise: %s', cruise_source_dir)
-            sys.exit(1)
+    # export cruise data files
+    _export_cruise_data_files(cruise)
 
-        # build cruise report
-        _build_cruise_reports(current_cruise)
+    # export lowering markers file
+    _export_lowering_markers_file(cruise)
 
-        # build cruise export dirs
-        _build_cruise_export_dirs(current_cruise)
-
-        # export cruise data files
-        _export_cruise_data_files(current_cruise)
-
-        # export lowering markers file
-        _export_lowering_markers_file(current_cruise)
-
-        # retieve lowering records for current cruise
-        current_lowerings = get_lowerings_by_cruise(current_cruise['id'])
-
-        if len(current_lowerings) == 0:
-            logging.warning("No lowerings found for current cruise")
-
-        else:
-            # for each lowering in cruise
-
-            for lowering in current_lowerings:
-                logging.info("Lowering: %s", lowering['lowering_id'])
-
-                # lowering source dir
-                lowering_source_dir = os.path.join(LOWERINGS_FILE_PATH, lowering['id'])
-
-                #verify current_cruise source directory exists
-                if not os.path.isdir(lowering_source_dir):
-                    logging.error('cannot find source directory for lowering: %s', lowering_source_dir)
-                    sys.exit(1)
-
-                # build lowering reports
-                _build_lowering_reports(lowering)
-
-                # build lowering export dirs
-                _build_lowering_export_dirs(current_cruise, lowering)
-
-                # export lowering nav2csv data file
-                _export_lowering_nav_csv_files(lowering)
-
-                # export lowering data files
-                _export_lowering_sealog_data_files(current_cruise, lowering)
-
-                # export lowering cropped data files
-                _export_lowering_openrvdas_data_files(current_cruise, lowering)
-
-                # sync data to data warehouse
-                if not parsed_args.no_transfer:
-                    _push_2_data_warehouse(current_cruise, lowering)
-
-    # Specified Cruise ID
-    # ========================
-    elif parsed_args.cruise_id:
-
-        # retrieve specified cruise record
-        current_cruise = get_cruise_by_id(parsed_args.cruise_id)
-        if not current_cruise:
-            logging.error("Cruise not found.")
-            sys.exit(1)
-
-        logging.info("Cruise ID: %s", current_cruise['cruise_id'])
-        if 'cruise_name' in current_cruise['cruise_additional_meta']:
-            logging.info("Cruise Name: %s", current_cruise['cruise_additional_meta']['cruise_name'])
-
-        # current_cruise source dir
-        cruise_source_dir = os.path.join(CRUISES_FILE_PATH, current_cruise['id'])
-
-        #verify current_cruise source directory exists
-        try:
-            os.path.isdir(cruise_source_dir)
-        except Exception as err:
-            logging.error('cannot find source directory for cruise: %s', cruise_source_dir)
-            sys.exit(1)
-
-        # build cruise report
-        _build_cruise_reports(current_cruise)
-
-        # build cruise export dirs
-        _build_cruise_export_dirs(current_cruise)
-
-        # export cruise data files
-        _export_cruise_data_files(current_cruise)
-
-        # export lowering markers file
-        _export_lowering_markers_file(current_cruise)
-
-        # retieve lowering records for current cruise
-        current_lowerings = get_lowerings_by_cruise(current_cruise['id'])
-
-        if len(current_lowerings) == 0:
-            logging.warning("No lowerings found for current cruise")
-
-        else:
-
-            # for each lowering in cruise
-            for lowering in current_lowerings:
-                logging.info("Lowering: %s", lowering['lowering_id'])
-
-                # lowering source dir
-                lowering_source_dir = os.path.join(LOWERINGS_FILE_PATH, lowering['id'])
-
-                #verify current_cruise source directory exists
-                if not os.path.isdir(lowering_source_dir):
-                    logging.error('Cannot find source directory for lowering: %s', lowering_source_dir)
-                    sys.exit(1)
-
-                # build lowering reports
-                _build_lowering_reports(lowering)
-
-                # build lowering export dirs
-                _build_lowering_export_dirs(current_cruise, lowering)
-
-                # export lowering nav2csv data file
-                _export_lowering_nav_csv_files(lowering)
-
-                # export lowering data files
-                _export_lowering_sealog_data_files(current_cruise, lowering)
-
-                # export lowering cropped data files
-                _export_lowering_openrvdas_data_files(current_cruise, lowering)
-
-                # sync data to data warehouse
-                if not parsed_args.no_transfer:
-                    _push_2_data_warehouse(current_cruise, lowering)
-
-    # Specified Lowering ID
-    # ========================
-    elif parsed_args.lowering_id:
-
-        # retieve specified lowering record
-        current_lowering = get_lowering_by_id(parsed_args.lowering_id)
-
-        if not current_lowering:
-            logging.error("Lowering not found.")
-            sys.exit(1)
-
-        logging.debug("Lowering ID: %s", current_lowering['lowering_id'])
-
-        # current_lowering source dir
-        lowering_source_dir = os.path.join(LOWERINGS_FILE_PATH, current_lowering['id'])
-
-        #verify current_lowering source directory exists
-        if not os.path.isdir(lowering_source_dir):
-            logging.error('cannot find source directory for lowering: %s', lowering_source_dir)
-            sys.exit(1)
-
-        # retrieve corresponding cruise record
-        current_cruise = get_cruise_by_lowering(current_lowering['id'])
-
-        if not current_cruise:
-            logging.error("Lowering is not part of a cruise")
-            sys.exit(1)
-
-        logging.info("Cruise ID: %s", current_cruise['cruise_id'])
-
-        if 'cruise_name' in current_cruise['cruise_additional_meta']:
-            logging.info("Cruise Name: %s", current_cruise['cruise_additional_meta']['cruise_name'])
-
-        # current_cruise source dir
-        cruise_source_dir = os.path.join(CRUISES_FILE_PATH, current_cruise['id'])
-
-        #verify current_cruise source directory exists
-        try:
-            os.path.isdir(cruise_source_dir)
-        except Exception as err:
-            logging.error('cannot find source directory for cruise: %s', cruise_source_dir)
-            sys.exit(1)
-
-        # build cruise report
-        _build_cruise_reports(current_cruise)
-
-        # build cruise export dirs
-        _build_cruise_export_dirs(current_cruise)
-
-        # export cruise data files
-        _export_cruise_data_files(current_cruise)
-
-        # export lowering markers file
-        _export_lowering_markers_file(current_cruise)
-
-        logging.info("Lowering: %s", current_lowering['lowering_id'])
+    # for each lowering in cruise
+    for lowering in lowerings:
+        logging.info("Lowering: %s", lowering['lowering_id'])
 
         # lowering source dir
-        lowering_source_dir = os.path.join(LOWERINGS_FILE_PATH, current_lowering['id'])
+        lowering_source_dir = os.path.join(LOWERINGS_FILE_PATH, lowering['id'])
 
-        #verify current_cruise source directory exists
+        #verify cruise source directory exists
         if not os.path.isdir(lowering_source_dir):
-            logging.error('cannot find source directory for lowering: %s', lowering_source_dir)
+            logging.error('Cannot find source directory for lowering: %s', lowering_source_dir)
             sys.exit(1)
 
         # build lowering reports
-        _build_lowering_reports(current_lowering)
+        _build_lowering_reports(lowering)
 
         # build lowering export dirs
-        _build_lowering_export_dirs(current_cruise, current_lowering)
+        _build_lowering_export_dirs(cruise, lowering)
 
         # export lowering nav2csv data file
-        _export_lowering_nav_csv_files(current_lowering)
+        _export_lowering_nav_csv_files(lowering)
 
         # export lowering data files
-        _export_lowering_sealog_data_files(current_cruise, current_lowering)
+        _export_lowering_sealog_data_files(cruise, lowering)
 
         # export lowering cropped data files
-        _export_lowering_openrvdas_data_files(current_cruise, current_lowering)
+        _export_lowering_openrvdas_data_files(cruise, lowering)
 
-        # sync data to data warehouse
-        if not parsed_args.no_transfer:
-            _push_2_data_warehouse(current_cruise, current_lowering)
-
-    else:
-
-        current_lowering = next(iter(get_lowerings()), None)
-
-        if not current_lowering:
-            logging.error("Lowering not found.")
-            sys.exit(1)
-
-        logging.debug("Lowering ID: %s", current_lowering['lowering_id'])
-
-        # current_lowering source dir
-        lowering_source_dir = os.path.join(LOWERINGS_FILE_PATH, current_lowering['id'])
-
-        #verify current_lowering source directory exists
-        if not os.path.isdir(lowering_source_dir):
-            logging.error('cannot find source directory for lowering: %s', lowering_source_dir)
-            sys.exit(1)
-
-        # retrieve corresponding cruise record
-        current_cruise = get_cruise_by_lowering(current_lowering['id'])
-
-        if not current_cruise:
-            logging.error("Lowering is not part of a cruise")
-            sys.exit(1)
-
-                # build cruise report
-        _build_cruise_reports(current_cruise)
-
-        # build cruise export dirs
-        _build_cruise_export_dirs(current_cruise)
-
-        # export cruise data files
-        _export_cruise_data_files(current_cruise)
-
-        # export lowering markers file
-        _export_lowering_markers_file(current_cruise)
-
-        logging.info("Lowering: %s", current_lowering['lowering_id'])
-
-        # lowering source dir
-        lowering_source_dir = os.path.join(LOWERINGS_FILE_PATH, current_lowering['id'])
-
-        #verify current_cruise source directory exists
-        if not os.path.isdir(lowering_source_dir):
-            logging.error('cannot find source directory for lowering: %s', lowering_source_dir)
-            sys.exit(1)
-
-        # build lowering reports
-        _build_lowering_reports(current_lowering)
-
-        # build lowering export dirs
-        _build_lowering_export_dirs(current_cruise, current_lowering)
-
-        # export lowering nav2csv data file
-        _export_lowering_nav_csv_files(current_lowering)
-
-        # export lowering data files
-        _export_lowering_sealog_data_files(current_cruise, current_lowering)
-
-        # export lowering cropped data files
-        _export_lowering_openrvdas_data_files(current_cruise, current_lowering)
-
-        # sync data to data warehouse
-        if not parsed_args.no_transfer:
-            _push_2_data_warehouse(current_cruise, current_lowering)
+    # sync data to data warehouse
+    if not parsed_args.no_transfer:
+        _push_2_data_warehouse(cruise, lowering)
 
     logging.debug("Done")
