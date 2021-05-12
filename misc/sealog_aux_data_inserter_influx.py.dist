@@ -1,0 +1,221 @@
+#!/usr/bin/env python3
+'''
+FILE:           sealog_aux_data_inserter_influx.py
+
+DESCRIPTION:    This service listens for new events submitted to Sealog, create
+                aux_data records containing the specified real-time data and
+                associates the aux data records with the newly created event.
+
+                This script leverages the OpenRVDAS/InfluxDB integration so that
+                if can add ancillary data from any point in time so long as the
+                data is availble from the InfluxDB.  In the event the data is not
+                available the script will NOT add the corresponding aux_data
+                records.
+
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    0.2
+CREATED:    2021-04-21
+REVISION:   2021-04-27
+
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2021
+'''
+
+import json
+import time
+import logging
+import asyncio
+import websockets
+import yaml
+import requests
+from influxdb_client import InfluxDBClient
+
+from python_sealog.settings import API_SERVER_URL, WS_SERVER_URL, EVENT_AUX_DATA_API_PATH, HEADERS
+from influx_sealog.settings import INFLUX_SERVER_URL, INFLUX_TOKEN, INFLUX_ORG
+from influx_sealog.aux_data_record_builder import SealogInfluxAuxDataRecordBuilder
+
+#-----------------------------------------------------------------------------#
+
+INLINE_CONFIG = '''
+-
+    data_source: realtimeVesselPosition
+    query_measurements:
+        - seapath1
+    aux_record_lookup:
+        S1HeadingTrue:
+            name: heading
+            uom: deg
+            round: 3
+        S1Latitude:
+            name: latitude
+            uom: ddeg
+            round: 6
+            modify:
+                -
+                    test:
+                        -
+                            field: S1NorS
+                            eq: "S"
+                    operation:
+                        -
+                            multiply: -1
+        S1Longitude:
+            name: longitude
+            uom: deg
+            round: 6
+            modify:
+                -
+                    test:
+                        -
+                            field: S1EorW
+                            eq: "W"
+                    operation:
+                        -
+                            multiply: -1
+        S1NorS:
+            no_output: true
+        S1EorW:
+            no_output: true
+'''
+
+# set of events to ignore
+EXCLUDE_SET = ()
+
+# needs to be unique for all currently active dataInserter scripts.
+CLIENT_WSID = 'auxData-dataInserter-influx'
+
+HELLO = {
+    'type': 'hello',
+    'id': CLIENT_WSID,
+    'auth': {
+        'headers': HEADERS
+    },
+    'version': '2',
+    'subs': ['/ws/status/newEvents']
+}
+
+PING = {
+    'type':'ping',
+    'id':CLIENT_WSID
+}
+
+async def aux_data_inserter(aux_data_builders):
+    '''
+    Use the aux_data_builder and the influx_sealog wrapper to submit aux_data
+    records built from influxDB data to the sealog-server API
+    '''
+
+    try:
+        async with websockets.connect(WS_SERVER_URL) as websocket:
+
+            await websocket.send(json.dumps(HELLO))
+
+            while True:
+
+                event = await websocket.recv()
+                event_obj = json.loads(event)
+
+                if event_obj['type'] and event_obj['type'] == 'ping':
+                    await websocket.send(json.dumps(PING))
+                elif event_obj['type'] and event_obj['type'] == 'pub':
+
+                    if event_obj['message']['event_value'] in EXCLUDE_SET:
+                        logging.debug("Skipping because event value is in the exclude set")
+                        continue
+
+                    logging.debug("Event: %s", event_obj['message'])
+
+                    # Build the aux_data records for the given event
+                    for builder in aux_data_builders:
+                        logging.debug("Building aux data record")
+                        record = builder.build_aux_data_record(event_obj['message'])
+                        if record:
+                            try:
+                                logging.debug("Submitting aux data record to Sealog Server")
+                                logging.debug(json.dumps(record))
+                                req= requests.post(API_SERVER_URL + EVENT_AUX_DATA_API_PATH, headers=HEADERS, data = json.dumps(record))
+                                logging.debug("Response: %s", req.text)
+
+                            except Exception as err:
+                                logging.warning("Error submitting aux data record")
+                                logging.debug(str(err))
+                        else:
+                            logging.debug("No aux data for data_source: %s", builder.data_source)
+
+    except Exception as err:
+        logging.error(str(err))
+        raise err
+
+# -------------------------------------------------------------------------------------
+# The main loop of the utility
+# -------------------------------------------------------------------------------------
+if __name__ == '__main__':
+
+    import argparse
+    import os
+    import sys
+
+    parser = argparse.ArgumentParser(description='Aux Data Inserter Service - InfluxDB')
+    parser.add_argument('-v', '--verbosity', dest='verbosity',
+                        default=0, action='count',
+                        help='Increase output verbosity')
+    parser.add_argument('-f', '--config_file', help=' used the specifed configuration file')
+
+    parsed_args = parser.parse_args()
+
+    ############################
+    # Set up logging before we do any other argument parsing (so that we
+    # can log problems with argument parsing).
+
+    LOGGING_FORMAT = '%(asctime)-15s %(levelname)s - %(message)s'
+    logging.basicConfig(format=LOGGING_FORMAT)
+
+    LOG_LEVELS = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
+    parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
+    logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
+
+    aux_data_configs = None # pylint: disable=invalid-name
+
+    if parsed_args.config_file:
+        try:
+            with open(parsed_args.config_file) as file:
+                aux_data_configs = yaml.safe_load(file)
+        except yaml.parser.ParserError:
+            logging.error("Invalid YAML syntax")
+            sys.exit(1)
+    else:
+        try:
+            aux_data_configs = yaml.safe_load(INLINE_CONFIG)
+        except yaml.parser.ParserError:
+            logging.error("Invalid YAML syntax")
+            sys.exit(1)
+
+    logging.debug(json.dumps(aux_data_configs, indent=2))
+
+    # create an influxDB Client
+    client = InfluxDBClient(url=INFLUX_SERVER_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
+
+    # Create the Aux Data Record Builders
+    aux_data_builder_list = list(map(lambda config: SealogInfluxAuxDataRecordBuilder(client, config), aux_data_configs))
+
+    # Run the main loop
+    while True:
+
+        # Wait 5 seconds for the server to complete startup
+        time.sleep(5)
+
+        try:
+            logging.debug("Connecting to event websocket feed...")
+            asyncio.get_event_loop().run_until_complete(aux_data_inserter(aux_data_builder_list))
+        except KeyboardInterrupt:
+            logging.error('Keyboard Interrupted')
+            try:
+                sys.exit(0)
+            except SystemExit:
+                os._exit(0) # pylint: disable=protected-access
+        except Exception as err:
+            logging.debug(str(err))
+            logging.error("Lost connection to server, trying again in 5 seconds")

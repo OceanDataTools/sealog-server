@@ -1,6 +1,7 @@
 
 const Nodemailer = require('nodemailer');
 const SECRET_KEY = require('../../../config/secret');
+const { randomAsciiString } = require('../../../lib/utils');
 
 const Bcrypt = require('bcryptjs');
 const Boom = require('@hapi/boom');
@@ -10,6 +11,7 @@ const Axios = require('axios');
 const Crypto = require('crypto');
 
 const resetPasswordTokenExpires = 15; //minutes
+
 
 const {
   usersTable
@@ -51,6 +53,11 @@ const resetPasswordPayload = Joi.object({
   reCaptcha: Joi.string().optional(),
   password: Joi.string().allow('').max(50).required()
 }).label('resetPasswordPayload');
+
+const autoLoginPayload = Joi.object({
+  reCaptcha: Joi.string().optional(),
+  loginToken: Joi.string().min(20).max(20).required()
+}).label('autoLoginPayload');
 
 const loginPayload = Joi.object({
   reCaptcha: Joi.string().optional(),
@@ -126,6 +133,7 @@ const _renameAndClearFields = (doc) => {
 
   //remove fields entirely
   delete doc.password;
+  delete doc.loginToken;
   delete doc.resetPasswordToken;
   delete doc.resetPasswordExpires;
 
@@ -196,6 +204,8 @@ exports.plugin = {
         user.roles = registeringUserRoles;
         user.system_user = false;
         user.disabled = disableRegisteringUsers;
+        user.loginToken = randomAsciiString(20);
+
 
         const password = request.payload.password;
 
@@ -363,16 +373,29 @@ exports.plugin = {
         let user = null;
 
         try {
-          const result = await db.collection(usersTable).findOne({ username: request.payload.username });
-          if (!result) {
-            return Boom.unauthorized('unknown user or bad password');
+
+          if (request.payload.loginToken) {
+            const result = await db.collection(usersTable).findOne({ loginToken: request.payload.loginToken });
+            if (!result) {
+              return Boom.unauthorized('bad loginToken');
+            }
+
+            user = result;
+
           }
+          else {
+            const result = await db.collection(usersTable).findOne({ username: request.payload.username });
+            if (!result) {
+              return Boom.unauthorized('unknown user or bad password');
+            }
 
-          user = result;
-          const pass = Bcrypt.compareSync(request.payload.password, user.password);
+            user = result;
 
-          if (!pass) {
-            return Boom.unauthorized('unknown user or bad password');
+            const pass = Bcrypt.compareSync(request.payload.password, user.password);
+
+            if (!pass) {
+              return Boom.unauthorized('unknown user or bad password');
+            }
           }
 
           if (user.disabled) {
@@ -411,7 +434,10 @@ exports.plugin = {
       },
       config: {
         validate: {
-          payload: loginPayload
+          payload: Joi.alternatives().try(
+            autoLoginPayload,
+            loginPayload
+          )
         },
         response: {
           status: {

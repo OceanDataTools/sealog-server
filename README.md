@@ -116,81 +116,14 @@ r = requests.post(root_url + api_path, headers=headers, data=payload)
 
 The JWT string (`token`) remains constant for a user as long as the roles for that user do not change. If a user's roles are changed or a user is deleted, the server will reject the JWT.  Therefore scripts only need to include a valid JWT string (`token`) and not the username/password to authenticate API requests to the server.
 
-### Submitting an event using .NET
-
-I don't do .NET.  It's nothing personnal, I just haven't had a need to use it and thus I have never learned it.  However the following codeblock should get a .NET developer fairly close to a working solution.  If someone reading this is a .NET developer can you please test this code block and provide some feedback?
-
-```
-Imports System  
-Imports System.IO  
-Imports System.Net  
-Imports System.Text  
-Namespace Examples.System.Net  
-    Public Class WebRequestPostExample  
-
-            Public Shared Sub Main()  
-            Dim uriString As String
-            uriString = "https://sealog-vehicle.oceandatatools.org:9200/sealog-server"
-
-            Dim loginPath As String
-            loginPath = "/api/v1/auth/login"
-
-            Dim submitPath As String
-            submitPath = "/api/v1/events"
-
-            Dim loginPostParms As New Specialized.NameValueCollection
-            loginPostParms.Add("username", "guest")
-            loginPostParms.Add("password", "")
-
-            Dim eventSubmitPostParams As New Specialized.NameValueCollection
-            eventSubmitPostParams.Add("event_value", "HELLO_WORLD")
-
-            ' Create a request using a URL that can receive a post.
-            Dim request As WebRequest = WebRequest.Create(uriString + loginPath)  
-            ' Set the Method property of the request to POST.  
-            request.Method = "POST"  
-            ' Create POST data and convert it to a byte array.  
-            Dim postData As String = "username:testuser password:password"  
-            Dim byteArray As Byte() = Encoding.UTF8.GetBytes(postData)  
-            ' Set the ContentType property of the WebRequest.  
-            request.ContentType = "application/form-data"  
-            ' Set the ContentLength property of the WebRequest.  
-            request.ContentLength = byteArray.Length  
-            ' Get the request stream.  
-            Dim dataStream As Stream = request.GetRequestStream()  
-            ' Write the data to the request stream.  
-            dataStream.Write(byteArray, 0, byteArray.Length)  
-            ' Close the Stream object.  
-            dataStream.Close()  
-            ' Get the response.  
-            Dim response As WebResponse = request.GetResponse()  
-            ' Display the status.  
-            Console.WriteLine(CType(response, HttpWebResponse).StatusDescription)  
-            ' Get the stream containing content returned by the server.  
-            dataStream = response.GetResponseStream()  
-            ' Open the stream using a StreamReader for easy access.  
-            Dim reader As New StreamReader(dataStream)  
-            ' Read the content.  
-            Dim responseFromServer As String = reader.ReadToEnd()  
-            ' Display the content.  
-            Console.WriteLine(responseFromServer)  
-            ' Clean up the streams.  
-            reader.Close()  
-            dataStream.Close()  
-            response.Close()  
-        End Sub  
-    End Class  
-End Namespace
-```
-
 ### Subscribing to the eventlog stream using python
 
 The sealog server publishes updates to eventlog as a stream that can be subscribed to via websockets.  Because the server implements the pub/sub functionality using the [hapines websocket framework](https://github.com/hapijs/nes) there is some overhead that must be supported when trying to connect via the vanilla websockets libraries.
 
-Please take a look at [this python script](https://github.com/oceandatatools/sealog-server/blob/master/misc/websocketsTest.py) for a quick-n-dirty example of how to connect to the eventlog stream from a python(v3.6) script.
+Please take a look at [this python script](https://github.com/oceandatatools/sealog-server/blob/master/misc/websockets_test.py) for a quick-n-dirty example of how to connect to the eventlog stream from a python(v3.6+) script.
 
 ## Want to Contribute?
-My intention with sealog-server was to create a production quality eventlogging framework for any one to use... but I don't need to do this alone.  Any and all help is appreciated.  This include helping with the server code, fleshing out the documentation, creating some code examples, identifying bugs and making logical feature requests.  Please contact me at oceandatarat at gmail dot com if you want in on the action.
+My intention with sealog-server was to create a production quality event logging framework for any one to use... but I don't need to do this alone.  Any and all help is appreciated.  This include helping with the server code, fleshing out the documentation, creating some code examples, identifying bugs and making logical feature requests.  Please contact me at oceandatarat at gmail dot com if you want in on the action.
 
 I've also setup a Slack channel for sealog, please contact me at oceandatarat at gmail dot com if you would like an invitation.
 
@@ -199,6 +132,8 @@ I've also setup a Slack channel for sealog, please contact me at oceandatarat at
 - University of Rhode Island's Inner Space Center in support of the NOAA Ship Okeanos Explorer and E/V Nautilus
 - R/V Falkor and ROV Subastian operated by the Schmidt Ocean Institute
 - R/V OceanXplorer1, ROV Chimaera, HOV Nadir and HOV Neptune operated by OceanX
+- ROV Hercules, Ocean Exploration Trust
+- ROV Lu'ukai, University of Hawaii
 
 # Thanks and acknowledgments
-Sealog exists thanks to financial support from all of it's users and continues to evolve thanks to the UNOLS community who have helped me since the beginning by sharing their wealth of experience and technical ability.
+Sealog exists thanks to financial support from it's users and continues to evolve thanks to the UNOLS community who have helped me since the beginning by sharing their wealth of experience and technical knowledge.

@@ -1,4 +1,5 @@
 const Bcrypt = require('bcryptjs');
+const { randomAsciiString } = require('../lib/utils');
 
 const saltRounds = 10;
 
@@ -30,7 +31,8 @@ exports.plugin = {
         last_login: new Date(),
         roles: ['admin', 'event_watcher', 'event_logger', 'event_manager', 'cruise_manager'],
         system_user: true,
-        disabled: false
+        disabled: false,
+        loginToken: randomAsciiString(20)
       },
       {
         _id: ObjectID("5981f167212b348aed7fb9f5"),
@@ -41,7 +43,8 @@ exports.plugin = {
         last_login: new Date(),
         roles: ['event_manager', 'event_logger', 'event_watcher'],
         system_user: true,
-        disabled: false
+        disabled: false,
+        loginToken: randomAsciiString(20)
       },
       {
         _id: ObjectID("5981f167212b348aed7fc9f5"),
@@ -52,7 +55,8 @@ exports.plugin = {
         last_login: new Date(),
         roles: ['event_manager', 'event_logger', 'event_watcher', 'cruise_manager'],
         system_user: true,
-        disabled: false
+        disabled: false,
+        loginToken: randomAsciiString(20)
       }
     ];
 
@@ -60,6 +64,19 @@ exports.plugin = {
     try {
       const result = await db.listCollections({ name: usersTable }).toArray();
       if (result.length > 0) {
+
+        // Database migration logic
+        const users = await db.collection(usersTable).find().toArray();
+
+        users.forEach(async (user) => {
+        
+          // Add loginToken to users if not present
+          if ( user.loginToken === undefined ) {
+            console.log('Mirgation: Adding missing loginToken to user');
+            await db.collection(usersTable).updateOne( { _id: user._id }, { $set: { 'loginToken': randomAsciiString(20) } } );
+          }
+        });
+
         console.log("Collection already exists... we're done here.");
         return;
       }

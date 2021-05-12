@@ -1,14 +1,33 @@
+#!/usr/bin/env python3
+'''
+FILE:           sealog_lowering_nav_2_csv.py
+
+DESCRIPTION:    This script exports the navigation data for the specified
+                lowering to csv format
+
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    0.1
+CREATED:    2021-04-21
+REVISION:   2021-04-27
+
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2021
+'''
+
 import json
 import logging
-import pandas as pd
 from io import StringIO
 from datetime import datetime
+import pandas as pd
 
-from python_sealog.lowerings import getLowerings, getLoweringByID
-from python_sealog.event_exports import getEventExportsByLowering
+from python_sealog.lowerings import get_lowerings, get_lowering_by_id
+from python_sealog.event_exports import get_event_exports_by_lowering
 
-desired_raw_columns = ['ts','vehicleRealtimeNavData.longitude_value','vehicleRealtimeNavData.latitude_value', 'vehicleRealtimeNavData.depth_value']
-desired_proc_columns = ['datetime','longitude_ddeg','latitude_ddeg', 'depth_m']
+DESIRED_RAW_COLS = ['ts','vehicleRealtimeNavData.longitude_value','vehicleRealtimeNavData.latitude_value', 'vehicleRealtimeNavData.depth_value']
+DESIRED_PROC_COLS = ['datetime','longitude_ddeg','latitude_ddeg', 'depth_m']
 
 ROUNDING = {
     'longitude_ddeg': 8,
@@ -17,20 +36,25 @@ ROUNDING = {
 }
 
 class ExportLoweringNav2CSV():
+    '''
+    Class that exports lowering navigation data and converts it to csv format
+    '''
 
-    def __init__(self, lowering_id=None, raw_columns=desired_raw_columns, proc_columns=desired_proc_columns, precision=ROUNDING):
+    def __init__(self, lowering_id=None, raw_columns=None, proc_columns=None, precision=None):
         self.lowering_id = lowering_id
-        self.raw_columns = raw_columns
-        self.proc_columns = proc_columns
-        self.precision = precision
+        self.raw_columns = raw_columns or DESIRED_RAW_COLS
+        self.proc_columns = proc_columns or DESIRED_PROC_COLS
+        self.precision = precision or ROUNDING
+        self.data = None
         self.logger = logging.getLogger('ExportLoweringNav2CSV')
 
         self.export_lowering()
 
     def round_data(self):
-        """
+        '''
         Round the data to the specified precision
-        """
+        '''
+
         try:
             decimals = pd.Series(self.precision.values(), index=self.precision.keys())
             self.data = self.data.round(decimals)
@@ -41,35 +65,41 @@ class ExportLoweringNav2CSV():
 
 
     def export_lowering(self):
+        '''
+        Retrieve the lowering record, retrieve the lowering event_export data
+        for the lowering, extract the navigation data from the event_export
+        data.
+        '''
 
-        # retieve specified lowering record
+        # retrieve specified lowering record
         logging.info("Retrieving lowering record")
         lowering = None
         if self.lowering_id is not None:
-            lowering = getLoweringByID(self.lowering_id)
+            lowering = get_lowering_by_id(self.lowering_id)
         else:
-            lowering = getLowerings()[0]
+            lowering = get_lowerings()[0]
 
         if not lowering:
-          logging.error("Lowering %s not found." % self.lowering_id)
-          return None
+            logging.error("Lowering %s not found.", self.lowering_id)
+            return None
 
-        logging.debug("Lowering:\n%s" % json.dumps(lowering, indent=2))
+        logging.debug("Lowering:\n%s", json.dumps(lowering, indent=2))
 
-        logging.info("Extracting \"lowering_in_water\" and \"lowering_out_of_water\" timestamps")
+        logging.info("Extracting \"lowering_descending\" and \"lowering_on_surface\" timestamps")
         try:
-            start_ts = datetime.strptime(lowering['lowering_additional_meta']['milestones']['lowering_in_water'], '%Y-%m-%dT%H:%M:%S.%fZ')
+            start_ts = datetime.strptime(lowering['lowering_additional_meta']['milestones']['lowering_descending'], '%Y-%m-%dT%H:%M:%S.%fZ')
             end_ts = datetime.strptime(lowering['lowering_additional_meta']['milestones']['lowering_on_surface'], '%Y-%m-%dT%H:%M:%S.%fZ')
-        except:
-            logging.error("Problem extracting \"lowering_in_water\" and \"lowering_out_of_water\" timestamps")
+        except Exception as err:
+            logging.error("Problem extracting \"lowering_descending\" and \"lowering_on_surface\" timestamps")
+            logging.debug(str(err))
             return None
 
         # get the events for the lowering
         logging.info("Exporting events for lowering")
-        events = getEventExportsByLowering(lowering['id'], export_format='csv')
+        events = get_event_exports_by_lowering(lowering['id'], export_format='csv')
 
         if events is None:
-            logging.error("No events found for lowering %s:" % self.lowering_id)
+            logging.error("No events found for lowering %s:", self.lowering_id)
             return None
 
         file = StringIO(events)
@@ -85,10 +115,10 @@ class ExportLoweringNav2CSV():
             logging.error(str(err))
             return None
 
-        logging.debug("Data:\n%s" % self.data.head())
+        logging.debug("Data:\n%s", self.data.head())
 
         # crop the events
-        logging.info("Cropping lowering events to \"lowering_in_water\" and \"lowering_out_of_water\" timestamps")
+        logging.info("Cropping lowering events to \"lowering_descending\" and \"lowering_on_surface\" timestamps")
         self.data = self.data[(self.data['ts'] >= start_ts)]
         self.data = self.data[(self.data['ts'] <= end_ts)]
 
@@ -99,14 +129,21 @@ class ExportLoweringNav2CSV():
         self.data.reset_index(inplace=True)
 
         # rename columns
+        self.data = self.data[self.raw_columns]
         self.data.columns = self.proc_columns
 
         # round data
         logging.info("Rounding data: %s", self.precision)
         self.round_data()
 
+        return None
+
 
     def __str__(self):
+        '''
+        Return the navigation data in csv format
+        '''
+
         return self.data.to_csv(index=False, na_rep='', date_format='%Y-%m-%dT%H:%M:%SZ')
 
 
@@ -129,7 +166,7 @@ if __name__ == "__main__":
     ############################
     # Set up logging before we do any other argument parsing (so that we
     # can log problems with argument parsing).
-  
+
     LOGGING_FORMAT = '%(asctime)-15s %(levelname)s - %(message)s'
     logging.basicConfig(format=LOGGING_FORMAT)
 
@@ -142,7 +179,7 @@ if __name__ == "__main__":
         lowering_export = ExportLoweringNav2CSV(parsed_args.lowering_id)
 
         if parsed_args.outfile:
-            logging.info("Saving nav export to %s" % parsed_args.outfile)
+            logging.info("Saving nav export to %s", parsed_args.outfile)
 
             try:
                 with open(parsed_args.outfile, 'w') as out_file:
@@ -162,4 +199,4 @@ if __name__ == "__main__":
         try:
             sys.exit(0)
         except SystemExit:
-            os._exit(0)
+            os._exit(0) # pylint: disable=protected-access

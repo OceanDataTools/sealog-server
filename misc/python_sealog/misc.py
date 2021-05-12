@@ -1,76 +1,104 @@
-import requests
+#!/usr/bin/env python3
+'''
+FILE:           misc.py
+
+DESCRIPTION:    This script contains miscellaneous wrapper functions for the
+                sealog-server api routes.
+
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    0.1
+CREATED:    2021-01-01
+REVISION:
+
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2021
+'''
+
 import json
 import logging
+import requests
 
-from .settings import apiServerURL, apiServerFilePath, headers, eventAuxDataAPIPath
+from .settings import API_SERVER_URL, API_SERVER_FILE_PATH, HEADERS, EVENT_AUX_DATA_API_PATH
 
-dataSourceFilter = ['vehicleRealtimeFramegrabberData']
-imagePath = apiServerFilePath + "/images";
+DATA_SOURCE_FILTER = ['vehicleRealtimeFramegrabberData']
+IMAGE_PATH = API_SERVER_FILE_PATH + "/images"
 
-def getFramegrabListByLowering(lowering_uid):
-  logging.debug("Exporting event data")
-  query='&data_source='.join(dataSourceFilter)
+def get_framegrab_list_by_lowering(lowering_uid):
+    '''
+    Get the list of framegrabs for the given lowering_uid
+    '''
 
-  framegrabFilenames = []
+    logging.debug("Exporting event data")
+    query='&data_source='.join(DATA_SOURCE_FILTER)
 
-  try:
-    url = apiServerURL + eventAuxDataAPIPath + '/bylowering/' + lowering_uid + '?datasource=' + query
-    logging.debug("URL: " + url)
-    r = requests.get(url, headers=headers)
+    framegrab_filenames = []
 
-    if r.status_code != 404:
-      framegrabs = json.loads(r.text)
-      for data in framegrabs:
-        for framegrab in data['data_array']:
-          if framegrab['data_name'] == 'filename':
-            framegrabFilenames.append(framegrab['data_value'])
+    try:
+        url = API_SERVER_URL + EVENT_AUX_DATA_API_PATH + '/bylowering/' + lowering_uid + '?datasource=' + query
+        logging.debug("URL: %s", url)
+        req = requests.get(url, headers=HEADERS)
 
-  except Exception as error:
-    logging.error(str(error))
+        if req.status_code != 404:
+            framegrabs = json.loads(req.text)
+            for data in framegrabs:
+                for framegrab in data['data_array']:
+                    if framegrab['data_name'] == 'filename':
+                        framegrab_filenames.append(framegrab['data_value'])
 
-  return framegrabFilenames
+    except Exception as error:
+        logging.error(str(error))
 
-def getFramegrabListByCruise(cruise_uid):
-  logging.debug("Exporting event data")
-  query='&data_source='.join(dataSourceFilter)
+    return framegrab_filenames
 
-  framegrabFilenames = []
+def get_framegrab_list_by_cruise(cruise_uid):
+    '''
+    Get the list of framegrabs for the given cruise_uid
+    '''
 
-  try:
-    url = apiServerURL + eventAuxDataAPIPath + '/bycruise/' + cruise_uid + '?datasource=' + query
-    logging.debug("URL: " + url)
-    r = requests.get(url, headers=headers)
+    logging.debug("Exporting event data")
+    query='&data_source='.join(DATA_SOURCE_FILTER)
 
-    if r.status_code != 404:
-      framegrabs = json.loads(r.text)
-      for data in framegrabs:
-        for framegrab in data['data_array']:
-          if framegrab['data_name'] == 'filename':
-            framegrabFilenames.append(framegrab['data_value'])
+    framegrab_filenames = []
 
-  except Exception as error:
-    logging.error(str(error))
+    try:
+        url = API_SERVER_URL + EVENT_AUX_DATA_API_PATH + '/bycruise/' + cruise_uid + '?datasource=' + query
+        logging.debug("URL: %s", url)
+        req = requests.get(url, headers=HEADERS)
 
-  return framegrabFilenames
+        if req.status_code != 404:
+            framegrabs = json.loads(req.text)
+            for data in framegrabs:
+                for framegrab in data['data_array']:
+                    if framegrab['data_name'] == 'filename':
+                        framegrab_filenames.append(framegrab['data_value'])
 
-def getFramegrabListByFile(filename):
+    except Exception as error:
+        logging.error(str(error))
 
-  logging.debug(filename)
-  framegrabFilenames = []
+    return framegrab_filenames
 
-  try:
-    f = open(filename)
-    r = json.loads(f.read())
-    # logging.debug(r)
+def get_framegrab_list_by_file(filename):
+    '''
+    Get the list of framegrabs based on the contents of the given file
+    '''
 
-    for data in r:
-      if data['data_source'] in dataSourceFilter:
-        for framegrab in data['data_array']:
-          if framegrab['data_name'] == 'filename':
-            framegrabFilenames.append(framegrab['data_value'])
+    logging.debug(filename)
+    framegrab_filenames = []
 
-  except Exception as error:
-    logging.error(str(error))
+    try:
+        with open(filename, 'r') as file:
+            framegrab_list = json.loads(file.read())
 
-  return framegrabFilenames
+            for data in framegrab_list:
+                if data['data_source'] in DATA_SOURCE_FILTER:
+                    for framegrab in data['data_array']:
+                        if framegrab['data_name'] == 'filename':
+                            framegrab_filenames.append(framegrab['data_value'])
 
+    except Exception as error:
+        logging.error(str(error))
+
+    return framegrab_filenames

@@ -1,11 +1,30 @@
+#!/usr/bin/env python3
+'''
+FILE:           settings.py
+
+DESCRIPTION:    This file contains the settings used by the influx_sealog
+				functions to communicate with the influxDB API
+
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    0.1
+CREATED:    2021-01-01
+REVISION:
+
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2021
+'''
+
 # URL to influx server
-influxServerURL = ""
+INFLUX_SERVER_URL = ""
 
 # Influx server authorization token
-influxToken = ""
+INFLUX_TOKEN = ""
 
 # Influx server org containing sensor data
-influxOrg = ""
+INFLUX_ORG = ""
 
 # Influx server bucket containing sensor data
-influxBucket = ""
+INFLUX_BUCKET = ""

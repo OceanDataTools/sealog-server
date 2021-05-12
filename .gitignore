@@ -5,31 +5,44 @@ node_modules
 npm-debug.log
 package-lock.json
 
-# virtual environment
+# Virtual environment
 venv/
 
-# dumb files OS X adds
+# Dumb files OS X adds
 .DS_Store
 
 # Scripts typically customized to the vessel/vehicles individual needs
+misc/cache_udp_data*.py
 misc/influx_sealog/settings*.py
 misc/python_sealog/settings*.py
-misc/sealog-asnap.py
-misc/sealog-cruiseResponder.py
-misc/sealog-cruiseSync.py
-misc/sealog-loweringResponder.py
-misc/sealog-autoActions.py
-misc/sealog-auxDataInserter-nav.py
-misc/sealog-udp2MongoDB.py
+misc/reporting/sealog_doc_template*.py
+misc/reporting/sealog_report_builder*.py
+misc/sealog_asnap.py
+misc/sealog_auto_actions*.py
+misc/sealog_aux_data_inserter*.py
+misc/sealog_aux_data_inserter*.py
+misc/sealog_aux_data_inserter_nav.py
+misc/sealog_auxDataInserter*.py
 misc/sealog_backupDB.sh
+misc/sealog_build_*_report*.py
+misc/sealog_cruise_responder.py
+misc/sealog_cruise_sync.py
+misc/sealog_lowering_responder.py
 misc/sealog_postLowering.sh
 misc/sealog_preLowering.sh
 misc/sealog_restoreDBfromBackup.sh
-misc/sealog_vehicle_postCruise.sh
+misc/sealog_udp2MongoDB.py
+misc/sealog_*_data_export_full.py*
+misc/sealog_*_data_export.py
 misc/sealog_vessel_postCruise.sh
-misc/sealog-auxDataInserter*.py
-misc/sealog-udp2MongoDB*.py
-misc/sealog_vehicle_data_export.py
+
+# files that need to be updated to the v2.1 standard or deleted
+misc/merge_*
+misc/sealog-auxDataInserter*
+misc/sealog-udp2MongoDB*
+
+# files related to reporting
+misc/reporting
 
 # Configuration files custom to the sealog-server instance
 config/db_constants.js
@@ -38,6 +51,6 @@ config/manifest.js
 config/path_constants.js
 config/secret.js
 
-# dumb python generated fiels
+# Dumb python generated fiels
 *.pyc
 __pycache__

@@ -7,6 +7,7 @@
 #
 #  Author: Webb Pinner webbpinner@gmail.com
 # Created: 2019-05-11
+# Revised: 2021-05-06
 
 TIMESTAMP=`date +%F-%H%M`
 PWD=pwd
@@ -31,7 +32,7 @@ fi
 # Goto the backup directory
 cd ${BACKUP_DIR}
 
-#Run the daily backup of remaining databases.
+# Backup specified Sealog database
 echo "Starting backup of ${DATABASE_NAME}...." >> ${BACKUP_LOG}
 ${MONGOBIN_PATH}/mongodump --host ${MONGO_HOST}:${MONGO_PORT} --db ${DATABASE_NAME} >> ${BACKUP_LOG} 2>&1
 
@@ -42,8 +43,8 @@ if [ $? != 0 ]; then
     exit -1
 fi
 
-#Name the new backup appropriately
-echo "Renaming backup directory to ${BACKUP_NAME}" >> ${BACKUP_LOG}
+# Name the new backup appropriately
+echo "Renaming database backup (dump) to ${BACKUP_NAME}" >> ${BACKUP_LOG}
 mv dump ${BACKUP_NAME}
 
 # Return to where we started
