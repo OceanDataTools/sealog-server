@@ -21,8 +21,6 @@ import json
 import logging
 import tempfile
 import subprocess
-import glob
-from datetime import datetime
 
 from python_sealog.settings import API_SERVER_FILE_PATH
 from python_sealog.cruises import get_cruises, get_cruise_by_id, get_cruise_by_lowering
@@ -30,7 +28,7 @@ from python_sealog.lowerings import get_lowerings, get_lowering_by_id, get_lower
 from python_sealog.misc import get_framegrab_list_by_lowering
 from python_sealog.events import get_events_by_lowering
 from python_sealog.event_aux_data import get_event_aux_data_by_lowering
-from python_sealog.event_exports import get_event_export, get_event_exports_by_lowering
+from python_sealog.event_exports import get_event_exports_by_lowering
 from python_sealog.event_templates import get_event_templates
 
 EXPORT_ROOT_DIR = '/home/sealog/sealog-export'
@@ -255,55 +253,55 @@ if __name__ == '__main__':
         logging.error("Can not specify a lowering {(}-l{)} and cruise {(}-c{)}")
         sys.exit(0)
 
-    cruise = None
-    lowerings = []
+    selected_cruise = None # pylint: disable=invalid-name
+    selected_lowerings = []
 
     # if exporting all lowerings for the current cruise
     if parsed_args.current_cruise:
-        cruise = next(iter(get_cruises()), None)
+        selected_cruise = next(iter(get_cruises()), None)
 
-        if cruise is None:
+        if selected_cruise is None:
             logging.error("There are no cruises available for export")
             sys.exit(0)
 
-        lowerings = get_lowerings_by_cruise(cruise['id'])
+        selected_lowerings = get_lowerings_by_cruise(selected_cruise['id'])
 
     # if exporting for all lowering from a specific cruise
     elif parsed_args.cruise_id:
-        cruise = get_cruise_by_id(parsed_args.cruise_id)
+        selected_cruise = get_cruise_by_id(parsed_args.cruise_id)
 
-        if cruise is None:
+        if selected_cruise is None:
             logging.error("Cruise %s not found", parsed_args.cruise_id)
             sys.exit(0)
 
-        lowerings = get_lowerings_by_cruise(cruise['id'])
+        selected_lowerings = get_lowerings_by_cruise(selected_cruise['id'])
 
     # if exporting for a specific lowering
     elif parsed_args.lowering_id:
-        lowerings = [get_lowering_by_id(parsed_args.lowering_id)]
+        selected_lowerings = [get_lowering_by_id(parsed_args.lowering_id)]
 
-        if lowerings[0] is None:
+        if selected_lowerings[0] is None:
             logging.error("Lowering %s not found", parsed_args.lowering_id)
             sys.exit(0)
 
-        cruise = get_cruise_by_lowering(lowerings[0]['id'])
-        
+        selected_cruise = get_cruise_by_lowering(selected_lowerings[0]['id'])
+
     # if exporting for the most recent lowering
     else:
-        lowerings = [next(iter(get_lowerings()), None)]
+        selected_lowerings = [next(iter(get_lowerings()), None)]
 
-        if lowerings[0] is None:
+        if selected_lowerings[0] is None:
             logging.error("There are no lowerings available for export")
             sys.exit(0)
 
-        cruise = get_cruise_by_lowering(lowerings[0]['id'])
+        selected_cruise = get_cruise_by_lowering(selected_lowerings[0]['id'])
 
-    if len(lowerings) == 0:
+    if len(selected_lowerings) == 0:
         logging.warning("There are no lowerings for the specified cruise")
 
     logging.info("Exporting the follow data:")
-    logging.info("\tCruise: %s", cruise['cruise_id'])
-    logging.info("\tLowering(s): %s", ', '.join([lowering['lowering_id'] for lowering in lowerings]) if len(lowerings) > 0 else "\t NONE")
+    logging.info("\tCruise: %s", selected_cruise['cruise_id'])
+    logging.info("\tLowering(s): %s", ', '.join([lowering['lowering_id'] for lowering in selected_lowerings]) if len(selected_lowerings) > 0 else "\t NONE")
 
     # Verify source directories
     success, msg = _verify_source_directories()
@@ -317,7 +315,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     # current_cruise source dir
-    cruise_source_dir = os.path.join(CRUISES_FILE_PATH, cruise['id'])
+    cruise_source_dir = os.path.join(CRUISES_FILE_PATH, selected_cruise['id'])
 
     #verify cruise source directory exists
     try:
@@ -327,17 +325,17 @@ if __name__ == '__main__':
         sys.exit(1)
 
     # build cruise export dirs
-    _build_cruise_export_dirs(cruise)
+    _build_cruise_export_dirs(selected_cruise)
 
     # export cruise data files
-    _export_cruise_sealog_data_files(cruise)
+    _export_cruise_sealog_data_files(selected_cruise)
 
     # for each lowering in cruise
-    for lowering in lowerings:
-        logging.info("Exporting data for lowering: %s", lowering['lowering_id'])
+    for selected_lowering in selected_lowerings:
+        logging.info("Exporting data for lowering: %s", selected_lowering['lowering_id'])
 
         # lowering source dir
-        lowering_source_dir = os.path.join(LOWERINGS_FILE_PATH, lowering['id'])
+        lowering_source_dir = os.path.join(LOWERINGS_FILE_PATH, selected_lowering['id'])
 
         #verify cruise source directory exists
         if not os.path.isdir(lowering_source_dir):
@@ -345,9 +343,9 @@ if __name__ == '__main__':
             sys.exit(1)
 
         # build lowering export dirs
-        _build_lowering_export_dirs(cruise, lowering)
+        _build_lowering_export_dirs(selected_cruise, selected_lowering)
 
         # export lowering data files
-        _export_lowering_sealog_data_files(cruise, lowering)
+        _export_lowering_sealog_data_files(selected_cruise, selected_lowering)
 
     logging.debug("Done")

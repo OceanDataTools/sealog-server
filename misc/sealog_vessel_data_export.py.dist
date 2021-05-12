@@ -161,18 +161,18 @@ if __name__ == '__main__':
     parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
     logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
 
-    cruise = None
+    selected_cruise = None # pylint: disable=invalid-name
 
     # if exporting a specific current cruise
     if parsed_args.cruise_id:
-        cruise = get_cruise_by_id(parsed_args.cruise_id)
+        selected_cruise = get_cruise_by_id(parsed_args.cruise_id)
 
     # if exporting the current cruise
     else:
-        cruise = next(iter(get_cruises()), None)
+        selected_cruise = next(iter(get_cruises()), None)
 
     # if no cruise found, exit
-    if cruise is None:
+    if selected_cruise is None:
         logging.error("Cruise %s not found", parsed_args.cruise_id)
         sys.exit(0)
 
@@ -187,12 +187,12 @@ if __name__ == '__main__':
         logging.error("cannot find export directory: %s", EXPORT_ROOT_DIR)
         sys.exit(1)
 
-    logging.info("Cruise ID: %s", cruise['cruise_id'])
-    if 'cruise_name' in cruise['cruise_additional_meta']:
-        logging.info("Cruise Name: %s", cruise['cruise_additional_meta']['cruise_name'])
+    logging.info("Cruise ID: %s", selected_cruise['cruise_id'])
+    if 'cruise_name' in selected_cruise['cruise_additional_meta']:
+        logging.info("Cruise Name: %s", selected_cruise['cruise_additional_meta']['cruise_name'])
 
     # cruise source dir
-    cruise_source_dir = os.path.join(CRUISES_FILE_PATH, cruise['id'])
+    cruise_source_dir = os.path.join(CRUISES_FILE_PATH, selected_cruise['id'])
 
     #verify cruise source directory exists
     try:
@@ -203,9 +203,9 @@ if __name__ == '__main__':
         sys.exit(1)
 
     # build cruise export dirs
-    _build_cruise_export_dirs(cruise)
+    _build_cruise_export_dirs(selected_cruise)
 
     # export cruise data files
-    _export_cruise_sealog_data_files(cruise)
+    _export_cruise_sealog_data_files(selected_cruise)
 
     logging.debug("Done")
