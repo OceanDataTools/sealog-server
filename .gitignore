@@ -40,7 +40,9 @@ misc/sealog_vessel_postCruise.sh
 misc/merge_*
 misc/sealog-auxDataInserter*
 misc/sealog-udp2MongoDB*
-misc/sealog-utils*
+
+# files related to reporting
+misc/reporting
 
 # Configuration files custom to the sealog-server instance
 config/db_constants.js
