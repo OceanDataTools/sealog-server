@@ -5,7 +5,7 @@ const resetPasswordURL = "http://localhost/resetPassword/";
 const reCaptchaSecret = "";
 const disableRegisteringUsers = true;
 const registeringUserRoles = ["event_watcher", "event_logger", "event_manager", "cruise_manager"];
-const useAccessControl = true;
+const useAccessControl = false;
 
 module.exports = {
   emailAddress,

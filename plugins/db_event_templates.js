@@ -14,6 +14,19 @@ exports.plugin = {
     try {
       const result = await db.listCollections({ name: eventTemplatesTable }).toArray();
       if (result.length > 0) {
+
+        // Database migration logic
+        const eventTemplates = await db.collection(eventTemplatesTable).find().toArray();
+
+        eventTemplates.forEach(async (eventTemplate) => {
+        
+          // Add template_categories to eventTemplate if not present
+          if ( eventTemplate.template_categories === undefined ) {
+            console.log('Mirgation: Adding missing template_categories to event template');
+            await db.collection(eventTemplatesTable).updateOne( { _id: eventTemplate._id }, { $set: { 'template_categories': [] } } );
+          }
+        });
+
         console.log("Collection already exists... we're done here.");
         return;
       }
