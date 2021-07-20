@@ -25,6 +25,12 @@ exports.plugin = {
             console.log('Mirgation: Adding missing template_categories to event template');
             await db.collection(eventTemplatesTable).updateOne( { _id: eventTemplate._id }, { $set: { 'template_categories': [] } } );
           }
+
+          // Add disabled to eventTemplate if not present
+          if ( eventTemplate.disabled === undefined ) {
+            console.log('Mirgation: Adding missing disabled to event template');
+            await db.collection(eventTemplatesTable).updateOne( { _id: eventTemplate._id }, { $set: { 'disabled': false } } );
+          }
         });
 
         console.log("Collection already exists... we're done here.");

@@ -23,7 +23,7 @@ import requests
 
 from .settings import API_SERVER_URL, HEADERS, CRUISES_API_PATH
 
-def get_cruise(cruise_uid, export_format='json'):
+def get_cruise(cruise_uid, export_format='json', api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return a cruise record based on the cruise_id.  Returns the record as a json
     object by default.  Set export_format to 'csv' to return the record in csv
@@ -31,8 +31,8 @@ def get_cruise(cruise_uid, export_format='json'):
     '''
 
     try:
-        url = API_SERVER_URL + CRUISES_API_PATH + '/' + cruise_uid + '?format=' + export_format
-        req = requests.get(url, headers=HEADERS)
+        url = api_server_url + CRUISES_API_PATH + '/' + cruise_uid + '?format=' + export_format
+        req = requests.get(url, headers=headers)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -50,15 +50,15 @@ def get_cruise(cruise_uid, export_format='json'):
     return None
 
 
-def get_cruises(export_format='json'):
+def get_cruises(export_format='json', api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return all cruise records.  Returns the records as json objects by default
     Set export_format to 'csv' to return the records in csv format.
     '''
 
     try:
-        url = API_SERVER_URL + CRUISES_API_PATH + '?format=' + export_format
-        req = requests.get(url, headers=HEADERS)
+        url = api_server_url + CRUISES_API_PATH + '?format=' + export_format
+        req = requests.get(url, headers=headers)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -81,14 +81,14 @@ def get_cruises(export_format='json'):
     return None
 
 
-def get_cruise_uid_by_id(cruise_id):
+def get_cruise_uid_by_id(cruise_id, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the UID for a cruise record based on the cruise_id.
     '''
 
     try:
-        url = API_SERVER_URL + CRUISES_API_PATH + '?cruise_id=' + cruise_id
-        req = requests.get(url, headers=HEADERS)
+        url = api_server_url + CRUISES_API_PATH + '?cruise_id=' + cruise_id
+        req = requests.get(url, headers=headers)
 
         if req.status_code == 200:
             cruise = json.loads(req.text)[0]
@@ -102,7 +102,7 @@ def get_cruise_uid_by_id(cruise_id):
     return None
 
 
-def get_cruise_by_id(cruise_id, export_format='json'):
+def get_cruise_by_id(cruise_id, export_format='json', api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the cruise record based on the cruise_id.  Returns the records as json
     object by default.  Set export_format to 'csv' to return the record in csv
@@ -110,8 +110,8 @@ def get_cruise_by_id(cruise_id, export_format='json'):
     '''
 
     try:
-        url = API_SERVER_URL + CRUISES_API_PATH + '?cruise_id=' + cruise_id + '&format=' + export_format
-        req = requests.get(url, headers=HEADERS)
+        url = api_server_url + CRUISES_API_PATH + '?cruise_id=' + cruise_id + '&format=' + export_format
+        req = requests.get(url, headers=headers)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -129,7 +129,7 @@ def get_cruise_by_id(cruise_id, export_format='json'):
     return None
 
 
-def get_cruise_by_lowering(lowering_uid, export_format='json'):
+def get_cruise_by_lowering(lowering_uid, export_format='json', api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the cruise record that contains the lowering whose uid is
     lowering_uid.  Returns the record as a json object by default.  Set
@@ -137,8 +137,8 @@ def get_cruise_by_lowering(lowering_uid, export_format='json'):
     '''
 
     try:
-        url = API_SERVER_URL + CRUISES_API_PATH + '/bylowering/' + lowering_uid + '?format=' + export_format
-        req = requests.get(url, headers=HEADERS)
+        url = api_server_url + CRUISES_API_PATH + '/bylowering/' + lowering_uid + '?format=' + export_format
+        req = requests.get(url, headers=headers)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -156,7 +156,7 @@ def get_cruise_by_lowering(lowering_uid, export_format='json'):
     return None
 
 
-def get_cruise_by_event(event_uid, export_format='json'):
+def get_cruise_by_event(event_uid, export_format='json', api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the cruise record that contains the event whose uid is
     event_uid.  Returns the record as a json object by default.  Set
@@ -164,8 +164,8 @@ def get_cruise_by_event(event_uid, export_format='json'):
     '''
 
     try:
-        url = API_SERVER_URL + CRUISES_API_PATH + '/byevent/' + event_uid + '?format=' + export_format
-        req = requests.get(url, headers=HEADERS)
+        url = api_server_url + CRUISES_API_PATH + '/byevent/' + event_uid + '?format=' + export_format
+        req = requests.get(url, headers=headers)
 
         if req.status_code == 200:
             if export_format == 'json':

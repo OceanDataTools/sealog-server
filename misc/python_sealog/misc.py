@@ -26,7 +26,7 @@ from .settings import API_SERVER_URL, API_SERVER_FILE_PATH, HEADERS, EVENT_AUX_D
 DATA_SOURCE_FILTER = ['vehicleRealtimeFramegrabberData']
 IMAGE_PATH = API_SERVER_FILE_PATH + "/images"
 
-def get_framegrab_list_by_lowering(lowering_uid):
+def get_framegrab_list_by_lowering(lowering_uid, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Get the list of framegrabs for the given lowering_uid
     '''
@@ -37,9 +37,9 @@ def get_framegrab_list_by_lowering(lowering_uid):
     framegrab_filenames = []
 
     try:
-        url = API_SERVER_URL + EVENT_AUX_DATA_API_PATH + '/bylowering/' + lowering_uid + '?datasource=' + query
+        url = api_server_url + EVENT_AUX_DATA_API_PATH + '/bylowering/' + lowering_uid + '?datasource=' + query
         logging.debug("URL: %s", url)
-        req = requests.get(url, headers=HEADERS)
+        req = requests.get(url, headers=headers)
 
         if req.status_code != 404:
             framegrabs = json.loads(req.text)
@@ -53,7 +53,7 @@ def get_framegrab_list_by_lowering(lowering_uid):
 
     return framegrab_filenames
 
-def get_framegrab_list_by_cruise(cruise_uid):
+def get_framegrab_list_by_cruise(cruise_uid, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Get the list of framegrabs for the given cruise_uid
     '''
@@ -64,9 +64,9 @@ def get_framegrab_list_by_cruise(cruise_uid):
     framegrab_filenames = []
 
     try:
-        url = API_SERVER_URL + EVENT_AUX_DATA_API_PATH + '/bycruise/' + cruise_uid + '?datasource=' + query
+        url = api_server_url + EVENT_AUX_DATA_API_PATH + '/bycruise/' + cruise_uid + '?datasource=' + query
         logging.debug("URL: %s", url)
-        req = requests.get(url, headers=HEADERS)
+        req = requests.get(url, headers=headers)
 
         if req.status_code != 404:
             framegrabs = json.loads(req.text)

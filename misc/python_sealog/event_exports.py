@@ -23,14 +23,14 @@ import requests
 
 from .settings import API_SERVER_URL, HEADERS, EVENT_EXPORTS_API_PATH
 
-def get_event_export(event_uid):
+def get_event_export(event_uid, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the event_export for the event with the given event_uid.
     '''
 
     try:
-        url = API_SERVER_URL + EVENT_EXPORTS_API_PATH + '/' + event_uid
-        req = requests.get(url, headers=HEADERS)
+        url = api_server_url + EVENT_EXPORTS_API_PATH + '/' + event_uid
+        req = requests.get(url, headers=headers)
 
         if req.status_code != 404:
             event = json.loads(req.text)
@@ -44,7 +44,7 @@ def get_event_export(event_uid):
     return None
 
 
-def get_event_exports_by_cruise(cruise_uid, export_format='json', event_filter=''):
+def get_event_exports_by_cruise(cruise_uid, export_format='json', event_filter='', api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the event_exports for the cruise with the given cruise_uid.  Returns
     the records as an array of json objects by default.  Set export_format to
@@ -53,12 +53,12 @@ def get_event_exports_by_cruise(cruise_uid, export_format='json', event_filter='
     '''
 
     try:
-        url = API_SERVER_URL + EVENT_EXPORTS_API_PATH + '/bycruise/' + cruise_uid + '?format=' + export_format
+        url = api_server_url + EVENT_EXPORTS_API_PATH + '/bycruise/' + cruise_uid + '?format=' + export_format
 
         if event_filter != '':
             url += '&value=' + event_filter
 
-        req = requests.get(url, headers=HEADERS)
+        req = requests.get(url, headers=headers)
 
         if req.status_code != 404:
 
@@ -75,7 +75,7 @@ def get_event_exports_by_cruise(cruise_uid, export_format='json', event_filter='
     return None
 
 
-def get_event_exports_by_lowering(lowering_uid, export_format='json', event_filter=''):
+def get_event_exports_by_lowering(lowering_uid, export_format='json', event_filter='', api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the event_exports for the lowering with the given lowering_uid.
     Returns the records as an array of json objects by default.  Set
@@ -85,12 +85,12 @@ def get_event_exports_by_lowering(lowering_uid, export_format='json', event_filt
     '''
 
     try:
-        url = API_SERVER_URL + EVENT_EXPORTS_API_PATH + '/bylowering/' + lowering_uid + '?format=' + export_format
+        url = api_server_url + EVENT_EXPORTS_API_PATH + '/bylowering/' + lowering_uid + '?format=' + export_format
 
         if event_filter != '':
             url += '&value=' + event_filter
 
-        req = requests.get(url, headers=HEADERS)
+        req = requests.get(url, headers=headers)
 
         if req.status_code != 404:
 

@@ -23,7 +23,7 @@ import requests
 
 from .settings import API_SERVER_URL, HEADERS, EVENTS_API_PATH
 
-def get_event(event_uid, export_format='json'):
+def get_event(event_uid, export_format='json', api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return an event record based on the event_uid.  Returns the record as a json
     object by default.  Set export_format to 'csv' to return the record in csv
@@ -31,8 +31,8 @@ def get_event(event_uid, export_format='json'):
     '''
 
     try:
-        url = API_SERVER_URL + EVENTS_API_PATH + '/' + event_uid + '?format=' + export_format
-        req = requests.get(url, headers=HEADERS)
+        url = api_server_url + EVENTS_API_PATH + '/' + event_uid + '?format=' + export_format
+        req = requests.get(url, headers=headers)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -50,7 +50,7 @@ def get_event(event_uid, export_format='json'):
     return None
 
 
-def get_events_by_cruise(cruise_uid, export_format='json', event_filter=''):
+def get_events_by_cruise(cruise_uid, export_format='json', event_filter='', api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return event records based on the cruise_uid.  Returns the records as json
     objects by default.  Set export_format to 'csv' to return the records in
@@ -59,11 +59,11 @@ def get_events_by_cruise(cruise_uid, export_format='json', event_filter=''):
     '''
 
     try:
-        url = API_SERVER_URL + EVENTS_API_PATH + '/bycruise/' + cruise_uid + '?format=' + export_format
+        url = api_server_url + EVENTS_API_PATH + '/bycruise/' + cruise_uid + '?format=' + export_format
         if event_filter != '':
             url += '&value=' + event_filter
 
-        req = requests.get(url, headers=HEADERS)
+        req = requests.get(url, headers=headers)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -86,7 +86,7 @@ def get_events_by_cruise(cruise_uid, export_format='json', event_filter=''):
     return None
 
 
-def get_events_by_lowering(lowering_uid, export_format='json', event_filter=''):
+def get_events_by_lowering(lowering_uid, export_format='json', event_filter='', api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return event records based on the lowering_uid.  Returns the records as
     json objects by default.  Set export_format to 'csv' to return the records
@@ -95,11 +95,11 @@ def get_events_by_lowering(lowering_uid, export_format='json', event_filter=''):
     '''
 
     try:
-        url = API_SERVER_URL + EVENTS_API_PATH + '/bylowering/' + lowering_uid + '?format=' + export_format
+        url = api_server_url + EVENTS_API_PATH + '/bylowering/' + lowering_uid + '?format=' + export_format
         if event_filter != '':
             url += '&value=' + event_filter
 
-        req = requests.get(url, headers=HEADERS)
+        req = requests.get(url, headers=headers)
 
         if req.status_code == 200:
 

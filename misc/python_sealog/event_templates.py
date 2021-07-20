@@ -23,7 +23,7 @@ import requests
 
 from .settings import API_SERVER_URL, HEADERS, EVENT_TEMPLATES_API_PATH
 
-def get_event_templates(system=True, non_system=True):
+def get_event_templates(system=True, non_system=True, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the event_export for the event with the given event_uid.
     '''
@@ -33,8 +33,8 @@ def get_event_templates(system=True, non_system=True):
         return []
 
     try:
-        url = API_SERVER_URL + EVENT_TEMPLATES_API_PATH
-        req = requests.get(url, headers=HEADERS)
+        url = api_server_url + EVENT_TEMPLATES_API_PATH
+        req = requests.get(url, headers=headers)
 
         if req.status_code != 404:
             event_templates = json.loads(req.text)

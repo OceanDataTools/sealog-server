@@ -23,14 +23,14 @@ import requests
 
 from .settings import API_SERVER_URL, HEADERS, CUSTOM_VAR_API_PATH
 
-def get_custom_var(var_uid):
+def get_custom_var(var_uid, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return a custom_var record based on the var_uid.
     '''
 
     try:
-        url = API_SERVER_URL + CUSTOM_VAR_API_PATH + '/' + var_uid
-        req = requests.get(url, headers=HEADERS)
+        url = api_server_url + CUSTOM_VAR_API_PATH + '/' + var_uid
+        req = requests.get(url, headers=headers)
         logging.debug(req.text)
 
         if req.status_code != 404:
@@ -46,14 +46,14 @@ def get_custom_var(var_uid):
     return None
 
 
-def get_custom_var_uid_by_name(var_name):
+def get_custom_var_uid_by_name(var_name, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return a custom_var uid based on the var_name.
     '''
 
     try:
-        url = API_SERVER_URL + CUSTOM_VAR_API_PATH + '?name=' + var_name
-        req = requests.get(url, headers=HEADERS)
+        url = api_server_url + CUSTOM_VAR_API_PATH + '?name=' + var_name
+        req = requests.get(url, headers=headers)
         logging.debug(req.text)
 
         if req.status_code != 404:
@@ -68,14 +68,14 @@ def get_custom_var_uid_by_name(var_name):
     return None
 
 
-def get_custom_var_by_name(var_name):
+def get_custom_var_by_name(var_name, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return a custom_var based on the var_name.
     '''
 
     try:
-        url = API_SERVER_URL + CUSTOM_VAR_API_PATH + '?name=' + var_name
-        req = requests.get(url, headers=HEADERS)
+        url = api_server_url + CUSTOM_VAR_API_PATH + '?name=' + var_name
+        req = requests.get(url, headers=headers)
         logging.debug(req.text)
 
         if req.status_code != 404:
@@ -89,7 +89,7 @@ def get_custom_var_by_name(var_name):
     return None
 
 
-def set_custom_var(var_uid, value):
+def set_custom_var(var_uid, value, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Set the value of the custom_var with the uid of var_uid.
     '''
