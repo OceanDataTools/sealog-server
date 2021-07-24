@@ -49,7 +49,7 @@ def get_event_aux_data_by_cruise(cruise_uid, datasource=None, api_server_url=API
     return None
 
 
-def get_event_aux_data_by_lowering(lowering_uid, datasource='', api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_event_aux_data_by_lowering(lowering_uid, datasource='', limit=0, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the aux_data records for the given lowering_uid and optional
     datasource.
@@ -58,8 +58,19 @@ def get_event_aux_data_by_lowering(lowering_uid, datasource='', api_server_url=A
     try:
         url = api_server_url + EVENT_AUX_DATA_API_PATH + '/bylowering/' + lowering_uid
 
+
+        querystring = []
+
         if datasource != '':
-            url += '&datasource=' + datasource
+            querystring.append('datasource=' + datasource)
+
+        if limit > 0:
+            querystring.append('limit=' + str(limit))
+
+        if len(querystring) > 0:
+            url += '?' + '&'.join(querystring)
+
+        logging.info(url)
 
         req = requests.get(url, headers=headers)
 
