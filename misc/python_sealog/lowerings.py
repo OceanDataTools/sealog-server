@@ -23,14 +23,14 @@ import requests
 
 from .settings import API_SERVER_URL, HEADERS, LOWERINGS_API_PATH
 
-def get_lowering_uid_by_id(lowering_id):
+def get_lowering_uid_by_id(lowering_id, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the UID for a lowering record based on the lowering_id.
     '''
 
     try:
-        url = API_SERVER_URL + LOWERINGS_API_PATH + '?lowering_id=' + lowering_id
-        req = requests.get(url, headers=HEADERS)
+        url = api_server_url + LOWERINGS_API_PATH + '?lowering_id=' + lowering_id
+        req = requests.get(url, headers=headers)
 
         if req.status_code == 200:
             lowering = json.loads(req.text)[0]
@@ -43,15 +43,15 @@ def get_lowering_uid_by_id(lowering_id):
     return None
 
 
-def get_lowerings(export_format='json'):
+def get_lowerings(export_format='json', api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return all lowering records.  Returns the records as json objects by
     default.  Set export_format to 'csv' to return the records in csv format.
     '''
 
     try:
-        url = API_SERVER_URL + LOWERINGS_API_PATH + '?format=' + export_format
-        req = requests.get(url, headers=HEADERS)
+        url = api_server_url + LOWERINGS_API_PATH + '?format=' + export_format
+        req = requests.get(url, headers=headers)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -74,14 +74,14 @@ def get_lowerings(export_format='json'):
     return None
 
 
-def get_lowering_uids_by_cruise(cruise_uid):
+def get_lowering_uids_by_cruise(cruise_uid, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the lowering UIDs for the given cruise_uid
     '''
 
     try:
-        url = API_SERVER_URL + LOWERINGS_API_PATH + '/bycruise/' + cruise_uid
-        req = requests.get(url, headers=HEADERS)
+        url = api_server_url + LOWERINGS_API_PATH + '/bycruise/' + cruise_uid
+        req = requests.get(url, headers=headers)
 
         if req.status_code == 200:
             lowerings = json.loads(req.text)
@@ -97,14 +97,14 @@ def get_lowering_uids_by_cruise(cruise_uid):
     return None
 
 
-def get_lowering_ids_by_cruise(cruise_uid):
+def get_lowering_ids_by_cruise(cruise_uid, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the lowering_ids for the given cruise_uid
     '''
 
     try:
-        url = API_SERVER_URL + LOWERINGS_API_PATH + '/bycruise/' + cruise_uid
-        req = requests.get(url, headers=HEADERS)
+        url = api_server_url + LOWERINGS_API_PATH + '/bycruise/' + cruise_uid
+        req = requests.get(url, headers=headers)
 
         if req.status_code == 200:
             lowerings = json.loads(req.text)
@@ -120,7 +120,7 @@ def get_lowering_ids_by_cruise(cruise_uid):
     return None
 
 
-def get_lowering(lowering_uid, export_format='json'):
+def get_lowering(lowering_uid, export_format='json', api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return a lowering record based on the lowering_id.  Returns the record as a
     json object by default.  Set export_format to 'csv' to return the record in
@@ -128,8 +128,8 @@ def get_lowering(lowering_uid, export_format='json'):
     '''
 
     try:
-        url = API_SERVER_URL + LOWERINGS_API_PATH + '/' + lowering_uid + '?format=' + export_format
-        req = requests.get(url, headers=HEADERS)
+        url = api_server_url + LOWERINGS_API_PATH + '/' + lowering_uid + '?format=' + export_format
+        req = requests.get(url, headers=headers)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -145,7 +145,7 @@ def get_lowering(lowering_uid, export_format='json'):
     return None
 
 
-def get_lowering_by_id(lowering_id, export_format='json'):
+def get_lowering_by_id(lowering_id, export_format='json', api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the lowering record based on the lowering_id.  Returns the records
     as json object by default.  Set export_format to 'csv' to return the record
@@ -153,8 +153,8 @@ def get_lowering_by_id(lowering_id, export_format='json'):
     '''
 
     try:
-        url = API_SERVER_URL + LOWERINGS_API_PATH + '?lowering_id=' + lowering_id + '&format=' + export_format
-        req = requests.get(url, headers=HEADERS)
+        url = api_server_url + LOWERINGS_API_PATH + '?lowering_id=' + lowering_id + '&format=' + export_format
+        req = requests.get(url, headers=headers)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -170,7 +170,7 @@ def get_lowering_by_id(lowering_id, export_format='json'):
     return None
 
 
-def get_lowerings_by_cruise(cruise_uid, export_format='json'):
+def get_lowerings_by_cruise(cruise_uid, export_format='json', api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the lowering records contained within the cruise whose uid is
     cruise_uid.  Returns the record as a json object by default.  Set
@@ -178,8 +178,8 @@ def get_lowerings_by_cruise(cruise_uid, export_format='json'):
     '''
 
     try:
-        url = API_SERVER_URL + LOWERINGS_API_PATH + '/bycruise/' + cruise_uid + '?format=' + export_format
-        req = requests.get(url, headers=HEADERS)
+        url = api_server_url + LOWERINGS_API_PATH + '/bycruise/' + cruise_uid + '?format=' + export_format
+        req = requests.get(url, headers=headers)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -202,7 +202,7 @@ def get_lowerings_by_cruise(cruise_uid, export_format='json'):
     return None
 
 
-def get_lowering_by_event(event_uid, export_format='json'):
+def get_lowering_by_event(event_uid, export_format='json', api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the lowering record containing the event whose uid is event_uid.
     Returns the record as a json object by default.  Set export_format to 'csv'
@@ -210,8 +210,8 @@ def get_lowering_by_event(event_uid, export_format='json'):
     '''
 
     try:
-        url = API_SERVER_URL + LOWERINGS_API_PATH + '/byevent/' + event_uid + '?format=' + export_format
-        req = requests.get(url, headers=HEADERS)
+        url = api_server_url + LOWERINGS_API_PATH + '/byevent/' + event_uid + '?format=' + export_format
+        req = requests.get(url, headers=headers)
 
         if req.status_code == 200:
             if export_format == 'json':

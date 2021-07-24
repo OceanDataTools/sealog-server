@@ -98,6 +98,9 @@ class SealogInfluxAuxDataRecordBuilder():
 
         logging.debug("raw values: %s", json.dumps(influx_data, indent=2))
 
+        if not influx_data:
+            return None
+
         for key, value in self._aux_record_lookup.items(): # pylint: disable=too-many-nested-blocks
             if "no_output" in value and value['no_output'] is True:
                 continue

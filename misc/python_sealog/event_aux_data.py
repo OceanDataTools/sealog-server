@@ -23,19 +23,19 @@ import requests
 
 from .settings import API_SERVER_URL, HEADERS, EVENT_AUX_DATA_API_PATH
 
-def get_event_aux_data_by_cruise(cruise_uid, datasource=None):
+def get_event_aux_data_by_cruise(cruise_uid, datasource=None, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the aux_data records for the given cruise_uid and optional
     datasource.
     '''
 
     try:
-        url = API_SERVER_URL + EVENT_AUX_DATA_API_PATH + '/bycruise/' + cruise_uid
+        url = api_server_url + EVENT_AUX_DATA_API_PATH + '/bycruise/' + cruise_uid
 
         if datasource is not None:
             url += '&datasource=' + datasource
 
-        req = requests.get(url, headers=HEADERS)
+        req = requests.get(url, headers=headers)
 
         if req.status_code != 404:
             event_aux_data = json.loads(req.text)
@@ -49,19 +49,30 @@ def get_event_aux_data_by_cruise(cruise_uid, datasource=None):
     return None
 
 
-def get_event_aux_data_by_lowering(lowering_uid, datasource=''):
+def get_event_aux_data_by_lowering(lowering_uid, datasource='', limit=0, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the aux_data records for the given lowering_uid and optional
     datasource.
     '''
 
     try:
-        url = API_SERVER_URL + EVENT_AUX_DATA_API_PATH + '/bylowering/' + lowering_uid
+        url = api_server_url + EVENT_AUX_DATA_API_PATH + '/bylowering/' + lowering_uid
+
+
+        querystring = []
 
         if datasource != '':
-            url += '&datasource=' + datasource
+            querystring.append('datasource=' + datasource)
 
-        req = requests.get(url, headers=HEADERS)
+        if limit > 0:
+            querystring.append('limit=' + str(limit))
+
+        if len(querystring) > 0:
+            url += '?' + '&'.join(querystring)
+
+        logging.info(url)
+
+        req = requests.get(url, headers=headers)
 
         event_aux_data = json.loads(req.text)
         logging.debug(json.dumps(event_aux_data))

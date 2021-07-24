@@ -34,7 +34,7 @@ from python_sealog.settings import API_SERVER_URL, WS_SERVER_URL, EVENT_AUX_DATA
 
 # Names of the appropriate mongoDB database and collection containing the desired real-time data.
 DATABASE = 'sealog_udp_cache'
-COLLECTION = 'testSensorData'
+COLLECTION = 'udpData'
 
 # Unique label of the record in the DATABASE.COLLECTION containing the desired real-time data
 RECORD_LABEL = "testData"
@@ -182,6 +182,8 @@ if __name__ == '__main__':
                         default=0, action='count',
                         help='Increase output verbosity')
 
+    parsed_args = parser.parse_args()
+
     ############################
     # Set up logging before we do any other argument parsing (so that we
     # can log problems with argument parsing).
@@ -192,8 +194,6 @@ if __name__ == '__main__':
     LOG_LEVELS = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
     parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
     logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
-
-    parsed_args = parser.parse_args()
 
     # Run the main loop
     while True:
