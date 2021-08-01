@@ -61,7 +61,17 @@ const _mvFilesToDir = (sourceDirPath, destDirPath) => {
         const sourceFilePath = sourceDirPath + '/' + files[i];
         const destFilePath = destDirPath + '/' + files[i];
         if (Fs.statSync(sourceFilePath).isFile()) {
-          Fs.renameSync(sourceFilePath, destFilePath);
+          try {
+            Fs.renameSync(sourceFilePath, destFilePath );
+          }
+          catch (error) {
+            console.error(error)
+            console.error(error.code)
+            if (error.code === 'EXDEV') {
+              Fs.copyFileSync(sourceFilePath, destFilePath );
+              Fs.unlinkSync(sourceFilePath );
+            }
+          }
         }
         else {
           _mvFilesToDir(sourceFilePath, destFilePath);
