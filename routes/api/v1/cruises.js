@@ -21,67 +21,10 @@ const {
   usersTable
 } = require('../../../config/db_constants');
 
-const _rmDir = (dirPath) => {
-
-  try {
-    const files = Fs.readdirSync(dirPath); 
-
-    if (files.length > 0) {
-      for (let i = 0; i < files.length; ++i) {
-        const filePath = dirPath + '/' + files[i];
-        if (Fs.statSync(filePath).isFile()) {
-          Fs.unlinkSync(filePath);
-        }
-        else {
-          _rmDir(filePath);
-        }
-      }
-    }
-  }
-  catch (err) {
-    console.log(err);
-    throw err; 
-  }
-
-  try {
-    Fs.rmdirSync(dirPath);
-  }
-  catch (err) {
-    console.log(err);
-    throw err;
-  }
-};
-
-const _mvFilesToDir = (sourceDirPath, destDirPath) => {
-
-  try {
-    const files = Fs.readdirSync(sourceDirPath); 
-    if (files.length > 0) {
-      for (let i = 0; i < files.length; ++i) {
-        const sourceFilePath = sourceDirPath + '/' + files[i];
-        const destFilePath = destDirPath + '/' + files[i];
-        if (Fs.statSync(sourceFilePath).isFile()) {
-          Fs.renameSync(sourceFilePath, destFilePath);
-        }
-        else {
-          _mvFilesToDir(sourceFilePath, destFilePath);
-        }
-      }
-    }
-  }
-  catch (err) {
-    console.log(err);
-    throw err;
-  }
-
-  try {
-    Fs.rmdirSync(sourceDirPath);
-  }
-  catch (err) {
-    console.log(err);
-    throw err;
-  }
-};
+const {
+  rmDir,
+  mvFilesToDir
+} = require('../../../lib/utils');
 
 const _flattenJSON = (json) => {
 
@@ -971,7 +914,7 @@ exports.plugin = {
           try {
             request.payload.cruise_additional_meta.cruise_files.map((file) => {
               // console.log("move files from", Path.join(Tmp.tmpdir,file), "to", Path.join(CRUISE_PATH, request.params.id));
-              _mvFilesToDir(Path.join(Tmp.tmpdir,file), Path.join(CRUISE_PATH, request.params.id));
+              mvFilesToDir(Path.join(Tmp.tmpdir,file), Path.join(CRUISE_PATH, request.params.id));
             });
 
           }
@@ -1257,7 +1200,7 @@ exports.plugin = {
           const deleteCruise = await db.collection(cruisesTable).deleteOne(query);
           
           if (Fs.existsSync(CRUISE_PATH + '/' + request.params.id)) {
-            _rmDir(CRUISE_PATH + '/' + request.params.id);
+            rmDir(CRUISE_PATH + '/' + request.params.id);
           }
           
           return h.response(deleteCruise).code(204);
@@ -1303,7 +1246,7 @@ exports.plugin = {
         }
 
         try {
-          _rmDir(CRUISE_PATH);
+          rmDir(CRUISE_PATH);
           if (!Fs.existsSync(CRUISE_PATH)) {
             Fs.mkdirSync(CRUISE_PATH);
           }

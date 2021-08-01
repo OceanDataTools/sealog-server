@@ -21,77 +21,10 @@ const {
   usersTable
 } = require('../../../config/db_constants');
 
-const _rmDir = (dirPath) => {
-
-  try {
-    const files = Fs.readdirSync(dirPath); 
-
-    if (files.length > 0) {
-      for (let i = 0; i < files.length; ++i) {
-        const filePath = dirPath + '/' + files[i];
-        if (Fs.statSync(filePath).isFile()) {
-          Fs.unlinkSync(filePath);
-        }
-        else {
-          _rmDir(filePath);
-        }
-      }
-    }
-  }
-  catch (err) {
-    console.log(err);
-    throw err; 
-  }
-
-  try {
-    Fs.rmdirSync(dirPath);
-  }
-  catch (err) {
-    console.log(err);
-    throw err;
-  }
-};
-
-const _mvFilesToDir = (sourceDirPath, destDirPath) => {
-
-  try {
-    const files = Fs.readdirSync(sourceDirPath); 
-    if (files.length > 0) {
-      for (let i = 0; i < files.length; ++i) {
-        const sourceFilePath = sourceDirPath + '/' + files[i];
-        const destFilePath = destDirPath + '/' + files[i];
-        if (Fs.statSync(sourceFilePath).isFile()) {
-          try {
-            Fs.renameSync(sourceFilePath, destFilePath );
-          }
-          catch (error) {
-            console.error(error)
-            console.error(error.code)
-            if (error.code === 'EXDEV') {
-              Fs.copyFileSync(sourceFilePath, destFilePath );
-              Fs.unlinkSync(sourceFilePath );
-            }
-          }
-        }
-        else {
-          _mvFilesToDir(sourceFilePath, destFilePath);
-        }
-      }
-    }
-  }
-  catch (err) {
-    console.log(err);
-    throw err;
-  }
-
-  try {
-    Fs.rmdirSync(sourceDirPath);
-  }
-  catch (err) {
-    console.log(err);
-    throw err;
-  }
-};
+const {
+  rmDir,
+  mvFilesToDir
+} = require('../../../lib/utils');
 
 const _flattenJSON = (json) => {
 
@@ -996,7 +929,7 @@ exports.plugin = {
           try {
             request.payload.lowering_additional_meta.lowering_files.map((file) => {
 
-              _mvFilesToDir(Path.join(Tmp.tmpdir,file), Path.join(LOWERING_PATH, request.params.id));
+              mvFilesToDir(Path.join(Tmp.tmpdir,file), Path.join(LOWERING_PATH, request.params.id));
             });
           }
           catch (err) {
@@ -1259,7 +1192,7 @@ exports.plugin = {
         }
 
         try {
-          _rmDir(LOWERING_PATH);
+          rmDir(LOWERING_PATH);
           if (!Fs.existsSync(LOWERING_PATH)) {
             Fs.mkdirSync(LOWERING_PATH);
           }
