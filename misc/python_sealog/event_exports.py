@@ -23,13 +23,15 @@ import requests
 
 from .settings import API_SERVER_URL, HEADERS, EVENT_EXPORTS_API_PATH
 
-def get_event_export(event_uid, api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_event_export(event_uid, export_format='json', add_record_ids=False, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the event_export for the event with the given event_uid.
     '''
 
+    _add_record_ids = (add_record_ids)? 'true' : 'false'
+
     try:
-        url = api_server_url + EVENT_EXPORTS_API_PATH + '/' + event_uid
+        url = api_server_url + EVENT_EXPORTS_API_PATH + '/' + event_uid + '?format=' + export_format + '&add_record_ids=' + _add_record_ids
         req = requests.get(url, headers=headers)
 
         if req.status_code != 404:
@@ -44,7 +46,7 @@ def get_event_export(event_uid, api_server_url=API_SERVER_URL, headers=HEADERS):
     return None
 
 
-def get_event_exports_by_cruise(cruise_uid, export_format='json', event_filter='', api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_event_exports_by_cruise(cruise_uid, export_format='json', event_filter='', add_record_ids=False, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the event_exports for the cruise with the given cruise_uid.  Returns
     the records as an array of json objects by default.  Set export_format to
@@ -52,8 +54,10 @@ def get_event_exports_by_cruise(cruise_uid, export_format='json', event_filter='
     that will limit the returns to on the events that match the event_filter.
     '''
 
+    _add_record_ids = (add_record_ids)? 'true' : 'false'
+
     try:
-        url = api_server_url + EVENT_EXPORTS_API_PATH + '/bycruise/' + cruise_uid + '?format=' + export_format
+        url = api_server_url + EVENT_EXPORTS_API_PATH + '/bycruise/' + cruise_uid + '?format=' + export_format + '&add_record_ids=' + _add_record_ids
 
         if event_filter != '':
             url += '&value=' + event_filter
@@ -75,7 +79,7 @@ def get_event_exports_by_cruise(cruise_uid, export_format='json', event_filter='
     return None
 
 
-def get_event_exports_by_lowering(lowering_uid, export_format='json', event_filter='', api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_event_exports_by_lowering(lowering_uid, export_format='json', event_filter='', add_record_ids=False, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the event_exports for the lowering with the given lowering_uid.
     Returns the records as an array of json objects by default.  Set
@@ -84,8 +88,10 @@ def get_event_exports_by_lowering(lowering_uid, export_format='json', event_filt
     event_filter.
     '''
 
+    _add_record_ids = (add_record_ids)? 'true' : 'false'
+
     try:
-        url = api_server_url + EVENT_EXPORTS_API_PATH + '/bylowering/' + lowering_uid + '?format=' + export_format
+        url = api_server_url + EVENT_EXPORTS_API_PATH + '/bylowering/' + lowering_uid + '?format=' + export_format + '&add_record_ids=' + _add_record_ids
 
         if event_filter != '':
             url += '&value=' + event_filter

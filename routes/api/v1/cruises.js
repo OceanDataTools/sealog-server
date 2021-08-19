@@ -137,13 +137,13 @@ const cruiseQuery = Joi.object({
   cruise_location: Joi.string().optional(),
   cruise_pi: Joi.string().optional(),
   cruise_tags: Joi.array().items(cruiseTag).optional(),
-  format: Joi.string().optional(),
+  format: Joi.string().valid('json','csv').optional(),
   offset: Joi.number().integer().min(0).optional(),
   limit: Joi.number().integer().min(1).optional()
 }).optional().label('cruiseQuery');
 
 const singleCruiseQuery = Joi.object({
-  format: Joi.string().optional()
+  format: Joi.string().valid('json','csv').optional()
 }).optional().label('singleCruiseQuery');
 
 const cruiseSuccessResponse = Joi.object({

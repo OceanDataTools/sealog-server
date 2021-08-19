@@ -154,14 +154,18 @@ def _set_milestones(event, evt_milestone): # pylint: disable=too-many-branches,t
             payload['lowering_additional_meta']['milestones'] = {}
 
         for milestone in MILESTONE_LOOKUP[evt_milestone]:
-            if ('lowering_additional_meta' not in lowering or
-                'milestones' not in lowering['lowering_additional_meta'] or
-                milestone not in lowering['lowering_additional_meta']['milestones'] or
-                lowering['lowering_additional_meta']['milestones'][milestone] is None or
-                lowering['lowering_additional_meta']['milestones'][milestone] == ''):
 
-                logging.info("Setting milestone: %s to %s", milestone, event['ts'])
-                payload['lowering_additional_meta']['milestones'][milestone] = event['ts']
+            milestone_name = milestone['name'] if type(milestone) is dict else milestone
+            milestone_reset = milestone['reset'] if type(milestone) is dict and 'reset' in milestone else False
+
+            if ('milestones' not in lowering['lowering_additional_meta'] or
+                milestone_name not in lowering['lowering_additional_meta']['milestones'] or
+                lowering['lowering_additional_meta']['milestones'][milestone_name] is None or
+                lowering['lowering_additional_meta']['milestones'][milestone_name] == '' or
+                milestone_reset):
+
+                logging.info("Setting milestone: %s to %s", milestone_name, event['ts'])
+                payload['lowering_additional_meta']['milestones'][milestone_name] = event['ts']
 
     if not bool(payload):
         logging.warning("Nothing to update in the lowering record")
