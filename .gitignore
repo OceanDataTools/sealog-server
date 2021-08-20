@@ -44,6 +44,9 @@ misc/sealog-udp2MongoDB*
 # files related to reporting
 misc/reporting
 
+# files like images that are specific to a single deployment
+misc/assets
+
 # Configuration files custom to the sealog-server instance
 config/db_constants.js
 config/email_constants.js
