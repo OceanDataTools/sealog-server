@@ -28,7 +28,7 @@ def get_event_export(event_uid, export_format='json', add_record_ids=False, api_
     Return the event_export for the event with the given event_uid.
     '''
 
-    _add_record_ids = (add_record_ids)? 'true' : 'false'
+    _add_record_ids = 'true' if add_record_ids else 'false'
 
     try:
         url = api_server_url + EVENT_EXPORTS_API_PATH + '/' + event_uid + '?format=' + export_format + '&add_record_ids=' + _add_record_ids
@@ -54,7 +54,7 @@ def get_event_exports_by_cruise(cruise_uid, export_format='json', event_filter='
     that will limit the returns to on the events that match the event_filter.
     '''
 
-    _add_record_ids = (add_record_ids)? 'true' : 'false'
+    _add_record_ids = 'true' if add_record_ids else 'false'
 
     try:
         url = api_server_url + EVENT_EXPORTS_API_PATH + '/bycruise/' + cruise_uid + '?format=' + export_format + '&add_record_ids=' + _add_record_ids
@@ -88,7 +88,7 @@ def get_event_exports_by_lowering(lowering_uid, export_format='json', event_filt
     event_filter.
     '''
 
-    _add_record_ids = (add_record_ids)? 'true' : 'false'
+    _add_record_ids = 'true' if add_record_ids else 'false'
 
     try:
         url = api_server_url + EVENT_EXPORTS_API_PATH + '/bylowering/' + lowering_uid + '?format=' + export_format + '&add_record_ids=' + _add_record_ids

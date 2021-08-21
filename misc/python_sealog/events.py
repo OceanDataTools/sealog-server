@@ -30,7 +30,7 @@ def get_event(event_uid, export_format='json', add_record_ids=False, api_server_
     format.
     '''
 
-    _add_record_ids = (add_record_ids)? 'true' : 'false'
+    _add_record_ids = 'true' if add_record_ids else 'false'
 
     try:
         url = api_server_url + EVENTS_API_PATH + '/' + event_uid + '?format=' + export_format + '&add_record_ids=' + _add_record_ids
@@ -60,7 +60,7 @@ def get_events_by_cruise(cruise_uid, export_format='json', add_record_ids=False,
     events.
     '''
 
-    _add_record_ids = (add_record_ids)? 'true' : 'false'
+    _add_record_ids = 'true' if add_record_ids else 'false'
 
     try:
         url = api_server_url + EVENTS_API_PATH + '/bycruise/' + cruise_uid + '?format=' + export_format + '&add_record_ids=' + _add_record_ids
@@ -98,7 +98,7 @@ def get_events_by_lowering(lowering_uid, export_format='json', add_record_ids=Fa
     events.
     '''
 
-    _add_record_ids = (add_record_ids)? 'true' : 'false'
+    _add_record_ids = 'true' if add_record_ids else 'false'
 
     try:
         url = api_server_url + EVENTS_API_PATH + '/bylowering/' + lowering_uid + '?format=' + export_format + '&add_record_ids=' + _add_record_ids
