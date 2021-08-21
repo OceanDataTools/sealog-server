@@ -387,7 +387,18 @@ exports.plugin = {
         }
 
         // time bounds based on lowering start/stop times
-        query.$and = [{ start_ts: { $lte: lowering.start_ts.date() } }, { stop_ts: { $gte: lowering.stop_ts.date() } }];
+        query.$and = [
+          {
+            start_ts: {
+              $lte: lowering.start_ts
+            }
+          },
+          {
+            stop_ts: {
+              $gte: new Date(Date.UTC(lowering.stop_ts.getUTCFullYear(), lowering.stop_ts.getUTCMonth(), lowering.stop_ts.getUTCDate()))
+            }
+          }
+        ];
 
         try {
           const cruise = await db.collection(cruisesTable).findOne(query);
