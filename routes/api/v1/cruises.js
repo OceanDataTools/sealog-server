@@ -395,7 +395,7 @@ exports.plugin = {
           },
           {
             stop_ts: {
-              $gte: new Date(Date.UTC(lowering.stop_ts.getUTCFullYear(), lowering.stop_ts.getUTCMonth(), lowering.stop_ts.getUTCDate()))
+              $gte: lowering.stop_ts
             }
           }
         ];
