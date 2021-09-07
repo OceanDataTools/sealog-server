@@ -147,13 +147,13 @@ const loweringQuery = Joi.object({
     loweringTag,
     Joi.array().items(loweringTag)
   ).optional(),
-  format: Joi.string().optional(),
+  format: Joi.string().valid('json','csv').optional(),
   offset: Joi.number().integer().min(0).optional(),
   limit: Joi.number().integer().min(1).optional()
 }).optional().label('loweringQuery');
 
 const singleLoweringQuery = Joi.object({
-  format: Joi.string().optional()
+  format: Joi.string().valid('json','csv').optional()
 }).optional().label('singleLoweringQuery');
 
 const loweringSuccessResponse = Joi.object({

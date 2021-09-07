@@ -4,6 +4,10 @@ const { parseAsync } = require('json2csv');
 const Deepcopy = require('deepcopy');
 
 const {
+  array_move
+} = require('../../../lib/utils');
+
+const {
   useAccessControl
 } = require('../../../config/email_constants');
 
@@ -84,9 +88,51 @@ const _flattenJSON = (json) => {
   return flattenJSON;
 };
 
+const _add_record_ids = async (request, records) => {
+
+  const db = request.mongo.db;
+
+  const new_results = await records.map(async (doc) => {
+
+    const cruise_lowering_query = {};
+
+    // time bounds based on event start/stop times
+    cruise_lowering_query.$and = [{ start_ts: { $lte: doc.ts } }, { stop_ts: { $gte: doc.ts } }];
+
+    try {
+      const event_cruise = await db.collection(cruisesTable).findOne(cruise_lowering_query);
+
+      if (event_cruise) {
+        doc.cruise_id = event_cruise.cruise_id;
+      }
+    }
+    catch (err) {
+      console.error("ERROR:", err);
+    }
+
+    try {
+      const event_lowering = await db.collection(loweringsTable).findOne(cruise_lowering_query);
+
+      if (event_lowering) {
+        doc.lowering_id = event_lowering.lowering_id;
+      }
+    }
+    catch (err) {
+      console.error("ERROR:", err);
+    }
+
+    return doc;
+  });
+
+  await Promise.all(new_results);
+
+  return records;
+
+};
+
 const _buildCSVHeaders = (flattenJSON) => {
 
-  const csvHeaders = flattenJSON.reduce((headers, event) => {
+  let csvHeaders = flattenJSON.reduce((headers, event) => {
 
     const keyNames = Object.keys(event);
 
@@ -96,7 +142,22 @@ const _buildCSVHeaders = (flattenJSON) => {
     });
   }, ['id','ts','event_value','event_author','event_free_text']);
 
-  return csvHeaders.slice(0, 5).concat(csvHeaders.slice(5).filter((header) => header.startsWith("event_option")).sort(), csvHeaders.slice(5).filter((header) => !header.startsWith("event_option")).sort());
+  // return csvHeaders.slice(0, 5).concat(csvHeaders.slice(5).filter((header) => header.startsWith("event_option")).sort(), csvHeaders.slice(5).filter((header) => !header.startsWith("event_option")).sort());
+
+  csvHeaders = csvHeaders.slice(0, 5).concat(csvHeaders.slice(5).filter((header) => header.startsWith("event_option")).sort(), csvHeaders.slice(5).filter((header) => !header.startsWith("event_option")).sort());
+
+  const cruiseIndex = csvHeaders.findIndex((header) => header === "cruise_id");
+  if (cruiseIndex > -1) {
+    csvHeaders = array_move(csvHeaders, cruiseIndex, 1);
+  }
+
+  const loweringIndex = csvHeaders.findIndex((header) => header === "lowering_id");
+  if (loweringIndex > -1) {
+    csvHeaders = array_move(csvHeaders, loweringIndex, 2);
+  }
+
+  return csvHeaders;
+
 };
 
 const _renameAndClearFields = (doc) => {
@@ -112,6 +173,7 @@ const _renameAndClearFields = (doc) => {
 
   return doc;
 };
+
 
 const _buildEventsQuery = (request, start_ts = new Date("1970-01-01T00:00:00.000Z"), stop_ts = new Date() ) => {
 
@@ -227,7 +289,7 @@ const eventExportSuccessResponse = Joi.object({
 }).label('eventExportSuccessResponse');
 
 const eventExportQuery = Joi.object({
-  format: Joi.string().optional(),
+  format: Joi.string().valid('json','csv').optional(),
   offset: Joi.number().integer().min(0).optional(),
   limit: Joi.number().integer().min(1).optional(),
   author: Joi.alternatives().try(
@@ -244,7 +306,8 @@ const eventExportQuery = Joi.object({
     Joi.string(),
     Joi.array().items(Joi.string()).optional()
   ).optional(),
-  freetext: Joi.string().optional()
+  freetext: Joi.string().optional(),
+  add_record_ids: Joi.boolean().optional()
 }).optional().label('eventExportQuery');
 
 exports.plugin = {
@@ -348,6 +411,10 @@ exports.plugin = {
           }
 
           results.forEach(_renameAndClearFields);
+
+          if (request.query.add_record_ids && request.query.add_record_ids === true) {
+            results = await _add_record_ids(request, results);
+          }
 
           if (request.query.format && request.query.format === "csv") {
 
@@ -486,6 +553,10 @@ exports.plugin = {
 
           results.forEach(_renameAndClearFields);
 
+          if (request.query.add_record_ids && request.query.add_record_ids === true) {
+            results = await _add_record_ids(request, results);
+          }
+
           if (request.query.format && request.query.format === "csv") {
 
             const flattenJSON = _flattenJSON(results);
@@ -614,12 +685,17 @@ exports.plugin = {
           // console.log("aggregate:", aggregate);
 
           try {
-            const results = await db.collection(eventsTable).aggregate(aggregate, { allowDiskUse: true }).skip(offset).toArray();
+            let results = await db.collection(eventsTable).aggregate(aggregate, { allowDiskUse: true }).skip(offset).toArray();
 
             if (results.length > 0) {
               results.forEach(_renameAndClearFields);
 
+              if (request.query.add_record_ids && request.query.add_record_ids === true) {
+                results = await _add_record_ids(request, results);
+              }
+
               if (request.query.format && request.query.format === "csv") {
+
                 const flattenJSON = _flattenJSON(results);
                 const csvHeaders = _buildCSVHeaders(flattenJSON);
                 

@@ -6,6 +6,10 @@ const Deepcopy = require('deepcopy');
 const THRESHOLD = 120; //seconds
 
 const {
+  array_move
+} = require('../../../lib/utils');
+
+const {
   useAccessControl
 } = require('../../../config/email_constants');
 
@@ -40,9 +44,51 @@ const _flattenJSON = (json) => {
   return flattenJSON;
 };
 
+const _add_record_ids = async (request, records) => {
+
+  const db = request.mongo.db;
+
+  const new_results = await records.map(async (doc) => {
+
+    const cruise_lowering_query = {};
+
+    // time bounds based on event start/stop times
+    cruise_lowering_query.$and = [{ start_ts: { $lte: doc.ts } }, { stop_ts: { $gte: doc.ts } }];
+
+    try {
+      const event_cruise = await db.collection(cruisesTable).findOne(cruise_lowering_query);
+
+      if (event_cruise) {
+        doc.cruise_id = event_cruise.cruise_id;
+      }
+    }
+    catch (err) {
+      console.error("ERROR:", err);
+    }
+
+    try {
+      const event_lowering = await db.collection(loweringsTable).findOne(cruise_lowering_query);
+
+      if (event_lowering) {
+        doc.lowering_id = event_lowering.lowering_id;
+      }
+    }
+    catch (err) {
+      console.error("ERROR:", err);
+    }
+
+    return doc;
+  });
+
+  await Promise.all(new_results);
+
+  return records;
+
+};
+
 const _buildCSVHeaders = (flattenJSON) => {
 
-  const csvHeaders = flattenJSON.reduce((headers, event) => {
+  let csvHeaders = flattenJSON.reduce((headers, event) => {
 
     const keyNames = Object.keys(event);
 
@@ -52,7 +98,19 @@ const _buildCSVHeaders = (flattenJSON) => {
     });
   }, ['id','ts','event_value','event_author','event_free_text']);
 
-  return csvHeaders.slice(0, 5).concat(csvHeaders.slice(5).sort());
+  csvHeaders = csvHeaders.slice(0, 5).concat(csvHeaders.slice(5).sort());
+
+  const cruiseIndex = csvHeaders.findIndex((header) => header === "cruise_id");
+  if (cruiseIndex > -1) {
+    csvHeaders = array_move(csvHeaders, cruiseIndex, 1);
+  }
+
+  const loweringIndex = csvHeaders.findIndex((header) => header === "lowering_id");
+  if (loweringIndex > -1) {
+    csvHeaders = array_move(csvHeaders, loweringIndex, 2);
+  }
+
+  return csvHeaders;
 };
 
 const _renameAndClearFields = (doc) => {
@@ -162,7 +220,7 @@ const eventParam = Joi.object({
 }).label('eventParam');
 
 const eventQuery = Joi.object({
-  format: Joi.string().optional(),
+  format: Joi.string().valid('json','csv').optional(),
   offset: Joi.number().integer().min(0).optional(),
   limit: Joi.number().integer().min(1).optional(),
   sort: Joi.string().optional(),
@@ -183,7 +241,8 @@ const eventQuery = Joi.object({
   freetext: Joi.alternatives().try(
     Joi.string(),
     Joi.array().items(Joi.string()).optional()
-  )
+  ),
+  add_record_ids: Joi.boolean().optional()
 }).optional().label('eventQuery');
 
 const eventSuccessResponse = Joi.object({
@@ -569,6 +628,10 @@ exports.plugin = {
 
         results.forEach(_renameAndClearFields);
 
+        if (request.query.add_record_ids && request.query.add_record_ids === true) {
+          results = await _add_record_ids(request, results);
+        }
+
         if (request.query.format && request.query.format === "csv") {
 
           const flattenJSON = _flattenJSON(results);
@@ -795,7 +858,7 @@ exports.plugin = {
           const sort = (request.query.sort === "newest") ? { ts: -1 } : { ts: 1 };
 
           try {
-            const results = await db.collection(eventsTable).find(query).sort(sort).skip(offset).limit(limit).toArray();
+            let results = await db.collection(eventsTable).find(query).sort(sort).skip(offset).limit(limit).toArray();
             // console.log("results:", results);
 
             if (results.length === 0) {
@@ -803,6 +866,10 @@ exports.plugin = {
             }
 
             results.forEach(_renameAndClearFields);
+
+            if (request.query.add_record_ids && request.query.add_record_ids === true) {
+              results = await _add_record_ids(request, results);
+            }
 
             if (request.query.format && request.query.format === "csv") {
               const flattenJSON = _flattenJSON(results);

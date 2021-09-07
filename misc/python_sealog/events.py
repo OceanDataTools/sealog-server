@@ -23,15 +23,17 @@ import requests
 
 from .settings import API_SERVER_URL, HEADERS, EVENTS_API_PATH
 
-def get_event(event_uid, export_format='json', api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_event(event_uid, export_format='json', add_record_ids=False, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return an event record based on the event_uid.  Returns the record as a json
     object by default.  Set export_format to 'csv' to return the record in csv
     format.
     '''
 
+    _add_record_ids = 'true' if add_record_ids else 'false'
+
     try:
-        url = api_server_url + EVENTS_API_PATH + '/' + event_uid + '?format=' + export_format
+        url = api_server_url + EVENTS_API_PATH + '/' + event_uid + '?format=' + export_format + '&add_record_ids=' + _add_record_ids
         req = requests.get(url, headers=headers)
 
         if req.status_code == 200:
@@ -50,7 +52,7 @@ def get_event(event_uid, export_format='json', api_server_url=API_SERVER_URL, he
     return None
 
 
-def get_events_by_cruise(cruise_uid, export_format='json', event_filter='', api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_events_by_cruise(cruise_uid, export_format='json', add_record_ids=False, event_filter='', api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return event records based on the cruise_uid.  Returns the records as json
     objects by default.  Set export_format to 'csv' to return the records in
@@ -58,8 +60,10 @@ def get_events_by_cruise(cruise_uid, export_format='json', event_filter='', api_
     events.
     '''
 
+    _add_record_ids = 'true' if add_record_ids else 'false'
+
     try:
-        url = api_server_url + EVENTS_API_PATH + '/bycruise/' + cruise_uid + '?format=' + export_format
+        url = api_server_url + EVENTS_API_PATH + '/bycruise/' + cruise_uid + '?format=' + export_format + '&add_record_ids=' + _add_record_ids
         if event_filter != '':
             url += '&value=' + event_filter
 
@@ -86,7 +90,7 @@ def get_events_by_cruise(cruise_uid, export_format='json', event_filter='', api_
     return None
 
 
-def get_events_by_lowering(lowering_uid, export_format='json', event_filter='', api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_events_by_lowering(lowering_uid, export_format='json', add_record_ids=False, event_filter='', api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return event records based on the lowering_uid.  Returns the records as
     json objects by default.  Set export_format to 'csv' to return the records
@@ -94,8 +98,10 @@ def get_events_by_lowering(lowering_uid, export_format='json', event_filter='', 
     events.
     '''
 
+    _add_record_ids = 'true' if add_record_ids else 'false'
+
     try:
-        url = api_server_url + EVENTS_API_PATH + '/bylowering/' + lowering_uid + '?format=' + export_format
+        url = api_server_url + EVENTS_API_PATH + '/bylowering/' + lowering_uid + '?format=' + export_format + '&add_record_ids=' + _add_record_ids
         if event_filter != '':
             url += '&value=' + event_filter
 

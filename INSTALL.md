@@ -102,11 +102,9 @@ Copy/Paste the following into the file (assumes sealog-server is located in `/ho
 directory=/home/sealog/sealog-server
 command=node server.js
 environment=NODE_ENV="production"
-process_name=sealog-server_%(process_num)s
-numprocs=1
+process_name=sealog-server
 redirect_stderr=true
 stdout_logfile=/var/log/sealog-server_STDOUT.log
-stderr_logfile=/var/log/sealog-server_STDERR.log
 user=sealog
 autostart=true
 autorestart=true
@@ -191,7 +189,7 @@ python3 -m venv ./venv
 Activate the python virtual environment and install the requried python libraries
 ```
 source ./venv/bin/activate
-pip install -r pymongo websockets requests
+pip install pymongo websockets requests
 ```
 
 ## Automatic Snapshot (ASNAP)
@@ -213,8 +211,7 @@ Append the following to the supervisor configuration file (assumes sealog-server
 [program:sealog-asnap]
 directory=/home/sealog/sealog-server/misc
 command=/home/sealog/sealog-server/venv/bin/python sealog_asnap.py
-process_name=sealog-asnap_%(process_num)s
-numprocs=1
+process_name=sealog-asnap
 redirect_stderr=true
 stdout_logfile=/var/log/sealog-asnap_STDOUT.log
 user=sealog
@@ -249,8 +246,7 @@ Append the following to the supervisor configuration file (assumes sealog-server
 [program:sealog-auto-actions]
 directory=/home/sealog/sealog-server/misc
 command=/home/sealog/sealog-server/venv/bin/python sealog_auto-actions.py
-process_name=sealog-auto-actions%(process_num)s
-numprocs=1
+process_name=sealog-auto-actions
 redirect_stderr=true
 stdout_logfile=/var/log/sealog-auto-actions_STDOUT.log
 user=sealog
