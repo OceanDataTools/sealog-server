@@ -480,7 +480,7 @@ exports.plugin = {
             return Boom.badRequest('no user found for that email address');
           }
 
-          if (user.disabled) {
+          if (result.disabled) {
             return Boom.badRequest('the account associated with email address is disabled');
           }
 
