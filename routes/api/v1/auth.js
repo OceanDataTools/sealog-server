@@ -218,7 +218,7 @@ exports.plugin = {
             return h.response({ "statusCode": 400, 'message': 'Bad request' }).code(400);
           }
 
-          const disabledAccountTxt = (disableRegisteringUsers) ? "<p>For security reasons, accounts created via self-registration are disabled by default.  The system adminstrator has been notified of you account request and will enable the account shortly.</p>" : "";
+          const disabledAccountTxt = (disableRegisteringUsers) ? "<p>For security reasons, accounts created via self-registration are disabled by default.  The system adminstrator has been notified of your account request and will enable the account shortly.</p>" : "";
           const emailTxt = '<p>Welcome to Sealog. If you are receiving this email you have just created an account on Sealog (' + request.info.hostname + ').</p>' + disabledAccountTxt + '<p>If you have any questions please reply to this email address</p><p>Thanks!</p>';
 
           let mailOptions = {
