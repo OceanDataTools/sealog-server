@@ -1,0 +1,205 @@
+#!/usr/bin/env python3
+'''
+FILE:           sealog_aux_data_inserter.py
+
+DESCRIPTION:    This service listens for new events submitted to Sealog, creates
+                an aux_data record containing the specified real-time data and
+                associates the aux data record with the newly created event.
+                However if the realtime data is older than 20 seconds this service
+                will consider the data stale and will not associate it with the
+                newly created event.
+
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    0.2
+CREATED:    2020-01-27
+REVISION:   2021-04-27
+
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2021
+'''
+
+import asyncio
+import json
+import time
+import glob
+import shutil
+import logging
+from datetime import datetime, timedelta
+import requests
+import websockets
+
+# ------------ only needed for scp transfers -------------
+# from paramiko import RSAKey, SFTPClient, Transport
+# from scp import SCPClient
+
+from python_sealog.settings import API_SERVER_URL, WS_SERVER_URL, EVENT_AUX_DATA_API_PATH, HEADERS
+
+# The data_source to use for the auxData records
+AUX_DATA_DATASOURCE = 'vehicleRealtimeFramegrabberData'
+
+# set of events to ignore
+EXCLUDE_SET = ()
+
+CLIENT_WSID = 'aux_data_inserter_' + AUX_DATA_DATASOURCE # needs to be unique for all currently active dataInserter scripts.
+
+THRESHOLD = 20 #seconds
+
+# ------------ only needed for scp transfers -------------
+# user = 'mt'
+# host = '192.168.1.42'
+# port = 22
+# key_file = '/home/sealog/.ssh/id_rsa'
+# my_key = RSAKey.from_private_key_file(key_file)
+# t = Transport(host, port)
+
+source_dir = '/tmp/images'
+dest_dir = '/home/sealog/sealog-files/images'
+
+camera_name = 'ROV HD'
+filename_prefix = ''
+filename_suffix = '_rov_hd.jpg'
+
+HELLO = {
+    'type': 'hello',
+    'id': CLIENT_WSID,
+    'auth': {
+        'headers': HEADERS
+    },
+    'version': '2',
+    'subs': ['/ws/status/newEvents']
+}
+
+PING = {
+    'type':'ping',
+    'id':CLIENT_WSID
+}
+
+
+async def aux_data_inserter():
+    '''
+    Connect to the websocket feed for new events.  When new events arrive,
+    build aux_data records and submit them to the sealog-server.
+    '''
+
+    logging.debug("Connecting to event websocket feed...")    
+    try:
+        async with websockets.connect(WS_SERVER_URL) as websocket:
+
+            await websocket.send(json.dumps(HELLO))
+
+            while True:
+
+                event = await websocket.recv()
+                event_obj = json.loads(event)
+
+                if event_obj['type'] and event_obj['type'] == 'ping':
+                    await websocket.send(json.dumps(PING))
+
+                elif event_obj['type'] and event_obj['type'] == 'pub':
+
+                    if event_obj['message']['event_value'] in EXCLUDE_SET:
+                        logging.debug("Skipping because event value is in the exclude set")
+                        continue
+
+                    if datetime.strptime(event_obj['message']['ts'], '%Y-%m-%dT%H:%M:%S.%fZ') < datetime.utcnow()-timedelta(seconds=THRESHOLD):
+                        logging.debug("Skipping because event ts is older than thresold")
+                        continue
+
+                    try:
+                        
+                        list_of_files = glob.glob(os.path.join(source_dir, '*.jpg'))
+                        latest_file = max(list_of_files, key=os.path.getctime)
+
+                    except Exception as error:
+                        logging.error("Error retrieving image file")
+                        logging.debug(str(error))
+                        continue
+
+                    filename_date = datetime.date(datetime.strptime(event_obj['message']['ts'], '%Y-%m-%dT%H:%M:%S.%fZ'))
+                    filename_time = datetime.time(datetime.strptime(event_obj['message']['ts'], '%Y-%m-%dT%H:%M:%S.%fZ')) 
+                    filename_middle = datetime.combine(filename_date, filename_time).strftime("%Y%m%d_%H%M%S%f")[:-3]
+
+                    dst = os.path.join(dest_dir, filename_prefix + filename_middle + filename_suffix)
+                    src = os.path.join(source_dir, latest_file)
+
+                    logging.debug("src:" + src)
+                    logging.debug("dst:" + dst)
+
+
+                    try:
+
+                        # ------------ only needed for scp transfers -------------
+                        # sftp = SFTPClient.from_transport(t)
+                        # sftp.put(src, dst)
+                        # sftp.close()
+
+                        # ----------- only needed for local transfers ------------
+                        shutil.copyfile(src,dst)
+
+                        aux_data_record = {
+                            'event_id': event_obj['message']['id'],
+                            'data_source': AUX_DATA_DATASOURCE,
+                            'data_array': []
+                        }
+
+                        aux_data_record['data_array'].append({ 'data_name': "camera_name",'data_value': camera_name })
+                        aux_data_record['data_array'].append({ 'data_name': "filename",'data_value': dst })
+                        r = requests.post(API_SERVER_URL + EVENTS_API_PATH, headers=HEADERS, data = json.dumps(aux_data_record))
+                        logging.debug(r.text)
+
+                    except Exception as error:
+                        logging.error("Unable to copy image to server")
+                        logging.error(error)
+
+    except Exception as error:
+        logging.error(str(error))
+        raise error
+
+# -------------------------------------------------------------------------------------
+# Required python code for running the script as a stand-alone utility
+# -------------------------------------------------------------------------------------
+if __name__ == '__main__':
+
+    import argparse
+    import os
+    import sys
+
+    parser = argparse.ArgumentParser(description='Aux Data Inserter Service - ' + AUX_DATA_DATASOURCE)
+    parser.add_argument('-v', '--verbosity', dest='verbosity',
+                        default=0, action='count',
+                        help='Increase output verbosity')
+
+    parsed_args = parser.parse_args()
+
+    ############################
+    # Set up logging before we do any other argument parsing (so that we
+    # can log problems with argument parsing).
+
+    LOGGING_FORMAT = '%(asctime)-15s %(levelname)s - %(message)s'
+    logging.basicConfig(format=LOGGING_FORMAT)
+
+    LOG_LEVELS = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
+    parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
+    logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
+
+    # Run the main loop
+    while True:
+
+        # Wait 5 seconds for the server to complete startup
+        time.sleep(5)
+
+        try:
+            # t.connect(username=user, pkey=my_key) # only needed for scp transfers
+            asyncio.get_event_loop().run_until_complete(aux_data_inserter())
+        except KeyboardInterrupt:
+            logging.error('Keyboard Interrupted')
+            try:
+                sys.exit(0)
+            except SystemExit:
+                os._exit(0) # pylint: disable=protected-access
+        except Exception as error:
+            logging.error("Lost connection to server, trying again in 5 seconds")
+            logging.debug(str(error))

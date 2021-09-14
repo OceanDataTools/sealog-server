@@ -45,7 +45,9 @@ Set the `sealogDB` and `sealogDB_devel` names in the `./config/db_constants.js` 
 
 Set the `IMAGE_PATH`, `CRUISE_PATH` and `LOWERING_PATH` locations in the `./config/path_constants.js` file to meet your specific installation requirements.  These paths are where the framegrabber image files, cruise files and lowering files are located on the server.
 
-Set the `emailAddress`, `emailPassword`, `resetPasswordURL` locations in the `./config/email_constants.js` file to meet your specific installation requirements.  The `emailAddress` and `emailPassword` are the email/password for the email address used when sending emails to users.  Currently this must be a gmail-based email account. The `resetPasswordURL` most likely will not need to be changed unless running a higly customized version of Sealog.
+Set the `senderAddress`, `resetPasswordURL` locations in the `./config/email_constants.js` file to meet your specific installation requirements.  The `resetPasswordURL` most likely only needs to have 'localhost' replaced with the servers hostname/IP unless running a higly customized version of Sealog.
+
+You will also need to uncomment the type of email integration used.  By default email is disabled but the distribution file includes commented code blocks for gmail and mailgun integration.
 
 Create a secret JWT encryption key and save it to the `./config/secret.js` file.  Create the key by running the following command:
 ```

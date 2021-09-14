@@ -1,4 +1,3 @@
-const Nodemailer = require('nodemailer');
 const { randomAsciiString } = require('../../../lib/utils');
 
 const Bcrypt = require('bcryptjs');
@@ -21,16 +20,8 @@ const {
 } = require('../../../config/db_constants');
 
 const {
-  emailAddress, emailPassword, resetPasswordURL
+  senderAddress, emailTransporter, resetPasswordURL, notificationEmailAddresses
 } = require('../../../config/email_constants');
-
-const emailTransporter = Nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: emailAddress,
-    pass: emailPassword
-  }
-});
 
 const SECRET_KEY = require('../../../config/secret');
 const Jwt = require('jsonwebtoken');
@@ -316,22 +307,24 @@ exports.plugin = {
 
         const resetLink = resetPasswordURL + token;
         const mailOptions = {
-          from: emailAddress, // sender address
+          from: senderAddress, // sender address
           to: request.payload.email, // list of receivers
           subject: 'Sealog - New User Created', // Subject line
           html: `<p>A new Sealog user account was created and associated with this email address.  The username for this account is: ${user.username}</p>
           <p>To set the password for this account please click on the link below.  This link will expire in ${resetPasswordTokenExpires} hours.</p>
           <p><a href="${resetLink}">${resetLink}</a></p>
-          <p>Please send any Sealog-related questions to: ${emailAddress}</p>
+          <p>Please send any Sealog-related questions to: ${senderAddress}</p>
           <p>Thanks!</p>`
         };
 
-        emailTransporter.sendMail(mailOptions, (err) => {
+        if (emailTransporter !== null) {
+          emailTransporter.sendMail(mailOptions, (err) => {
 
-          if (err) {
-            console.log("ERROR:", err);
-          }
-        });
+            if (err) {
+              console.log("ERROR:", err);
+            }
+          });
+        }
 
         return h.response({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
       },
