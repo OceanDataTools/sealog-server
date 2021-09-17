@@ -247,7 +247,7 @@ Append the following to the supervisor configuration file (assumes sealog-server
 ```
 [program:sealog-auto-actions]
 directory=/home/sealog/sealog-server/misc
-command=/home/sealog/sealog-server/venv/bin/python sealog_auto-actions.py
+command=/home/sealog/sealog-server/venv/bin/python sealog_auto_actions.py
 process_name=sealog-auto-actions
 redirect_stderr=true
 stdout_logfile=/var/log/sealog-auto-actions_STDOUT.log
