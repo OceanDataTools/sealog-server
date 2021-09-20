@@ -20,7 +20,7 @@ const {
 } = require('../../../config/db_constants');
 
 const {
-  senderAddress, emailTransporter, resetPasswordURL, notificationEmailAddresses
+  senderAddress, emailTransporter, resetPasswordURL
 } = require('../../../config/email_constants');
 
 const SECRET_KEY = require('../../../config/secret');
