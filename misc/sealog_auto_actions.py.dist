@@ -138,6 +138,9 @@ def _set_milestones(event, evt_milestone): # pylint: disable=too-many-branches,t
         logging.warning("No lowering found for event.")
         return
 
+    # remove element that shouldn't be included when pushed by to server
+    lowering['lowering_additional_meta'].pop("lowering_files", None)
+
     payload = {}
 
     # if evt_milestone in START_STOP_LOOKUP, set lowering start_ts/stop_ts
@@ -149,6 +152,8 @@ def _set_milestones(event, evt_milestone): # pylint: disable=too-many-branches,t
     if evt_milestone in MILESTONE_LOOKUP:
 
         payload['lowering_additional_meta'] = lowering['lowering_additional_meta']
+
+
 
         if 'milestones' not in payload['lowering_additional_meta']:
             payload['lowering_additional_meta']['milestones'] = {}
