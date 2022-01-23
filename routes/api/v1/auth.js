@@ -1,5 +1,3 @@
-
-const Nodemailer = require('nodemailer');
 const SECRET_KEY = require('../../../config/secret');
 const { randomAsciiString } = require('../../../lib/utils');
 
@@ -12,22 +10,13 @@ const Crypto = require('crypto');
 
 const resetPasswordTokenExpires = 15; //minutes
 
-
 const {
   usersTable
 } = require('../../../config/db_constants');
 
 const {
-  emailAddress, emailPassword, reCaptchaSecret, resetPasswordURL, registeringUserRoles, disableRegisteringUsers, notificationEmailAddresses
+  senderAddress, emailTransporter, reCaptchaSecret, resetPasswordURL, registeringUserRoles, disableRegisteringUsers, notificationEmailAddresses
 } = require('../../../config/email_constants');
-
-const emailTransporter = Nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: emailAddress,
-    pass: emailPassword
-  }
-});
 
 const authorizationHeader = Joi.object({
   authorization: Joi.string().required()
@@ -229,28 +218,31 @@ exports.plugin = {
             return h.response({ "statusCode": 400, 'message': 'Bad request' }).code(400);
           }
 
-          const disabledAccountTxt = (disableRegisteringUsers) ? "<p>For security reasons, accounts created via self-registration are disabled by default.  The system adminstrator has been notified of you account request and will enable the account shortly.</p>" : "";
-          const emailTxt = '<p>Welcome to Sealog. If you are receiving this email you have just created an account on Sealog (' + request.info.hostname + ').</p>' + disabledAccountTxt + '<p>If you have any questions please reply to this email address</p><p>Thanks!</p>';
+          const disabledAccountTxt = (disableRegisteringUsers) ? "<p>For security reasons, accounts created via self-registration are disabled by default.  The system adminstrator has been notified of your account request and will enable the account shortly.</p>" : "";
 
           let mailOptions = {
-            from: emailAddress, // sender address
+            from: senderAddress, // sender address
             to: request.payload.email, // list of receivers
             subject: 'Welcome to Sealog', // Subject line
-            html: emailTxt
+            html: `<p>Welcome to Sealog. If you are receiving this email you have just created an account on Sealog (${request.info.hostname}).</p>
+            ${disabledAccountTxt}
+            <p>If you have any questions please reply to this email address</p><p>Thanks!</p>`
           };
 
-          emailTransporter.sendMail(mailOptions, (err) => {
+          if (emailTransporter !== null) {
+            emailTransporter.sendMail(mailOptions, (err) => {
 
-            if (err) {
-              console.log("ERROR:", err);
-            }
-          });
+              if (err) {
+                console.log("ERROR:", err);
+              }
+            });
+          }
 
           mailOptions = {
-            from: emailAddress, // sender address
-            to: emailAddress, // list of receivers
+            from: senderAddress, // sender address
+            to: notificationEmailAddresses.join(), // list of receipents to be notified. 
             subject: 'New Sealog User Registration', // Subject line
-            html: '<p>New user: ' + user.username + ' ( ' + user.fullname + ' ) has just registered an account with Sealog (' + request.info.hostname + '). Please ensure this user\'s access permissions have been configured correctly.</p>'
+            html: `<p>New user: ${user.username}  ( ${user.fullname} ) has just registered an account with Sealog (${request.info.hostname}). Please ensure this user's access permissions have been configured correctly.</p>`
           };
 
           if (notificationEmailAddresses.length > 0) {
@@ -258,12 +250,14 @@ exports.plugin = {
           }
 
 
-          emailTransporter.sendMail(mailOptions, (err) => {
+          if (emailTransporter !== null) {
+            emailTransporter.sendMail(mailOptions, (err) => {
 
-            if (err) {
-              console.log("ERROR:", err);
-            }
-          });
+              if (err) {
+                console.log("ERROR:", err);
+              }
+            });
+          }
 
           return h.response({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
 
@@ -486,7 +480,7 @@ exports.plugin = {
             return Boom.badRequest('no user found for that email address');
           }
 
-          if (user.disabled) {
+          if (result.disabled) {
             return Boom.badRequest('the account associated with email address is disabled');
           }
 
@@ -520,18 +514,21 @@ exports.plugin = {
 
         const resetLink = resetPasswordURL + token;
         const mailOptions = {
-          from: emailAddress, // sender address
+          from: senderAddress, // sender address
           to: request.payload.email, // list of receivers
           subject: 'Sealog Password Reset Request', // Subject line
-          html: '<p>Sealog has recieved a request to reset the Sealog account associated with this email address. If you did not request this then please just ignore this message. If you would like to change your password please click on the link below.  This link will expire in ' + resetPasswordTokenExpires + ' minutes:</p><p><a href=' + resetLink + '>' + resetLink + '</a></p>'
+          html: `<p>Sealog has recieved a request to reset the Sealog account associated with this email address. If you did not request this then please just ignore this message. If you would like to change your password please click on the link below.  This link will expire in ${resetPasswordTokenExpires.toString()} minutes:</p>
+          <p><a href='${resetLink}'>${resetLink}</a></p>`
         };
 
-        emailTransporter.sendMail(mailOptions, (err) => {
+        if (emailTransporter !== null) {
+          emailTransporter.sendMail(mailOptions, (err) => {
 
-          if (err) {
-            console.log("ERROR:", err);
-          }
-        });
+            if (err) {
+              console.log("ERROR:", err);
+            }
+          });
+        }
 
         return h.response({ statusCode: 200, message: "password reset email sent" }).code(200);
       },

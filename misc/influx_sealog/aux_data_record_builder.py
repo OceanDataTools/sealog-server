@@ -35,7 +35,7 @@ class SealogInfluxAuxDataRecordBuilder():
         self._query_measurements = aux_data_config['query_measurements']
         self._query_fields = list(aux_data_config['aux_record_lookup'].keys())
         self._aux_record_lookup = aux_data_config['aux_record_lookup']
-        self._datasource = aux_data_config['data_source']
+        self._data_source = aux_data_config['data_source']
         self.logger = logging.getLogger(__name__)
 
     @staticmethod
@@ -84,7 +84,7 @@ class SealogInfluxAuxDataRecordBuilder():
 
         aux_data_record = {
             'event_id': event_id,
-            'data_source': self._datasource,
+            'data_source': self._data_source,
             'data_array': []
         }
 
@@ -183,11 +183,11 @@ class SealogInfluxAuxDataRecordBuilder():
         return None
 
     @property
-    def datasource(self):
+    def data_source(self):
         '''
-        Getter method for the datasource property
+        Getter method for the data_source property
         '''
-        return self._datasource
+        return self._data_source
 
     @property
     def measurements(self):
