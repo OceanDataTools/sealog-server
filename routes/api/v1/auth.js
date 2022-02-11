@@ -3,7 +3,7 @@ const { randomAsciiString } = require('../../../lib/utils');
 
 const Bcrypt = require('bcryptjs');
 const Boom = require('@hapi/boom');
-const Joi = require('@hapi/joi');
+const Joi = require('joi');
 const Jwt = require('jsonwebtoken');
 const Axios = require('axios');
 const Crypto = require('crypto');

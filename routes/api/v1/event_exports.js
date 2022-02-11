@@ -1,5 +1,5 @@
 const Boom = require('@hapi/boom');
-const Joi = require('@hapi/joi');
+const Joi = require('joi');
 const { parseAsync } = require('json2csv');
 const Deepcopy = require('deepcopy');
 

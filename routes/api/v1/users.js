@@ -1,7 +1,7 @@
 const { randomAsciiString } = require('../../../lib/utils');
 
 const Bcrypt = require('bcryptjs');
-const Joi = require('@hapi/joi');
+const Joi = require('joi');
 const Boom = require('@hapi/boom');
 const Crypto = require('crypto');
 
