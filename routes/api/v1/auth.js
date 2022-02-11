@@ -23,9 +23,7 @@ const authorizationHeader = Joi.object({
 }).options({ allowUnknown: true }).label('authorizationHeader');
 
 const databaseInsertResponse = Joi.object({
-  n: Joi.number().integer(),
-  ok: Joi.number().integer(),
-  insertedCount: Joi.number().integer(),
+  acknowledged: Joi.boolean(),
   insertedId: Joi.object()
 }).label('databaseInsertResponse');
 
@@ -259,7 +257,7 @@ exports.plugin = {
             });
           }
 
-          return h.response({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
+          return h.response({ acknowledged: result.acknowledged, insertedId: result.insertedId }).code(201);
 
         }
         catch (err) {

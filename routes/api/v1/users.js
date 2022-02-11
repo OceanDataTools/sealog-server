@@ -41,12 +41,10 @@ const userQuery = Joi.object({
   sort: Joi.string().valid('username', 'last_login').optional()
 }).optional().label('userQuery');
 
-const userCreateResponse = Joi.object({
-  n: Joi.number().integer(),
-  ok: Joi.number().integer(),
-  insertedCount: Joi.number().integer(),
+const databaseInsertResponse = Joi.object({
+  acknowledged: Joi.boolean(),
   insertedId: Joi.object()
-}).label('userCreateResponse');
+}).label('databaseInsertResponse');
 
 const userCreatePayload = Joi.object({
   id: Joi.string().length(24).optional(),
@@ -326,7 +324,7 @@ exports.plugin = {
           });
         }
 
-        return h.response({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
+        return h.response({ acknowledged: result.acknowledged, insertedId: result.insertedId }).code(201);
       },
       config: {
         auth: {
@@ -343,7 +341,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            201: userCreateResponse
+            201: databaseInsertResponse
           }
         },
         description: 'Create a new user',

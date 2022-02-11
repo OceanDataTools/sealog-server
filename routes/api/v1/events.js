@@ -270,9 +270,7 @@ const eventCreatePayload = Joi.object({
 }).label('eventCreatePayload');
 
 const eventCreateResponse = Joi.object({
-  n: Joi.number().integer(),
-  ok: Joi.number().integer(),
-  insertedCount: Joi.number().integer(),
+  acknowledged: Joi.boolean(),
   insertedId: Joi.object(),
   insertedEvent: eventSuccessResponse
 }).label('eventCreateResponse');
@@ -1129,7 +1127,7 @@ exports.plugin = {
             server.publish('/ws/status/newEvents', event);
           }
 
-          return h.response({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId, insertedEvent: event }).code(201);
+          return h.response({ acknowledged: result.acknowledged, insertedId: result.insertedId, insertedEvent: event }).code(201);
         }
         catch (err) {
           console.log(err);
