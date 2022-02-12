@@ -1,7 +1,7 @@
 {
   "extends": [
     "eslint:recommended",
-    "@hapi/eslint-config-hapi",
+    "plugin:@hapi/recommended",
     "plugin:import/errors",
     "plugin:import/warnings"
   ],

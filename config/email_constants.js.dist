@@ -24,7 +24,7 @@ const disableRegisteringUsers = false;
 const registeringUserRoles = ["event_watcher", "event_logger", "event_manager", "cruise_manager"];
 
 // Activate per-cruise/per-lowering access permissions
-const useAccessControl = true;
+const useAccessControl = false;
 
 // Uncomment one of the following
 
