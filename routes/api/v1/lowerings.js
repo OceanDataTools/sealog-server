@@ -1,4 +1,3 @@
-const Joi = require('joi');
 const Boom = require('@hapi/boom');
 const Fs = require('fs');
 const Tmp = require('tmp');
@@ -26,49 +25,53 @@ const {
   mvFilesToDir
 } = require('../../../lib/utils');
 
-const _flattenJSON = (json) => {
+const {
+  authorizationHeader,databaseInsertResponse,loweringParam,cruiseParam,eventParam,loweringCreatePayload,loweringCreatePayloadNoAccessControl,loweringUpdatePayload,loweringUpdatePayloadNoAccessControl,loweringQuery,singleLoweringQuery,loweringSuccessResponse,loweringUpdatePermissionsPayload
+} = require('../../../lib/validations');
 
-  const flattenJSON = json.map((lowering) => {
-  
-    const copiedLowering = Deepcopy(lowering);
+const flattenLoweringObjs = (lowering_objs) => {
 
-    Object.keys(copiedLowering.lowering_additional_meta).forEach((key) => {
-      
-      copiedLowering[key] = copiedLowering.lowering_additional_meta[key];
-      if (Array.isArray(copiedLowering[key])) {
-        copiedLowering[key] = copiedLowering[key].join(',');
+  const flat_lowerings = lowering_objs.map((lowering) => {
+
+    const copied_lowering = Deepcopy(lowering);
+
+    Object.keys(copied_lowering.lowering_additional_meta).forEach((key) => {
+
+      copied_lowering[key] = copied_lowering.lowering_additional_meta[key];
+      if (Array.isArray(copied_lowering[key])) {
+        copied_lowering[key] = copied_lowering[key].join(',');
       }
     });
 
-    delete copiedLowering.lowering_additional_meta;
-    delete copiedLowering.lowering_hidden;
-    delete copiedLowering.lowering_access_list;
-    delete copiedLowering.lowering_files;
+    delete copied_lowering.lowering_additional_meta;
+    delete copied_lowering.lowering_hidden;
+    delete copied_lowering.lowering_access_list;
+    delete copied_lowering.lowering_files;
 
-    copiedLowering.start_ts = copiedLowering.start_ts.toISOString();
-    copiedLowering.stop_ts = copiedLowering.stop_ts.toISOString();
-    copiedLowering.id = copiedLowering.id.id.toString('hex');
-    copiedLowering.lowering_tags = copiedLowering.lowering_tags.join(',');
+    copied_lowering.start_ts = copied_lowering.start_ts.toISOString();
+    copied_lowering.stop_ts = copied_lowering.stop_ts.toISOString();
+    copied_lowering.id = copied_lowering.id.id.toString('hex');
+    copied_lowering.lowering_tags = copied_lowering.lowering_tags.join(',');
 
-    return copiedLowering;
+    return copied_lowering;
   });
 
-  return flattenJSON;
+  return flat_lowerings;
 };
 
-const _buildCSVHeaders = (flattenJSON) => {
+const buildLoweringCSVHeaders = (flat_lowerings) => {
 
-  const csvHeaders = flattenJSON.reduce((headers, lowering) => {
+  const csv_headers = flat_lowerings.reduce((headers, lowering) => {
 
-    const keyNames = Object.keys(lowering);
+    const key_names = Object.keys(lowering);
 
-    return headers.concat(keyNames).filter((value, index, self) => {
+    return headers.concat(key_names).filter((value, index, self) => {
 
       return self.indexOf(value) === index;
     });
   }, ['id','lowering_id','start_ts','stop_ts','lowering_location','lowering_tags']);
 
-  return csvHeaders.slice(0, 6).concat(csvHeaders.slice(6).sort());
+  return csv_headers.slice(0, 6).concat(csv_headers.slice(6).sort());
 };
 
 const _renameAndClearFields = (doc) => {
@@ -84,94 +87,6 @@ const _renameAndClearFields = (doc) => {
   return doc;
 };
 
-const authorizationHeader = Joi.object({
-  authorization: Joi.string().required()
-}).options({ allowUnknown: true }).label('authorizationHeader');
-
-const databaseInsertResponse = Joi.object({
-  acknowledged: Joi.boolean(),
-  insertedId: Joi.object()
-}).label('databaseInsertResponse');
-
-const cruiseParam = Joi.object({
-  id: Joi.string().length(24).required()
-}).label('cruiseParam');
-
-const eventParam = Joi.object({
-  id: Joi.string().length(24).required()
-}).label('eventParam');
-
-const loweringParam = Joi.object({
-  id: Joi.string().length(24).required()
-}).label('loweringParam');
-
-const loweringTag = Joi.string().label('loweringTag');
-
-const userID = Joi.string().label('userID');
-
-const loweringCreatePayload = Joi.object({
-  id: Joi.string().length(24).optional(),
-  lowering_id: Joi.string().required(),
-  start_ts: Joi.date().iso().required(),
-  stop_ts: Joi.date().iso().required(),
-  lowering_additional_meta: Joi.object().required(),
-  lowering_tags: Joi.array().items(loweringTag).required(),
-  lowering_location: Joi.string().allow('').required(),
-  lowering_access_list: Joi.array().items(userID).optional(),
-  lowering_hidden: Joi.boolean().optional()
-}).label('loweringCreatePayload');
-
-const loweringCreatePayloadNoAccessControl = loweringCreatePayload.keys({ lowering_access_list: Joi.forbidden() }).label('loweringCreatePayload');
-
-const loweringUpdatePayload = Joi.object({
-  lowering_id: Joi.string().optional(),
-  start_ts: Joi.date().iso().optional(),
-  stop_ts: Joi.date().iso().optional(),
-  lowering_additional_meta: Joi.object().optional(),
-  lowering_tags: Joi.array().items(loweringTag).optional(),
-  lowering_location: Joi.string().allow('').optional(),
-  lowering_access_list: Joi.array().items(userID).optional(),
-  lowering_hidden: Joi.boolean().optional()
-}).required().min(1).label('loweringUpdatePayload');
-
-const loweringUpdatePayloadNoAccessControl = loweringUpdatePayload.keys({ lowering_access_list: Joi.forbidden() }).label('loweringUpdatePayload');
-
-const loweringQuery = Joi.object({
-  lowering_id: Joi.string().optional(),
-  startTS: Joi.date().iso(),
-  stopTS: Joi.date().iso(),
-  lowering_location: Joi.string().optional(),
-  lowering_tags: Joi.alternatives().try(
-    loweringTag,
-    Joi.array().items(loweringTag)
-  ).optional(),
-  format: Joi.string().valid('json','csv').optional(),
-  offset: Joi.number().integer().min(0).optional(),
-  limit: Joi.number().integer().min(1).optional()
-}).optional().label('loweringQuery');
-
-const singleLoweringQuery = Joi.object({
-  format: Joi.string().valid('json','csv').optional()
-}).optional().label('singleLoweringQuery');
-
-const loweringSuccessResponse = Joi.object({
-  id: Joi.object(),
-  lowering_id: Joi.string(),
-  start_ts: Joi.date().iso(),
-  stop_ts: Joi.date().iso(),
-  lowering_additional_meta: Joi.object(),
-  lowering_tags: Joi.array().items(loweringTag),
-  lowering_location: Joi.string().allow(''),
-  lowering_access_list: Joi.array().items(userID),
-  lowering_hidden: Joi.boolean()
-}).label('loweringSuccessResponse');
-
-const loweringSuccessResponseNoAccessControl = loweringSuccessResponse.keys({ lowering_access_list: Joi.forbidden() }).label('loweringSuccessResponse');
-
-const loweringUpdatePermissionsPayload = Joi.object({
-  add: Joi.array().items(userID).optional(),
-  remove: Joi.array().items(userID).optional()
-}).required().min(1).label('loweringUpdatePermissionsPayload');
 
 exports.plugin = {
   name: 'routes-api-lowerings',
@@ -190,7 +105,7 @@ exports.plugin = {
         const query = {};
 
         //Hidden filtering
-        if (typeof request.query.hidden !== "undefined") {
+        if (typeof request.query.hidden !== 'undefined') {
 
           if (request.auth.credentials.scope.includes('admin')) {
             query.lowering_hidden = request.query.hidden;
@@ -238,7 +153,7 @@ exports.plugin = {
 
           //Time filtering
           if ((request.query.startTS) || (request.query.stopTS)) {
-            let startTS = new Date("1970-01-01T00:00:00.000Z");
+            let startTS = new Date('1970-01-01T00:00:00.000Z');
             let stopTS = new Date();
 
             if (request.query.startTS) {
@@ -250,8 +165,8 @@ exports.plugin = {
             }
 
             // query.ts = { "$gte": startTS , "$lt": stopTS };
-            query.start_ts = { "$lt": stopTS };
-            query.stop_ts = { "$gt": startTS };
+            query.start_ts = { '$lt': stopTS };
+            query.stop_ts = { '$gt': startTS };
           }
         }
 
@@ -275,25 +190,25 @@ exports.plugin = {
               return _renameAndClearFields(lowering);
             });
 
-            if (request.query.format && request.query.format === "csv") {
+            if (request.query.format && request.query.format === 'csv') {
 
-              const flattenJSON = _flattenJSON(mod_lowerings);
+              const flat_lowerings = flattenLoweringObjs(mod_lowerings);
 
-              const csvHeaders = _buildCSVHeaders(flattenJSON);
+              const csv_headers = buildLoweringCSVHeaders(flat_lowerings);
 
-              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
+              const csv_results = await parseAsync(flat_lowerings, { fields: csv_headers });
 
               return h.response(csv_results).code(200);
             }
 
             return h.response(mod_lowerings).code(200);
           }
- 
+
           return Boom.notFound('No records found');
-          
+
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           return Boom.serverUnavailable('database error');
         }
       },
@@ -308,10 +223,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items((useAccessControl) ? loweringSuccessResponse : loweringSuccessResponseNoAccessControl)
-            )
+            200: loweringSuccessResponse
           }
         },
         description: 'Return the lowerings based on query parameters',
@@ -348,7 +260,7 @@ exports.plugin = {
         const query = {};
 
         //Hidden filtering
-        if (typeof request.query.hidden !== "undefined") {
+        if (typeof request.query.hidden !== 'undefined') {
 
           if (request.auth.credentials.scope.includes('admin')) {
             query.lowering_hidden = request.query.hidden;
@@ -426,25 +338,25 @@ exports.plugin = {
               return _renameAndClearFields(result);
             });
 
-            if (request.query.format && request.query.format === "csv") {
+            if (request.query.format && request.query.format === 'csv') {
 
-              const flattenJSON = _flattenJSON(mod_lowerings);
+              const flat_lowerings = flattenLoweringObjs(mod_lowerings);
 
-              const csvHeaders = _buildCSVHeaders(flattenJSON);
+              const csv_headers = buildLoweringCSVHeaders(flat_lowerings);
 
-              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
+              const csv_results = await parseAsync(flat_lowerings, { fields: csv_headers });
 
               return h.response(csv_results).code(200);
             }
 
             return h.response(mod_lowerings).code(200);
           }
- 
+
           return Boom.notFound('No records found');
-          
+
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           return Boom.serverUnavailable('database error');
         }
       },
@@ -460,10 +372,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items((useAccessControl) ? loweringSuccessResponse : loweringSuccessResponseNoAccessControl)
-            )
+            200: loweringSuccessResponse
           }
         },
         description: 'Return the lowerings based on query parameters',
@@ -524,13 +433,13 @@ exports.plugin = {
               lowering.lowering_additional_meta.lowering_files = [];
             }
 
-            if (request.query.format && request.query.format === "csv") {
+            if (request.query.format && request.query.format === 'csv') {
 
-              const flattenJSON = _flattenJSON([_renameAndClearFields(lowering)]);
+              const flat_lowerings = flattenLoweringObjs([_renameAndClearFields(lowering)]);
 
-              const csvHeaders = _buildCSVHeaders(flattenJSON);
+              const csv_headers = buildLoweringCSVHeaders(flat_lowerings);
 
-              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
+              const csv_results = await parseAsync(flat_lowerings, { fields: csv_headers });
 
               return h.response(csv_results).code(200);
             }
@@ -539,10 +448,10 @@ exports.plugin = {
           }
 
           return Boom.notFound('No records found');
-          
+
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           return Boom.serverUnavailable('database error');
         }
       },
@@ -558,10 +467,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.alternatives().try(
-              Joi.string(),
-              (useAccessControl) ? loweringSuccessResponse : loweringSuccessResponseNoAccessControl
-            )
+            200: loweringSuccessResponse
           }
         },
         description: 'Return the lowerings based on query parameters',
@@ -596,15 +502,15 @@ exports.plugin = {
             return Boom.notFound('No record found for id: ' + request.params.id);
           }
 
-          if (!request.auth.credentials.scope.includes("admin") && result.lowering_hidden && (useAccessControl && typeof result.lowering_access_list !== 'undefined' && !result.lowering_access_list.includes(request.auth.credentials.id))) {
+          if (!request.auth.credentials.scope.includes('admin') && result.lowering_hidden && (useAccessControl && typeof result.lowering_access_list !== 'undefined' && !result.lowering_access_list.includes(request.auth.credentials.id))) {
             return Boom.unauthorized('User not authorized to retrieve this lowering');
           }
 
           lowering = result;
-        
+
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -615,13 +521,13 @@ exports.plugin = {
           lowering.lowering_additional_meta.lowering_files = [];
         }
 
-        if (request.query.format && request.query.format === "csv") {
+        if (request.query.format && request.query.format === 'csv') {
 
-          const flattenJSON = _flattenJSON([_renameAndClearFields(lowering)]);
+          const flat_lowerings = flattenLoweringObjs([_renameAndClearFields(lowering)]);
 
-          const csvHeaders = _buildCSVHeaders(flattenJSON);
+          const csv_headers = buildLoweringCSVHeaders(flat_lowerings);
 
-          const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
+          const csv_results = await parseAsync(flat_lowerings, { fields: csv_headers });
 
           return h.response(csv_results).code(200);
         }
@@ -640,10 +546,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.alternatives().try(
-              Joi.string(),
-              (useAccessControl) ? loweringSuccessResponse : loweringSuccessResponseNoAccessControl
-            )
+            200: loweringSuccessResponse
           }
         },
         description: 'Return the lowering based on lowering id',
@@ -679,15 +582,15 @@ exports.plugin = {
             return Boom.notFound('No record found for id: ' + request.params.id);
           }
 
-          if (!request.auth.credentials.scope.includes("admin") && result.lowering_hidden && (useAccessControl && typeof result.lowering_access_list !== 'undefined' && !result.lowering_access_list.includes(request.auth.credentials.id))) {
+          if (!request.auth.credentials.scope.includes('admin') && result.lowering_hidden && (useAccessControl && typeof result.lowering_access_list !== 'undefined' && !result.lowering_access_list.includes(request.auth.credentials.id))) {
             return Boom.unauthorized('User not authorized to retrieve this lowering');
           }
 
           lowering = result;
-        
+
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -780,7 +683,7 @@ exports.plugin = {
           result = await db.collection(loweringsTable).insertOne(lowering);
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -788,13 +691,13 @@ exports.plugin = {
           Fs.mkdirSync(LOWERING_PATH + '/' + result.insertedId);
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
         }
 
         lowering.id = result.insertedId;
         server.publish('/ws/status/newLowerings', lowering);
 
-        const cruiseQuery = { start_ts: { "$lte": lowering.start_ts }, stop_ts: { "$gt": lowering.stop_ts } };
+        const cruiseQuery = { start_ts: { '$lte': lowering.start_ts }, stop_ts: { '$gt': lowering.stop_ts } };
 
         try {
           const loweringCruise = await db.collection(cruisesTable).find(cruiseQuery).toArray();
@@ -808,7 +711,7 @@ exports.plugin = {
         }
 
         return h.response({ acknowledged: result.acknowledged, insertedId: result.insertedId }).code(201);
-        
+
       },
       config: {
         auth: {
@@ -863,7 +766,7 @@ exports.plugin = {
 
           if (request.payload.stopTS) {
             lowering.stop_ts = Date(request.payload.stopTS);
-          }          
+          }
         }
         catch (err) {
           return Boom.badRequest('Unable to parse date string');
@@ -894,7 +797,7 @@ exports.plugin = {
 
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           return Boom.serverUnavailable('database error', err);
         }
 
@@ -931,10 +834,10 @@ exports.plugin = {
             });
           }
           catch (err) {
-            console.log("ERROR:", err);
+            console.log('ERROR:', err);
             return Boom.serverUnavailable('unabled to upload files. Verify directory ' + Path.join(LOWERING_PATH, request.params.id) + ' exists');
           }
-          
+
           delete request.payload.lowering_files;
         }
 
@@ -942,7 +845,7 @@ exports.plugin = {
           await db.collection(loweringsTable).updateOne(query, { $set: request.payload });
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -953,7 +856,7 @@ exports.plugin = {
 
         server.publish('/ws/status/updateLowerings', updatedLowering);
 
-        const cruiseQuery = { start_ts: { "$lte": updatedLowering.start_ts }, stop_ts: { "$gt": updatedLowering.stop_ts } };
+        const cruiseQuery = { start_ts: { '$lte': updatedLowering.start_ts }, stop_ts: { '$gt': updatedLowering.stop_ts } };
 
         try {
           const loweringCruise = await db.collection(cruisesTable).find(cruiseQuery).toArray();
@@ -1038,7 +941,7 @@ exports.plugin = {
             const users_are_valid = request.payload.add.reduce((result, user_id) => {
 
               if (!user_ids.includes(user_id)) {
-                console.log("userid:", user_id, "is invalid");
+                console.log('userid:', user_id, 'is invalid');
                 result = false;
               }
 
@@ -1059,7 +962,7 @@ exports.plugin = {
               }
 
               return result;
-        
+
             }, true);
 
             if (!users_are_valid) {
@@ -1129,7 +1032,7 @@ exports.plugin = {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
@@ -1140,7 +1043,7 @@ exports.plugin = {
           }
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -1149,7 +1052,7 @@ exports.plugin = {
           return h.response().code(204);
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           return Boom.serverUnavailable('database error');
         }
       },
@@ -1185,7 +1088,7 @@ exports.plugin = {
           await db.collection(loweringsTable).deleteMany(query);
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -1196,8 +1099,8 @@ exports.plugin = {
           }
         }
         catch (err) {
-          console.log("ERROR:", err);
-          return Boom.serverUnavailable('error deleting lowering files');  
+          console.log('ERROR:', err);
+          return Boom.serverUnavailable('error deleting lowering files');
         }
 
         return h.response().code(204);

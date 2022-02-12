@@ -1,5 +1,4 @@
 const Boom = require('@hapi/boom');
-const Joi = require('joi');
 
 const THRESHOLD = 120; //seconds
 
@@ -14,6 +13,14 @@ const {
   cruisesTable
 } = require('../../../config/db_constants');
 
+const {
+  buildEventsQuery
+} = require('../../../lib/utils');
+
+const {
+  authorizationHeader,databaseInsertResponse,auxDataParam,auxDataQuery,auxDataCreatePayload,auxDataUpdatePayload,auxDataSuccessResponse
+} = require('../../../lib/validations');
+
 const _renameAndClearFields = (doc) => {
 
   //rename id
@@ -23,153 +30,6 @@ const _renameAndClearFields = (doc) => {
   return doc;
 };
 
-const _buildEventsQuery = (request, start_ts = new Date("1970-01-01T00:00:00.000Z"), stop_ts = new Date() ) => {
-
-  const query = {};
-  if (request.query.author) {
-    if (Array.isArray(request.query.author)) {
-      const regex_query = request.query.author.map((author) => {
-
-        // return '/' + author + '/i';
-        const return_regex = new RegExp(author, 'i');
-        return return_regex;
-      });
-
-      query.event_author  = { $in: regex_query };
-    }
-    else {
-      query.event_author =  new RegExp(request.query.author, 'i');
-    }
-  }
-
-  if (request.query.value) {
-    if (Array.isArray(request.query.value)) {
-
-      const inList = [];
-      const ninList = [];
-
-      for ( const value of request.query.value ) {
-        if (value.startsWith("!")) {
-          ninList.push( new RegExp(value.substr(1), 'i'));
-        }
-        else {
-          inList.push(new RegExp(value, 'i'));
-        }
-      }
-
-      if ( inList.length > 0 && ninList.length > 0) {
-        query.event_value  = { $in: inList, $nin: ninList };
-      }
-      else if (inList.length > 0) {
-        query.event_value  = { $in: inList };
-      }
-      else {
-        query.event_value  = { $nin: ninList };
-      }
-
-    }
-    else {
-      if (request.query.value.startsWith("!")) {
-        query.event_value = new RegExp('^(?!.*' + request.query.value.substr(1) + ')', 'i');
-      }
-      else {
-        query.event_value = new RegExp(request.query.value, 'i');
-      }
-    }
-  }
-
-  if (request.query.freetext) {
-    query.event_free_text = new RegExp(request.query.freetext, 'i');
-  }
-
-  //Time filtering
-  if (request.query.startTS) {
-    const tempStartTS = new Date(request.query.startTS);
-    const startTS = (tempStartTS >= start_ts && tempStartTS <= stop_ts) ? tempStartTS : start_ts;
-    query.ts = { $gte: startTS };
-  }
-  else {
-    query.ts = { $gte: start_ts };
-  }
-
-  if (request.query.stopTS) {
-    const tempStopTS = new Date(request.query.stopTS);
-    const stopTS = (tempStopTS >= start_ts && tempStopTS <= stop_ts) ? tempStopTS : stop_ts;
-    query.ts.$lte = stopTS;
-  }
-  else {
-    query.ts.$lte = stop_ts;
-  }
-
-  // console.log("query:", query);
-  return query;
-};
-
-const authorizationHeader = Joi.object({
-  authorization: Joi.string().required()
-}).options({ allowUnknown: true }).label('authorizationHeader');
-
-const databaseInsertResponse = Joi.object({
-  acknowledged: Joi.boolean(),
-  insertedId: Joi.object()
-}).label('databaseInsertResponse');
-
-const auxDataParam = Joi.object({
-  id: Joi.string().length(24).required()
-}).label('auxDataParam');
-
-const auxData_data_item = Joi.object({
-  data_name: Joi.string().required(),
-  data_value: Joi.alternatives().try(
-    Joi.string(),
-    Joi.number()
-  ).required(),
-  data_uom: Joi.string().optional()
-}).label('auxDataDataItem');
-
-const auxDataQuery = Joi.object({
-  eventID: Joi.string().length(24).optional(),
-  offset: Joi.number().integer().min(0).optional(),
-  limit: Joi.number().integer().min(1).optional(),
-  author: Joi.alternatives().try(
-    Joi.string(),
-    Joi.array().items(Joi.string()).optional()
-  ).optional(),
-  startTS: Joi.date().iso().optional(),
-  stopTS: Joi.date().iso().optional(),
-  datasource: Joi.alternatives().try(
-    Joi.string(),
-    Joi.array().items(Joi.string())
-  ).optional(),
-  value: Joi.alternatives().try(
-    Joi.string(),
-    Joi.array().items(Joi.string())
-  ).optional(),
-  freetext: Joi.alternatives().try(
-    Joi.string(),
-    Joi.array().items(Joi.string())
-  ).optional()
-}).optional().label('auxDataQuery');
-
-const auxDataCreatePayload = Joi.object({
-  id: Joi.string().length(24).optional(),
-  event_id: Joi.string().length(24).required(),
-  data_source: Joi.string().min(1).max(100).required(),
-  data_array: Joi.array().items(auxData_data_item)
-}).label('auxDataCreatePayload');
-
-const auxDataUpdatePayload = Joi.object({
-  event_id: Joi.string().length(24).optional(),
-  data_source: Joi.string().min(1).max(100).optional(),
-  data_array: Joi.array().items(auxData_data_item).optional()
-}).required().min(1).label('auxDataUpdatePayload');
-
-const auxDataSuccessResponse = Joi.object({
-  id: Joi.object(),
-  event_id: Joi.object(),
-  data_source: Joi.string(),
-  data_array: Joi.array().items(auxData_data_item)
-}).label('auxDataSuccessResponse');
 
 exports.plugin = {
   name: 'routes-api-event_aux_data',
@@ -206,7 +66,7 @@ exports.plugin = {
             return Boom.badRequest('Cruise not found for id' + request.params.id);
           }
 
-          if (!request.auth.credentials.scope.includes("admin") && cruiseResult.cruise_hidden && (useAccessControl && typeof cruiseResult.cruise_access_list !== 'undefined' && !cruiseResult.cruise_access_list.includes(request.auth.credentials.id))) {
+          if (!request.auth.credentials.scope.includes('admin') && cruiseResult.cruise_hidden && (useAccessControl && typeof cruiseResult.cruise_access_list !== 'undefined' && !cruiseResult.cruise_access_list.includes(request.auth.credentials.id))) {
             return Boom.unauthorized('User not authorized to retrieve this cruise');
           }
 
@@ -217,7 +77,7 @@ exports.plugin = {
           return Boom.serverUnavailable('database error', err);
         }
 
-        const eventQuery = _buildEventsQuery(request, cruise.start_ts, cruise.stop_ts);
+        const eventQuery = buildEventsQuery(request, cruise.start_ts, cruise.stop_ts);
 
         try {
           const results = await db.collection(eventsTable).find(eventQuery, { _id: 1 }).sort( { ts: 1 } ).toArray();
@@ -253,9 +113,9 @@ exports.plugin = {
 
                 return h.response(eventAuxDataResults).code(200);
               }
- 
+
               return Boom.notFound('No records found');
-              
+
             }
             catch (err) {
               return Boom.serverUnavailable('database error', err);
@@ -281,7 +141,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.array().items(auxDataSuccessResponse)
+            200: auxDataSuccessResponse
           }
         },
         description: 'Return the event_aux_data records for a cruise based on the cruise id',
@@ -308,7 +168,7 @@ exports.plugin = {
             return Boom.notFound('lowering not found for that id');
           }
 
-          if (!request.auth.credentials.scope.includes("admin") && loweringResult.lowering_hidden && (useAccessControl && typeof loweringResult.lowering_access_list !== 'undefined' && !loweringResult.lowering_access_list.includes(request.auth.credentials.id))) {
+          if (!request.auth.credentials.scope.includes('admin') && loweringResult.lowering_hidden && (useAccessControl && typeof loweringResult.lowering_access_list !== 'undefined' && !loweringResult.lowering_access_list.includes(request.auth.credentials.id))) {
             return Boom.unauthorized('User not authorized to retrieve this lowering');
           }
 
@@ -318,7 +178,7 @@ exports.plugin = {
           return Boom.serverUnavailable('database error', err);
         }
 
-        const eventQuery = _buildEventsQuery(request, lowering.start_ts, lowering.stop_ts);
+        const eventQuery = buildEventsQuery(request, lowering.start_ts, lowering.stop_ts);
 
         try {
           const results = await db.collection(eventsTable).find(eventQuery, { _id: 1 }).sort( { ts: 1 } ).toArray();
@@ -382,7 +242,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.array().items(auxDataSuccessResponse)
+            200: auxDataSuccessResponse
           }
         },
         description: 'Return the event_aux_data records for a lowering based on the lowering id',
@@ -406,7 +266,7 @@ exports.plugin = {
             return Boom.badRequest('Cannot include param eventID when using author, value, freetext, startTS or stopTS');
           }
 
-          const eventQuery = _buildEventsQuery(request);
+          const eventQuery = buildEventsQuery(request);
 
           try {
             const results = await db.collection(eventsTable).find(eventQuery, { _id: 1 }).sort( { ts: 1 } ).toArray();
@@ -519,7 +379,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.array().items(auxDataSuccessResponse)
+            200: auxDataSuccessResponse
           }
         },
         description: 'Return the event_aux_data records based on query parameters',
@@ -648,7 +508,7 @@ exports.plugin = {
                   if (Math.abs(Math.round(diff)) < THRESHOLD) {
                     server.publish('/ws/status/newEventAuxData', event_aux_data);
                   }
-              
+
                   return h.response({ acknowledged: insertResult.acknowledged, insertedId: insertResult.insertedId }).code(201);
 
                 }
@@ -678,14 +538,14 @@ exports.plugin = {
                 catch (err) {
                   return Boom.serverUnavailable('database error', err);
                 }
-              }    
+              }
             }
             catch (err) {
-              return Boom.serverUnavailable("ERROR find aux data:", err);
+              return Boom.serverUnavailable('ERROR find aux data:', err);
             }
           }
           catch (err) {
-            return Boom.serverUnavailable("ERROR find event:", err);
+            return Boom.serverUnavailable('ERROR find event:', err);
           }
         }
       },
@@ -755,12 +615,12 @@ exports.plugin = {
           result.data_array.forEach((resultOption) => {
 
             let foundit = false;
-            
+
             event_aux_data.data_array.forEach((requestOption) => {
 
               if (requestOption.data_name === resultOption.data_name) {
                 requestOption.data_value = resultOption.data_value;
-                
+
                 if (resultOption.data_uom) {
                   requestOption.data_uom = resultOption.data_uom;
                 }

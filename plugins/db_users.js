@@ -23,11 +23,11 @@ exports.plugin = {
 
     const init_data = [
       {
-        _id: ObjectID("5981f167212b348aed7fa9f5"),
-        username: "admin",
-        fullname: "Admin",
-        email: "admin@notarealserver.com",
-        password: await hashedPassword("demo"),
+        _id: ObjectID('5981f167212b348aed7fa9f5'),
+        username: 'admin',
+        fullname: 'Admin',
+        email: 'admin@notarealserver.com',
+        password: await hashedPassword('demo'),
         last_login: new Date(),
         roles: ['admin', 'event_watcher', 'event_logger', 'event_manager', 'cruise_manager'],
         system_user: true,
@@ -35,11 +35,11 @@ exports.plugin = {
         loginToken: randomAsciiString(20)
       },
       {
-        _id: ObjectID("5981f167212b348aed7fb9f5"),
-        username: "guest",
-        fullname: "Guest",
-        email: "guest@notarealserver.com",
-        password: await hashedPassword(""),
+        _id: ObjectID('5981f167212b348aed7fb9f5'),
+        username: 'guest',
+        fullname: 'Guest',
+        email: 'guest@notarealserver.com',
+        password: await hashedPassword(''),
         last_login: new Date(),
         roles: ['event_manager', 'event_logger', 'event_watcher'],
         system_user: true,
@@ -47,11 +47,11 @@ exports.plugin = {
         loginToken: randomAsciiString(20)
       },
       {
-        _id: ObjectID("5981f167212b348aed7fc9f5"),
-        username: "pi",
-        fullname: "Primary Investigator",
-        email: "pi@notarealserver.com",
-        password: await hashedPassword(""),
+        _id: ObjectID('5981f167212b348aed7fc9f5'),
+        username: 'pi',
+        fullname: 'Primary Investigator',
+        email: 'pi@notarealserver.com',
+        password: await hashedPassword(''),
         last_login: new Date(),
         roles: ['event_manager', 'event_logger', 'event_watcher', 'cruise_manager'],
         system_user: true,
@@ -60,7 +60,7 @@ exports.plugin = {
       }
     ];
 
-    console.log("Searching for Users Collection");
+    console.log('Searching for Users Collection');
     try {
       const result = await db.listCollections({ name: usersTable }).toArray();
       if (result.length > 0) {
@@ -69,7 +69,7 @@ exports.plugin = {
         const users = await db.collection(usersTable).find().toArray();
 
         users.forEach(async (user) => {
-        
+
           // Add loginToken to users if not present
           if ( user.loginToken === undefined ) {
             console.log('Mirgation: Adding missing loginToken to user');
@@ -77,25 +77,25 @@ exports.plugin = {
           }
         });
 
-        console.log("Collection already exists... we're done here.");
+        console.log('Collection already exists... we\'re done here.');
         return;
       }
     }
     catch (err) {
-      console.log("ERROR:", err.code);
+      console.log('ERROR:', err.code);
       throw (err);
     }
 
     try {
-      console.log("Creating Users Collection");
+      console.log('Creating Users Collection');
       const collection = await db.createCollection(usersTable);
 
-      console.log("Populating Users Collection");
+      console.log('Populating Users Collection');
       await collection.insertMany(init_data);
 
     }
     catch (err) {
-      console.log("ERROR:", err.code);
+      console.log('ERROR:', err.code);
       throw (err);
     }
   }

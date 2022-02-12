@@ -1,9 +1,12 @@
 const Boom = require('@hapi/boom');
-const Joi = require('joi');
 
 const {
   customVarsTable
 } = require('../../../config/db_constants');
+
+const {
+  authorizationHeader,customVarSuccessResponse,customVarUpdatePayload,customVarParam
+} = require('../../../lib/validations');
 
 const _renameAndClearFields = (doc) => {
 
@@ -13,32 +16,6 @@ const _renameAndClearFields = (doc) => {
 
   return doc;
 };
-
-const authorizationHeader = Joi.object({
-  authorization: Joi.string().required()
-}).options({ allowUnknown: true }).label('authorizationHeader');
-
-// const databaseInsertResponse = Joi.object({
-//   n: Joi.number().integer(),
-//   ok: Joi.number().integer(),
-//   insertedCount: Joi.number().integer(),
-//   insertedId: Joi.object()
-// }).label('databaseInsertResponse');
-
-const customVarParam = Joi.object({
-  id: Joi.string().length(24).required()
-}).label('customVarParam');
-
-const customVarResponse = Joi.object({
-  id: Joi.object(),
-  custom_var_name: Joi.string(),
-  custom_var_value: Joi.string().allow('')
-}).label('customVarResponse');
-
-const customVarUpdatePayload = Joi.object({
-  custom_var_name: Joi.string().optional(),
-  custom_var_value: Joi.string().allow('').optional()
-}).required().min(1).label('customVarUpdatePayload');
 
 exports.plugin = {
   name: 'routes-api-custom_vars',
@@ -78,9 +55,9 @@ exports.plugin = {
 
             return h.response(results).code(200);
           }
- 
+
           return Boom.notFound('No records found');
-          
+
         }
         catch (err) {
           return Boom.serverUnavailable('database error', err);
@@ -93,13 +70,11 @@ exports.plugin = {
         },
         validate: {
           headers: authorizationHeader,
-          query: Joi.object({
-            name: Joi.string()
-          }).optional()
+          query: customVarParam
         },
         response: {
           status: {
-            200: Joi.array().items(customVarResponse)
+            200: customVarSuccessResponse
           }
         },
         description: 'Return the custom vars based on query parameters',
@@ -150,7 +125,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: customVarResponse
+            200: customVarSuccessResponse
           }
         },
         description: 'Return the custom_var based on custom_var id',
@@ -203,7 +178,7 @@ exports.plugin = {
         }
         catch (err) {
           return Boom.serverUnavailable('database error', err);
-        }   
+        }
       },
       config: {
         auth: {

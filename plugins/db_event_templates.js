@@ -10,7 +10,7 @@ exports.plugin = {
     const db = server.mongo.db;
     // const ObjectID = server.mongo.ObjectID;
 
-    console.log("Searching for Event Template Collection");
+    console.log('Searching for Event Template Collection');
     try {
       const result = await db.listCollections({ name: eventTemplatesTable }).toArray();
       if (result.length > 0) {
@@ -19,7 +19,7 @@ exports.plugin = {
         const eventTemplates = await db.collection(eventTemplatesTable).find().toArray();
 
         eventTemplates.forEach(async (eventTemplate) => {
-        
+
           // Add template_categories to eventTemplate if not present
           if ( eventTemplate.template_categories === undefined ) {
             console.log('Mirgation: Adding missing template_categories to event template');
@@ -33,21 +33,21 @@ exports.plugin = {
           }
         });
 
-        console.log("Collection already exists... we're done here.");
+        console.log('Collection already exists... we\'re done here.');
         return;
       }
     }
     catch (err) {
-      console.log("ERROR:", err.code);
+      console.log('ERROR:', err.code);
       throw (err);
     }
 
-    console.log("Creating Event Template Collection");
+    console.log('Creating Event Template Collection');
     try {
       await db.createCollection(eventTemplatesTable);
     }
     catch (err) {
-      console.log("ERROR:", err.code);
+      console.log('ERROR:', err.code);
       throw (err);
     }
   }

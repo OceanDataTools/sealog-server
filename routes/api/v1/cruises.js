@@ -1,4 +1,3 @@
-const Joi = require('joi');
 const Boom = require('@hapi/boom');
 const Fs = require('fs');
 const Tmp = require('tmp');
@@ -22,53 +21,57 @@ const {
 } = require('../../../config/db_constants');
 
 const {
+  authorizationHeader,databaseInsertResponse,cruiseQuery,cruiseSuccessResponse,loweringParam,singleCruiseQuery,eventParam,cruiseParam,cruiseCreatePayload,cruiseUpdatePayload,cruiseUpdatePermissionsPayload
+} = require('../../../lib/validations');
+
+const {
   rmDir,
   mvFilesToDir
 } = require('../../../lib/utils');
 
-const _flattenJSON = (json) => {
+const flattenCruiseObjs = (cruise_objs) => {
 
-  const flattenJSON = json.map((cruise) => {
-  
-    const copiedCruise = Deepcopy(cruise);
+  const flat_cruises = cruise_objs.map((cruise) => {
 
-    Object.keys(copiedCruise.cruise_additional_meta).forEach((key) => {
+    const copied_cruise = Deepcopy(cruise);
 
-      copiedCruise[key] = copiedCruise.cruise_additional_meta[key];
-      if (Array.isArray(copiedCruise[key])) {
-        copiedCruise[key] = copiedCruise[key].join(',');
+    Object.keys(copied_cruise.cruise_additional_meta).forEach((key) => {
+
+      copied_cruise[key] = copied_cruise.cruise_additional_meta[key];
+      if (Array.isArray(copied_cruise[key])) {
+        copied_cruise[key] = copied_cruise[key].join(',');
       }
     });
 
-    delete copiedCruise.cruise_additional_meta;
-    delete copiedCruise.cruise_hidden;
-    delete copiedCruise.cruise_access_list;
-    delete copiedCruise.cruise_files;
+    delete copied_cruise.cruise_additional_meta;
+    delete copied_cruise.cruise_hidden;
+    delete copied_cruise.cruise_access_list;
+    delete copied_cruise.cruise_files;
 
-    copiedCruise.start_ts = copiedCruise.start_ts.toISOString();
-    copiedCruise.stop_ts = copiedCruise.stop_ts.toISOString();
-    copiedCruise.id = copiedCruise.id.id.toString('hex');
-    copiedCruise.cruise_tags = copiedCruise.cruise_tags.join(',');
+    copied_cruise.start_ts = copied_cruise.start_ts.toISOString();
+    copied_cruise.stop_ts = copied_cruise.stop_ts.toISOString();
+    copied_cruise.id = copied_cruise.id.id.toString('hex');
+    copied_cruise.cruise_tags = copied_cruise.cruise_tags.join(',');
 
-    return copiedCruise;
+    return copied_cruise;
   });
 
-  return flattenJSON;
+  return flat_cruises;
 };
 
-const _buildCSVHeaders = (flattenJSON) => {
+const buildCruiseCSVHeaders = (flat_cruises) => {
 
-  const csvHeaders = flattenJSON.reduce((headers, cruise) => {
+  const csv_headers = flat_cruises.reduce((headers, cruise) => {
 
-    const keyNames = Object.keys(cruise);
+    const key_names = Object.keys(cruise);
 
-    return headers.concat(keyNames).filter((value, index, self) => {
+    return headers.concat(key_names).filter((value, index, self) => {
 
       return self.indexOf(value) === index;
     });
   }, ['id','cruise_id','start_ts','stop_ts','cruise_location','cruise_tags']);
 
-  return csvHeaders.slice(0, 6).concat(csvHeaders.slice(6).sort());
+  return csv_headers.slice(0, 6).concat(csv_headers.slice(6).sort());
 };
 
 const _renameAndClearFields = (doc) => {
@@ -83,112 +86,6 @@ const _renameAndClearFields = (doc) => {
 
   return doc;
 };
-
-
-const authorizationHeader = Joi.object({
-  authorization: Joi.string().required()
-}).options({ allowUnknown: true }).label('authorizationHeader');
-
-const databaseInsertResponse = Joi.object({
-  acknowledged: Joi.boolean(),
-  insertedId: Joi.object()
-}).label('databaseInsertResponse');
-
-const cruiseParam = Joi.object({
-  id: Joi.string().length(24).required()
-}).label('cruiseParam');
-
-const eventParam = Joi.object({
-  id: Joi.string().length(24).required()
-}).label('eventParam');
-
-const loweringParam = Joi.object({
-  id: Joi.string().length(24).required()
-}).label('loweringParam');
-
-const cruiseTag = Joi.string().label('cruiseTag');
-
-const userID = Joi.string().label('userID');
-
-const cruiseAdditionalMetaCreate = Joi.object({
-  cruise_name: Joi.string().optional(),
-  cruise_vessel: Joi.string(),
-  cruise_pi: Joi.string(),
-  cruise_departure_location: Joi.string(),
-  cruise_arrival_location: Joi.string()
-}).options({ allowUnknown: true }).label('cruiseAdditionalMetaCreate');
-
-const cruiseAdditionalMetaUpdate = Joi.object({
-  cruise_name: Joi.string().optional(),
-  cruise_vessel: Joi.string().optional(),
-  cruise_pi: Joi.string().optional(),
-  cruise_departure_location: Joi.string().optional(),
-  cruise_arrival_location: Joi.string().optional()
-}).options({ allowUnknown: true }).label('cruiseAdditionalMetaUpdate');
-
-const cruiseQuery = Joi.object({
-  startTS: Joi.date().iso(),
-  stopTS: Joi.date().iso(),
-  hidden: Joi.boolean().optional(),
-  cruise_id: Joi.string().optional(),
-  cruise_vessel: Joi.string().optional(),
-  cruise_location: Joi.string().optional(),
-  cruise_pi: Joi.string().optional(),
-  cruise_tags: Joi.array().items(cruiseTag).optional(),
-  format: Joi.string().valid('json','csv').optional(),
-  offset: Joi.number().integer().min(0).optional(),
-  limit: Joi.number().integer().min(1).optional()
-}).optional().label('cruiseQuery');
-
-const singleCruiseQuery = Joi.object({
-  format: Joi.string().valid('json','csv').optional()
-}).optional().label('singleCruiseQuery');
-
-const cruiseSuccessResponse = Joi.object({
-  id: Joi.object(),
-  cruise_id: Joi.string(),
-  start_ts: Joi.date().iso(),
-  stop_ts: Joi.date().iso(),
-  cruise_location: Joi.string().allow(''),
-  cruise_additional_meta: cruiseAdditionalMetaCreate,
-  cruise_tags: Joi.array().items(cruiseTag),
-  cruise_access_list: Joi.array().items(userID),
-  cruise_hidden: Joi.boolean()
-}).label('cruiseSuccessResponse');
-
-const cruiseSuccessResponseNoAccessControl = cruiseSuccessResponse.keys({ cruise_access_list: Joi.forbidden() }).label('cruiseSuccessResponse');
-
-const cruiseCreatePayload = Joi.object({
-  id: Joi.string().length(24).optional(),
-  cruise_id: Joi.string().required(),
-  start_ts: Joi.date().iso().required(),
-  stop_ts: Joi.date().iso().required(),
-  cruise_location: Joi.string().allow('').required(),
-  cruise_additional_meta: cruiseAdditionalMetaCreate.required(),
-  cruise_tags: Joi.array().items(cruiseTag).required(),
-  cruise_access_list: Joi.array().items(userID).optional(),
-  cruise_hidden: Joi.boolean().optional()
-}).label('cruiseCreatePayload');
-
-const cruiseCreatePayloadNoAccessControl = cruiseCreatePayload.keys({ cruise_access_list: Joi.forbidden() }).label('cruiseCreatePayload');
-
-const cruiseUpdatePayload = Joi.object({
-  cruise_id: Joi.string().optional(),
-  start_ts: Joi.date().iso().optional(),
-  stop_ts: Joi.date().iso().optional(),
-  cruise_location: Joi.string().allow('').optional(),
-  cruise_additional_meta: cruiseAdditionalMetaUpdate.optional(),
-  cruise_tags: Joi.array().items(cruiseTag).optional(),
-  cruise_access_list: Joi.array().items(userID).optional(),
-  cruise_hidden: Joi.boolean().optional()
-}).required().min(1).label('cruiseUpdatePayload');
-
-const cruiseUpdatePayloadNoAccessControl = cruiseUpdatePayload.keys({ cruise_access_list: Joi.forbidden() }).label('cruiseUpdatePayload');
-
-const cruiseUpdatePermissionsPayload = Joi.object({
-  add: Joi.array().items(userID).optional(),
-  remove: Joi.array().items(userID).optional()
-}).required().min(1).label('cruiseUpdatePermissionsPayload');
 
 exports.plugin = {
   name: 'routes-api-cruises',
@@ -209,7 +106,7 @@ exports.plugin = {
         const query = {};
 
         //Hidden filtering
-        if (typeof request.query.hidden !== "undefined") {
+        if (typeof request.query.hidden !== 'undefined') {
 
           if (request.auth.credentials.scope.includes('admin')) {
             query.cruise_hidden = request.query.hidden;
@@ -267,7 +164,7 @@ exports.plugin = {
 
           // Time filtering
           if ((request.query.startTS) || (request.query.stopTS)) {
-            let startTS = new Date("1970-01-01T00:00:00.000Z");
+            let startTS = new Date('1970-01-01T00:00:00.000Z');
             let stopTS = new Date();
 
             if (request.query.startTS) {
@@ -278,8 +175,8 @@ exports.plugin = {
               stopTS = new Date(request.query.stopTS);
             }
 
-            query.start_ts = { "$lt": stopTS };
-            query.stop_ts = { "$gt": startTS };
+            query.start_ts = { '$lt': stopTS };
+            query.stop_ts = { '$gt': startTS };
           }
         }
 
@@ -304,26 +201,26 @@ exports.plugin = {
               return _renameAndClearFields(cruise);
             });
 
-            if (request.query.format && request.query.format === "csv") {
+            if (request.query.format && request.query.format === 'csv') {
 
-              const flattenJSON = _flattenJSON(mod_cruises);
+              const flat_cruises = flattenCruiseObjs(mod_cruises);
 
-              const csvHeaders = _buildCSVHeaders(flattenJSON);
+              const csv_headers = buildCruiseCSVHeaders(flat_cruises);
 
-              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
+              const csv_results = await parseAsync(flat_cruises, { fields: csv_headers });
 
               return h.response(csv_results).code(200);
             }
-            
+
             return h.response(mod_cruises).code(200);
           }
- 
+
           return Boom.notFound('No records found');
-          
+
         }
         catch (err) {
           return Boom.serverUnavailable('database error', err);
-        }   
+        }
       },
       config: {
         auth: {
@@ -336,10 +233,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items((useAccessControl) ? cruiseSuccessResponse : cruiseSuccessResponseNoAccessControl)
-            )
+            200: cruiseSuccessResponse
           }
         },
         description: 'Return the cruises based on query parameters',
@@ -411,13 +305,13 @@ exports.plugin = {
               cruise.cruise_additional_meta.cruise_files = [];
             }
 
-            if (request.query.format && request.query.format === "csv") {
+            if (request.query.format && request.query.format === 'csv') {
 
-              const flattenJSON = _flattenJSON([_renameAndClearFields(cruise)]);
+              const flat_cruises = flattenCruiseObjs([_renameAndClearFields(cruise)]);
 
-              const csvHeaders = _buildCSVHeaders(flattenJSON);
+              const csv_headers = buildCruiseCSVHeaders(flat_cruises);
 
-              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
+              const csv_results = await parseAsync(flat_cruises, { fields: csv_headers });
 
               return h.response(csv_results).code(200);
             }
@@ -426,10 +320,10 @@ exports.plugin = {
           }
 
           return Boom.notFound('No records found');
-          
+
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           return Boom.serverUnavailable('database error');
         }
       },
@@ -445,10 +339,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.alternatives().try(
-              Joi.string(),
-              (useAccessControl) ? cruiseSuccessResponse : cruiseSuccessResponseNoAccessControl
-            )
+            200: cruiseSuccessResponse
           }
         },
         description: 'Return the cruises based on query parameters',
@@ -509,13 +400,13 @@ exports.plugin = {
               cruise.cruise_additional_meta.cruise_files = [];
             }
 
-            if (request.query.format && request.query.format === "csv") {
+            if (request.query.format && request.query.format === 'csv') {
 
-              const flattenJSON = _flattenJSON([_renameAndClearFields(cruise)]);
+              const flat_cruises = flattenCruiseObjs([_renameAndClearFields(cruise)]);
 
-              const csvHeaders = _buildCSVHeaders(flattenJSON);
+              const csv_headers = buildCruiseCSVHeaders(flat_cruises);
 
-              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
+              const csv_results = await parseAsync(flat_cruises, { fields: csv_headers });
 
               return h.response(csv_results).code(200);
             }
@@ -524,10 +415,10 @@ exports.plugin = {
           }
 
           return Boom.notFound('No records found');
-          
+
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           return Boom.serverUnavailable('database error');
         }
       },
@@ -543,10 +434,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.alternatives().try(
-              Joi.string(),
-              (useAccessControl) ? cruiseSuccessResponse : cruiseSuccessResponseNoAccessControl
-            )
+            200: cruiseSuccessResponse
           }
         },
         description: 'Return the cruises based on query parameters',
@@ -582,7 +470,7 @@ exports.plugin = {
             return Boom.notFound('No record found for id: ' + request.params.id);
           }
 
-          if (!request.auth.credentials.scope.includes("admin") && result.cruise_hidden && (useAccessControl && typeof result.cruise_access_list !== 'undefined' && !result.cruise_access_list.includes(request.auth.credentials.id))) {
+          if (!request.auth.credentials.scope.includes('admin') && result.cruise_hidden && (useAccessControl && typeof result.cruise_access_list !== 'undefined' && !result.cruise_access_list.includes(request.auth.credentials.id))) {
             return Boom.unauthorized('User not authorized to retrieve this cruise');
           }
 
@@ -600,13 +488,13 @@ exports.plugin = {
           cruise.cruise_additional_meta.cruise_files = [];
         }
 
-        if (request.query.format && request.query.format === "csv") {
+        if (request.query.format && request.query.format === 'csv') {
 
-          const flattenJSON = _flattenJSON([_renameAndClearFields(cruise)]);
+          const flat_cruises = flattenCruiseObjs([_renameAndClearFields(cruise)]);
 
-          const csvHeaders = _buildCSVHeaders(flattenJSON);
+          const csv_headers = buildCruiseCSVHeaders(flat_cruises);
 
-          const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
+          const csv_results = await parseAsync(flat_cruises, { fields: csv_headers });
 
           return h.response(csv_results).code(200);
         }
@@ -625,10 +513,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.alternatives().try(
-              Joi.string(),
-              (useAccessControl) ? cruiseSuccessResponse : cruiseSuccessResponseNoAccessControl
-            )
+            200: cruiseSuccessResponse
           }
         },
         description: 'Return the cruise based on cruise id',
@@ -664,7 +549,7 @@ exports.plugin = {
             return Boom.notFound('No record found for id: ' + request.params.id);
           }
 
-          if (!request.auth.credentials.scope.includes("admin") && result.cruise_hidden && (useAccessControl && typeof result.cruise_access_list !== 'undefined' && !result.cruise_access_list.includes(request.auth.credentials.id))) {
+          if (!request.auth.credentials.scope.includes('admin') && result.cruise_hidden && (useAccessControl && typeof result.cruise_access_list !== 'undefined' && !result.cruise_access_list.includes(request.auth.credentials.id))) {
             return Boom.unauthorized('User not authorized to retrieve this cruise');
           }
 
@@ -775,7 +660,7 @@ exports.plugin = {
           result = await db.collection(cruisesTable).insertOne(cruise);
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           return Boom.serverUnavailable('database error', err);
         }
 
@@ -783,13 +668,13 @@ exports.plugin = {
           Fs.mkdirSync(CRUISE_PATH + '/' + result.insertedId);
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
         }
 
         cruise.id = result.insertedId;
         server.publish('/ws/status/newCruises', _renameAndClearFields(cruise));
 
-        const loweringQuery = { start_ts: { "$gte": cruise.start_ts }, stop_ts: { "$lt": cruise.stop_ts } };
+        const loweringQuery = { start_ts: { '$gte': cruise.start_ts }, stop_ts: { '$lt': cruise.stop_ts } };
 
         try {
           const cruiseLowerings = await db.collection(loweringsTable).find(loweringQuery).toArray();
@@ -805,7 +690,7 @@ exports.plugin = {
           return Boom.serverUnavailable('database error', err);
         }
 
-        return h.response({ acknowledged: result.acknowledged, insertedId: result.insertedId }).code(201);
+        return h.response(databaseInsertResponse).code(201);
 
       },
       config: {
@@ -815,7 +700,7 @@ exports.plugin = {
         },
         validate: {
           headers: authorizationHeader,
-          payload: (useAccessControl) ? cruiseCreatePayload : cruiseCreatePayloadNoAccessControl,
+          payload: cruiseCreatePayload,
           failAction: (request, h, err) => {
 
             throw Boom.badRequest(err.message);
@@ -861,7 +746,7 @@ exports.plugin = {
 
           if (request.payload.stopTS) {
             cruise.stop_ts = Date(request.payload.stopTS);
-          }          
+          }
         }
         catch (err) {
           return Boom.badRequest('Unable to parse date string');
@@ -950,7 +835,7 @@ exports.plugin = {
           // build the query for retrieving the affected lowerings
           const start_ts = (cruise.start_ts) ? cruise.start_ts : result.start_ts;
           const stop_ts = (cruise.stop_ts) ? cruise.stop_ts : result.stop_ts;
-          const loweringQuery = { start_ts: { "$gte": start_ts }, stop_ts: { "$lt": stop_ts } };
+          const loweringQuery = { start_ts: { '$gte': start_ts }, stop_ts: { '$lt': stop_ts } };
 
           if (typeof request.payload.cruise_hidden !== 'undefined' && request.payload.cruise_hidden !== result.cruise_hidden) {
 
@@ -993,7 +878,7 @@ exports.plugin = {
 
         server.publish('/ws/status/updateCruises', updatedCruise);
 
-        const loweringQuery = { start_ts: { "$gte": updatedCruise.start_ts }, stop_ts: { "$lt": updatedCruise.stop_ts } };
+        const loweringQuery = { start_ts: { '$gte': updatedCruise.start_ts }, stop_ts: { '$lt': updatedCruise.stop_ts } };
 
         try {
           const cruiseLowerings = await db.collection(loweringsTable).find(loweringQuery).toArray();
@@ -1020,7 +905,7 @@ exports.plugin = {
         validate: {
           headers: authorizationHeader,
           params: cruiseParam,
-          payload: (useAccessControl) ? cruiseUpdatePayload : cruiseUpdatePayloadNoAccessControl,
+          payload: cruiseUpdatePayload,
           failAction: (request, h, err) => {
 
             throw Boom.badRequest(err.message);
@@ -1100,7 +985,7 @@ exports.plugin = {
               }
 
               return result;
-        
+
             }, true);
 
             if (!users_are_valid) {
@@ -1131,7 +1016,7 @@ exports.plugin = {
         }
 
         // build the query for retrieving the affected lowerings
-        const loweringQuery = { start_ts: { "$gte": cruise.start_ts }, stop_ts: { "$lt": cruise.stop_ts } };
+        const loweringQuery = { start_ts: { '$gte': cruise.start_ts }, stop_ts: { '$lt': cruise.stop_ts } };
 
         if (request.payload.remove) {
           try {
@@ -1203,15 +1088,15 @@ exports.plugin = {
         }
         catch (err) {
           return Boom.serverUnavailable('database error', err);
-        }  
+        }
 
         try {
           const deleteCruise = await db.collection(cruisesTable).deleteOne(query);
-          
+
           if (Fs.existsSync(CRUISE_PATH + '/' + request.params.id)) {
             rmDir(CRUISE_PATH + '/' + request.params.id);
           }
-          
+
           return h.response(deleteCruise).code(204);
         }
         catch (err) {
@@ -1250,7 +1135,7 @@ exports.plugin = {
           await db.collection(cruisesTable).deleteMany(query);
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           return Boom.serverUnavailable('database error', err);
         }
 
@@ -1261,7 +1146,7 @@ exports.plugin = {
           }
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           return Boom.serverUnavailable('error deleting cruise files', err);
         }
 

@@ -10,7 +10,7 @@ exports.plugin = {
 
     server.subscription('/ws/status/newEvents');
 
-    
+
     server.method('publishUpdateEvent', ( payload ) => {
 
       server.publish('/ws/status/updateEvents', payload );
@@ -20,7 +20,7 @@ exports.plugin = {
 
 
     server.method('publishDeleteEvent', ( payload ) => {
-      
+
       server.publish('/ws/status/deleteEvents', payload );
     });
 
@@ -28,7 +28,7 @@ exports.plugin = {
 
 
     server.method('publishUpdateCustomVar', ( payload ) => {
-      
+
       server.publish('/ws/status/updateCustomVars', payload );
     });
 

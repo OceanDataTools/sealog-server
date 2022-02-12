@@ -6,7 +6,7 @@
     "plugin:import/warnings"
   ],
   "parserOptions": {
-    "ecmaVersion": 2017,
+    "ecmaVersion": 2022,
     "sourceType": "module"
   },
   "env": {
@@ -14,21 +14,22 @@
     "node": true
   },
   "rules": {
-    "quotes": 0,
+    "comma-dangle": ["error", "never"],
+    "eol-last": 1,
     "indent": ["error", 2, {"SwitchCase": 1}],
-    "no-console": 0,
-    "no-debugger": 0,
-    "semi": [1, "always"],
-    "no-trailing-spaces": 0,
-    "eol-last": 0,
-    "no-underscore-dangle": 0,
-    "no-alert": 0,
-    "no-lone-blocks": 0,
-    "no-unused-vars": [1, {
+    "no-alert": "warn",
+    "no-console": "off",
+    "no-debugger": "warn",
+    "no-extend-native": "warn",
+    "no-lone-blocks": "warn",
+    "no-trailing-spaces": "warn",
+    "no-underscore-dangle": ["warn", { "allow": ["_id", "_data", "_rolesToScope", "_renameAndClearFields"], "allowAfterThis": true }],
+    "no-unused-vars": ["warn", {
       "vars": "all",
       "args": "after-used",
       "argsIgnorePattern": "options"
     }],
-    no-extend-native: 0
+    "quotes": "warn",
+    "semi": ["warn", "always"],
   }
 }
