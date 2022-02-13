@@ -5,23 +5,23 @@
 // const Mg = require('nodemailer-mailgun-transport'); // eslint-disable-line no-unused-vars
 
 // The sender address for all emails 
-const senderAddress = "sealog_admin@oceandatatools.org";
+const senderAddress = 'sealog_admin@oceandatatools.org';
 
 // Additional receipents for and sent emails.
 const notificationEmailAddresses = [];
 
 // URL of password reset form
 // Set the protocol (http/https), serverURL/IP and port number to match the server's configuration
-const resetPasswordURL = "http://localhost:8080/resetPassword/";
+const resetPasswordURL = 'http://localhost:8080/resetPassword/';
 
-// Server-side reCaptcha key, set to "" if not using reCaptcha bot protection
-const reCaptchaSecret = "";
+// Server-side reCaptcha key, set to '' if not using reCaptcha bot protection
+const reCaptchaSecret = '';
 
 // Disable registering users, requires Sealog admin user to enable the accounts prior to use
 const disableRegisteringUsers = false;
 
 // Default roles of self-registering users
-const registeringUserRoles = ["event_watcher", "event_logger", "event_manager", "cruise_manager"];
+const registeringUserRoles = ['event_watcher', 'event_logger', 'event_manager', 'cruise_manager'];
 
 // Activate per-cruise/per-lowering access permissions
 const useAccessControl = false;
@@ -35,8 +35,8 @@ const emailTransporter = null;
 // const emailTransporter = Nodemailer.createTransport({
 //   service: 'gmail',
 //   auth: {
-//     user: "username@gmail.com",
-//     pass: "password"
+//     user: 'username@gmail.com',
+//     pass: 'password'
 //   }
 // }); // eslint-disable-line no-dupe-keys
 
