@@ -18,6 +18,7 @@ LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for det
                 Copyright (C) OceanDataTools.org 2022
 '''
 
+import sys
 import json
 import logging
 import asyncio
@@ -107,7 +108,6 @@ if __name__ == "__main__":
 
     import argparse
     import os
-    import sys
 
     parser = argparse.ArgumentParser(description='Converts sealog cruise records to csv format.')
     parser.add_argument('-v', '--verbosity', dest='verbosity',

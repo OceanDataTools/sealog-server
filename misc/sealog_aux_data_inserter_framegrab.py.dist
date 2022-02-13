@@ -25,35 +25,46 @@ import sys
 import asyncio
 import json
 import time
+import glob
+import shutil
 import logging
 from datetime import datetime, timedelta
 import requests
 import websockets
-from pymongo import MongoClient
 
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
+# ------------ only needed for scp transfers -------------
+# from paramiko import RSAKey, SFTPClient, Transport
+# from scp import SCPClient
+
 from misc.python_sealog.settings import API_SERVER_URL, WS_SERVER_URL, EVENT_AUX_DATA_API_PATH, HEADERS
 
-# Names of the appropriate mongoDB database and collection containing the desired real-time data.
-DATABASE = 'sealog_udp_cache'
-COLLECTION = 'udpData'
-
-# Unique label of the record in the DATABASE.COLLECTION containing the desired real-time data
-RECORD_LABEL = "testData"
-
 # The data_source to use for the auxData records
-AUX_DATA_DATASOURCE = 'realtimeTestData'
-
-# time afterwhich realtime data is considered stale
-THRESHOLD = 20 # seconds
+AUX_DATA_DATASOURCE = 'vehicleRealtimeFramegrabberData'
 
 # set of events to ignore
 EXCLUDE_SET = ()
 
-
 CLIENT_WSID = 'aux_data_inserter_' + AUX_DATA_DATASOURCE # needs to be unique for all currently active dataInserter scripts.
+
+THRESHOLD = 20 #seconds
+
+# ------------ only needed for scp transfers -------------
+# user = 'mt'
+# host = '192.168.1.42'
+# port = 22
+# key_file = '/home/sealog/.ssh/id_rsa'
+# my_key = RSAKey.from_private_key_file(key_file)
+# t = Transport(host, port)
+
+source_dir = '/tmp/images'
+dest_dir = '/home/sealog/sealog-files/images'
+
+camera_name = 'ROV HD'
+filename_prefix = ''
+filename_suffix = '_rov_hd.jpg'
 
 HELLO = {
     'type': 'hello',
@@ -71,43 +82,14 @@ PING = {
 }
 
 
-def aux_data_record_builder(event, record):
-    '''
-    Build the aux_data record using the new event and real-time data record
-    '''
-
-    if not record:
-        return None
-
-    aux_data_record = {
-        'event_id': event['id'],
-        'data_source': AUX_DATA_DATASOURCE,
-        'data_array': []
-    }
-
-    for key, value in record['data'].items():
-        aux_data_record['data_array'].append({ 'data_name': key,'data_value': value, 'data_uom': '??' })
-
-    logging.debug("Aux Data Record:\n%s", json.dumps(aux_data_record, indent=2))
-
-    if len(aux_data_record['data_array']) == 0:
-        return None
-
-    return aux_data_record
-
-
 async def aux_data_inserter():
     '''
     Connect to the websocket feed for new events.  When new events arrive,
     build aux_data records and submit them to the sealog-server.
     '''
 
+    logging.debug("Connecting to event websocket feed...")
     try:
-
-        # establish database connection
-        client = MongoClient()
-        collection = client[DATABASE][COLLECTION]
-
         async with websockets.connect(WS_SERVER_URL) as websocket:
 
             await websocket.send(json.dumps(HELLO))
@@ -131,42 +113,50 @@ async def aux_data_inserter():
                         continue
 
                     try:
-                        record = collection.find_one({"label": RECORD_LABEL})
 
-                        logging.debug("Record from database:\n%s", json.dumps(record['data'], indent=2))
-
-                        if not record:
-                            logging.error("No data record found in %s.%s with a label of %s", DATABASE, COLLECTION, RECORD_LABEL )
-                            continue
-
-                        if not 'updated' in record:
-                            logging.error("Data record must contain and 'updated' field containing a datetime object of when the data was last updated")
-                            continue
-
-                        if record['updated'] < datetime.utcnow()-timedelta(seconds=THRESHOLD):
-                            logging.debug("Data record is considered stale, skipping")
-                            continue
+                        list_of_files = glob.glob(os.path.join(source_dir, '*.jpg'))
+                        latest_file = max(list_of_files, key=os.path.getctime)
 
                     except Exception as error:
-                        logging.error("Error retrieving auxData record")
+                        logging.error("Error retrieving image file")
                         logging.debug(str(error))
                         continue
 
-                    aux_data_record = aux_data_record_builder(event_obj['message'], record)
+                    filename_date = datetime.date(datetime.strptime(event_obj['message']['ts'], '%Y-%m-%dT%H:%M:%S.%fZ'))
+                    filename_time = datetime.time(datetime.strptime(event_obj['message']['ts'], '%Y-%m-%dT%H:%M:%S.%fZ'))
+                    filename_middle = datetime.combine(filename_date, filename_time).strftime("%Y%m%d_%H%M%S%f")[:-3]
 
-                    if not aux_data_record:
-                        logging.debug("Skipping because there's no data to add")
-                        continue
+                    dst = os.path.join(dest_dir, filename_prefix + filename_middle + filename_suffix)
+                    src = os.path.join(source_dir, latest_file)
+
+                    logging.debug("src: %s", src)
+                    logging.debug("dst: %s", dst)
+
 
                     try:
-                        logging.debug("Submitting AuxData record to Sealog Server")
+
+                        # ------------ only needed for scp transfers -------------
+                        # sftp = SFTPClient.from_transport(t)
+                        # sftp.put(src, dst)
+                        # sftp.close()
+
+                        # ----------- only needed for local transfers ------------
+                        shutil.copyfile(src,dst)
+
+                        aux_data_record = {
+                            'event_id': event_obj['message']['id'],
+                            'data_source': AUX_DATA_DATASOURCE,
+                            'data_array': []
+                        }
+
+                        aux_data_record['data_array'].append({ 'data_name': "camera_name",'data_value': camera_name })
+                        aux_data_record['data_array'].append({ 'data_name': "filename",'data_value': dst })
                         req = requests.post(API_SERVER_URL + EVENT_AUX_DATA_API_PATH, headers=HEADERS, data = json.dumps(aux_data_record))
-                        logging.debug("Response: %s", req.text)
+                        logging.debug(req.text)
 
                     except Exception as error:
-                        logging.error("Error submitting auxData record")
-                        logging.debug(str(error))
-                        raise error
+                        logging.error("Unable to copy image to server")
+                        logging.error(error)
 
     except Exception as error:
         logging.error(str(error))
@@ -205,7 +195,7 @@ if __name__ == '__main__':
         time.sleep(5)
 
         try:
-            logging.debug("Connecting to event websocket feed...")
+            # t.connect(username=user, pkey=my_key) # only needed for scp transfers
             asyncio.get_event_loop().run_until_complete(aux_data_inserter())
         except KeyboardInterrupt:
             logging.error('Keyboard Interrupted')

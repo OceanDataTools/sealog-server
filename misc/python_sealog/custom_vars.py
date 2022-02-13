@@ -17,6 +17,7 @@ LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for det
                 Copyright (C) OceanDataTools.org 2022
 '''
 
+import sys
 import json
 import logging
 import requests
@@ -99,7 +100,8 @@ def set_custom_var(var_uid, value, api_server_url=API_SERVER_URL, headers=HEADER
 
     try:
         payload = { "custom_var_value": value}
-        req = requests.patch(API_SERVER_URL + CUSTOM_VAR_API_PATH + '/' + var_uid, headers=headers, data = json.dumps(payload))
+        url = api_server_url + CUSTOM_VAR_API_PATH + '/' + var_uid
+        req = requests.patch(url, headers=headers, data = json.dumps(payload))
         logging.debug(req.text)
 
     except Exception as error:

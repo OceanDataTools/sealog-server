@@ -28,6 +28,7 @@ LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for det
                 Copyright (C) OceanDataTools.org 2022
 '''
 
+import sys
 import asyncio
 import json
 import logging
@@ -163,8 +164,8 @@ def _set_milestones(event, evt_milestone): # pylint: disable=too-many-branches,t
 
         for milestone in MILESTONE_LOOKUP[evt_milestone]:
 
-            milestone_name = milestone['name'] if type(milestone) is dict else milestone
-            milestone_reset = milestone['reset'] if type(milestone) is dict and 'reset' in milestone else False
+            milestone_name = milestone['name'] if isinstance(milestone, dict) else milestone
+            milestone_reset = milestone['reset'] if isinstance(milestone, dict) and 'reset' in milestone else False
 
             if ('milestones' not in lowering['lowering_additional_meta'] or
                 milestone_name not in lowering['lowering_additional_meta']['milestones'] or
@@ -229,7 +230,6 @@ if __name__ == '__main__':
 
     import argparse
     import os
-    import sys
 
     parser = argparse.ArgumentParser(description='Auto-Actions Service')
     parser.add_argument('-v', '--verbosity', dest='verbosity',

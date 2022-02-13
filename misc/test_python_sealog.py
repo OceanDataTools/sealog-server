@@ -18,6 +18,8 @@ LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for det
                 Copyright (C) OceanDataTools.org 2022
 '''
 
+import sys
+
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 

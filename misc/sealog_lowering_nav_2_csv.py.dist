@@ -17,6 +17,7 @@ LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for det
                 Copyright (C) OceanDataTools.org 2022
 '''
 
+import sys
 import json
 import logging
 from io import StringIO
@@ -156,7 +157,6 @@ class ExportLoweringNav2CSV():
 if __name__ == "__main__":
 
     import os
-    import sys
     import argparse
 
     parser = argparse.ArgumentParser(description='Export lowering navigation data to csv')

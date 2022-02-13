@@ -16,6 +16,7 @@ LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for det
                 Copyright (C) OceanDataTools.org 2022
 '''
 
+import sys
 import os
 import json
 import logging
@@ -225,7 +226,6 @@ def _export_cruise_sealog_data_files(cruise):
 if __name__ == '__main__':
 
     import argparse
-    import sys
 
     parser = argparse.ArgumentParser(description='Sealog ' + VEHICLE_NAME + ' Data export')
     parser.add_argument('-v', '--verbosity', dest='verbosity',

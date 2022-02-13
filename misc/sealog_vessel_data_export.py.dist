@@ -17,9 +17,9 @@ LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for det
 '''
 
 import os
+import sys
 import json
 import logging
-import subprocess
 
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
@@ -143,7 +143,6 @@ def _export_cruise_sealog_data_files(cruise): #pylint: disable=too-many-statemen
 if __name__ == '__main__':
 
     import argparse
-    import sys
 
     parser = argparse.ArgumentParser(description='Sealog ' + VESSEL_NAME + ' Data export')
     parser.add_argument('-v', '--verbosity', dest='verbosity',

@@ -17,6 +17,7 @@ LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for det
                 Copyright (C) OceanDataTools.org 2022
 '''
 
+import sys
 import json
 import logging
 import requests
@@ -60,7 +61,6 @@ def get_event_aux_data_by_lowering(lowering_uid, datasource='', limit=0, api_ser
 
     try:
         url = api_server_url + EVENT_AUX_DATA_API_PATH + '/bylowering/' + lowering_uid
-
 
         querystring = []
 

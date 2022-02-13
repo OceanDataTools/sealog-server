@@ -17,6 +17,7 @@ LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for det
                 Copyright (C) OceanDataTools.org 2022
 '''
 
+import sys
 import asyncio
 import json
 import logging
@@ -75,7 +76,6 @@ if __name__ == '__main__':
 
     import argparse
     import os
-    import sys
 
     parser = argparse.ArgumentParser(description='Simple script to demonstrate how to subscribe to the new event websocket feed')
     parser.add_argument('-v', '--verbosity', dest='verbosity',

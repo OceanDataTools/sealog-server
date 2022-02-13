@@ -3,8 +3,8 @@
 #
 
 import asyncio
-import websockets
 import json
+import websockets
 import requests
 
 eventsAPIPath = '/api/v1/events'
@@ -49,18 +49,18 @@ async def eventlog():
 
             await websocket.send(json.dumps(hello))
 
-            while(True):
+            while True:
 
                 event = await websocket.recv()
-                eventObj = json.loads(event)
-                print("eventObj:", eventObj)
+                event_obj = json.loads(event)
+                print("event_obj:", event_obj)
 
-                if eventObj['type'] and eventObj['type'] == 'ping':
+                if event_obj['type'] and event_obj['type'] == 'ping':
                     await websocket.send(json.dumps(ping))
-                elif eventObj['type'] and eventObj['type'] == 'pub':
+                elif event_obj['type'] and event_obj['type'] == 'pub':
 
-                    r = requests.post('http://' + localServerIP + ':' + localServerAPIPort + localServerPath + eventsAPIPath, headers=localHeaders, data = json.dumps(eventObj['message']))
-                    print(r.text)
+                    req = requests.post('http://' + localServerIP + ':' + localServerAPIPort + localServerPath + eventsAPIPath, headers=localHeaders, data = json.dumps(event_obj['message']))
+                    print(req.text)
 
                     ### end of repeat
 

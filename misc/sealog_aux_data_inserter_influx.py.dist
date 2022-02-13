@@ -24,6 +24,7 @@ LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for det
                 Copyright (C) OceanDataTools.org 2022
 '''
 
+import sys
 import json
 import time
 import logging
@@ -159,7 +160,6 @@ if __name__ == '__main__':
 
     import argparse
     import os
-    import sys
 
     parser = argparse.ArgumentParser(description='Aux Data Inserter Service - InfluxDB')
     parser.add_argument('-v', '--verbosity', dest='verbosity',
