@@ -4,7 +4,7 @@
 // Only needed if using Mailgun
 // const Mg = require('nodemailer-mailgun-transport'); // eslint-disable-line no-unused-vars
 
-// The sender address for all emails 
+// The sender address for all emails
 const senderAddress = 'sealog_admin@oceandatatools.org';
 
 // Additional receipents for and sent emails.

@@ -965,8 +965,8 @@ exports.plugin = {
         }
 
         try {
-          // const result = await db.collection(eventsTable).findOneAndUpdate(query, { $set: request.payload },{ returnOriginal: false });
-          const result = await db.collection(eventsTable).findOneAndUpdate(query, { $set: event },{ returnOriginal: false });
+          // const result = await db.collection(eventsTable).findOneAndUpdate(query, { $set: request.payload },{ returnDocument: 'after' });
+          const result = await db.collection(eventsTable).findOneAndUpdate(query, { $set: event },{ returnDocument: 'after' });
           const updatedEvent = _renameAndClearFields(result.value);
 
           if (time_change) {

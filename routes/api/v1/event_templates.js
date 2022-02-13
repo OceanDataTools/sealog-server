@@ -253,7 +253,7 @@ exports.plugin = {
         const event_template = request.payload;
 
         try {
-          const result = await db.collection(eventTemplatesTable).findOneAndUpdate(query, { $set: event_template },{ returnOriginal: false });
+          const result = await db.collection(eventTemplatesTable).findOneAndUpdate(query, { $set: event_template },{ returnDocument: 'after' });
           server.publish('/ws/status/updateEventTemplates', _renameAndClearFields(result.value));
 
           return h.response().code(204);
