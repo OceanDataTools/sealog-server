@@ -14,11 +14,26 @@ const {
 } = require('../../../config/db_constants');
 
 const {
-  senderAddress, emailTransporter, reCaptchaSecret, resetPasswordURL, registeringUserRoles, disableRegisteringUsers, notificationEmailAddresses
+  senderAddress,
+  emailTransporter,
+  reCaptchaSecret,
+  resetPasswordURL,
+  registeringUserRoles,
+  disableRegisteringUsers,
+  notificationEmailAddresses
 } = require('../../../config/email_constants');
 
 const {
-  authorizationHeader,databaseInsertResponse,forgotPasswordPayload,forgotPasswordSuccessResponse,loginPayload,loginSuccessResponse,registerPayload,resetPasswordPayload,userSuccessResponse,userToken
+  authorizationHeader,
+  databaseInsertResponse,
+  forgotPasswordPayload,
+  forgotPasswordSuccessResponse,
+  loginPayload,
+  loginSuccessResponse,
+  registerPayload,
+  resetPasswordPayload,
+  userSuccessResponse,
+  userToken
 } = require('../../../lib/validations');
 
 const _rolesToScope = (roles) => {

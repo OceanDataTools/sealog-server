@@ -5,7 +5,13 @@ const {
 } = require('../../../config/db_constants');
 
 const {
-  authorizationHeader,databaseInsertResponse,eventTemplateParam,eventTemplateQuery,eventTemplateSuccessResponse,eventTemplateCreatePayload,eventTemplateUpdatePayload
+  authorizationHeader,
+  databaseInsertResponse,
+  eventTemplateParam,
+  eventTemplateQuery,
+  eventTemplateSuccessResponse,
+  eventTemplateCreatePayload,
+  eventTemplateUpdatePayload
 } = require('../../../lib/validations');
 
 const _renameAndClearFields = (doc, admin = false) => {

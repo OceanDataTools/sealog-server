@@ -19,11 +19,20 @@ const {
 } = require('../../../config/db_constants');
 
 const {
-  senderAddress, emailTransporter, resetPasswordURL
+  senderAddress,
+  emailTransporter,
+  resetPasswordURL
 } = require('../../../config/email_constants');
 
 const {
-  authorizationHeader,databaseInsertResponse,userQuery,userSuccessResponse,userParam,userCreatePayload,userUpdatePayload,userToken
+  authorizationHeader,
+  databaseInsertResponse,
+  userQuery,
+  userSuccessResponse,
+  userParam,
+  userCreatePayload,
+  userUpdatePayload,
+  userToken
 } = require('../../../lib/validations');
 
 const SECRET_KEY = require('../../../config/secret');

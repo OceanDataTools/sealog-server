@@ -9,12 +9,12 @@ BUGS:
 NOTES:
 AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
-VERSION:    0.1
+VERSION:    1.0
 CREATED:    2021-04-21
 REVISION:   2021-04-27
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2021
+                Copyright (C) OceanDataTools.org 2022
 '''
 
 import os

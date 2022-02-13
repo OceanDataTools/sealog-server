@@ -4,7 +4,10 @@ const { parseAsync } = require('json2csv');
 const THRESHOLD = 120; //seconds
 
 const {
-  addEventRecordIDs, flattenEventObjs, buildEventCSVHeaders, buildEventsQuery
+  addEventRecordIDs,
+  flattenEventObjs,
+  buildEventCSVHeaders,
+  buildEventsQuery
 } = require('../../../lib/utils');
 
 const {
@@ -12,7 +15,14 @@ const {
 } = require('../../../config/email_constants');
 
 const {
-  authorizationHeader,eventParam,eventQuery,eventCountSuccessResponse,eventSuccessResponse,eventCreatePayload,eventCreateResponse,eventUpdatePayload
+  authorizationHeader,
+  eventParam,
+  eventQuery,
+  eventCountSuccessResponse,
+  eventSuccessResponse,
+  eventCreatePayload,
+  eventCreateResponse,
+  eventUpdatePayload
 } = require('../../../lib/validations');
 
 const {

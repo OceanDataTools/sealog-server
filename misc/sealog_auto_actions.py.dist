@@ -20,12 +20,12 @@ BUGS:
 NOTES:
 AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
-VERSION:    0.2
+VERSION:    1.0
 CREATED:    2018-09-26
-REVISION:   2021-05-02
+REVISION:   2022-02-13
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2021
+                Copyright (C) OceanDataTools.org 2022
 '''
 
 import asyncio
@@ -35,9 +35,12 @@ import time
 import requests
 import websockets
 
-from python_sealog.custom_vars import get_custom_var_uid_by_name, set_custom_var
-from python_sealog.lowerings import get_lowering_by_event
-from python_sealog.settings import API_SERVER_URL, WS_SERVER_URL, HEADERS, LOWERINGS_API_PATH
+from os.path import dirname, realpath
+sys.path.append(dirname(dirname(realpath(__file__))))
+
+from misc.python_sealog.custom_vars import get_custom_var_uid_by_name, set_custom_var
+from misc.python_sealog.lowerings import get_lowering_by_event
+from misc.python_sealog.settings import API_SERVER_URL, WS_SERVER_URL, HEADERS, LOWERINGS_API_PATH
 
 ASNAP_STATUS_VAR_NAME = 'asnapStatus'
 

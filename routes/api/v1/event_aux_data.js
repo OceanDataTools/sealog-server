@@ -18,7 +18,13 @@ const {
 } = require('../../../lib/utils');
 
 const {
-  authorizationHeader,databaseInsertResponse,auxDataParam,auxDataQuery,auxDataCreatePayload,auxDataUpdatePayload,auxDataSuccessResponse
+  authorizationHeader,
+  databaseInsertResponse,
+  auxDataParam,
+  auxDataQuery,
+  auxDataCreatePayload,
+  auxDataUpdatePayload,
+  auxDataSuccessResponse
 } = require('../../../lib/validations');
 
 const _renameAndClearFields = (doc) => {

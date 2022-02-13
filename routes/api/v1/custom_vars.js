@@ -5,7 +5,11 @@ const {
 } = require('../../../config/db_constants');
 
 const {
-  authorizationHeader,customVarSuccessResponse,customVarUpdatePayload,customVarParam,customVarQuery
+  authorizationHeader,
+  customVarSuccessResponse,
+  customVarUpdatePayload,
+  customVarParam,
+  customVarQuery
 } = require('../../../lib/validations');
 
 const _renameAndClearFields = (doc) => {

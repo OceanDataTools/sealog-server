@@ -21,7 +21,17 @@ const {
 } = require('../../../config/db_constants');
 
 const {
-  authorizationHeader,databaseInsertResponse,cruiseQuery,cruiseSuccessResponse,loweringParam,singleCruiseQuery,eventParam,cruiseParam,cruiseCreatePayload,cruiseUpdatePayload,cruiseUpdatePermissionsPayload
+  authorizationHeader,
+  databaseInsertResponse,
+  cruiseQuery,
+  cruiseSuccessResponse,
+  loweringParam,
+  singleCruiseQuery,
+  eventParam,
+  cruiseParam,
+  cruiseCreatePayload,
+  cruiseUpdatePayload,
+  cruiseUpdatePermissionsPayload
 } = require('../../../lib/validations');
 
 const {

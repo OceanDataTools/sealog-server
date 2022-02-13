@@ -9,12 +9,12 @@ BUGS:
 NOTES:
 AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
-VERSION:    0.1
+VERSION:    1.0
 CREATED:    2021-01-01
-REVISION:
+REVISION:   2022-02-13
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2021
+                Copyright (C) OceanDataTools.org 2022
 '''
 import sys
 import json
@@ -22,7 +22,11 @@ import logging
 from datetime import datetime, timedelta
 from urllib3.exceptions import NewConnectionError
 from influxdb_client.rest import ApiException
-from .settings import INFLUX_SERVER_URL, INFLUX_TOKEN, INFLUX_ORG, INFLUX_BUCKET
+
+from os.path import dirname, realpath
+sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
+
+from misc.influx_sealog.settings import INFLUX_SERVER_URL, INFLUX_TOKEN, INFLUX_ORG, INFLUX_BUCKET
 
 class SealogInfluxAuxDataRecordBuilder():
     '''
@@ -60,12 +64,12 @@ class SealogInfluxAuxDataRecordBuilder():
         query_range = self._build_query_range(ts)
 
         try:
-            query = 'from(bucket: "{}")\
-|> range({})\
-|> filter(fn: (r) => {})\
-|> filter(fn: (r) => {})\
-|> sort(columns: ["_time"], desc: true)\
-|> limit(n:1)'.format(INFLUX_BUCKET, query_range, ' or '.join([ 'r["_measurement"] == "{}"'.format(q_measurement) for q_measurement in self._query_measurements]), ' or '.join([ 'r["_field"] == "{}"'.format(q_field) for q_field in self._query_fields]))
+            query = 'from(bucket: "{}")\n'.format(INFLUX_BUCKET)
+            query += '|> range({})\n'.format(query_range)
+            query += '|> filter(fn: (r) => {})\n'.format(' or '.join([ 'r["_measurement"] == "{}"'.format(q_measurement) for q_measurement in self._query_measurements]))
+            query += '|> filter(fn: (r) => {})\n'.format(' or '.join([ 'r["_field"] == "{}"'.format(q_field) for q_field in self._query_fields]))
+            query += '|> sort(columns: ["_time"], desc: true)\n'
+            query += '|> limit(n:1)'
         except Exception as err:
             logging.error("Error building query string")
             logging.error(" - Range: %s", query_range)

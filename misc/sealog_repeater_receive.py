@@ -7,7 +7,6 @@ import websockets
 import json
 import requests
 
-
 eventsAPIPath = '/api/v1/events'
 
 localServerIP = '0.0.0.0'

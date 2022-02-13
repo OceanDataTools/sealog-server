@@ -2,7 +2,10 @@ const Boom = require('@hapi/boom');
 const { parseAsync } = require('json2csv');
 
 const {
-  addEventRecordIDs, flattenEventObjs, buildEventCSVHeaders, buildEventsQuery
+  addEventRecordIDs,
+  flattenEventObjs,
+  buildEventCSVHeaders,
+  buildEventsQuery
 } = require('../../../lib/utils');
 
 const {

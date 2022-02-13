@@ -26,7 +26,19 @@ const {
 } = require('../../../lib/utils');
 
 const {
-  authorizationHeader,databaseInsertResponse,loweringParam,cruiseParam,eventParam,loweringCreatePayload,loweringCreatePayloadNoAccessControl,loweringUpdatePayload,loweringUpdatePayloadNoAccessControl,loweringQuery,singleLoweringQuery,loweringSuccessResponse,loweringUpdatePermissionsPayload
+  authorizationHeader,
+  databaseInsertResponse,
+  loweringParam,
+  cruiseParam,
+  eventParam,
+  loweringCreatePayload,
+  loweringCreatePayloadNoAccessControl,
+  loweringUpdatePayload,
+  loweringUpdatePayloadNoAccessControl,
+  loweringQuery,
+  singleLoweringQuery,
+  loweringSuccessResponse,
+  loweringUpdatePermissionsPayload
 } = require('../../../lib/validations');
 
 const flattenLoweringObjs = (lowering_objs) => {

@@ -10,12 +10,12 @@ BUGS:
 NOTES:
 AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
-VERSION:    0.2
+VERSION:    1.0
 CREATED:    2021-04-22
-REVISION:   2021-04-27
+REVISION:   2022-02-13
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2021
+                Copyright (C) OceanDataTools.org 2022
 '''
 
 import json
@@ -23,8 +23,11 @@ import logging
 import asyncio
 import websockets
 
-from python_sealog.cruises import get_cruises
-from python_sealog.settings import WS_SERVER_URL, HEADERS
+from os.path import dirname, realpath
+sys.path.append(dirname(dirname(realpath(__file__))))
+
+from misc.python_sealog.cruises import get_cruises
+from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
 
 CLIENT_WSID = 'cruise2CSVSync'
 
