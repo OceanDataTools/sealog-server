@@ -50,7 +50,7 @@ const flattenLoweringObjs = (lowering_objs) => {
 
     copied_lowering.start_ts = copied_lowering.start_ts.toISOString();
     copied_lowering.stop_ts = copied_lowering.stop_ts.toISOString();
-    copied_lowering.id = copied_lowering.id.id.toString('hex');
+    copied_lowering.id = copied_lowering.id.toString('hex');
     copied_lowering.lowering_tags = copied_lowering.lowering_tags.join(',');
 
     return copied_lowering;

@@ -5,7 +5,7 @@ const {
 } = require('../../../config/db_constants');
 
 const {
-  authorizationHeader,customVarSuccessResponse,customVarUpdatePayload,customVarParam
+  authorizationHeader,customVarSuccessResponse,customVarUpdatePayload,customVarParam,customVarQuery
 } = require('../../../lib/validations');
 
 const _renameAndClearFields = (doc) => {
@@ -43,7 +43,7 @@ exports.plugin = {
           }
         }
 
-        // console.log("query:", query)
+        // console.log('query:', query);
 
         try {
           const results = await db.collection(customVarsTable).find(query).toArray();
@@ -70,7 +70,7 @@ exports.plugin = {
         },
         validate: {
           headers: authorizationHeader,
-          query: customVarParam
+          query: customVarQuery
         },
         response: {
           status: {

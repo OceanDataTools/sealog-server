@@ -1,7 +1,6 @@
 const { randomAsciiString } = require('../../../lib/utils');
 
 const Bcrypt = require('bcryptjs');
-const Joi = require('joi');
 const Boom = require('@hapi/boom');
 const Crypto = require('crypto');
 
@@ -23,60 +22,12 @@ const {
   senderAddress, emailTransporter, resetPasswordURL
 } = require('../../../config/email_constants');
 
+const {
+  authorizationHeader,databaseInsertResponse,userQuery,userSuccessResponse,userParam,userCreatePayload,userUpdatePayload,userToken
+} = require('../../../lib/validations');
+
 const SECRET_KEY = require('../../../config/secret');
 const Jwt = require('jsonwebtoken');
-
-const authorizationHeader = Joi.object({
-  authorization: Joi.string()
-}).options({ allowUnknown: true }).label('authorizationHeader');
-
-const userParam = Joi.object({
-  id: Joi.string().length(24).required()
-}).label('userParam');
-
-const userQuery = Joi.object({
-  system_user: Joi.boolean().optional(),
-  offset: Joi.number().integer().min(0).optional(),
-  limit: Joi.number().integer().min(1).optional(),
-  sort: Joi.string().valid('username', 'last_login').optional()
-}).optional().label('userQuery');
-
-const databaseInsertResponse = Joi.object({
-  acknowledged: Joi.boolean(),
-  insertedId: Joi.object()
-}).label('databaseInsertResponse');
-
-const userCreatePayload = Joi.object({
-  id: Joi.string().length(24).optional(),
-  username: Joi.string().min(1).max(100).required(),
-  fullname: Joi.string().min(1).max(100).required(),
-  email: Joi.string().email().required(),
-  password: Joi.string().allow('').max(50).required(),
-  roles: Joi.array().items(Joi.string()).min(1).required(),
-  system_user: Joi.boolean().optional(),
-  disabled: Joi.boolean().optional()
-}).label('userCreatePayload');
-
-const userUpdatePayload = Joi.object({
-  username: Joi.string().min(1).max(100).optional(),
-  fullname: Joi.string().min(1).max(100).optional(),
-  // email: Joi.string().email().optional(),
-  password: Joi.string().allow('').max(50).optional(),
-  roles: Joi.array().items(Joi.string()).min(1).optional(),
-  system_user: Joi.boolean().optional(),
-  disabled: Joi.boolean().optional()
-}).required().min(1).label('userUpdatePayload');
-
-const userSuccessResponse = Joi.object({
-  id: Joi.object(),
-  email: Joi.string().email(),
-  system_user: Joi.boolean(),
-  last_login: Joi.date(),
-  username: Joi.string(),
-  fullname: Joi.string(),
-  roles: Joi.array().items(Joi.string()),
-  disabled: Joi.boolean()
-}).label('userSuccessResponse');
 
 exports.plugin = {
   name: 'routes-api-users',
@@ -142,7 +93,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.array().items(userSuccessResponse)
+            200: userSuccessResponse
           }
         },
         description: 'Return the current list of users',
@@ -584,9 +535,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.object({
-              token: Joi.string().regex(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_.+/=]*$/)
-            }).label('user JWT')
+            200: userToken
           }
         },
         description: 'This is the route used for retrieving a user\'s JWT based on the user\'s ID.',
@@ -637,9 +586,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.object({
-              loginToken: Joi.string().regex(/^[A-Za-z0-9-]*$/)
-            }).label('user loginToken')
+            200: userToken
           }
         },
         description: 'This is the route used for retrieving a user\'s loginToken based on the user\'s ID.',

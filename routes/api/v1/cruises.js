@@ -50,7 +50,7 @@ const flattenCruiseObjs = (cruise_objs) => {
 
     copied_cruise.start_ts = copied_cruise.start_ts.toISOString();
     copied_cruise.stop_ts = copied_cruise.stop_ts.toISOString();
-    copied_cruise.id = copied_cruise.id.id.toString('hex');
+    copied_cruise.id = copied_cruise.id.toString('hex');
     copied_cruise.cruise_tags = copied_cruise.cruise_tags.join(',');
 
     return copied_cruise;
