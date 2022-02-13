@@ -710,7 +710,7 @@ exports.plugin = {
           return Boom.serverUnavailable('database error', err);
         }
 
-        return h.response({ acknowledged: result.acknowledged, insertedId: result.insertedId }).code(201);
+        return h.response(result).code(201);
 
       },
       config: {

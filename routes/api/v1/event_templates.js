@@ -187,7 +187,7 @@ exports.plugin = {
           _renameAndClearFields(event_template);
           server.publish('/ws/status/newEventTemplates', event_template);
 
-          return h.response({ acknowledged: result.acknowledged, insertedId: result.insertedId }).code(201);
+          return h.response(result).code(201);
 
         }
         catch (err) {

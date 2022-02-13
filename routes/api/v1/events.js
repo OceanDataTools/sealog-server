@@ -865,7 +865,7 @@ exports.plugin = {
             server.publish('/ws/status/newEvents', event);
           }
 
-          return h.response({ acknowledged: result.acknowledged, insertedId: result.insertedId, insertedEvent: event }).code(201);
+          return h.response({ ...result, insertedEvent: event }).code(201);
         }
         catch (err) {
           console.log(err);

@@ -690,7 +690,7 @@ exports.plugin = {
           return Boom.serverUnavailable('database error', err);
         }
 
-        return h.response(databaseInsertResponse).code(201);
+        return h.response(result).code(201);
 
       },
       config: {

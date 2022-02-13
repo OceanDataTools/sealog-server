@@ -452,7 +452,7 @@ exports.plugin = {
 
             try {
               const result = await db.collection(eventAuxDataTable).insertOne(event_aux_data);
-              return h.response({ acknowledged: result.acknowledged, insertedId: result.insertedId }).code(201);
+              return h.response(result).code(201);
 
             }
             catch (err) {
@@ -509,7 +509,7 @@ exports.plugin = {
                     server.publish('/ws/status/newEventAuxData', event_aux_data);
                   }
 
-                  return h.response({ acknowledged: insertResult.acknowledged, insertedId: insertResult.insertedId }).code(201);
+                  return h.response(insertResult).code(201);
 
                 }
                 catch (err) {
