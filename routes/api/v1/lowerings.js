@@ -706,7 +706,7 @@ exports.plugin = {
           console.log('ERROR:', err);
         }
 
-        lowering.id = result.insertedId;
+        lowering = _renameAndClearFields(lowering)
         server.publish('/ws/status/newLowerings', lowering);
 
         const cruiseQuery = { start_ts: { '$lte': lowering.start_ts }, stop_ts: { '$gt': lowering.stop_ts } };
@@ -863,8 +863,7 @@ exports.plugin = {
 
         const updatedLowering = await db.collection(loweringsTable).findOne(query);
 
-        updatedLowering.id = updatedLowering._id;
-        delete updatedLowering._id;
+        updatedLowering = _renameAndClearFields(updatedLowering)
 
         server.publish('/ws/status/updateLowerings', updatedLowering);
 
