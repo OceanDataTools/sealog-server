@@ -11,10 +11,10 @@ AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
 VERSION:    0.1
 CREATED:    2021-01-01
-REVISION:
+REVISION:   2022-02-13
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2021
+                Copyright (C) OceanDataTools.org 2022
 '''
 
 API_SERVER_URL = 'http://localhost:8000/sealog-server'

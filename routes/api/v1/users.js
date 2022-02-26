@@ -1,7 +1,6 @@
 const { randomAsciiString } = require('../../../lib/utils');
 
 const Bcrypt = require('bcryptjs');
-const Joi = require('@hapi/joi');
 const Boom = require('@hapi/boom');
 const Crypto = require('crypto');
 
@@ -20,65 +19,24 @@ const {
 } = require('../../../config/db_constants');
 
 const {
-  senderAddress, emailTransporter, resetPasswordURL
+  senderAddress,
+  emailTransporter,
+  resetPasswordURL
 } = require('../../../config/email_constants');
+
+const {
+  authorizationHeader,
+  databaseInsertResponse,
+  userQuery,
+  userSuccessResponse,
+  userParam,
+  userCreatePayload,
+  userUpdatePayload,
+  userToken
+} = require('../../../lib/validations');
 
 const SECRET_KEY = require('../../../config/secret');
 const Jwt = require('jsonwebtoken');
-
-const authorizationHeader = Joi.object({
-  authorization: Joi.string().required()
-}).options({ allowUnknown: true }).label('authorizationHeader');
-
-const userParam = Joi.object({
-  id: Joi.string().length(24).required()
-}).label('userParam');
-
-const userQuery = Joi.object({
-  system_user: Joi.boolean().optional(),
-  offset: Joi.number().integer().min(0).optional(),
-  limit: Joi.number().integer().min(1).optional(),
-  sort: Joi.string().valid('username', 'last_login').optional()
-}).optional().label('userQuery');
-
-const userCreateResponse = Joi.object({
-  n: Joi.number().integer(),
-  ok: Joi.number().integer(),
-  insertedCount: Joi.number().integer(),
-  insertedId: Joi.object()
-}).label('userCreateResponse');
-
-const userCreatePayload = Joi.object({
-  id: Joi.string().length(24).optional(),
-  username: Joi.string().min(1).max(100).required(),
-  fullname: Joi.string().min(1).max(100).required(),
-  email: Joi.string().email().required(),
-  password: Joi.string().allow('').max(50).required(),
-  roles: Joi.array().items(Joi.string()).min(1).required(),
-  system_user: Joi.boolean().optional(),
-  disabled: Joi.boolean().optional()
-}).label('userCreatePayload');
-
-const userUpdatePayload = Joi.object({
-  username: Joi.string().min(1).max(100).optional(),
-  fullname: Joi.string().min(1).max(100).optional(),
-  // email: Joi.string().email().optional(),
-  password: Joi.string().allow('').max(50).optional(),
-  roles: Joi.array().items(Joi.string()).min(1).optional(),
-  system_user: Joi.boolean().optional(),
-  disabled: Joi.boolean().optional()
-}).required().min(1).label('userUpdatePayload');
-
-const userSuccessResponse = Joi.object({
-  id: Joi.object(),
-  email: Joi.string().email(),
-  system_user: Joi.boolean(),
-  last_login: Joi.date(),
-  username: Joi.string(),
-  fullname: Joi.string(),
-  roles: Joi.array().items(Joi.string()),
-  disabled: Joi.boolean()
-}).label('userSuccessResponse');
 
 exports.plugin = {
   name: 'routes-api-users',
@@ -129,7 +87,7 @@ exports.plugin = {
           return h.response(result);
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
       },
@@ -144,7 +102,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.array().items(userSuccessResponse)
+            200: userSuccessResponse
           }
         },
         description: 'Return the current list of users',
@@ -170,7 +128,7 @@ exports.plugin = {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
-          console.log("invalid ObjectID");
+          console.log('invalid ObjectID');
           return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
@@ -188,7 +146,7 @@ exports.plugin = {
 
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
       },
@@ -222,7 +180,7 @@ exports.plugin = {
         //   return h.response({ statusCode: 400, error: "Unauthorized", message: "The requesting user is unauthorized to make that request" }).code(400);
         // }
 
-        if (request.payload.system_user && typeof request.payload.system_user === "boolean" && !request.auth.credentials.roles.includes('admin')) {
+        if (request.payload.system_user && typeof request.payload.system_user === 'boolean' && !request.auth.credentials.roles.includes('admin')) {
           return Boom.unauthorized('Only admins can create system users');
         }
 
@@ -235,7 +193,7 @@ exports.plugin = {
           }
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
 
@@ -247,26 +205,26 @@ exports.plugin = {
             delete user.id;
           }
           catch (err) {
-            console.log("invalid ObjectID");
+            console.log('invalid ObjectID');
             return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
           }
         }
 
-        if (request.payload.system_user && typeof request.payload.system_user === "boolean") {
+        if (request.payload.system_user && typeof request.payload.system_user === 'boolean') {
           user.system_user = request.payload.system_user;
         }
         else {
           user.system_user = false;
         }
 
-        if (request.payload.disabled && typeof request.payload.disabled === "boolean") {
+        if (request.payload.disabled && typeof request.payload.disabled === 'boolean') {
           user.disabled = request.payload.disabled;
         }
         else {
           user.disabled = false;
         }
 
-        user.last_login = new Date("1970-01-01T00:00:00.000Z");
+        user.last_login = new Date('1970-01-01T00:00:00.000Z');
 
         const password = request.payload.password;
 
@@ -281,7 +239,7 @@ exports.plugin = {
             resolve(hash);
           });
         });
-        
+
         user.password = hashedPassword;
         user.loginToken = randomAsciiString(20);
 
@@ -292,16 +250,16 @@ exports.plugin = {
         }
         catch (err) {
           console.log(err);
-          return Boom.serverUnavailable("database error");
+          return Boom.serverUnavailable('database error');
         }
 
         const token = Crypto.randomBytes(20).toString('hex');
-          
+
         try {
           await db.collection(usersTable).updateOne({ _id: user._id }, { $set: { resetPasswordToken: token, resetPasswordExpires: Date.now() + (resetPasswordTokenExpires * 60 * 60 * 1000) } }); // token expires in 24 hours
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
 
@@ -321,17 +279,17 @@ exports.plugin = {
           emailTransporter.sendMail(mailOptions, (err) => {
 
             if (err) {
-              console.log("ERROR:", err);
+              console.log('ERROR:', err);
             }
           });
         }
 
-        return h.response({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
+        return h.response(result).code(201);
       },
       config: {
         auth: {
           strategy: 'jwt',
-          scope: ["admin", "write_users"]
+          scope: ['admin', 'write_users']
         },
         validate: {
           headers: authorizationHeader,
@@ -343,7 +301,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            201: userCreateResponse
+            201: databaseInsertResponse
           }
         },
         description: 'Create a new user',
@@ -363,15 +321,15 @@ exports.plugin = {
           return Boom.badRequest('Only admins and the owner can edit users');
         }
 
-        if (request.payload.roles && request.payload.roles.includes("admin") && !request.auth.credentials.roles.includes('admin')) {
+        if (request.payload.roles && request.payload.roles.includes('admin') && !request.auth.credentials.roles.includes('admin')) {
           return Boom.badRequest('Only admins create other admins');
         }
 
-        if (request.payload.disabled && typeof request.payload.disabled === "boolean" && !request.auth.credentials.roles.includes('admin')) {
+        if (request.payload.disabled && typeof request.payload.disabled === 'boolean' && !request.auth.credentials.roles.includes('admin')) {
           return Boom.badRequest('Only admins can enable/disabled users');
         }
 
-        if (request.payload.system_user && typeof request.payload.system_user === "boolean" && !request.auth.credentials.roles.includes('admin')) {
+        if (request.payload.system_user && typeof request.payload.system_user === 'boolean' && !request.auth.credentials.roles.includes('admin')) {
           return Boom.badRequest('Only admins can promote/demote users to system users');
         }
 
@@ -383,7 +341,7 @@ exports.plugin = {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
-          console.log("invalid ObjectID");
+          console.log('invalid ObjectID');
           return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
@@ -396,10 +354,10 @@ exports.plugin = {
           user_query = result;
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           return Boom.serverUnavailable('database error', err);
         }
-          
+
         //Trying to change the username?
         if (request.payload.username && request.payload.username !== user_query.username) {
 
@@ -413,11 +371,11 @@ exports.plugin = {
             }
           }
           catch (err) {
-            console.log("ERROR:", err);
+            console.log('ERROR:', err);
             return Boom.serverUnavailable('database error', err);
           }
         }
-        
+
         const user = request.payload;
 
         if (request.payload.password) {
@@ -426,7 +384,7 @@ exports.plugin = {
           const hashedPassword = await new Promise((resolve, reject) => {
 
             Bcrypt.hash(password, saltRounds, (err, hash) => {
-            
+
               if (err) {
                 reject(err);
               }
@@ -434,7 +392,7 @@ exports.plugin = {
               resolve(hash);
             });
           });
-          
+
           user.password = hashedPassword;
         }
 
@@ -443,14 +401,14 @@ exports.plugin = {
           return h.response().code(204);
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
       },
       config: {
         auth: {
           strategy: 'jwt',
-          scope: ["admin", "write_users"]
+          scope: ['admin', 'write_users']
         },
         validate: {
           headers: authorizationHeader,
@@ -482,12 +440,12 @@ exports.plugin = {
         }
 
         const query = {};
-        
+
         try {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
-          console.log("invalid ObjectID");
+          console.log('invalid ObjectID');
           return Boom.unauthorized('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
@@ -501,7 +459,7 @@ exports.plugin = {
           }
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
 
@@ -509,7 +467,7 @@ exports.plugin = {
           await db.collection(usersTable).deleteOne(query);
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
 
@@ -535,7 +493,7 @@ exports.plugin = {
       config: {
         auth: {
           strategy: 'jwt',
-          scope: ["admin", "write_users"]
+          scope: ['admin', 'write_users']
         },
         validate: {
           headers: authorizationHeader,
@@ -572,7 +530,7 @@ exports.plugin = {
           return h.response({ token: Jwt.sign( { id: user._id, scope: server.methods._rolesToScope(user.roles), roles: user.roles }, SECRET_KEY) }).code(200);
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
       },
@@ -586,9 +544,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.object({
-              token: Joi.string().regex(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_.+/=]*$/)
-            }).label('user JWT')
+            200: userToken
           }
         },
         description: 'This is the route used for retrieving a user\'s JWT based on the user\'s ID.',
@@ -625,7 +581,7 @@ exports.plugin = {
           return h.response({ loginToken: user.loginToken }).code(200);
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
       },
@@ -639,9 +595,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.object({
-              loginToken: Joi.string().regex(/^[A-Za-z0-9-]*$/)
-            }).label('user loginToken')
+            200: userToken
           }
         },
         description: 'This is the route used for retrieving a user\'s loginToken based on the user\'s ID.',

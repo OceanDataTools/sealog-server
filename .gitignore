@@ -1,14 +1,13 @@
 # node dependencies
 node_modules
 
-# npm logfile and package lock file
+# npm package lock file
 npm-debug.log
-package-lock.json
 
 # Virtual environment
 venv/
 
-# Dumb files OS X adds
+# Dumb files OS X creates
 .DS_Store
 
 # Scripts typically customized to the vessel/vehicles individual needs
@@ -17,9 +16,10 @@ misc/influx_sealog/settings*.py
 misc/python_sealog/settings*.py
 misc/reporting/sealog_doc_template*.py
 misc/reporting/sealog_report_builder*.py
+misc/sealog_*_data_export.py
+misc/sealog_*_data_export_full.py*
 misc/sealog_asnap.py
 misc/sealog_auto_actions*.py
-misc/sealog_aux_data_inserter*.py
 misc/sealog_aux_data_inserter*.py
 misc/sealog_aux_data_inserter_nav.py
 misc/sealog_auxDataInserter*.py
@@ -31,9 +31,7 @@ misc/sealog_lowering_responder.py
 misc/sealog_postLowering.sh
 misc/sealog_preLowering.sh
 misc/sealog_restoreDBfromBackup.sh
-misc/sealog_udp2MongoDB.py
-misc/sealog_*_data_export_full.py*
-misc/sealog_*_data_export.py
+misc/sealog_udp2MongoDB*.py
 misc/sealog_vessel_postCruise.sh
 
 # files that need to be updated to the v2.1 standard or deleted

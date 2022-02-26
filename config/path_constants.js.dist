@@ -1,6 +1,6 @@
-const IMAGE_PATH = "/home/sealog/sealog-files/images";
-const CRUISE_PATH = "/home/sealog/sealog-files/cruises";
-const LOWERING_PATH = "/home/sealog/sealog-files/lowerings";
+const IMAGE_PATH = '/home/sealog/sealog-files/images';
+const CRUISE_PATH = '/home/sealog/sealog-files/cruises';
+const LOWERING_PATH = '/home/sealog/sealog-files/lowerings';
 
 module.exports = {
   IMAGE_PATH,

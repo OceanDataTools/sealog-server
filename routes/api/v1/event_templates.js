@@ -1,9 +1,18 @@
 const Boom = require('@hapi/boom');
-const Joi = require('@hapi/joi');
 
 const {
   eventTemplatesTable
 } = require('../../../config/db_constants');
+
+const {
+  authorizationHeader,
+  databaseInsertResponse,
+  eventTemplateParam,
+  eventTemplateQuery,
+  eventTemplateSuccessResponse,
+  eventTemplateCreatePayload,
+  eventTemplateUpdatePayload
+} = require('../../../lib/validations');
 
 const _renameAndClearFields = (doc, admin = false) => {
 
@@ -16,84 +25,6 @@ const _renameAndClearFields = (doc, admin = false) => {
 
   return doc;
 };
-
-const authorizationHeader = Joi.object({
-  authorization: Joi.string().required()
-}).options({ allowUnknown: true }).label('authorizationHeader');
-
-const databaseInsertResponse = Joi.object({
-  n: Joi.number().integer(),
-  ok: Joi.number().integer(),
-  insertedCount: Joi.number().integer(),
-  insertedId: Joi.object()
-}).label('databaseInsertResponse');
-
-const eventTemplateParam = Joi.object({
-  id: Joi.string().length(24).required()
-}).label('eventTemplateParam');
-
-const eventTemplateQuery = Joi.object({
-  system_template: Joi.boolean().optional(),
-  offset: Joi.number().integer().min(0).optional(),
-  limit: Joi.number().integer().min(1).optional(),
-  sort: Joi.string().valid('event_name').optional()
-}).optional().label('eventTemplateQuery');
-
-const eventTemplateSuccessResponse = Joi.object({
-  id: Joi.object(),
-  event_name: Joi.string(),
-  event_value: Joi.string(),
-  event_free_text_required: Joi.boolean(),
-  system_template: Joi.boolean(),
-  template_categories: Joi.array().items(Joi.string()),
-  template_style: Joi.object().optional(),
-  disabled: Joi.boolean().optional(),
-  event_options: Joi.array().items(Joi.object({
-    event_option_name: Joi.string(),
-    event_option_type: Joi.string(),
-    event_option_default_value: Joi.string().allow(''),
-    event_option_values: Joi.array().items(Joi.string()),
-    event_option_allow_freeform: Joi.boolean(),
-    event_option_required: Joi.boolean()
-  }))
-}).label('eventTemplateSuccessResponse');
-
-const eventTemplateCreatePayload = Joi.object({
-  id: Joi.string().length(24).optional(),
-  event_name: Joi.string().required(),
-  event_value: Joi.string().required(),
-  event_free_text_required: Joi.boolean().required(),
-  system_template: Joi.boolean().required(),
-  template_categories: Joi.array().items(Joi.string()).optional(),
-  template_style: Joi.object(),
-  disabled: Joi.boolean().optional(),
-  event_options: Joi.array().items(Joi.object({
-    event_option_name: Joi.string().required(),
-    event_option_type: Joi.string().required(),
-    event_option_default_value: Joi.string().allow('').optional(),
-    event_option_values: Joi.array().items(Joi.string()).required(),
-    event_option_allow_freeform: Joi.boolean().required(),
-    event_option_required: Joi.boolean().required()
-  })).optional()
-}).label('eventTemplateCreatePayload');
-
-const eventTemplateUpdatePayload = Joi.object({
-  event_name: Joi.string().optional(),
-  event_value: Joi.string().optional(),
-  event_free_text_required: Joi.boolean().optional(),
-  system_template: Joi.boolean().optional(),
-  template_categories: Joi.array().items(Joi.string()).optional(),
-  template_style: Joi.object().optional(),
-  disabled: Joi.boolean().optional(),
-  event_options: Joi.array().items(Joi.object({
-    event_option_name: Joi.string().required(),
-    event_option_type: Joi.string().required(),
-    event_option_default_value: Joi.string().allow('').optional(),
-    event_option_values: Joi.array().items(Joi.string()).required(),
-    event_option_allow_freeform: Joi.boolean().required(),
-    event_option_required: Joi.boolean().required()
-  })).optional()
-}).required().min(1).label('eventTemplateUpdatePayload');
 
 exports.plugin = {
   name: 'routes-api-event_templates',
@@ -118,7 +49,7 @@ exports.plugin = {
         const limit = (request.query.limit) ? request.query.limit : 0;
         const offset = (request.query.offset) ? request.query.offset : 0;
         const sort = (request.query.sort) ? { [request.query.sort]: 1 } : {};
-        
+
         const query = (request.auth.credentials.scope.includes('admin')) ? {} : { disabled: { $eq: false } };
 
         if (typeof request.query.system_template !== 'undefined') {
@@ -136,9 +67,9 @@ exports.plugin = {
 
             return h.response(results).code(200);
           }
- 
+
           return Boom.notFound('No records found');
-          
+
         }
         catch (err) {
           console.log(err);
@@ -156,7 +87,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.array().items(eventTemplateSuccessResponse)
+            200: eventTemplateSuccessResponse
           }
         },
         description: 'Return the event templates based on query parameters',
@@ -234,7 +165,7 @@ exports.plugin = {
             delete event_template.id;
           }
           catch (err) {
-            console.log("invalid ObjectID");
+            console.log('invalid ObjectID');
             return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
           }
         }
@@ -262,7 +193,7 @@ exports.plugin = {
           _renameAndClearFields(event_template);
           server.publish('/ws/status/newEventTemplates', event_template);
 
-          return h.response({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
+          return h.response(result).code(201);
 
         }
         catch (err) {
@@ -328,7 +259,7 @@ exports.plugin = {
         const event_template = request.payload;
 
         try {
-          const result = await db.collection(eventTemplatesTable).findOneAndUpdate(query, { $set: event_template },{ returnOriginal: false });
+          const result = await db.collection(eventTemplatesTable).findOneAndUpdate(query, { $set: event_template },{ returnDocument: 'after' });
           server.publish('/ws/status/updateEventTemplates', _renameAndClearFields(result.value));
 
           return h.response().code(204);

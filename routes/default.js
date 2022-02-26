@@ -1,5 +1,5 @@
 const Boom = require('@hapi/boom');
-const Joi = require('@hapi/joi');
+const Joi = require('joi');
 const Fs = require('fs');
 const Path = require('path');
 const Tmp = require('tmp');
@@ -11,9 +11,9 @@ const {
 } = require('../config/path_constants');
 
 
-const IMAGE_ROUTE = "/files/images";
-const CRUISE_ROUTE = "/files/cruises";
-const LOWERING_ROUTE = "/files/lowerings";
+const IMAGE_ROUTE = '/files/images';
+const CRUISE_ROUTE = '/files/cruises';
+const LOWERING_ROUTE = '/files/lowerings';
 
 const handleFileUpload = (path,file) => {
 
@@ -38,10 +38,10 @@ const handleFolderDelete = (path) => {
   if (Fs.existsSync(path)) {
     Fs.readdirSync(path).forEach((file) => {
 
-      const curPath = path + "/" + file;
+      const curPath = path + '/' + file;
       if (Fs.lstatSync(curPath).isDirectory()) { // recurse
         handleFolderDelete(curPath);
-      } 
+      }
       else { // delete file
         Fs.unlinkSync(curPath);
       }
@@ -98,7 +98,7 @@ exports.plugin = {
         response: {
           status: {
             200: Joi.object({
-              result: "Welcome to sealog-server!"
+              result: 'Welcome to sealog-server!'
             })
           }
         },
@@ -252,7 +252,7 @@ exports.plugin = {
       async handler(request, h) {
 
         const { payload } = request;
-        const upload = await handleFileUpload(CRUISE_PATH + "/" + request.params.id, payload.file);
+        const upload = await handleFileUpload(CRUISE_PATH + '/' + request.params.id, payload.file);
         return h.response({ message: upload.message }).code(201);
       },
       config: {
@@ -377,7 +377,7 @@ exports.plugin = {
           params: filepondFileParam,
           payload: filepondFilePayload,
           failAction: (request, h, err) => {
-            
+
             throw Boom.badRequest(err.message);
           }
         },
@@ -394,7 +394,7 @@ exports.plugin = {
       async handler(request, h) {
 
         const { payload } = request;
-        const upload = await handleFileUpload(LOWERING_PATH + "/" + request.params.id, payload.file);
+        const upload = await handleFileUpload(LOWERING_PATH + '/' + request.params.id, payload.file);
         return h.response({ message: upload.message }).code(201);
       },
       config: {

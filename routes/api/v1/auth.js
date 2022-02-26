@@ -3,7 +3,6 @@ const { randomAsciiString } = require('../../../lib/utils');
 
 const Bcrypt = require('bcryptjs');
 const Boom = require('@hapi/boom');
-const Joi = require('@hapi/joi');
 const Jwt = require('jsonwebtoken');
 const Axios = require('axios');
 const Crypto = require('crypto');
@@ -15,70 +14,27 @@ const {
 } = require('../../../config/db_constants');
 
 const {
-  senderAddress, emailTransporter, reCaptchaSecret, resetPasswordURL, registeringUserRoles, disableRegisteringUsers, notificationEmailAddresses
+  senderAddress,
+  emailTransporter,
+  reCaptchaSecret,
+  resetPasswordURL,
+  registeringUserRoles,
+  disableRegisteringUsers,
+  notificationEmailAddresses
 } = require('../../../config/email_constants');
 
-const authorizationHeader = Joi.object({
-  authorization: Joi.string().required()
-}).options({ allowUnknown: true }).label('authorizationHeader');
-
-const databaseInsertResponse = Joi.object({
-  n: Joi.number().integer(),
-  ok: Joi.number().integer(),
-  insertedCount: Joi.number().integer(),
-  insertedId: Joi.object()
-}).label('databaseInsertResponse');
-
-const registerPayload = Joi.object({
-  reCaptcha: Joi.string().optional(),
-  username: Joi.string().min(1).max(50).required(),
-  fullname: Joi.string().min(1).max(50).required(),
-  email: Joi.string().min(1).max(50).required(),
-  password: Joi.string().allow('').max(50).required()
-}).label('registerPayload');
-
-const resetPasswordPayload = Joi.object({
-  token: Joi.string().required(),
-  reCaptcha: Joi.string().optional(),
-  password: Joi.string().allow('').max(50).required()
-}).label('resetPasswordPayload');
-
-const autoLoginPayload = Joi.object({
-  reCaptcha: Joi.string().optional(),
-  loginToken: Joi.string().min(20).max(20).required()
-}).label('autoLoginPayload');
-
-const loginPayload = Joi.object({
-  reCaptcha: Joi.string().optional(),
-  username: Joi.string().min(1).max(50).required(),
-  password: Joi.string().allow('').max(50).required()
-}).label('loginPayload');
-
-const loginSuccessResponse = Joi.object({
-  token: Joi.string().regex(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_.+/=]*$/),
-  id: Joi.string()
-}).label('loginSuccessResponse');
-
-const forgotPasswordPayload = Joi.object({
-  email: Joi.string().min(1).max(50).required(),
-  reCaptcha: Joi.string().optional()
-}).label('forgotPasswordPayload');
-
-const forgotPasswordSuccessResponse = Joi.object({
-  statusCode: Joi.number().integer(),
-  message: Joi.string()
-}).label('forgotPasswordSuccessResponse');
-
-const userSuccessResponse = Joi.object({
-  id: Joi.object(),
-  email: Joi.string().email(),
-  system_user: Joi.boolean(),
-  last_login: Joi.date(),
-  username: Joi.string(),
-  fullname: Joi.string(),
-  roles: Joi.array().items(Joi.string()),
-  disabled: Joi.boolean()
-}).label('userSuccessResponse');
+const {
+  authorizationHeader,
+  databaseInsertResponse,
+  forgotPasswordPayload,
+  forgotPasswordSuccessResponse,
+  loginPayload,
+  loginSuccessResponse,
+  registerPayload,
+  resetPasswordPayload,
+  userSuccessResponse,
+  userToken
+} = require('../../../lib/validations');
 
 const _rolesToScope = (roles) => {
 
@@ -86,7 +42,7 @@ const _rolesToScope = (roles) => {
     return [];
   }
 
-  if (roles.includes("admin")) {
+  if (roles.includes('admin')) {
     return ['admin'];
   }
 
@@ -143,7 +99,7 @@ exports.plugin = {
       method: 'POST',
       path: '/auth/register',
       async handler(request, h) {
-      
+
         const db = request.mongo.db;
         // const ObjectID = request.mongo.ObjectID;
 
@@ -151,7 +107,7 @@ exports.plugin = {
           const result = await db.collection(usersTable).findOne({ username: request.payload.username });
           if (result) {
 
-            return h.response({ statusCode: 401, error: "invalid registration", message: 'username already exists' }).code(401);
+            return h.response({ statusCode: 401, error: 'invalid registration', message: 'username already exists' }).code(401);
           }
         }
         catch (err) {
@@ -162,14 +118,14 @@ exports.plugin = {
           const result = await db.collection(usersTable).findOne({ email: request.payload.email });
           if (result) {
 
-            return h.response({ statusCode: 401, error: "invalid registration", message: 'email already exists' }).code(401);
+            return h.response({ statusCode: 401, error: 'invalid registration', message: 'email already exists' }).code(401);
           }
         }
         catch (err) {
           return Boom.serverUnavailable('database error', err);
         }
 
-        if (reCaptchaSecret !== "") {
+        if (reCaptchaSecret !== '') {
           try {
             const reCaptchaVerify = await Axios.get('https://www.google.com/recaptcha/api/siteverify?secret=' + reCaptchaSecret + '&response=' + request.payload.reCaptcha + '&remoteip=' + request.info.remoteAddress
             );
@@ -182,10 +138,10 @@ exports.plugin = {
             return Boom.serverUnavailable('reCaptcha error', err);
           }
         }
-   
+
         const user = request.payload;
 
-        if (user.reCaptcha !== "") {
+        if (user.reCaptcha !== '') {
           delete user.reCaptcha;
         }
 
@@ -199,7 +155,7 @@ exports.plugin = {
         const password = request.payload.password;
 
         const hashedPassword = await new Promise((resolve, reject) => {
-          
+
           Bcrypt.hash(password, saltRounds, (err, hash) => {
 
             if (err) {
@@ -215,10 +171,10 @@ exports.plugin = {
         try {
           const result = await db.collection(usersTable).insertOne(user);
           if (!result) {
-            return h.response({ "statusCode": 400, 'message': 'Bad request' }).code(400);
+            return h.response({ 'statusCode': 400, 'message': 'Bad request' }).code(400);
           }
 
-          const disabledAccountTxt = (disableRegisteringUsers) ? "<p>For security reasons, accounts created via self-registration are disabled by default.  The system adminstrator has been notified of your account request and will enable the account shortly.</p>" : "";
+          const disabledAccountTxt = (disableRegisteringUsers) ? '<p>For security reasons, accounts created via self-registration are disabled by default.  The system adminstrator has been notified of your account request and will enable the account shortly.</p>' : '';
 
           let mailOptions = {
             from: senderAddress, // sender address
@@ -233,14 +189,14 @@ exports.plugin = {
             emailTransporter.sendMail(mailOptions, (err) => {
 
               if (err) {
-                console.log("ERROR:", err);
+                console.log('ERROR:', err);
               }
             });
           }
 
           mailOptions = {
             from: senderAddress, // sender address
-            to: notificationEmailAddresses.join(), // list of receipents to be notified. 
+            to: notificationEmailAddresses.join(), // list of receipents to be notified.
             subject: 'New Sealog User Registration', // Subject line
             html: `<p>New user: ${user.username}  ( ${user.fullname} ) has just registered an account with Sealog (${request.info.hostname}). Please ensure this user's access permissions have been configured correctly.</p>`
           };
@@ -254,12 +210,12 @@ exports.plugin = {
             emailTransporter.sendMail(mailOptions, (err) => {
 
               if (err) {
-                console.log("ERROR:", err);
+                console.log('ERROR:', err);
               }
             });
           }
 
-          return h.response({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId }).code(201);
+          return h.response(result).code(201);
 
         }
         catch (err) {
@@ -300,15 +256,15 @@ exports.plugin = {
             await db.collection(usersTable).updateOne({ _id: result._id }, { $set: { resetPasswordToken: null, resetPasswordExpires: null } });
             return h.response({ statusCode: 401, error: 'invalid token', message: 'password reset token has expired' }).code(401);
           }
- 
+
           user = result;
-          
+
         }
         catch (err) {
           return Boom.serverUnavailable('database error', err);
         }
 
-        if (reCaptchaSecret !== "") {
+        if (reCaptchaSecret !== '') {
           try {
             const reCaptchaVerify = await Axios.get('https://www.google.com/recaptcha/api/siteverify?secret=' + reCaptchaSecret + '&response=' + request.payload.reCaptcha + '&remoteip=' + request.info.remoteAddress);
 
@@ -397,11 +353,11 @@ exports.plugin = {
           }
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           return Boom.serverUnavailable('database error');
         }
 
-        if (reCaptchaSecret !== "") {
+        if (reCaptchaSecret !== '') {
           try {
             const reCaptchaVerify = await Axios.get('https://www.google.com/recaptcha/api/siteverify?secret=' + reCaptchaSecret + '&response=' + request.payload.reCaptcha + '&remoteip=' + request.info.remoteAddress);
 
@@ -428,10 +384,7 @@ exports.plugin = {
       },
       config: {
         validate: {
-          payload: Joi.alternatives().try(
-            autoLoginPayload,
-            loginPayload
-          )
+          payload: loginPayload
         },
         response: {
           status: {
@@ -449,7 +402,7 @@ exports.plugin = {
       path: '/auth/validate',
       handler(request, h) {
 
-        return h.response({ status: "valid" }).code(200);
+        return h.response({ status: 'valid' }).code(200);
       },
       config: {
         auth: {
@@ -489,9 +442,9 @@ exports.plugin = {
         catch (err) {
           return Boom.serverUnavailable('database error', err);
         }
-          
+
         const token = Crypto.randomBytes(20).toString('hex');
-        
+
         try {
           await db.collection(usersTable).updateOne({ _id: user._id }, { $set: { resetPasswordToken: token, resetPasswordExpires: Date.now() + (resetPasswordTokenExpires * 60 * 1000) } });
         }
@@ -499,7 +452,7 @@ exports.plugin = {
           return Boom.serverUnavailable('database error', err);
         }
 
-        if (reCaptchaSecret !== "") {
+        if (reCaptchaSecret !== '') {
           try {
             const reCaptchaVerify = await Axios.get('https://www.google.com/recaptcha/api/siteverify?secret=' + reCaptchaSecret + '&response=' + request.payload.reCaptcha + '&remoteip=' + request.info.remoteAddress);
 
@@ -525,12 +478,12 @@ exports.plugin = {
           emailTransporter.sendMail(mailOptions, (err) => {
 
             if (err) {
-              console.log("ERROR:", err);
+              console.log('ERROR:', err);
             }
           });
         }
 
-        return h.response({ statusCode: 200, message: "password reset email sent" }).code(200);
+        return h.response({ statusCode: 200, message: 'password reset email sent' }).code(200);
       },
       config: {
         validate: {
@@ -566,7 +519,7 @@ exports.plugin = {
 
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
       },
@@ -604,7 +557,7 @@ exports.plugin = {
           return h.response({ token: Jwt.sign( { id: user._id, scope: server.methods._rolesToScope(user.roles), roles: user.roles }, SECRET_KEY) }).code(200);
         }
         catch (err) {
-          console.log("ERROR:", err);
+          console.log('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
       },
@@ -617,9 +570,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.object({
-              token: Joi.string().regex(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_.+/=]*$/)
-            }).label('user JWT')
+            200: userToken
           }
         },
         description: 'This is the route used for retrieving a user\'s JWT based on the user\'s JWT.',

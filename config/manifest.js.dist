@@ -49,7 +49,15 @@ const swagger_options = {
       description: 'the users api'
     }
   ],
-  grouping: 'tags'
+  grouping: 'tags',
+  security: [{ API_KEY: [] }],
+  securityDefinitions: {
+    API_KEY: {
+      type: 'apiKey',
+      name: 'authorization',
+      in: 'header'
+    }
+  }
 };
 
 const {
@@ -105,7 +113,7 @@ const manifest = {
         {
           url: mongodb_URL,
           settings: {
-            poolSize: 20,
+            maxPoolSize: 20,
             useNewUrlParser: true,
             useUnifiedTopology: true
           },
@@ -135,7 +143,7 @@ const manifest = {
       },
       { plugin: './routes/default', options: {},
         routes: {
-          prefix: envKey('prefix') 
+          prefix: envKey('prefix')
         }
       },
       { plugin: './routes/api/v1/event_aux_data', options: {},
@@ -163,9 +171,21 @@ const manifest = {
           prefix: envKey('prefix') + '/api/v1'
         }
       },
-      { plugin: './routes/api/v1/users', option: {},
+      { plugin: './routes/api/v1/users', options: {},
         routes: {
           prefix: envKey('prefix') + '/api/v1'
+        }
+      },
+      { plugin: 'hapi-pino',
+        options: {
+          logRequestComplete: process.env.NODE_ENV !== 'production',
+          prettyPrint: process.env.NODE_ENV !== 'production',
+          redact: ['req.headers.authorization']
+        }
+      },
+      { plugin: 'hapi-swagger', options: swagger_options,
+        routes: {
+          prefix: envKey('prefix')
         }
       }
     ]
@@ -174,104 +194,44 @@ const manifest = {
 
 if (process.env.NODE_ENV === 'development') { // DEVELOPMENT
 
-  manifest.register.plugins.push({ "plugin": "blipp" });
-  manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_cruises" });
-  manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_custom_vars" });
-  manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_event_aux_data" });
-  manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_event_templates" });
-  manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_events" });
-  manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_lowerings" });
-  manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_users" });
-  manifest.register.plugins.push({ "plugin": "hapi-swagger",
-    options: swagger_options,
-    routes: {
-      prefix: envKey('prefix')
-    }
-  });
-  manifest.register.plugins.push({ "plugin": "@hapi/good", options:
-    {
-      "ops": { interval: 60000 },
-      "reporters": {
-        "console": [{
-          "module": "@hapi/good-squeeze",
-          "name": "Squeeze",
-          "args": [{
-            "error": "*",
-            "log": "*",
-            "request": "*",
-            "response": "*"
-          }]
-        }, {
-          module: "@hapi/good-console"
-        }, "stdout"]
-      }
-    }
-  });
+  manifest.register.plugins.push({ 'plugin': 'blipp' });
+  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_cruises' });
+  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_custom_vars' });
+  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_event_aux_data' });
+  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_event_templates' });
+  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_events' });
+  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_lowerings' });
+  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_users' });
 }
 else if (process.env.NODE_ENV === 'test') { // TESTING
 
-  manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_cruises" });
-  manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_custom_vars" });
-  manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_event_aux_data" });
-  manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_event_templates" });
-  manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_events" });
-  manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_lowerings" });
-  manifest.register.plugins.push({ "plugin": "./plugins/dbDevel_users" });
-
+  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_cruises' });
+  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_custom_vars' });
+  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_event_aux_data' });
+  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_event_templates' });
+  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_events' });
+  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_lowerings' });
+  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_users' });
 }
 else if (process.env.NODE_ENV === 'production') { // PRODUCTION
 
-  manifest.register.plugins.push({ "plugin": "./plugins/db_custom_vars" });
-  manifest.register.plugins.push({ "plugin": "./plugins/db_cruises" });
-  manifest.register.plugins.push({ "plugin": "./plugins/db_event_aux_data" });
-  manifest.register.plugins.push({ "plugin": "./plugins/db_event_templates" });
-  manifest.register.plugins.push({ "plugin": "./plugins/db_events" });
-  manifest.register.plugins.push({ "plugin": "./plugins/db_lowerings" });
-  manifest.register.plugins.push({ "plugin": "./plugins/db_users" });
-  manifest.register.plugins.push({ "plugin": "hapi-swagger",
-    options: swagger_options,
-    routes: {
-      prefix: envKey('prefix')
-    }
-  });
-
+  manifest.register.plugins.push({ 'plugin': './plugins/db_cruises' });
+  manifest.register.plugins.push({ 'plugin': './plugins/db_custom_vars' });
+  manifest.register.plugins.push({ 'plugin': './plugins/db_event_aux_data' });
+  manifest.register.plugins.push({ 'plugin': './plugins/db_event_templates' });
+  manifest.register.plugins.push({ 'plugin': './plugins/db_events' });
+  manifest.register.plugins.push({ 'plugin': './plugins/db_lowerings' });
+  manifest.register.plugins.push({ 'plugin': './plugins/db_users' });
 }
 else if (env === 'debug') { // DEBUG
 
-  manifest.register.plugins.push({ "plugin": "./plugins/db_custom_vars" });
-  manifest.register.plugins.push({ "plugin": "./plugins/db_cruises" });
-  manifest.register.plugins.push({ "plugin": "./plugins/db_event_aux_data" });
-  manifest.register.plugins.push({ "plugin": "./plugins/db_event_templates" });
-  manifest.register.plugins.push({ "plugin": "./plugins/db_events" });
-  manifest.register.plugins.push({ "plugin": "./plugins/db_lowerings" });
-  manifest.register.plugins.push({ "plugin": "./plugins/db_users" });
-  manifest.register.plugins.push({ "plugin": "hapi-swagger",
-    options: swagger_options,
-    routes: {
-      prefix: envKey('prefix')
-    }
-  });
-  manifest.register.plugins.push({ "plugin": "@hapi/good", options:
-    {
-      "ops": { interval: 60000 },
-      "reporters": {
-        "console": [{
-          "module": "@hapi/good-squeeze",
-          "name": "Squeeze",
-          "args": [{
-            "error": "*",
-            "log": "*",
-            "request": "*",
-            "response": "*"
-          }]
-        }, {
-          module: "@hapi/good-console"
-        }, "stdout"]
-      }
-    }
-  });
-
+  manifest.register.plugins.push({ 'plugin': './plugins/db_cruises' });
+  manifest.register.plugins.push({ 'plugin': './plugins/db_custom_vars' });
+  manifest.register.plugins.push({ 'plugin': './plugins/db_event_aux_data' });
+  manifest.register.plugins.push({ 'plugin': './plugins/db_event_templates' });
+  manifest.register.plugins.push({ 'plugin': './plugins/db_events' });
+  manifest.register.plugins.push({ 'plugin': './plugins/db_lowerings' });
+  manifest.register.plugins.push({ 'plugin': './plugins/db_users' });
 }
-
 
 module.exports = manifest;
