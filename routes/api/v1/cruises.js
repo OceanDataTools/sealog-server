@@ -883,8 +883,7 @@ exports.plugin = {
 
         const updatedCruise = await db.collection(cruisesTable).findOne(query);
 
-        updatedCruise.id = updatedCruise._id;
-        delete updatedCruise._id;
+        updatedCruise = _renameAndClearFields(updatedCruise);
 
         server.publish('/ws/status/updateCruises', updatedCruise);
 
