@@ -8,28 +8,32 @@ BUGS:
 NOTES:
 AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
-VERSION:    0.4
+VERSION:    1.0
 CREATED:    2018-11-07
-REVISION:   2021-05-10
+REVISION:   2022-02-13
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2021
+                Copyright (C) OceanDataTools.org 2022
 '''
 
+import sys
 import os
 import json
 import logging
 import tempfile
 import subprocess
 
-from python_sealog.settings import API_SERVER_FILE_PATH
-from python_sealog.cruises import get_cruises, get_cruise_by_id, get_cruise_by_lowering
-from python_sealog.lowerings import get_lowerings, get_lowering_by_id, get_lowerings_by_cruise
-from python_sealog.misc import get_framegrab_list_by_lowering
-from python_sealog.events import get_events_by_lowering
-from python_sealog.event_aux_data import get_event_aux_data_by_lowering
-from python_sealog.event_exports import get_event_exports_by_lowering
-from python_sealog.event_templates import get_event_templates
+from os.path import dirname, realpath
+sys.path.append(dirname(dirname(realpath(__file__))))
+
+from misc.python_sealog.settings import API_SERVER_FILE_PATH
+from misc.python_sealog.cruises import get_cruises, get_cruise_by_id, get_cruise_by_lowering
+from misc.python_sealog.lowerings import get_lowerings, get_lowering_by_id, get_lowerings_by_cruise
+from misc.python_sealog.misc import get_framegrab_list_by_lowering
+from misc.python_sealog.events import get_events_by_lowering
+from misc.python_sealog.event_aux_data import get_event_aux_data_by_lowering
+from misc.python_sealog.event_exports import get_event_exports_by_lowering
+from misc.python_sealog.event_templates import get_event_templates
 
 EXPORT_ROOT_DIR = '/home/sealog/sealog-export'
 VEHICLE_NAME = 'Explorer'
@@ -222,7 +226,6 @@ def _export_cruise_sealog_data_files(cruise):
 if __name__ == '__main__':
 
     import argparse
-    import sys
 
     parser = argparse.ArgumentParser(description='Sealog ' + VEHICLE_NAME + ' Data export')
     parser.add_argument('-v', '--verbosity', dest='verbosity',

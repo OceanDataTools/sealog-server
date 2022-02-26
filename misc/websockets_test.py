@@ -9,20 +9,24 @@ BUGS:
 NOTES:
 AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
-VERSION:    0.1
+VERSION:    1.0
 CREATED:    2018-06-27
-REVISION:   2021-05-12
+REVISION:   2022-02-13
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2021
+                Copyright (C) OceanDataTools.org 2022
 '''
 
+import sys
 import asyncio
 import json
 import logging
 import websockets
 
-from python_sealog.settings import WS_SERVER_URL, HEADERS
+from os.path import dirname, realpath
+sys.path.append(dirname(dirname(realpath(__file__))))
+
+from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
 
 CLIENT_WS_ID = 'websocketTest'
 
@@ -72,7 +76,6 @@ if __name__ == '__main__':
 
     import argparse
     import os
-    import sys
 
     parser = argparse.ArgumentParser(description='Simple script to demonstrate how to subscribe to the new event websocket feed')
     parser.add_argument('-v', '--verbosity', dest='verbosity',

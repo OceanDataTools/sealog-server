@@ -29,29 +29,29 @@ exports.plugin = {
 
     ];
 
-    console.log("Searching for Custom Variable Collection");
+    console.log('Searching for Custom Variable Collection');
     try {
       const result = await db.listCollections({ name: customVarsTable }).toArray();
       if (result.length > 0) {
-        console.log("Collection already exists... we're done here.");
+        console.log('Collection already exists... we\'re done here.');
         return;
       }
     }
     catch (err) {
-      console.log("ERROR:", err.code);
+      console.log('ERROR:', err.code);
       throw (err);
     }
 
     try {
-      console.log("Creating Custom Variable Collection");
+      console.log('Creating Custom Variable Collection');
       const collection = await db.createCollection(customVarsTable);
 
-      console.log("Populating Custom Variable Collection");
+      console.log('Populating Custom Variable Collection');
       await collection.insertMany(init_data);
 
     }
     catch (err) {
-      console.log("ERROR:", err.code);
+      console.log('ERROR:', err.code);
       throw (err);
     }
   }

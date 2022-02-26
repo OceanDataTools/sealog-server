@@ -9,19 +9,23 @@ BUGS:
 NOTES:
 AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
-VERSION:    0.1
+VERSION:    1.0
 CREATED:    2021-01-01
-REVISION:
+REVISION:   2022-02-13
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2021
+                Copyright (C) OceanDataTools.org 2022
 '''
 
+import sys
 import json
 import logging
 import requests
 
-from .settings import API_SERVER_URL, HEADERS, CRUISES_API_PATH
+from os.path import dirname, realpath
+sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
+
+from misc.python_sealog.settings import API_SERVER_URL, HEADERS, CRUISES_API_PATH
 
 def get_cruise(cruise_uid, export_format='json', api_server_url=API_SERVER_URL, headers=HEADERS):
     '''

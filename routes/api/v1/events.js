@@ -1,17 +1,29 @@
 const Boom = require('@hapi/boom');
-const Joi = require('@hapi/joi');
 const { parseAsync } = require('json2csv');
-const Deepcopy = require('deepcopy');
 
 const THRESHOLD = 120; //seconds
 
 const {
-  array_move
+  addEventRecordIDs,
+  flattenEventObjs,
+  buildEventCSVHeaders,
+  buildEventsQuery
 } = require('../../../lib/utils');
 
 const {
   useAccessControl
 } = require('../../../config/email_constants');
+
+const {
+  authorizationHeader,
+  eventParam,
+  eventQuery,
+  eventCountSuccessResponse,
+  eventSuccessResponse,
+  eventCreatePayload,
+  eventCreateResponse,
+  eventUpdatePayload
+} = require('../../../lib/validations');
 
 const {
   eventsTable,
@@ -20,98 +32,6 @@ const {
   loweringsTable,
   cruisesTable
 } = require('../../../config/db_constants');
-
-const _flattenJSON = (json) => {
-
-  const flattenJSON = json.map((event) => {
-  
-    const copiedEvent = Deepcopy(event);
-
-    copiedEvent.event_options.map((data) => {
-  
-      const elementName = `event_option.${data.event_option_name}`;
-      copiedEvent[elementName] = data.event_option_value;
-    });
-
-    delete copiedEvent.event_options;
-
-    copiedEvent.ts = copiedEvent.ts.toISOString();
-    copiedEvent.id = copiedEvent.id.id.toString('hex');
-    copiedEvent.event_free_text = "\"" + copiedEvent.event_free_text.replace(/"/g, '\\"') + "\"";
-    return copiedEvent;
-  });
-
-  return flattenJSON;
-};
-
-const _add_record_ids = async (request, records) => {
-
-  const db = request.mongo.db;
-
-  const new_results = await records.map(async (doc) => {
-
-    const cruise_lowering_query = {};
-
-    // time bounds based on event start/stop times
-    cruise_lowering_query.$and = [{ start_ts: { $lte: doc.ts } }, { stop_ts: { $gte: doc.ts } }];
-
-    try {
-      const event_cruise = await db.collection(cruisesTable).findOne(cruise_lowering_query);
-
-      if (event_cruise) {
-        doc.cruise_id = event_cruise.cruise_id;
-      }
-    }
-    catch (err) {
-      console.error("ERROR:", err);
-    }
-
-    try {
-      const event_lowering = await db.collection(loweringsTable).findOne(cruise_lowering_query);
-
-      if (event_lowering) {
-        doc.lowering_id = event_lowering.lowering_id;
-      }
-    }
-    catch (err) {
-      console.error("ERROR:", err);
-    }
-
-    return doc;
-  });
-
-  await Promise.all(new_results);
-
-  return records;
-
-};
-
-const _buildCSVHeaders = (flattenJSON) => {
-
-  let csvHeaders = flattenJSON.reduce((headers, event) => {
-
-    const keyNames = Object.keys(event);
-
-    return headers.concat(keyNames).filter((value, index, self) => {
-
-      return self.indexOf(value) === index;
-    });
-  }, ['id','ts','event_value','event_author','event_free_text']);
-
-  csvHeaders = csvHeaders.slice(0, 5).concat(csvHeaders.slice(5).sort());
-
-  const cruiseIndex = csvHeaders.findIndex((header) => header === "cruise_id");
-  if (cruiseIndex > -1) {
-    csvHeaders = array_move(csvHeaders, cruiseIndex, 1);
-  }
-
-  const loweringIndex = csvHeaders.findIndex((header) => header === "lowering_id");
-  if (loweringIndex > -1) {
-    csvHeaders = array_move(csvHeaders, loweringIndex, 2);
-  }
-
-  return csvHeaders;
-};
 
 const _renameAndClearFields = (doc) => {
 
@@ -128,165 +48,6 @@ const _renameAndClearFields = (doc) => {
   return doc;
 };
 
-const _buildEventsQuery = (request, start_ts = new Date("1970-01-01T00:00:00.000Z"), stop_ts = new Date() ) => {
-
-  const query = {};
-  if (request.query.author) {
-    if (Array.isArray(request.query.author)) {
-      const regex_query = request.query.author.map((author) => {
-
-        // return '/' + author + '/i';
-        const return_regex = new RegExp(author, 'i');
-        return return_regex;
-      });
-
-      query.event_author  = { $in: regex_query };
-    }
-    else {
-      query.event_author =  new RegExp(request.query.author, 'i');
-    }
-  }
-
-  if (request.query.value) {
-    if (Array.isArray(request.query.value)) {
-
-      const inList = [];
-      const ninList = [];
-
-      for ( const value of request.query.value ) {
-        if (value.startsWith("!")) {
-          ninList.push( new RegExp(value.substr(1), 'i'));
-        }
-        else {
-          inList.push(new RegExp(value, 'i'));
-        }
-      }
-
-      if ( inList.length > 0 && ninList.length > 0) {
-        query.event_value  = { $in: inList, $nin: ninList };
-      }
-      else if (inList.length > 0) {
-        query.event_value  = { $in: inList };
-      }
-      else {
-        query.event_value  = { $nin: ninList };
-      }
-
-    }
-    else {
-      if (request.query.value.startsWith("!")) {
-        query.event_value = new RegExp('^(?!.*' + request.query.value.substr(1) + ')', 'i');
-      }
-      else {
-        query.event_value = new RegExp(request.query.value, 'i');
-      }
-    }
-  }
-
-  if (request.query.freetext) {
-    query.event_free_text = new RegExp(request.query.freetext, 'i');
-  }
-
-  //Time filtering
-  if (request.query.startTS) {
-    const tempStartTS = new Date(request.query.startTS);
-    const startTS = (tempStartTS >= start_ts && tempStartTS <= stop_ts) ? tempStartTS : start_ts;
-    query.ts = { $gte: startTS };
-  }
-  else {
-    query.ts = { $gte: start_ts };
-  }
-
-  if (request.query.stopTS) {
-    const tempStopTS = new Date(request.query.stopTS);
-    const stopTS = (tempStopTS >= start_ts && tempStopTS <= stop_ts) ? tempStopTS : stop_ts;
-    query.ts.$lte = stopTS;
-  }
-  else {
-    query.ts.$lte = stop_ts;
-  }
-
-  // console.log("query:", query);
-  return query;
-};
-
-
-const authorizationHeader = Joi.object({
-  authorization: Joi.string().required()
-}).options({ allowUnknown: true }).label('authorizationHeader');
-
-const eventParam = Joi.object({
-  id: Joi.string().length(24).required()
-}).label('eventParam');
-
-const eventQuery = Joi.object({
-  format: Joi.string().valid('json','csv').optional(),
-  offset: Joi.number().integer().min(0).optional(),
-  limit: Joi.number().integer().min(1).optional(),
-  sort: Joi.string().optional(),
-  author: Joi.alternatives().try(
-    Joi.string(),
-    Joi.array().items(Joi.string()).optional()
-  ),
-  startTS: Joi.date().iso(),
-  stopTS: Joi.date().iso(),
-  datasource: Joi.alternatives().try(
-    Joi.string(),
-    Joi.array().items(Joi.string()).optional()
-  ),
-  value: Joi.alternatives().try(
-    Joi.string(),
-    Joi.array().items(Joi.string()).optional()
-  ),
-  freetext: Joi.alternatives().try(
-    Joi.string(),
-    Joi.array().items(Joi.string()).optional()
-  ),
-  add_record_ids: Joi.boolean().optional()
-}).optional().label('eventQuery');
-
-const eventSuccessResponse = Joi.object({
-  id: Joi.object(),
-  event_author: Joi.string(),
-  ts: Joi.date().iso(),
-  event_value: Joi.string(),
-  event_options: Joi.array().items(Joi.object({
-    event_option_name: Joi.string(),
-    event_option_value: Joi.string().allow('')
-  })),
-  event_free_text: Joi.string().allow('')
-}).label('eventSuccessResponse');
-
-const eventCreatePayload = Joi.object({
-  id: Joi.string().length(24).optional(),
-  event_author: Joi.string().min(1).max(100).optional(),
-  ts: Joi.date().iso().optional(),
-  event_value: Joi.string().min(1).max(100).required(),
-  event_options: Joi.array().items(Joi.object({
-    event_option_name: Joi.string().required(),
-    event_option_value: Joi.string().allow('').required()
-  })).optional(),
-  event_free_text: Joi.string().allow('').optional()
-}).label('eventCreatePayload');
-
-const eventCreateResponse = Joi.object({
-  n: Joi.number().integer(),
-  ok: Joi.number().integer(),
-  insertedCount: Joi.number().integer(),
-  insertedId: Joi.object(),
-  insertedEvent: eventSuccessResponse
-}).label('eventCreateResponse');
-
-const eventUpdatePayload = Joi.object({
-  event_author: Joi.string().min(1).max(100).optional(),
-  ts: Joi.date().iso().optional(),
-  event_value: Joi.string().min(1).max(100).optional(),
-  event_options: Joi.array().items(Joi.object({
-    event_option_name: Joi.string().required(),
-    event_option_value: Joi.string().allow('').required()
-  })).optional(),
-  event_free_text: Joi.string().allow('').optional()
-}).required().min(1).label('eventUpdateResponse');
 
 exports.plugin = {
   name: 'routes-api-events',
@@ -314,7 +75,7 @@ exports.plugin = {
             return Boom.badRequest('No cruise record found for id: ' + request.params.id );
           }
 
-          if (!request.auth.credentials.scope.includes("admin") && cruiseResult.cruise_hidden && (useAccessControl && typeof cruiseResult.cruise_access_list !== 'undefined' && !cruiseResult.cruise_access_list.includes(request.auth.credentials.id))) {
+          if (!request.auth.credentials.scope.includes('admin') && cruiseResult.cruise_hidden && (useAccessControl && typeof cruiseResult.cruise_access_list !== 'undefined' && !cruiseResult.cruise_access_list.includes(request.auth.credentials.id))) {
             return Boom.unauthorized('User not authorized to retrieve this cruise');
           }
 
@@ -325,7 +86,7 @@ exports.plugin = {
           return Boom.serverUnavailable('database error');
         }
 
-        const query = _buildEventsQuery(request, cruise.start_ts, cruise.stop_ts);
+        const query = buildEventsQuery(request, cruise.start_ts, cruise.stop_ts);
         const limit = (request.query.limit) ? request.query.limit : 0;
         const offset = (request.query.offset) ? request.query.offset : 0;
 
@@ -342,7 +103,7 @@ exports.plugin = {
 
         if (results.length === 0) {
           return Boom.notFound('No records found' );
-        }      
+        }
 
         // --------- Data source filtering
         if (request.query.datasource) {
@@ -386,11 +147,11 @@ exports.plugin = {
 
         results.forEach(_renameAndClearFields);
 
-        if (request.query.format && request.query.format === "csv") {
-          const flattenJSON = _flattenJSON(results);
-          const csvHeaders = _buildCSVHeaders(flattenJSON);
+        if (request.query.format && request.query.format === 'csv') {
+          const flat_events = flattenEventObjs(results);
+          const csv_headers = buildEventCSVHeaders(flat_events);
 
-          const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
+          const csv_results = await parseAsync(flat_events, { fields: csv_headers });
 
           return h.response(csv_results).code(200);
         }
@@ -409,10 +170,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(eventSuccessResponse)
-            )
+            200: eventSuccessResponse
           }
         },
         description: 'Export the events for a cruise based on the cruise id',
@@ -440,7 +198,7 @@ exports.plugin = {
             return Boom.badRequest('No record cruise found for id: ' + request.params.id );
           }
 
-          if (!request.auth.credentials.scope.includes("admin") && cruiseResult.cruise_hidden && (useAccessControl && typeof cruiseResult.cruise_access_list !== 'undefined' && !cruiseResult.cruise_access_list.includes(request.auth.credentials.id))) {
+          if (!request.auth.credentials.scope.includes('admin') && cruiseResult.cruise_hidden && (useAccessControl && typeof cruiseResult.cruise_access_list !== 'undefined' && !cruiseResult.cruise_access_list.includes(request.auth.credentials.id))) {
             return Boom.unauthorized('User not authorized to retrieve this cruise');
           }
 
@@ -451,11 +209,11 @@ exports.plugin = {
           return Boom.serverUnavailable('database error');
         }
 
-        if (cruise.cruise_hidden && !request.auth.credentials.scope.includes("admin")) {
+        if (cruise.cruise_hidden && !request.auth.credentials.scope.includes('admin')) {
           return Boom.unauthorized('User not authorized to retrieve hidden cruises');
         }
 
-        const query = _buildEventsQuery(request, cruise.start_ts, cruise.stop_ts);
+        const query = buildEventsQuery(request, cruise.start_ts, cruise.stop_ts);
 
         let results = [];
 
@@ -469,7 +227,7 @@ exports.plugin = {
         }
 
         if (results.length > 0) {
-        
+
           // --------- Data source filtering
           if (request.query.datasource) {
 
@@ -504,7 +262,7 @@ exports.plugin = {
             const aux_data_eventID_set = new Set(aux_data_results.map((aux_data) => String(aux_data.event_id)));
 
             results = results.filter((event) => {
-              
+
               return (aux_data_eventID_set.has(String(event._id))) ? event : null;
             });
 
@@ -527,9 +285,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.object({
-              events: Joi.number().integer()
-            })
+            200: eventCountSuccessResponse
           }
         },
         description: 'Return the number of events for a cruise based on the cruise id',
@@ -556,7 +312,7 @@ exports.plugin = {
             return Boom.badRequest('No record lowering found for id: ' + request.params.id );
           }
 
-          if (!request.auth.credentials.scope.includes("admin") && loweringResult.lowering_hidden && (useAccessControl && typeof loweringResult.lowering_access_list !== 'undefined' && !loweringResult.lowering_access_list.includes(request.auth.credentials.id))) {
+          if (!request.auth.credentials.scope.includes('admin') && loweringResult.lowering_hidden && (useAccessControl && typeof loweringResult.lowering_access_list !== 'undefined' && !loweringResult.lowering_access_list.includes(request.auth.credentials.id))) {
             return Boom.unauthorized('User not authorized to retrieve this lowering');
           }
 
@@ -567,7 +323,7 @@ exports.plugin = {
           return Boom.serverUnavailable('database error');
         }
 
-        const query = _buildEventsQuery(request, lowering.start_ts, lowering.stop_ts);
+        const query = buildEventsQuery(request, lowering.start_ts, lowering.stop_ts);
         const limit = (request.query.limit) ? request.query.limit : 0;
         const offset = (request.query.offset) ? request.query.offset : 0;
 
@@ -585,7 +341,7 @@ exports.plugin = {
         if (results.length === 0) {
           return Boom.notFound('No records found' );
         }
-      
+
         // --------- Data source filtering
         if (request.query.datasource) {
 
@@ -620,7 +376,7 @@ exports.plugin = {
           const aux_data_eventID_set = new Set(aux_data_results.map((aux_data) => String(aux_data.event_id)));
 
           results = results.filter((event) => {
-            
+
             return (aux_data_eventID_set.has(String(event._id))) ? event : null;
           });
 
@@ -629,15 +385,15 @@ exports.plugin = {
         results.forEach(_renameAndClearFields);
 
         if (request.query.add_record_ids && request.query.add_record_ids === true) {
-          results = await _add_record_ids(request, results);
+          results = await addEventRecordIDs(request, results);
         }
 
-        if (request.query.format && request.query.format === "csv") {
+        if (request.query.format && request.query.format === 'csv') {
 
-          const flattenJSON = _flattenJSON(results);
-          const csvHeaders = _buildCSVHeaders(flattenJSON);
-          
-          const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
+          const flat_events = flattenEventObjs(results);
+          const csv_headers = buildEventCSVHeaders(flat_events);
+
+          const csv_results = await parseAsync(flat_events, { fields: csv_headers });
 
           return h.response(csv_results).code(200);
         }
@@ -656,10 +412,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(eventSuccessResponse)
-            )
+            200: eventSuccessResponse
           }
         },
         description: 'Export the events for a lowering based on the lowering id',
@@ -687,7 +440,7 @@ exports.plugin = {
             return Boom.badRequest('No record lowering found for id: ' + request.params.id );
           }
 
-          if (!request.auth.credentials.scope.includes("admin") && loweringResult.lowering_hidden && (useAccessControl && typeof loweringResult.lowering_access_list !== 'undefined' && !loweringResult.lowering_access_list.includes(request.auth.credentials.id))) {
+          if (!request.auth.credentials.scope.includes('admin') && loweringResult.lowering_hidden && (useAccessControl && typeof loweringResult.lowering_access_list !== 'undefined' && !loweringResult.lowering_access_list.includes(request.auth.credentials.id))) {
             return Boom.unauthorized('User not authorized to retrieve this lowering');
           }
 
@@ -698,7 +451,7 @@ exports.plugin = {
           return Boom.serverUnavailable('database error');
         }
 
-        const query = _buildEventsQuery(request, lowering.start_ts, lowering.stop_ts);
+        const query = buildEventsQuery(request, lowering.start_ts, lowering.stop_ts);
 
         let results = [];
 
@@ -712,7 +465,7 @@ exports.plugin = {
         }
 
         if (results.length > 0) {
-        
+
           // --------- Data source filtering
           if (request.query.datasource) {
 
@@ -747,7 +500,7 @@ exports.plugin = {
             const aux_data_eventID_set = new Set(aux_data_results.map((aux_data) => String(aux_data.event_id)));
 
             results = results.filter((event) => {
-              
+
               return (aux_data_eventID_set.has(String(event._id))) ? event : null;
             });
 
@@ -770,9 +523,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.object({
-              events: Joi.number().integer()
-            })
+            200: eventCountSuccessResponse
           }
         },
         description: 'Export the number of events for a lowering based on the lowering id',
@@ -826,11 +577,11 @@ exports.plugin = {
             return Boom.serverUnavailable('database error');
           }
 
-          const query = _buildEventsQuery(request);
+          const query = buildEventsQuery(request);
           query._id = datasourceIDs;
           const limit = (request.query.limit) ? request.query.limit : 0;
           const offset = (request.query.offset) ? request.query.offset : 0;
-          const sort = (request.query.sort === "newest") ? { ts: -1 } : { ts: 1 };
+          const sort = (request.query.sort === 'newest') ? { ts: -1 } : { ts: 1 };
 
           try {
             const results = await db.collection(eventsTable).find(query).sort(sort).skip(offset).limit(limit).toArray();
@@ -840,9 +591,9 @@ exports.plugin = {
               results.forEach(_renameAndClearFields);
               return h.response(results).code(200);
             }
- 
+
             return Boom.notFound('No records found' );
-            
+
           }
           catch (err) {
             console.log(err);
@@ -852,10 +603,10 @@ exports.plugin = {
         }
         else {
 
-          const query = _buildEventsQuery(request);
+          const query = buildEventsQuery(request);
           const limit = (request.query.limit) ? request.query.limit : 0;
           const offset = (request.query.offset) ? request.query.offset : 0;
-          const sort = (request.query.sort === "newest") ? { ts: -1 } : { ts: 1 };
+          const sort = (request.query.sort === 'newest') ? { ts: -1 } : { ts: 1 };
 
           try {
             let results = await db.collection(eventsTable).find(query).sort(sort).skip(offset).limit(limit).toArray();
@@ -868,14 +619,14 @@ exports.plugin = {
             results.forEach(_renameAndClearFields);
 
             if (request.query.add_record_ids && request.query.add_record_ids === true) {
-              results = await _add_record_ids(request, results);
+              results = await addEventRecordIDs(request, results);
             }
 
-            if (request.query.format && request.query.format === "csv") {
-              const flattenJSON = _flattenJSON(results);
-              const csvHeaders = _buildCSVHeaders(flattenJSON);
+            if (request.query.format && request.query.format === 'csv') {
+              const flat_events = flattenEventObjs(results);
+              const csv_headers = buildEventCSVHeaders(flat_events);
 
-              const csv_results = await parseAsync(flattenJSON, { fields: csvHeaders });
+              const csv_results = await parseAsync(flat_events, { fields: csv_headers });
 
               return h.response(csv_results).code(200);
             }
@@ -899,10 +650,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.alternatives().try(
-              Joi.string(),
-              Joi.array().items(eventSuccessResponse)
-            )
+            200: eventSuccessResponse
           }
         },
         description: 'Return the events based on query parameters',
@@ -956,14 +704,14 @@ exports.plugin = {
             return Boom.serverUnavailable('database error');
           }
 
-          const query = _buildEventsQuery(request);
+          const query = buildEventsQuery(request);
           query._id = datasourceIDs;
 
           try {
             const results = await db.collection(eventsTable).find(query).toArray();
 
-            return h.response({ "events": results.length }).code(200);
-            
+            return h.response({ 'events': results.length }).code(200);
+
           }
           catch (err) {
             console.log(err);
@@ -973,12 +721,12 @@ exports.plugin = {
         }
         else {
 
-          const query = _buildEventsQuery(request);
+          const query = buildEventsQuery(request);
 
           try {
             const results = await db.collection(eventsTable).find(query).toArray();
 
-            return h.response({ "events": results.length }).code(200);
+            return h.response({ 'events': results.length }).code(200);
           }
           catch (err) {
             console.log(err);
@@ -997,9 +745,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: Joi.object({
-              events: Joi.number().integer()
-            })
+            200: eventCountSuccessResponse
           }
         },
         description: 'Return the number of events based on query parameters',
@@ -1092,19 +838,19 @@ exports.plugin = {
         else {
           event.event_options = event.event_options.map((event_option) => {
 
-            event_option.event_option_name = event_option.event_option_name.toLowerCase().replace(/\s+/g, "_");
+            event_option.event_option_name = event_option.event_option_name.toLowerCase().replace(/\s+/g, '_');
             return event_option;
           });
         }
 
         if (!event.event_free_text) {
-          event.event_free_text = "";
+          event.event_free_text = '';
         }
 
         if (!event.event_author) {
           try {
             const result = await db.collection(usersTable).findOne({ _id: new ObjectID(request.auth.credentials.id) });
-            
+
             if (!result) {
               return Boom.badRequest('specified user does not exist');
             }
@@ -1129,7 +875,7 @@ exports.plugin = {
             server.publish('/ws/status/newEvents', event);
           }
 
-          return h.response({ n: result.result.n, ok: result.result.ok, insertedCount: result.insertedCount, insertedId: result.insertedId, insertedEvent: event }).code(201);
+          return h.response({ ...result, insertedEvent: event }).code(201);
         }
         catch (err) {
           console.log(err);
@@ -1202,7 +948,7 @@ exports.plugin = {
         if (event.event_options) {
           const temp_event_options = event.event_options.map((event_option) => {
 
-            event_option.event_option_name = event_option.event_option_name.toLowerCase().replace(/\s+/g, "_");
+            event_option.event_option_name = event_option.event_option_name.toLowerCase().replace(/\s+/g, '_');
             return event_option;
           });
 
@@ -1211,7 +957,7 @@ exports.plugin = {
 
             let foundit = false;
             event.event_options.forEach((event_option) => {
-              
+
               if (event_option.event_option_name === requestOption.event_option_name) {
                 event_option.event_option_value = requestOption.event_option_value;
                 foundit = true;
@@ -1229,8 +975,8 @@ exports.plugin = {
         }
 
         try {
-          // const result = await db.collection(eventsTable).findOneAndUpdate(query, { $set: request.payload },{ returnOriginal: false });
-          const result = await db.collection(eventsTable).findOneAndUpdate(query, { $set: event },{ returnOriginal: false });
+          // const result = await db.collection(eventsTable).findOneAndUpdate(query, { $set: request.payload },{ returnDocument: 'after' });
+          const result = await db.collection(eventsTable).findOneAndUpdate(query, { $set: event },{ returnDocument: 'after' });
           const updatedEvent = _renameAndClearFields(result.value);
 
           if (time_change) {
@@ -1245,7 +991,7 @@ exports.plugin = {
             // console.log(del_results);
 
             server.publish('/ws/status/newEvents', updatedEvent);
-  
+
           }
           else {
             server.publish('/ws/status/updateEvents', updatedEvent);
@@ -1326,14 +1072,14 @@ exports.plugin = {
             return Boom.serverUnavailable('database error');
           }
 
-          const query = _buildEventsQuery(request);
+          const query = buildEventsQuery(request);
           query._id = datasourceIDs;
           const limit = (request.query.limit) ? request.query.limit : 0;
           const offset = (request.query.offset) ? request.query.offset : 0;
-          const sort = (request.query.sort === "newest") ? { ts: -1 } : { ts: 1 };
+          const sort = (request.query.sort === 'newest') ? { ts: -1 } : { ts: 1 };
 
           let eventIDs = [];
-          
+
           // find the events
           try {
             const results = await db.collection(eventsTable).find(query).sort(sort).project({ _id: 1 }).skip(offset).limit(limit).toArray(); // should return just the ids
@@ -1358,7 +1104,7 @@ exports.plugin = {
           catch (err) {
             console.log(err);
             return Boom.serverUnavailable('database error');
-          }          
+          }
 
           // delete the event records
           try {
@@ -1372,10 +1118,10 @@ exports.plugin = {
         }
         else {
 
-          const query = _buildEventsQuery(request);
+          const query = buildEventsQuery(request);
           const limit = (request.query.limit) ? request.query.limit : 0;
           const offset = (request.query.offset) ? request.query.offset : 0;
-          const sort = (request.query.sort === "newest") ? { ts: -1 } : { ts: 1 };
+          const sort = (request.query.sort === 'newest') ? { ts: -1 } : { ts: 1 };
 
           let eventIDs = [];
 
@@ -1403,7 +1149,7 @@ exports.plugin = {
           catch (err) {
             console.log(err);
             return Boom.serverUnavailable('database error');
-          }          
+          }
 
           // delete the event records
           try {
@@ -1413,7 +1159,7 @@ exports.plugin = {
           catch (err) {
             console.log(err);
             return Boom.serverUnavailable('database error');
-          }          
+          }
         }
       },
       config: {
@@ -1470,7 +1216,7 @@ exports.plugin = {
           console.log(err);
           return Boom.serverUnavailable('database error');
         }
-  
+
         try {
           const aux_data_result = await db.collection(eventAuxDataTable).find({ event_id: new ObjectID(request.params.id) }).toArray();
 
@@ -1480,7 +1226,7 @@ exports.plugin = {
           console.log(err);
           return Boom.serverUnavailable('database error');
         }
-  
+
         try {
           await db.collection(eventsTable).findOneAndDelete(query);
         }
@@ -1535,7 +1281,7 @@ exports.plugin = {
           console.log(err);
           return Boom.serverUnavailable('database error');
         }
-  
+
         try {
           await db.collection(eventAuxDataTable).deleteMany();
           return h.response().code(204);

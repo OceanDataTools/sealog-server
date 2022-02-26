@@ -20,7 +20,7 @@ exports.plugin = {
           return { isValid: false };
         }
         else if ( result.disabled) {
-          return { isValid: false }; 
+          return { isValid: false };
         }
         else if ( !decoded.roles || result.roles.toString() !== decoded.roles.toString() ) {
           return { isValid: false };
@@ -33,8 +33,8 @@ exports.plugin = {
       }
       catch (err) {
         console.log(err);
-        console.log("Validation ERROR:");
-        return { isValid: false };        
+        console.log('Validation ERROR:');
+        return { isValid: false };
       }
     };
 
