@@ -881,7 +881,7 @@ exports.plugin = {
           }
         }
 
-        const updatedCruise = await db.collection(cruisesTable).findOne(query);
+        let updatedCruise = await db.collection(cruisesTable).findOne(query);
 
         updatedCruise = _renameAndClearFields(updatedCruise);
 

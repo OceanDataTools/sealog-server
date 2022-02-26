@@ -861,7 +861,7 @@ exports.plugin = {
           return Boom.serverUnavailable('database error');
         }
 
-        const updatedLowering = await db.collection(loweringsTable).findOne(query);
+        let updatedLowering = await db.collection(loweringsTable).findOne(query);
 
         updatedLowering = _renameAndClearFields(updatedLowering)
 
