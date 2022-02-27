@@ -27,7 +27,7 @@ import requests
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
-from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
+from misc.python_sealog.settings import WS_SERVER_URL, HEADERS, CRUISES_API_PATH
 
 CLIENT_WSID = 'cruiseSync'
 
@@ -69,7 +69,7 @@ def update_cruise_record(cruise_record):
         cruise_found = None
 
         try:
-            url = instance['apiServerURL'] + '/sealog-server/api/v1/cruises/' + cruise_record['id']
+            url = instance['apiServerURL'] + CRUISES_API_PATH + '/' + cruise_record['id']
             req = requests.get(url, headers=instance_headers)
 
             if req.status_code != 404:
@@ -88,7 +88,7 @@ def update_cruise_record(cruise_record):
         # if a cruise record with the cruiseID does exist, perform an update
         if cruise_found is not None:
             try:
-                url = instance['apiServerURL'] + '/sealog-server/api/v1/cruises/' + cruise_found['id']
+                url = instance['apiServerURL'] + CRUISES_API_PATH + '/' + cruise_found['id']
                 logging.debug(url)
                 logging.debug(json.dumps(cruise_record))
                 del cruise_record['id']
@@ -96,21 +96,21 @@ def update_cruise_record(cruise_record):
                 logging.debug(req.text)
 
             except Exception as error:
-                logging.error('Error updating custom variable ID')
+                logging.error('Error updating existing cruise record')
                 logging.debug(str(error))
                 raise error
 
         # if a cruise record with the cruiseID does NOT exist, perform an insert
         else:
             try:
-                url = instance['apiServerURL'] + '/sealog-server/api/v1/cruises'
+                url = instance['apiServerURL'] + CRUISES_API_PATH
                 logging.debug(url)
                 logging.debug(json.dumps(cruise_record))
                 req = requests.post(url, headers=instance_headers, data = json.dumps(cruise_record))
                 logging.debug(req.text)
 
             except Exception as error:
-                logging.error('Error updating custom variable ID')
+                logging.error('Error inserting new cruise record')
                 logging.debug(str(error))
                 raise error
 
