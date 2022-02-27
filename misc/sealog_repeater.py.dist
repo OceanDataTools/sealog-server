@@ -1,0 +1,274 @@
+#!/usr/bin/env python3
+'''
+FILE:           sealog_repeater.py
+
+DESCRIPTION:    This script listens for new/updated events from multiple
+                servers and syncs the events bertween all the servers.
+
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    1.0
+CREATED:    2021-04-21
+REVISION:   2022-02-27
+
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2022
+'''
+
+import sys
+import copy
+import json
+import time
+import logging
+import asyncio
+import requests
+import websockets
+
+from os.path import dirname, realpath
+sys.path.append(dirname(dirname(realpath(__file__))))
+
+from misc.python_sealog.settings import API_SERVER_URL, WS_SERVER_URL, HEADERS, EVENTS_API_PATH, EVENT_AUX_DATA_API_PATH, TOKEN
+
+CLIENT_WSID = 'eventSync'
+
+HELLO = {
+    'type': 'hello',
+    'id': CLIENT_WSID,
+    'auth': {
+        'headers': HEADERS
+    },
+    'version': '2',
+    'subs': ['/ws/status/newEvents', '/ws/status/updateEvents', '/ws/status/deleteEvents', '/ws/status/newEventAuxData', '/ws/status/updateEventAuxData', '/ws/status/deleteEventAuxData']
+}
+
+PING = {
+    'type':'ping',
+    'id':CLIENT_WSID
+}
+
+SEALOG_SERVER_INSTANCES = [
+    {
+        'apiServerURL': '',
+        'wsServerURL': '',
+        'token':''
+    }
+]
+
+async def transmit_event(server, event, path):
+    '''
+    Repeat the event to the server.
+    '''
+
+    # check to see if a cruise record with the cruiseID in cruise_record already exists
+
+    headers = {
+        "authorization": server['token']
+    }
+
+    url = server['apiServerURL'] + EVENTS_API_PATH
+
+    try:
+
+        if path == '/ws/status/updateEvents':
+            url += '/' + event['id']
+            update_event = copy.deepcopy(event)
+            del update_event['id']
+            req = requests.patch(url, headers=headers, data=json.dumps(update_event))
+
+        elif path == '/ws/status/deleteEvents':
+            url += '/' + event['id']
+            req = requests.delete(url, headers=headers)
+
+        else:
+            req = requests.post(url, headers=headers, data=json.dumps(event))
+
+    except Exception as error:
+        logging.error('Error adding/modifying event to server')
+        logging.debug(str(error))
+        raise error
+
+
+async def transmit_event_auxdata(server, event_auxdata, path):
+    '''
+    Repeat the event to the server.
+    '''
+
+    # check to see if a cruise record with the cruiseID in cruise_record already exists
+
+    headers = {
+        "authorization": server['token']
+    }
+
+    url = server['apiServerURL'] + EVENT_AUX_DATA_API_PATH
+
+    try:
+
+        if path == '/ws/status/updateEventAuxData':
+            url += '/' + event_auxdata['id']
+            update_event_auxdata = copy.deepcopy(event_auxdata)
+            del update_event_auxdata['id']
+            req = requests.patch(url, headers=headers, data=json.dumps(update_event_auxdata))
+
+        elif path == '/ws/status/deleteEventAuxData':
+            url += '/' + event_auxdata['id']
+            req = requests.delete(url, headers=headers)
+
+        else:
+            req = requests.post(url, headers=headers, data=json.dumps(event_auxdata))
+
+    except Exception as error:
+        logging.error('Error adding/modifying event_auxdata to server')
+        logging.debug(str(error))
+        raise error
+
+
+async def transmitter(servers):
+    '''
+    Main loop of the transmitter process.
+    '''
+
+    try:
+        logging.debug("Connecting to local server")
+        async with websockets.connect(WS_SERVER_URL) as websocket:
+
+            logging.debug("Send HELLO packet")
+            await websocket.send(json.dumps(HELLO))
+
+            seen_events = []
+            seen_event_auxdata = []
+
+            while True:
+
+                msg = await websocket.recv()
+                msg_obj = json.loads(msg)
+
+                if msg_obj['type'] and msg_obj['type'] == 'ping':
+
+                    await websocket.send(json.dumps(PING))
+
+                elif msg_obj['type'] and msg_obj['type'] == 'pub':
+
+                    if msg_obj['path'] in ['/ws/status/newEvents', '/ws/status/updateEvents', '/ws/status/deleteEvents']:
+
+                        if msg_obj['message']['id'] not in seen_events:
+
+                            if msg_obj['path'] == '/ws/status/updateEvents':
+                                seen_events.append(msg_obj['message']['id'])
+
+                            for server in servers:
+                                await transmit_event(server, msg_obj['message'], msg_obj['path'] )
+                        else:
+                            seen_events.remove(msg_obj['message']['id'])
+
+                    if msg_obj['path'] in ['/ws/status/newEventAuxData', '/ws/status/updateEventAuxData', '/ws/status/deleteEventAuxData']:
+
+                        if msg_obj['message']['id'] not in seen_events:
+
+                            if msg_obj['path'] == '/ws/status/updateEventAuxData':
+                                seen_event_auxdata.append(msg_obj['message']['id'])
+
+                            for server in servers:
+                                await transmit_event_auxdata(server, msg_obj['message'], msg_obj['path'] )
+                        else:
+                            seen_event_auxdata.remove(msg_obj['message']['id'])
+
+                else:
+                    logging.debug("Skipping because event value is in the exclude set")
+
+    except Exception as err:
+        logging.error(str(err))
+
+async def receiver():
+    '''
+    Main loop of the receiver process.
+    '''
+
+    local_server = {
+        'apiServerURL': API_SERVER_URL,
+        'wsServerURL': WS_SERVER_URL,
+        'token': TOKEN
+    }
+
+
+    for server in SEALOG_SERVER_INSTANCES:
+        try:
+            logging.debug("Connecting to remote server %s", server['wsServerURL'])
+            async with websockets.connect(server['wsServerURL']) as websocket:
+
+                logging.debug("Send HELLO packet")
+                hello = HELLO
+                hello['auth']['headers'] = { "authorization": server['token'] }
+                await websocket.send(json.dumps(hello))
+
+                while True:
+
+                    msg = await websocket.recv()
+                    msg_obj = json.loads(msg)
+
+                    if msg_obj['type'] and msg_obj['type'] == 'ping':
+
+                        await websocket.send(json.dumps(PING))
+
+                    elif msg_obj['type'] and msg_obj['type'] == 'pub':
+
+                        if msg_obj['path'] in ['/ws/status/newEvents', '/ws/status/updateEvents', '/ws/status/deleteEvents']:
+                            await transmit_event(local_server, msg_obj['message'], msg_obj['path'] )
+
+                        if msg_obj['path'] in ['/ws/status/newEventAuxData', '/ws/status/updateEventAuxData', '/ws/status/deleteEventAuxData']:
+                            await transmit_event_auxdata(local_server, msg_obj['message'], msg_obj['path'] )
+
+                    else:
+                        logging.debug("Skipping because event value is in the exclude set")
+
+        except Exception as err:
+            logging.error(str(err))
+
+# -------------------------------------------------------------------------------------
+# The main loop of the utility
+# -------------------------------------------------------------------------------------
+if __name__ == '__main__':
+
+    import argparse
+    import os
+
+    parser = argparse.ArgumentParser(description='Sealog Server Sync')
+    parser.add_argument('-v', '--verbosity', dest='verbosity',
+                        default=0, action='count',
+                        help='Increase output verbosity')
+
+    parsed_args = parser.parse_args()
+
+    ############################
+    # Set up logging before we do any other argument parsing (so that we
+    # can log problems with argument parsing).
+
+    LOGGING_FORMAT = '%(asctime)-15s %(levelname)s - %(message)s'
+    logging.basicConfig(format=LOGGING_FORMAT)
+
+    LOG_LEVELS = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
+    parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
+    logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
+
+    # Run the main loop
+    while True:
+
+        # Wait 5 seconds for the server to complete startup
+        time.sleep(5)
+
+        try:
+            logging.debug("Connecting to event websocket feed...")
+            loop = asyncio.get_event_loop()
+            loop.create_task(transmitter(SEALOG_SERVER_INSTANCES))
+            loop.create_task(receiver())
+            loop.run_forever()
+        except KeyboardInterrupt:
+            logging.error('Keyboard Interrupted')
+            try:
+                sys.exit(0)
+            except SystemExit:
+                os._exit(0) # pylint: disable=protected-access
+        except Exception as err:
+            logging.debug(str(err))
+            logging.error("Lost connection to server, trying again in 5 seconds")
