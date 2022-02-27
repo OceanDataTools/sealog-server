@@ -1,74 +1,111 @@
 #!/usr/bin/env python3
-# still in development
-#
+'''
+FILE:           sealog_repeater_transmit.py
 
+DESCRIPTION:    This script listens for new events and event updates and
+                transmits those new/updated records to a remote sealog
+                instance
+
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    1.0
+CREATED:    2021-04-21
+REVISION:   2022-02-27
+
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2022
+'''
+
+import sys
 import asyncio
 import json
 import websockets
 import requests
 
+from os.path import dirname, realpath
+sys.path.append(dirname(dirname(realpath(__file__))))
 
-eventsAPIPath = '/api/v1/events'
+from misc.python_sealog.settings import WS_SERVER_URL, HEADERS, EVENTS_API_PATH
 
-localServerIP = '0.0.0.0'
-localServerAPIPort = '8000'
-localServerWSPort = '8000'
-localServerPath = '/sealog-server'
-#devel
-localToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYTlmNSIsInNjb3BlIjpbImFkbWluIiwiZXZlbnRfbWFuYWdlciIsImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTI1MDEyNzY4fQ.Smk_qqn4ixjjahh365a1XxhdbmQdDjwpgwcey_ow_T4"
-#prod
-#localToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVhZTQ0ZGUwNjczMTI2MDY2NDZlZmJkYyIsInNjb3BlIjpbImFkbWluIl0sImlhdCI6MTUyNDkxMTY0MH0.3q0Wg_kKRkThzW5JFNhbBImn7LGk4TFT40lwl-CZ4_8"
-localClientWSID = 'localSealogReceive'
+CLIENT_WSID = 'cruiseSync'
 
-remoteServerIP = '162.243.201.175'
-remoteServerAPIPort = '80'
-remoteServerWSPort = '80'
-remoteServerPath = '/sealog-server'
-remoteToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYTlmNSIsInNjb3BlIjpbImFkbWluIiwiZXZlbnRfbWFuYWdlciIsImV2ZW50X2xvZ2dlciIsImV2ZW50X3dhdGNoZXIiXSwiaWF0IjoxNTI1MDE5Mzk3fQ.Sxk1GJ2qYmxFxfJsKr8NC5-WFfvN22FXPqZaoXPK_1o"
-remoteClientWSID = 'remoteSealogReceive'
-
-hello = {
+HELLO = {
     'type': 'hello',
-    'id': localClientWSID,
+    'id': CLIENT_WSID,
     'auth': {
-        'headers': {
-            'authorization': localToken
-        }
+        'headers': HEADERS
     },
     'version': '2',
-    'subs': ['/ws/status/newEvents']
+    'subs': ['/ws/status/newEvents', '/ws/status/updateEvents']
 }
 
-ping = {
+PING = {
     'type':'ping',
-    'id':localClientWSID
+    'id':CLIENT_WSID
 }
 
-localHeaders = {'authorization': localToken}
-remoteHeaders = {'authorization': remoteToken}
+SEALOG_SERVER_INSTANCES = [
+    {
+        'apiServerURL': '',
+        'token':''
+    }
+]
 
-async def eventlog():
+async def transmit_event(event):
+    '''
+    Repeat the event to the remote server(s).
+    '''
+
+    for instance in SEALOG_SERVER_INSTANCES:
+        # check to see if a cruise record with the cruiseID in cruise_record already exists
+
+        instance_headers = {
+            "authorization": instance['token']
+        }
+
+        url = instance['apiServerURL'] + EVENTS_API_PATH
+        logging.debug(url)
+        logging.debug(json.dumps(event))
+
+        try:
+            req = requests.post(url, headers=instance_headers, data=json.dumps(event))
+            logging.debug(req.text)
+
+        except Exception as error:
+            logging.error('Error adding event to remote server')
+            logging.debug(str(error))
+            raise error
+
+async def repeater()
+    '''
+    Main loop of the repeater process.
+    '''
+
     try:
-        async with websockets.connect('ws://' + localServerIP + ':' + localServerWSPort) as websocket:
+        async with websockets.connect(WS_SERVER_URL) as websocket:
 
-            await websocket.send(json.dumps(hello))
+            await websocket.send(json.dumps(HELLO))
 
             while True:
 
                 event = await websocket.recv()
                 event_obj = json.loads(event)
-                print("event_obj: %s", event_obj)
 
                 if event_obj['type'] and event_obj['type'] == 'ping':
-                    await websocket.send(json.dumps(ping))
+
+                    await websocket.send(json.dumps(PING))
+
                 elif event_obj['type'] and event_obj['type'] == 'pub':
 
-                    req = requests.post('http://' + remoteServerIP + ':' + remoteServerAPIPort + remoteServerPath + eventsAPIPath, headers=remoteHeaders, data = json.dumps(event_obj['message']))
-                    print(req.text)
+                    await transmit_event(event_obj['message'])
 
-                    ### end of repeat
+                else:
+                    logging.debug("Skipping because lowering value is in the exclude set")
 
-    except Exception as error:
-        print(error)
+    except Exception as err:
+        logging.error(str(err))
 
-asyncio.get_event_loop().run_until_complete(eventlog())
+
+asyncio.get_event_loop().run_until_complete(repeater())
