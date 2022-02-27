@@ -639,7 +639,7 @@ exports.plugin = {
         const db = request.mongo.db;
         const ObjectID = request.mongo.ObjectID;
 
-        const lowering = request.payload;
+        let lowering = request.payload;
 
         if (request.payload.id) {
           try {
@@ -706,7 +706,7 @@ exports.plugin = {
           console.log('ERROR:', err);
         }
 
-        lowering = _renameAndClearFields(lowering)
+        lowering = _renameAndClearFields(lowering);
         server.publish('/ws/status/newLowerings', lowering);
 
         const cruiseQuery = { start_ts: { '$lte': lowering.start_ts }, stop_ts: { '$gt': lowering.stop_ts } };
@@ -863,7 +863,7 @@ exports.plugin = {
 
         let updatedLowering = await db.collection(loweringsTable).findOne(query);
 
-        updatedLowering = _renameAndClearFields(updatedLowering)
+        updatedLowering = _renameAndClearFields(updatedLowering);
 
         server.publish('/ws/status/updateLowerings', updatedLowering);
 
