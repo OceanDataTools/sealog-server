@@ -4,13 +4,13 @@ node_modules
 # npm package lock file
 npm-debug.log
 
-# Virtual environment
+# virtual python environment
 venv/
 
-# Dumb files OS X creates
+# OS X generated files
 .DS_Store
 
-# Scripts typically customized to the vessel/vehicles individual needs
+# customize versions of the dist scripts
 misc/cache_udp_data*.py
 misc/influx_sealog/settings*.py
 misc/python_sealog/settings*.py
@@ -42,16 +42,16 @@ misc/sealog-udp2MongoDB*
 # files related to reporting
 misc/reporting
 
-# files like images that are specific to a single deployment
+# files (i.e. images) specific to a single deployment
 misc/assets
 
-# Configuration files custom to the sealog-server instance
+# customized versions of the dist configuration files
 config/db_constants.js
 config/email_constants.js
 config/manifest.js
 config/path_constants.js
 config/secret.js
 
-# Dumb python generated fiels
+# python generated files
 *.pyc
 __pycache__

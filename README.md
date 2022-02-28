@@ -72,15 +72,12 @@ curl -X POST --header 'Content-Type: application/json' --header 'Accept: applica
 This will respond with:
 ```
 {
-    "deleted":0,
-    "errors":0,
-    "insertedIds":["6ad467beb0f844c49dcc5078"],
-    "inserted":1,
-    "modified":0
+    "acknowledged": "true",
+    "insertedId":"6ad467beb0f844c49dcc5078" 
 }
 ```
 
-The value associated with the variable `"insertedIds"` is the UID for the event.  Event UIDs are unique and can be used to directly access the event for the purposes of reading/editing/deleting.
+The value associated with the variable `"insertedId"` is the UID for the event.  Event UIDs are unique and can be used to directly access the event for the purposes of reading/editing/deleting.
 
 Using this technique scripts can be developed to allow scripts, software or even hardware like Arduinos to submit events to the Sealog Server without the need to hard-code in usernames and passwords.
 
@@ -132,8 +129,8 @@ I've also setup a Slack channel for sealog, please contact me at oceandatarat at
 - University of Rhode Island's Inner Space Center in support of the NOAA Ship Okeanos Explorer and E/V Nautilus
 - R/V Falkor and ROV Subastian operated by the Schmidt Ocean Institute
 - R/V OceanXplorer1, ROV Chimaera, HOV Nadir and HOV Neptune operated by OceanX
-- ROV Hercules, Ocean Exploration Trust
-- ROV Lu'ukai, University of Hawaii
+- E/V Nautilus, ROV Hercules/Argus, operated by Ocean Exploration Trust
+- ROV Lu'ukai operated by University of Hawaii
 
 # Thanks and acknowledgments
 Sealog exists thanks to financial support from it's users and continues to evolve thanks to the UNOLS community who have helped me since the beginning by sharing their wealth of experience and technical knowledge.
