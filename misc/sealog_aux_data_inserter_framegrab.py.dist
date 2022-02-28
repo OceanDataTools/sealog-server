@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 '''
-FILE:           sealog_aux_data_inserter.py
+FILE:           sealog_aux_data_inserter_framegrab.py
 
-DESCRIPTION:    This service listens for new events submitted to Sealog, creates
-                an aux_data record containing the specified real-time data and
-                associates the aux data record with the newly created event.
-                However if the realtime data is older than 20 seconds this service
-                will consider the data stale and will not associate it with the
+DESCRIPTION:    This service listens for new events submitted to Sealog, copies
+                frame grab file(s) from a source dir, renames/copies the file
+                to the sealog-files/images directory and creates an aux_data
+                record containing the specified real-time data and associates
+                the aux data record with the newly created event.  However if
+                the realtime data is older than 20 seconds this service will
+                consider the data stale and will not associate it with the
                 newly created event.
 
 BUGS:
@@ -15,7 +17,7 @@ AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
 VERSION:    1.0
 CREATED:    2020-01-27
-REVISION:   2022-02-13
+REVISION:   2022-02-28
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2022
