@@ -8,15 +8,15 @@
  - [git](https://git-scm.com)
  
  
-#### Installing MongoDB 3.6 on Ubuntu 18.04 LTS
+#### Installing MongoDB 3.6 on Ubuntu 20.04 LTS
 
 ```
 sudo apt-get install mongodb
 ```
  
-#### Installing NodeJS/npm on Ubuntu 18.04 LTS
+#### Installing NodeJS/npm on Ubuntu 20.04 LTS
 Recommend using these instuctions, skipping the distro-version section and following the section on “How to install Using a PPA".  ***NOTE:*** tweak these instructions to install version 12:
-https://www.digitalocean.com/community/tutorials/how-to-install-node-js-on-ubuntu-18-04
+https://www.digitalocean.com/community/tutorials/how-to-install-node-js-on-ubuntu-20-04
 
 ### Clone the repository
 
@@ -39,15 +39,15 @@ cp ./config/secret.js.dist ./config/secret.js
 
 ### Modify the configuration files
 
-Set the `host`, `port`, `wsPort`, and `prefix` values in the `./config/manifest.js` file to meet your specific installation requirements.  There are 3 sets of these variables for the various ways sealog-server can be run.  If you are only running one instance of Sealog Server on the server then the defaults are sufficient
-
 Set the `sealogDB` and `sealogDB_devel` names in the `./config/db_constants.js` file to meet your specific installation requirements.  If you are only running one instance of Sealog Server on the server then the defaults are sufficient
-
-Set the `IMAGE_PATH`, `CRUISE_PATH` and `LOWERING_PATH` locations in the `./config/path_constants.js` file to meet your specific installation requirements.  These paths are where the framegrabber image files, cruise files and lowering files are located on the server.
 
 Set the `senderAddress`, `resetPasswordURL` locations in the `./config/email_constants.js` file to meet your specific installation requirements.  The `resetPasswordURL` most likely only needs to have 'localhost' replaced with the servers hostname/IP unless running a higly customized version of Sealog.
 
 You will also need to uncomment the type of email integration used.  By default email is disabled but the distribution file includes commented code blocks for gmail and mailgun integration.
+
+Set the `host`, `port`, `wsPort`, and `prefix` values in the `./config/manifest.js` file to meet your specific installation requirements.  There are 3 sets of these variables for the various ways sealog-server can be run.  If you are only running one instance of Sealog Server on the server then the defaults are sufficient
+
+Set the `IMAGE_PATH`, `CRUISE_PATH` and `LOWERING_PATH` locations in the `./config/path_constants.js` file to meet your specific installation requirements.  These paths are where the framegrabber image files, cruise files and lowering files are located on the server.
 
 Create a secret JWT encryption key and save it to the `./config/secret.js` file.  Create the key by running the following command:
 ```
@@ -104,7 +104,6 @@ Copy/Paste the following into the file (assumes sealog-server is located in `/ho
 directory=/home/sealog/sealog-server
 command=node server.js
 environment=NODE_ENV="production"
-process_name=sealog-server
 redirect_stderr=true
 stdout_logfile=/var/log/sealog-server_STDOUT.log
 user=sealog
@@ -163,7 +162,7 @@ By default sealog-server runs over http.  To run the server over https uncomment
 // };
 ```
 
-AND the following line at line 45:
+AND the following line at line 103:
 ```
 //    tls: tlsOptions,
 ```
@@ -213,7 +212,6 @@ Append the following to the supervisor configuration file (assumes sealog-server
 [program:sealog-asnap]
 directory=/home/sealog/sealog-server/misc
 command=/home/sealog/sealog-server/venv/bin/python sealog_asnap.py
-process_name=sealog-asnap
 redirect_stderr=true
 stdout_logfile=/var/log/sealog-asnap_STDOUT.log
 user=sealog
@@ -227,7 +225,6 @@ The default ASNAP interval is 10 seconds.  To change that add the `--interval <s
 ```
 command=/home/sealog/sealog-server/venv/bin/python sealog_asnap.py --interval 300
 ```
-
 
 ## Auto-Actions
 
@@ -248,7 +245,6 @@ Append the following to the supervisor configuration file (assumes sealog-server
 [program:sealog-auto-actions]
 directory=/home/sealog/sealog-server/misc
 command=/home/sealog/sealog-server/venv/bin/python sealog_auto_actions.py
-process_name=sealog-auto-actions
 redirect_stderr=true
 stdout_logfile=/var/log/sealog-auto-actions_STDOUT.log
 user=sealog
