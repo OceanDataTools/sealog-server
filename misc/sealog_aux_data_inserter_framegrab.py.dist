@@ -52,19 +52,24 @@ CLIENT_WSID = 'aux_data_inserter_' + AUX_DATA_DATASOURCE # needs to be unique fo
 THRESHOLD = 20 #seconds
 
 # ------------ only needed for scp transfers -------------
-# user = 'mt'
+# user = 'survey'
 # host = '192.168.1.42'
 # port = 22
 # key_file = '/home/sealog/.ssh/id_rsa'
 # my_key = RSAKey.from_private_key_file(key_file)
 # t = Transport(host, port)
 
-source_dir = '/tmp/images'
-dest_dir = '/home/sealog/sealog-files/images'
+source_dir = '/mnt/ramdisk'
+dest_dir = '/data/sealog-files/images'
 
-camera_name = 'ROV HD'
-filename_prefix = ''
-filename_suffix = '_rov_hd.jpg'
+sources = [
+    {
+        'source_filename': 'stream1.jpg',
+        'source_name': 'Stream_1',
+        'filename_prefix': '',
+        'filename_suffix': '_stream1.jpg'
+    }
+]
 
 HELLO = {
     'type': 'hello',
@@ -112,51 +117,46 @@ async def aux_data_inserter():
                         logging.debug("Skipping because event ts is older than thresold")
                         continue
 
-                    try:
+                    aux_data_record = {         
+                        'event_id': event_obj['message']['id'],
+                        'data_source': AUX_DATA_DATASOURCE,
+                        'data_array': []
+                    }
 
-                        list_of_files = glob.glob(os.path.join(source_dir, '*.jpg'))
-                        latest_file = max(list_of_files, key=os.path.getctime)
+                    for source in sources:
 
-                    except Exception as error:
-                        logging.error("Error retrieving image file")
-                        logging.debug(str(error))
-                        continue
+                        latest_file = os.path.join(source_dir, source['source_filename'])
+                        
+                        filename_date = datetime.date(datetime.strptime(event_obj['message']['ts'], '%Y-%m-%dT%H:%M:%S.%fZ'))
+                        filename_time = datetime.time(datetime.strptime(event_obj['message']['ts'], '%Y-%m-%dT%H:%M:%S.%fZ'))
+                        filename_middle = datetime.combine(filename_date, filename_time).strftime("%Y%m%d_%H%M%S%f")[:-3]
 
-                    filename_date = datetime.date(datetime.strptime(event_obj['message']['ts'], '%Y-%m-%dT%H:%M:%S.%fZ'))
-                    filename_time = datetime.time(datetime.strptime(event_obj['message']['ts'], '%Y-%m-%dT%H:%M:%S.%fZ'))
-                    filename_middle = datetime.combine(filename_date, filename_time).strftime("%Y%m%d_%H%M%S%f")[:-3]
+                        dst = os.path.join(dest_dir, source['filename_prefix'] + filename_middle + source['filename_suffix'])
+                        src = os.path.join(source_dir, latest_file)
 
-                    dst = os.path.join(dest_dir, filename_prefix + filename_middle + filename_suffix)
-                    src = os.path.join(source_dir, latest_file)
+                        logging.debug("src: %s", src)
+                        logging.debug("dst: %s", dst)
 
-                    logging.debug("src: %s", src)
-                    logging.debug("dst: %s", dst)
+                        try:
 
+                            # ------------ only needed for scp transfers -------------
+                            # sftp = SFTPClient.from_transport(t)
+                            # sftp.put(src, dst)
+                            # sftp.close()
 
-                    try:
+                            # ----------- only needed for local transfers ------------
+                            shutil.copyfile(src,dst)
 
-                        # ------------ only needed for scp transfers -------------
-                        # sftp = SFTPClient.from_transport(t)
-                        # sftp.put(src, dst)
-                        # sftp.close()
+                            aux_data_record['data_array'].append({ 'data_name': "camera_name",'data_value': source['source_name'] })
+                            aux_data_record['data_array'].append({ 'data_name': "filename",'data_value': dst })
 
-                        # ----------- only needed for local transfers ------------
-                        shutil.copyfile(src,dst)
-
-                        aux_data_record = {
-                            'event_id': event_obj['message']['id'],
-                            'data_source': AUX_DATA_DATASOURCE,
-                            'data_array': []
-                        }
-
-                        aux_data_record['data_array'].append({ 'data_name': "camera_name",'data_value': camera_name })
-                        aux_data_record['data_array'].append({ 'data_name': "filename",'data_value': dst })
+                        except Exception as error:
+                            logging.error("Unable to copy image to server")
+                            logging.error(error)
+        
+                    if len(aux_data_record['data_array']) > 0:
                         req = requests.post(API_SERVER_URL + EVENT_AUX_DATA_API_PATH, headers=HEADERS, data = json.dumps(aux_data_record))
                         logging.debug(req.text)
-
-                    except Exception as error:
-                        logging.error("Unable to copy image to server")
-                        logging.error(error)
 
     except Exception as error:
         logging.error(str(error))

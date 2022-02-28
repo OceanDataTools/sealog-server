@@ -33,6 +33,8 @@ misc/sealog_preLowering.sh
 misc/sealog_restoreDBfromBackup.sh
 misc/sealog_udp2MongoDB*.py
 misc/sealog_vessel_postCruise.sh
+misc/sealog_repeater.py
+
 
 # files that need to be updated to the v2.1 standard or deleted
 misc/merge_*
