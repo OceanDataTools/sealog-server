@@ -27,6 +27,7 @@ const {
 const {
   authorizationHeader,
   databaseInsertResponse,
+  loginToken,
   userQuery,
   userSuccessResponse,
   userParam,
@@ -595,7 +596,7 @@ exports.plugin = {
         },
         response: {
           status: {
-            200: userToken
+            200: loginToken
           }
         },
         description: 'This is the route used for retrieving a user\'s loginToken based on the user\'s ID.',

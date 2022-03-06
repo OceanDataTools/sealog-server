@@ -24,6 +24,8 @@ import asyncio
 import websockets
 import requests
 
+from copy import deepcopy
+
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
@@ -91,8 +93,9 @@ def update_cruise_record(cruise_record):
                 url = instance['apiServerURL'] + CRUISES_API_PATH + '/' + cruise_found['id']
                 logging.debug(url)
                 logging.debug(json.dumps(cruise_record))
-                del cruise_record['id']
-                req = requests.patch(url, headers=instance_headers, data = json.dumps(cruise_record))
+                update_cruise_record = deepcopy(cruise_record)
+                del update_cruise_record['id']
+                req = requests.patch(url, headers=instance_headers, data = json.dumps(update_cruise_record))
                 logging.debug(req.text)
 
             except Exception as error:
