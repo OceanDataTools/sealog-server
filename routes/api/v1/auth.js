@@ -25,6 +25,7 @@ const {
 
 const {
   authorizationHeader,
+  autoLoginPayload
   databaseInsertResponse,
   forgotPasswordPayload,
   forgotPasswordSuccessResponse,
@@ -32,8 +33,9 @@ const {
   loginSuccessResponse,
   registerPayload,
   resetPasswordPayload,
+  userPassPayload,
   userSuccessResponse,
-  userToken
+  userToken,
 } = require('../../../lib/validations');
 
 const _rolesToScope = (roles) => {
@@ -384,7 +386,10 @@ exports.plugin = {
       },
       config: {
         validate: {
-          payload: loginPayload
+          payload: Joi.alternatives().try(
+            userPassPayload,
+            autoLoginPayload
+          )
         },
         response: {
           status: {
