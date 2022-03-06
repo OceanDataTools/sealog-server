@@ -1,7 +1,6 @@
 const SECRET_KEY = require('../../../config/secret');
 const { randomAsciiString } = require('../../../lib/utils');
 
-const Joi = require('joi');
 const Bcrypt = require('bcryptjs');
 const Boom = require('@hapi/boom');
 const Jwt = require('jsonwebtoken');
@@ -26,7 +25,6 @@ const {
 
 const {
   authorizationHeader,
-  autoLoginPayload,
   databaseInsertResponse,
   forgotPasswordPayload,
   forgotPasswordSuccessResponse,
@@ -34,7 +32,6 @@ const {
   loginSuccessResponse,
   registerPayload,
   resetPasswordPayload,
-  userPassPayload,
   userSuccessResponse,
   userToken
 } = require('../../../lib/validations');
@@ -387,10 +384,7 @@ exports.plugin = {
       },
       config: {
         validate: {
-          payload: Joi.alternatives().try(
-            userPassPayload,
-            autoLoginPayload
-          )
+          payload: loginPayload
         },
         response: {
           status: {
