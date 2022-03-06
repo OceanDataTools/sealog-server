@@ -1,6 +1,7 @@
 const SECRET_KEY = require('../../../config/secret');
 const { randomAsciiString } = require('../../../lib/utils');
 
+const Joi = require('joi');
 const Bcrypt = require('bcryptjs');
 const Boom = require('@hapi/boom');
 const Jwt = require('jsonwebtoken');
