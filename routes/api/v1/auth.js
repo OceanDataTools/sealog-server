@@ -25,7 +25,7 @@ const {
 
 const {
   authorizationHeader,
-  autoLoginPayload
+  autoLoginPayload,
   databaseInsertResponse,
   forgotPasswordPayload,
   forgotPasswordSuccessResponse,
@@ -35,7 +35,7 @@ const {
   resetPasswordPayload,
   userPassPayload,
   userSuccessResponse,
-  userToken,
+  userToken
 } = require('../../../lib/validations');
 
 const _rolesToScope = (roles) => {
