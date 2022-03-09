@@ -389,7 +389,6 @@ exports.plugin = {
         }
 
         if (request.query.format && request.query.format === 'csv') {
-
           const flat_events = flattenEventObjs(results);
           const csv_headers = buildEventCSVHeaders(flat_events);
 
