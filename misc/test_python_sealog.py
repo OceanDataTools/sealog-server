@@ -32,7 +32,7 @@ CRUISE_ID = 'AT37-13'
 LOWERING_UID = '6981f167212b348aed7fa9f5'
 LOWERING_ID = '4928'
 EVENT_UID = '5981f167212b348aed7fa9f5'
-EVENT_FILTER = 'FISH'
+EVENT_FILTER = ['FISH']
 
 print("Cruises")
 print("get_cruises() ", end='')

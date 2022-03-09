@@ -36,14 +36,16 @@ def get_framegrab_list_by_lowering(lowering_uid, api_server_url=API_SERVER_URL, 
     '''
 
     logging.debug("Exporting event data")
-    query='&data_source='.join(DATA_SOURCE_FILTER)
+
+    params = {
+        'datasource': DATA_SOURCE_FILTER
+    }
 
     framegrab_filenames = []
 
     try:
-        url = api_server_url + EVENT_AUX_DATA_API_PATH + '/bylowering/' + lowering_uid + '?datasource=' + query
-        logging.debug("URL: %s", url)
-        req = requests.get(url, headers=headers)
+        url = api_server_url + EVENT_AUX_DATA_API_PATH + '/bylowering/' + lowering_uid
+        req = requests.get(url, headers=headers, params=params)
 
         if req.status_code != 404:
             framegrabs = json.loads(req.text)
@@ -63,14 +65,16 @@ def get_framegrab_list_by_cruise(cruise_uid, api_server_url=API_SERVER_URL, head
     '''
 
     logging.debug("Exporting event data")
-    query='&data_source='.join(DATA_SOURCE_FILTER)
+
+    params = {
+        'datasource': DATA_SOURCE_FILTER
+    }
 
     framegrab_filenames = []
 
     try:
-        url = api_server_url + EVENT_AUX_DATA_API_PATH + '/bycruise/' + cruise_uid + '?datasource=' + query
-        logging.debug("URL: %s", url)
-        req = requests.get(url, headers=headers)
+        url = api_server_url + EVENT_AUX_DATA_API_PATH + '/bycruise/' + cruise_uid
+        req = requests.get(url, headers=headers, params=params)
 
         if req.status_code != 404:
             framegrabs = json.loads(req.text)

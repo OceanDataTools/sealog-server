@@ -27,19 +27,27 @@ sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
 
 from misc.python_sealog.settings import API_SERVER_URL, HEADERS, EVENT_AUX_DATA_API_PATH
 
-def get_event_aux_data_by_cruise(cruise_uid, datasource=None, api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_event_aux_data_by_cruise(cruise_uid, datasource=[], limit=0, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the aux_data records for the given cruise_uid and optional
     datasource.
     '''
 
+    if not isinstance(datasource, list):
+        logging.warning("DEPRECIATED: datasource should be an array of strings")
+        datasource = [datasource]
+
+    params = {}
+
+    if len(datasource) > 0:
+        params['datasource']: datasource
+
+    if limit > 0:
+        params['limit'] = limit
+
     try:
         url = api_server_url + EVENT_AUX_DATA_API_PATH + '/bycruise/' + cruise_uid
-
-        if datasource is not None:
-            url += '&datasource=' + datasource
-
-        req = requests.get(url, headers=headers)
+        req = requests.get(url, headers=headers, params=params)
 
         if req.status_code != 404:
             event_aux_data = json.loads(req.text)
@@ -53,29 +61,27 @@ def get_event_aux_data_by_cruise(cruise_uid, datasource=None, api_server_url=API
     return None
 
 
-def get_event_aux_data_by_lowering(lowering_uid, datasource='', limit=0, api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_event_aux_data_by_lowering(lowering_uid, datasource=[], limit=0, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the aux_data records for the given lowering_uid and optional
     datasource.
     '''
 
+    if not isinstance(datasource, list):
+        logging.warning("DEPRECIATED: datasource should be an array of strings")
+        datasource = [datasource]
+
+    params = {}
+
+    if len(datasource) > 0:
+        params['datasource']: datasource
+
+    if limit > 0:
+        params['limit'] = limit
+
     try:
         url = api_server_url + EVENT_AUX_DATA_API_PATH + '/bylowering/' + lowering_uid
-
-        querystring = []
-
-        if datasource != '':
-            querystring.append('datasource=' + datasource)
-
-        if limit > 0:
-            querystring.append('limit=' + str(limit))
-
-        if len(querystring) > 0:
-            url += '?' + '&'.join(querystring)
-
-        logging.info(url)
-
-        req = requests.get(url, headers=headers)
+        req = requests.get(url, headers=headers, params=params)
 
         event_aux_data = json.loads(req.text)
         logging.debug(json.dumps(event_aux_data))
