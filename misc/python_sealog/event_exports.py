@@ -27,7 +27,7 @@ sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
 
 from misc.python_sealog.settings import API_SERVER_URL, HEADERS, EVENT_EXPORTS_API_PATH
 
-def get_event_export(event_uid, export_format='json', add_record_ids=False, api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_event_export(event_uid, export_format='json', event_filter=[], add_record_ids=False, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the event_export for the event with the given event_uid.
     '''
