@@ -39,7 +39,7 @@ def get_event_aux_data_by_cruise(cruise_uid, datasource=[], limit=0, api_server_
 
     params = {}
 
-    if len(datasource) > 0:
+    if datasource:
         params['datasource']: datasource
 
     if limit > 0:
@@ -73,7 +73,7 @@ def get_event_aux_data_by_lowering(lowering_uid, datasource=[], limit=0, api_ser
 
     params = {}
 
-    if len(datasource) > 0:
+    if datasource:
         params['datasource']: datasource
 
     if limit > 0:

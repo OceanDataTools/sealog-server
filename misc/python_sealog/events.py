@@ -77,7 +77,7 @@ def get_events(export_format='json', add_record_ids=False, event_filter=[], star
         'add_record_ids': 'true' if add_record_ids else 'false',
     }
 
-    if len(event_filter) > 0:
+    if event_filter:
         params['value'] = event_filter
 
     if startTS is not None:
@@ -128,7 +128,7 @@ def get_events_by_cruise(cruise_uid, export_format='json', add_record_ids=False,
         'add_record_ids': 'true' if add_record_ids else 'false',
     }
 
-    if len(event_filter) > 0:
+    if event_filter:
         params['value'] = event_filter
 
     try:
@@ -173,7 +173,7 @@ def get_events_by_lowering(lowering_uid, export_format='json', add_record_ids=Fa
         'add_record_ids': 'true' if add_record_ids else 'false',
     }
 
-    if len(event_filter) > 0:
+    if event_filter:
         params['value'] = event_filter
 
     try:
