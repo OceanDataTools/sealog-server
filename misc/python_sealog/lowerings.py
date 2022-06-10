@@ -32,9 +32,13 @@ def get_lowering_uid_by_id(lowering_id, api_server_url=API_SERVER_URL, headers=H
     Return the UID for a lowering record based on the lowering_id.
     '''
 
+    params = {
+        'lowering_id': lowering_id
+    }
+
     try:
-        url = api_server_url + LOWERINGS_API_PATH + '?lowering_id=' + lowering_id
-        req = requests.get(url, headers=headers)
+        url = api_server_url + LOWERINGS_API_PATH
+        req = requests.get(url, headers=headers, params=params)
 
         if req.status_code == 200:
             lowering = json.loads(req.text)[0]
@@ -53,9 +57,13 @@ def get_lowerings(export_format='json', api_server_url=API_SERVER_URL, headers=H
     default.  Set export_format to 'csv' to return the records in csv format.
     '''
 
+    params = {
+        'format': export_format
+    }
+
     try:
-        url = api_server_url + LOWERINGS_API_PATH + '?format=' + export_format
-        req = requests.get(url, headers=headers)
+        url = api_server_url + LOWERINGS_API_PATH
+        req = requests.get(url, headers=headers, params=params)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -156,9 +164,13 @@ def get_lowering_by_id(lowering_id, export_format='json', api_server_url=API_SER
     in csv format.
     '''
 
+    params = {
+        'format': export_format
+    }
+
     try:
-        url = api_server_url + LOWERINGS_API_PATH + '?lowering_id=' + lowering_id + '&format=' + export_format
-        req = requests.get(url, headers=headers)
+        url = api_server_url + LOWERINGS_API_PATH + '?lowering_id=' + lowering_id
+        req = requests.get(url, headers=headers, params=params)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -181,9 +193,14 @@ def get_lowerings_by_cruise(cruise_uid, export_format='json', api_server_url=API
     export_format to 'csv' to return the record in csv format.
     '''
 
+    params = {
+        'format': export_format
+    }
+
+
     try:
-        url = api_server_url + LOWERINGS_API_PATH + '/bycruise/' + cruise_uid + '?format=' + export_format
-        req = requests.get(url, headers=headers)
+        url = api_server_url + LOWERINGS_API_PATH + '/bycruise/' + cruise_uid
+        req = requests.get(url, headers=headers, params=params)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -213,9 +230,13 @@ def get_lowering_by_event(event_uid, export_format='json', api_server_url=API_SE
     to return the record in csv format.
     '''
 
+    params = {
+        'format': export_format
+    }
+
     try:
-        url = api_server_url + LOWERINGS_API_PATH + '/byevent/' + event_uid + '?format=' + export_format
-        req = requests.get(url, headers=headers)
+        url = api_server_url + LOWERINGS_API_PATH + '/byevent/' + event_uid
+        req = requests.get(url, headers=headers, params=params)
 
         if req.status_code == 200:
             if export_format == 'json':

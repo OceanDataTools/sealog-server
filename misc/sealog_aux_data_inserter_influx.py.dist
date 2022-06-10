@@ -12,18 +12,22 @@ DESCRIPTION:    This service listens for new events submitted to Sealog, create
                 available the script will NOT add the corresponding aux_data
                 records.
 
+                This script can also add influx data to a list of event ids
+                (comma-separated) using the -e flag
+
 BUGS:
 NOTES:
 AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
 VERSION:    1.0
 CREATED:    2021-04-21
-REVISION:   2022-02-13
+REVISION:   2022-06-08
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2022
 '''
 
+import re
 import sys
 import json
 import time
@@ -37,7 +41,7 @@ from influxdb_client import InfluxDBClient
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
-from misc.python_sealog.settings import API_SERVER_URL, WS_SERVER_URL, EVENT_AUX_DATA_API_PATH, HEADERS
+from misc.python_sealog.settings import API_SERVER_URL, WS_SERVER_URL, EVENTS_API_PATH, EVENT_AUX_DATA_API_PATH, HEADERS
 from misc.influx_sealog.settings import INFLUX_SERVER_URL, INFLUX_TOKEN, INFLUX_ORG
 from misc.influx_sealog.aux_data_record_builder import SealogInfluxAuxDataRecordBuilder
 
@@ -106,7 +110,64 @@ PING = {
     'id':CLIENT_WSID
 }
 
-async def aux_data_inserter(aux_data_builders):
+
+def parse_event_ids(event_id_file):
+    event_ids = list()
+    with open(event_id_file) as file:
+        lines = list()
+
+        for line in file:
+            line = line.rstrip('\n')
+            logging.debug(line)
+            event_ids += line.split(',')
+
+        event_ids = [event_id.strip() for event_id in event_ids]
+
+        for event_id in event_ids:
+            if re.match(r"^[a-f\d]{24}$", event_id) is None:
+                logging.error("\"%s\" is an invalid event_id... quiting", event_id)
+                raise ValueError("\"%s\" is an invalid event_id... quiting", event_id)
+
+    return event_ids
+
+
+def insert_aux_data(aux_data_builders, event):
+    for builder in aux_data_builders:
+        logging.debug("Building aux data record")
+        record = builder.build_aux_data_record(event)
+        if record:
+            try:
+                logging.debug("Submitting aux data record to Sealog Server")
+                logging.debug(json.dumps(record))
+                req= requests.post(API_SERVER_URL + EVENT_AUX_DATA_API_PATH, headers=HEADERS, data = json.dumps(record))
+                logging.debug("Response: %s", req.text)
+
+            except Exception as err:
+                logging.warning("Error submitting aux data record")
+                logging.debug(str(err))
+        else:
+            logging.debug("No aux data for data_source: %s", builder.data_source)
+
+
+def insert_aux_data_from_list(aux_data_builders, event_ids):
+    for event_id in event_ids:
+        try:
+            logging.debug("Retrieving event record from Sealog Server")
+            url = API_SERVER_URL + EVENTS_API_PATH + '/' + event_id
+            logging.debug("URL: \"%s\"", url)
+            req = requests.get(url, headers=HEADERS)
+            event = json.loads(req.text)
+            logging.debug("Event: %s", event)
+
+        except Exception as err:
+            logging.warning("Error submitting aux data record")
+            logging.debug(str(err))
+            raise(err)
+
+        insert_aux_data(aux_data_builders, event)
+
+
+async def insert_aux_data_from_ws(aux_data_builders):
     '''
     Use the aux_data_builder and the influx_sealog wrapper to submit aux_data
     records built from influxDB data to the sealog-server API
@@ -132,22 +193,9 @@ async def aux_data_inserter(aux_data_builders):
 
                     logging.debug("Event: %s", event_obj['message'])
 
-                    # Build the aux_data records for the given event
-                    for builder in aux_data_builders:
-                        logging.debug("Building aux data record")
-                        record = builder.build_aux_data_record(event_obj['message'])
-                        if record:
-                            try:
-                                logging.debug("Submitting aux data record to Sealog Server")
-                                logging.debug(json.dumps(record))
-                                req= requests.post(API_SERVER_URL + EVENT_AUX_DATA_API_PATH, headers=HEADERS, data = json.dumps(record))
-                                logging.debug("Response: %s", req.text)
+                    insert_aux_data(aux_data_builders, event_obj['message'])
 
-                            except Exception as err:
-                                logging.warning("Error submitting aux data record")
-                                logging.debug(str(err))
-                        else:
-                            logging.debug("No aux data for data_source: %s", builder.data_source)
+
 
     except Exception as err:
         logging.error(str(err))
@@ -165,7 +213,8 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbosity', dest='verbosity',
                         default=0, action='count',
                         help='Increase output verbosity')
-    parser.add_argument('-f', '--config_file', help=' used the specifed configuration file')
+    parser.add_argument('-f', '--config_file', help='use the specifed configuration file')
+    parser.add_argument('-e', '--events', help='list of event_ids to apply the influx data')
 
     parsed_args = parser.parse_args()
 
@@ -183,9 +232,16 @@ if __name__ == '__main__':
     aux_data_configs = None # pylint: disable=invalid-name
 
     if parsed_args.config_file:
+
+        config_file, data_source = parsed_args.config_file.split(":") if ":" in parsed_args.config_file else [ parsed_args.config_file, None ]
+        
         try:
-            with open(parsed_args.config_file) as file:
+            with open(config_file) as file:
                 aux_data_configs = yaml.safe_load(file)
+    
+            if data_source:
+                aux_data_configs = [config for config in aux_data_configs if config['data_source'] == data_source]
+
         except yaml.parser.ParserError:
             logging.error("Invalid YAML syntax")
             sys.exit(1)
@@ -204,6 +260,16 @@ if __name__ == '__main__':
     # Create the Aux Data Record Builders
     aux_data_builder_list = list(map(lambda config: SealogInfluxAuxDataRecordBuilder(client, config), aux_data_configs))
 
+    if parsed_args.events:
+        logging.debug("Processing list of event ids")
+
+        event_ids = parse_event_ids(parsed_args.events)
+        logging.info("Event IDs:\n%s",json.dumps(event_ids, indent=2))
+
+        insert_aux_data_from_list(aux_data_builder_list, event_ids)
+
+        sys.exit(0)
+
     # Run the main loop
     while True:
 
@@ -212,7 +278,7 @@ if __name__ == '__main__':
 
         try:
             logging.debug("Connecting to event websocket feed...")
-            asyncio.get_event_loop().run_until_complete(aux_data_inserter(aux_data_builder_list))
+            asyncio.get_event_loop().run_until_complete(insert_aux_data_from_ws(aux_data_builder_list))
         except KeyboardInterrupt:
             logging.error('Keyboard Interrupted')
             try:

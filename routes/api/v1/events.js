@@ -89,7 +89,8 @@ exports.plugin = {
         const query = buildEventsQuery(request, cruise.start_ts, cruise.stop_ts);
         const limit = (request.query.limit) ? request.query.limit : 0;
         const offset = (request.query.offset) ? request.query.offset : 0;
-
+        const sort = (request.query.sort === 'newest') ? { ts: -1 } : { ts: 1 };
+        
         let results = [];
 
         try {
@@ -326,6 +327,7 @@ exports.plugin = {
         const query = buildEventsQuery(request, lowering.start_ts, lowering.stop_ts);
         const limit = (request.query.limit) ? request.query.limit : 0;
         const offset = (request.query.offset) ? request.query.offset : 0;
+        const sort = (request.query.sort === 'newest') ? { ts: -1 } : { ts: 1 };
 
         let results = [];
 
@@ -384,12 +386,11 @@ exports.plugin = {
 
         results.forEach(_renameAndClearFields);
 
-        if (request.query.add_record_ids && request.query.add_record_ids === true) {
+        if (request.query.add_record_ids && request.query.add_record_ids === 'true') {
           results = await addEventRecordIDs(request, results);
         }
 
         if (request.query.format && request.query.format === 'csv') {
-
           const flat_events = flattenEventObjs(results);
           const csv_headers = buildEventCSVHeaders(flat_events);
 
@@ -618,7 +619,7 @@ exports.plugin = {
 
             results.forEach(_renameAndClearFields);
 
-            if (request.query.add_record_ids && request.query.add_record_ids === true) {
+            if (request.query.add_record_ids && request.query.add_record_ids === 'true') {
               results = await addEventRecordIDs(request, results);
             }
 

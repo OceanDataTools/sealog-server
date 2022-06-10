@@ -55,9 +55,13 @@ def get_custom_var_uid_by_name(var_name, api_server_url=API_SERVER_URL, headers=
     Return a custom_var uid based on the var_name.
     '''
 
+    params = {
+        'name': var_name
+    }
+
     try:
-        url = api_server_url + CUSTOM_VAR_API_PATH + '?name=' + var_name
-        req = requests.get(url, headers=headers)
+        url = api_server_url + CUSTOM_VAR_API_PATH
+        req = requests.get(url, headers=headers, params=params)
         logging.debug(req.text)
 
         if req.status_code != 404:
@@ -77,9 +81,13 @@ def get_custom_var_by_name(var_name, api_server_url=API_SERVER_URL, headers=HEAD
     Return a custom_var based on the var_name.
     '''
 
+    params = {
+        'name': var_name
+    }
+
     try:
-        url = api_server_url + CUSTOM_VAR_API_PATH + '?name=' + var_name
-        req = requests.get(url, headers=headers)
+        url = api_server_url + CUSTOM_VAR_API_PATH
+        req = requests.get(url, headers=headers, params=params)
         logging.debug(req.text)
 
         if req.status_code != 404:

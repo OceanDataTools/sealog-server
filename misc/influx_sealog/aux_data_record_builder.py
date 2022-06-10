@@ -106,40 +106,45 @@ class SealogInfluxAuxDataRecordBuilder():
             return None
 
         for key, value in self._aux_record_lookup.items(): # pylint: disable=too-many-nested-blocks
-            if "no_output" in value and value['no_output'] is True:
+            try:
+                if "no_output" in value and value['no_output'] is True:
+                    continue
+
+                output_value = influx_data[key]
+
+                if "modify" in value:
+                    logging.debug("modify found in record")
+                    for mod_op in value['modify']:
+                        if 'test' in mod_op:
+                            logging.debug("test found in mod_op")
+                            test_result = False
+                            for test in mod_op['test']:
+                                logging.debug(json.dumps(test))
+
+                                if 'field' in test:
+                                    if test['field'] not in influx_data:
+                                        logging.error("test field data not in influx query")
+                                        return None
+
+                                    if 'eq' in test and influx_data[test['field']] == test['eq']:
+                                        test_result = True
+                                        break
+
+                            if test_result and 'operation' in mod_op:
+                                logging.debug("operation found in mod_op")
+                                for operan in mod_op['operation']:
+                                    if 'multiply' in operan:
+                                        output_value *= operan['multiply']
+
+                aux_data_record['data_array'].append({
+                    'data_name': value['name'],
+                    'data_value': str(round(output_value, value['round'])) if 'round' in value else str(output_value),
+                    'data_uom': value['uom'] if 'uom' in value else ''
+                })
+            except Exception as err:
+                logging.warning("Problem adding %s", key)
+                logging.debug(str(err))
                 continue
-
-            output_value = influx_data[key]
-
-            if "modify" in value:
-                logging.debug("modify found in record")
-                for mod_op in value['modify']:
-                    if 'test' in mod_op:
-                        logging.debug("test found in mod_op")
-                        test_result = False
-                        for test in mod_op['test']:
-                            logging.debug(json.dumps(test))
-
-                            if 'field' in test:
-                                if test['field'] not in influx_data:
-                                    logging.error("test field data not in influx query")
-                                    return None
-
-                                if 'eq' in test and influx_data[test['field']] == test['eq']:
-                                    test_result = True
-                                    break
-
-                        if test_result and 'operation' in mod_op:
-                            logging.debug("operation found in mod_op")
-                            for operan in mod_op['operation']:
-                                if 'multiply' in operan:
-                                    output_value *= operan['multiply']
-
-            aux_data_record['data_array'].append({
-                'data_name': value['name'],
-                'data_value': str(round(output_value, value['round'])) if 'round' in value else str(output_value),
-                'data_uom': value['uom'] if 'uom' in value else ''
-            })
 
         if len(aux_data_record['data_array']) > 0:
             return aux_data_record

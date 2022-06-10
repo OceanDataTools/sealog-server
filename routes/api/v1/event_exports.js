@@ -139,7 +139,7 @@ exports.plugin = {
 
           results.forEach(_renameAndClearFields);
 
-          if (request.query.add_record_ids && request.query.add_record_ids === true) {
+          if (request.query.add_record_ids && request.query.add_record_ids === 'true') {
             results = await addEventRecordIDs(request, results);
           }
 
@@ -280,7 +280,7 @@ exports.plugin = {
 
           results.forEach(_renameAndClearFields);
 
-          if (request.query.add_record_ids && request.query.add_record_ids === true) {
+          if (request.query.add_record_ids && request.query.add_record_ids === 'true') {
             results = await addEventRecordIDs(request, results);
           }
 
@@ -417,7 +417,7 @@ exports.plugin = {
             if (results.length > 0) {
               results.forEach(_renameAndClearFields);
 
-              if (request.query.add_record_ids && request.query.add_record_ids === true) {
+              if (request.query.add_record_ids && request.query.add_record_ids === 'true') {
                 results = await addEventRecordIDs(request, results);
               }
 
