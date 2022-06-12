@@ -94,7 +94,7 @@ exports.plugin = {
         let results = [];
 
         try {
-          results = await db.collection(eventsTable).find(query).sort( { ts: 1  } ).skip(offset).limit(limit).toArray();
+          results = await db.collection(eventsTable).find(query).sort(sort).skip(offset).limit(limit).toArray();
           // console.log("results:", results);
         }
         catch (err) {
@@ -219,7 +219,7 @@ exports.plugin = {
         let results = [];
 
         try {
-          results = await db.collection(eventsTable).find(query).sort( { ts: 1  } ).toArray();
+          results = await db.collection(eventsTable).find(query).toArray();
           // console.log("results:", results);
         }
         catch (err) {
@@ -332,7 +332,7 @@ exports.plugin = {
         let results = [];
 
         try {
-          results = await db.collection(eventsTable).find(query).sort( { ts: 1  } ).skip(offset).limit(limit).toArray();
+          results = await db.collection(eventsTable).find(query).sort(sort).skip(offset).limit(limit).toArray();
           // console.log("results:", results);
         }
         catch (err) {
@@ -457,7 +457,7 @@ exports.plugin = {
         let results = [];
 
         try {
-          results = await db.collection(eventsTable).find(query).sort( { ts: 1  } ).toArray();
+          results = await db.collection(eventsTable).find(query).toArray();
           // console.log("results:", results);
         }
         catch (err) {
