@@ -19,6 +19,7 @@ const {
   eventParam,
   eventQuery,
   eventCountSuccessResponse,
+  eventSingleQuery,
   eventSuccessResponse,
   eventCreatePayload,
   eventCreateResponse,
@@ -90,7 +91,7 @@ exports.plugin = {
         const limit = (request.query.limit) ? request.query.limit : 0;
         const offset = (request.query.offset) ? request.query.offset : 0;
         const sort = (request.query.sort === 'newest') ? { ts: -1 } : { ts: 1 };
-        
+
         let results = [];
 
         try {
@@ -147,6 +148,10 @@ exports.plugin = {
         }
 
         results.forEach(_renameAndClearFields);
+
+        if (request.query.add_record_ids) {
+          results = await addEventRecordIDs(request, results);
+        }
 
         if (request.query.format && request.query.format === 'csv') {
           const flat_events = flattenEventObjs(results);
@@ -386,7 +391,7 @@ exports.plugin = {
 
         results.forEach(_renameAndClearFields);
 
-        if (request.query.add_record_ids && request.query.add_record_ids === 'true') {
+        if (request.query.add_record_ids) {
           results = await addEventRecordIDs(request, results);
         }
 
@@ -619,7 +624,7 @@ exports.plugin = {
 
             results.forEach(_renameAndClearFields);
 
-            if (request.query.add_record_ids && request.query.add_record_ids === 'true') {
+            if (request.query.add_record_ids) {
               results = await addEventRecordIDs(request, results);
             }
 
@@ -660,7 +665,6 @@ exports.plugin = {
         tags: ['events', 'api']
       }
     });
-
 
 
     server.route({
@@ -769,13 +773,29 @@ exports.plugin = {
         const query = { _id: ObjectID(request.params.id) };
 
         try {
-          const result = await db.collection(eventsTable).findOne(query);
+          let result = await db.collection(eventsTable).findOne(query);
 
           if (!result) {
             return Boom.notFound('No record found for id: ' + request.params.id );
           }
 
-          return h.response(_renameAndClearFields(result)).code(200);
+          result = _renameAndClearFields(result);
+
+          if (request.query.add_record_ids) {
+            const temp = await addEventRecordIDs(request, [result]);
+            result = temp[0];
+          }
+
+          if (request.query.format && request.query.format === 'csv') {
+            const flat_events = flattenEventObjs([result]);
+            const csv_headers = buildEventCSVHeaders(flat_events);
+
+            const csv_results = await parseAsync(flat_events, { fields: csv_headers });
+
+            return h.response(csv_results).code(200);
+          }
+
+          return h.response(result).code(200);
         }
         catch (err) {
           console.log(err);
@@ -789,7 +809,8 @@ exports.plugin = {
         },
         validate: {
           headers: authorizationHeader,
-          params: eventParam
+          params: eventParam,
+          query: eventSingleQuery
         },
         response: {
           status: {

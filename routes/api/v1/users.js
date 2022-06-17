@@ -129,7 +129,7 @@ exports.plugin = {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
-          console.log('invalid ObjectID');
+          // console.log('invalid ObjectID');
           return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
@@ -206,7 +206,7 @@ exports.plugin = {
             delete user.id;
           }
           catch (err) {
-            console.log('invalid ObjectID');
+            // console.log('invalid ObjectID');
             return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
           }
         }
@@ -342,7 +342,7 @@ exports.plugin = {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
-          console.log('invalid ObjectID');
+          // console.log('invalid ObjectID');
           return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
@@ -446,7 +446,7 @@ exports.plugin = {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
-          console.log('invalid ObjectID');
+          // console.log('invalid ObjectID');
           return Boom.unauthorized('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
