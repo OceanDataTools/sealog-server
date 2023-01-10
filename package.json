@@ -37,7 +37,7 @@
     "bcryptjs": "^2.4.3",
     "check-disk-space": "^3.3.0",
     "deepcopy": "^2.1.0",
-    "hapi-auth-jwt2": "^10.2.0",
+    "hapi-auth-jwt2": "^10.4.0",
     "hapi-mongodb": "^10.0.3",
     "hapi-pino": "^9.4.0",
     "hapi-swagger": "^14.5.2",
