@@ -31,6 +31,7 @@ from misc.python_sealog.lowerings import get_lowerings, get_lowering_by_id
 from misc.python_sealog.event_exports import get_event_exports_by_lowering
 
 DESIRED_RAW_COLS = ['ts','vehicleRealtimeNavData.longitude_value','vehicleRealtimeNavData.latitude_value', 'vehicleRealtimeNavData.depth_value']
+ALT_DESIRED_RAW_COLS = ['ts','vehicleRealtimeHipapData.longitude_value','vehicleRealtimeHipapData.latitude_value', 'vehicleRealtimeHipapData.depth_value']
 DESIRED_PROC_COLS = ['datetime','longitude_ddeg','latitude_ddeg', 'depth_m']
 
 ROUNDING = {
@@ -179,7 +180,12 @@ if __name__ == "__main__":
 
     try:
 
-        lowering_export = ExportLoweringNav2CSV(parsed_args.lowering_id)
+        try:
+            lowering_export = ExportLoweringNav2CSV(parsed_args.lowering_id)
+
+        except:
+            logging.warning("There was a problem with the preference nav reference, trying again with alternative nav reference.")
+            lowering_export = ExportLoweringNav2CSV(parsed_args.lowering_id, raw_columns=ALT_DESIRED_RAW_COLS)
 
         if parsed_args.outfile:
             logging.info("Saving nav export to %s", parsed_args.outfile)
@@ -196,6 +202,8 @@ if __name__ == "__main__":
             logging.info("Sending nav export to stdout")
 
             print(lowering_export)
+
+
 
     except KeyboardInterrupt:
         logging.warning('Interrupted')

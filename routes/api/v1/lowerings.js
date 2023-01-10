@@ -952,7 +952,7 @@ exports.plugin = {
             const users_are_valid = request.payload.add.reduce((result, user_id) => {
 
               if (!user_ids.includes(user_id)) {
-                console.log('userid:', user_id, 'is invalid');
+                // console.log('userid:', user_id, 'is invalid');
                 result = false;
               }
 

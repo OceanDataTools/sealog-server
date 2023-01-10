@@ -24,17 +24,20 @@ const _renameAndClearFields = (doc) => {
   //rename id
   doc.id = doc._id;
   delete doc._id;
-  delete doc.event_id;
 
   if (doc.aux_data && doc.aux_data.length > 0) {
-    doc.aux_data.forEach(_renameAndClearFields);
+    doc.aux_data.forEach((aux) => {
+
+      delete aux._id;
+      delete aux.event_id;
+    });
   }
 
   return doc;
 };
 
 const {
-  authorizationHeader,eventParam,eventExportQuery,eventExportSuccessResponse
+  authorizationHeader,eventParam,eventExportQuery,eventExportSingleQuery,eventExportSuccessResponse
 } = require('../../../lib/validations');
 
 exports.plugin = {
@@ -139,7 +142,7 @@ exports.plugin = {
 
           results.forEach(_renameAndClearFields);
 
-          if (request.query.add_record_ids && request.query.add_record_ids === 'true') {
+          if (request.query.add_record_ids) {
             results = await addEventRecordIDs(request, results);
           }
 
@@ -280,7 +283,7 @@ exports.plugin = {
 
           results.forEach(_renameAndClearFields);
 
-          if (request.query.add_record_ids && request.query.add_record_ids === 'true') {
+          if (request.query.add_record_ids) {
             results = await addEventRecordIDs(request, results);
           }
 
@@ -417,7 +420,7 @@ exports.plugin = {
             if (results.length > 0) {
               results.forEach(_renameAndClearFields);
 
-              if (request.query.add_record_ids && request.query.add_record_ids === 'true') {
+              if (request.query.add_record_ids) {
                 results = await addEventRecordIDs(request, results);
               }
 
@@ -487,14 +490,28 @@ exports.plugin = {
         // console.log(aggregate)
 
         try {
-          const results = await db.collection(eventsTable).aggregate(aggregate, { allowDiskUse: true }).toArray();
+          let results = await db.collection(eventsTable).aggregate(aggregate, { allowDiskUse: true }).toArray();
 
-          if (results.length > 0) {
-            results.forEach(_renameAndClearFields);
-            return h.response(results[0]).code(200);
+          if (results.length === 0) {
+            return Boom.notFound('No records found');
           }
 
-          return Boom.notFound('No records found');
+          results.forEach(_renameAndClearFields);
+
+          if (request.query.add_record_ids) {
+            results = await addEventRecordIDs(request, results);
+          }
+
+          if (request.query.format && request.query.format === 'csv') {
+            const flat_events = flattenEventObjs(results);
+            const csv_headers = buildEventCSVHeaders(flat_events);
+
+            const csv_results = await parseAsync(flat_events, { fields: csv_headers });
+
+            return h.response(csv_results).code(200);
+          }
+
+          return h.response(results[0]).code(200);
 
         }
         catch (err) {
@@ -509,7 +526,8 @@ exports.plugin = {
         },
         validate: {
           headers: authorizationHeader,
-          params: eventParam
+          params: eventParam,
+          query: eventExportSingleQuery
         },
         response: {
           status: {
