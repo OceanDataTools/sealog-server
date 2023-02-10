@@ -66,10 +66,32 @@ dest_dir = '/data/sealog-files/images'
 
 sources = [
     {
-        'source_filename': 'stream1.jpg',
-        'source_name': 'Stream_1',
+        'source_url': 'http://10.23.46.60/images/'
+        'source_filename': 'scicam.jpg',
+        'source_name': 'SCICAM',
         'filename_prefix': '',
-        'filename_suffix': '_stream1.jpg'
+        'filename_suffix': '.jpg'
+    },
+    {
+        'source_url': 'http://10.23.46.61/images/'
+        'source_filename': 'sitcam.jpg',
+        'source_name': 'SITCAM',
+        'filename_prefix': '',
+        'filename_suffix': '.jpg'
+    },
+    {
+        'source_url': 'http://10.23.46.62/images/'
+        'source_filename': 'hdquad.jpg',
+        'source_name': 'HDQUAD',
+        'filename_prefix': '',
+        'filename_suffix': '.jpg'
+    },
+    {
+        'source_url': 'http://10.23.46.63/images/'
+        'source_filename': 'sdquad.jpg',
+        'source_name': 'SDQUAD',
+        'filename_prefix': '',
+        'filename_suffix': '.jpg'
     }
 ]
 
@@ -127,16 +149,16 @@ async def aux_data_inserter():
 
                     for source in sources:
 
-                        latest_file = os.path.join(source_dir, source['source_filename'])
+                        # latest_file = os.path.join(source_dir, source['source_filename'])
                         
                         filename_date = datetime.date(datetime.strptime(event_obj['message']['ts'], '%Y-%m-%dT%H:%M:%S.%fZ'))
                         filename_time = datetime.time(datetime.strptime(event_obj['message']['ts'], '%Y-%m-%dT%H:%M:%S.%fZ'))
                         filename_middle = datetime.combine(filename_date, filename_time).strftime("%Y%m%d_%H%M%S%f")[:-3]
 
                         dst = os.path.join(dest_dir, source['filename_prefix'] + filename_middle + source['filename_suffix'])
-                        src = os.path.join(source_dir, latest_file)
+                        # src = os.path.join(source_dir, latest_file)
 
-                        logging.debug("src: %s", src)
+                        # logging.debug("src: %s", src)
                         logging.debug("dst: %s", dst)
 
                         try:
@@ -146,8 +168,19 @@ async def aux_data_inserter():
                             # sftp.put(src, dst)
                             # sftp.close()
 
+
+                            # ------------ only needed for http transfers -------------
+                            res = requests.get(source['source_url'] + source['source_filename'], stream=True)
+
+                            if res.status_code != 200:
+                                logging.error("Unable to retrieve image from: %s", source['source_url'] + source['source_filename'])
+                                continue
+
+                            with open(dst, 'wb') as f:
+                                shutil.copyfileobj(res.raw, f)
+
                             # ----------- only needed for local transfers ------------
-                            shutil.copyfile(src,dst)
+                            # shutil.copyfile(src,dst)
 
                             aux_data_record['data_array'].append({ 'data_name': "camera_name",'data_value': source['source_name'] })
                             aux_data_record['data_array'].append({ 'data_name': "filename",'data_value': dst })
