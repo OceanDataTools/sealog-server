@@ -62,7 +62,7 @@ THRESHOLD = 20 #seconds
 # t = Transport(host, port)
 
 source_dir = '/mnt/ramdisk'
-dest_dir = '/data/sealog-files/images'
+dest_dir = '/home/mt/sealog-Sub-files/images'
 
 sources = [
     {
