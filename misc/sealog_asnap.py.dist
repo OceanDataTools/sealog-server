@@ -47,6 +47,10 @@ def asnap_service(interval):
 
     run_flag = True
 
+    # wait for even second
+    wait_time = time.time() % 1
+    time.sleep(wait_time)
+
     while True:
         try:
             asnap_status = get_custom_var_by_name(ASNAP_STATUS_VAR_NAME)
@@ -68,7 +72,8 @@ def asnap_service(interval):
                 logging.error("Error submitting new ASNAP event: %s", json.dumps(ASNAP_EVENT))
                 logging.debug(str(error))
 
-        time.sleep(interval)
+        wait_time = time.time() % 1
+        time.sleep(interval - 1 + wait_time)
 
 # -------------------------------------------------------------------------------------
 # Required python code for running the script as a stand-alone utility
