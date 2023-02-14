@@ -25,10 +25,3 @@ COPY config/secret.js.dist config/secret.js
 EXPOSE 8000
 
 CMD [ "npm", "run", "start" ]
-
-# Attach git metadata to the environment for the /version API
-ARG GIT_SOURCE
-ENV GIT_SOURCE=${GIT_SOURCE}
-
-ARG GIT_REVISION
-ENV GIT_REVISION=${GIT_REVISION}
