@@ -73,19 +73,19 @@ const envKey = (key) => {
   const configuration = {
     development: {
       host: '0.0.0.0',
-      port: 8000,
+      port: process.env.PORT || 8000,
       prefix: '/sealog-server',
       db: sealogDB_devel
     },
     debug: {
       host: '0.0.0.0',
-      port: 8000,
+      port: process.env.PORT || 8000,
       prefix: '/sealog-server',
       db: sealogDB
     },
     production: {
       host: '0.0.0.0',
-      port: 8000,
+      port: process.env.PORT || 8000,
       prefix: '/sealog-server',
       db: sealogDB
     }
@@ -94,7 +94,7 @@ const envKey = (key) => {
   return configuration[env][key];
 };
 
-const mongodb_URL = 'mongodb://localhost:27017/' + envKey('db');
+const mongodb_URL = (process.env.MONGO_URL || 'mongodb://localhost:27017/') + envKey('db');
 
 const manifest = {
   server: {
@@ -179,7 +179,7 @@ const manifest = {
       { plugin: 'hapi-pino',
         options: {
           logRequestComplete: process.env.NODE_ENV !== 'production',
-          prettyPrint: process.env.NODE_ENV !== 'production',
+          level: (process.env.NODE_ENV !== 'production')? 'debug' : 'info',
           redact: ['req.headers.authorization']
         }
       },
