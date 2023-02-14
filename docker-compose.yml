@@ -15,7 +15,7 @@ services:
 
       # Create the secret key with the following command:
       # node -e "console.log(require('crypto').randomBytes(256).toString('base64'));
-      - SEALOG_SECRET='Vskv6bMI8guDYc9227UXIJLWgBeyVronkuN3mDe7RuW7XxWbF0ry1xKzjee85eD3Pt5kKwWPsnouqzgIyzxxuUyzr+PcRCUy6E3y4j8yFZhxzcmRccxQxuqxqj/5/wsfS4F+p1t3EBCs8MUYRpPGlZCZ9FzeGXt91gNwIYn/WWv4Eso/MTdSzkGzqh9kabVnzGITCwRAiAr1xo0zenNnhSjOaj2UrdRetunRq25nWGLSMWXEaAYPS1zLYR16+ZQkkTEdmYtFTOKFEHIA0HIv1Ei7v/1n2uh9Vyeu2YiBaEBcTBd8mfGWBClmhKu8XiHkGMnXeKcp6dfCd5UF06O2VA==
+      - SEALOG_SECRET=<INSERT_CUSTOM_SECRET>
 
     ports:
       - "8000:8000"  # API
