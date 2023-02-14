@@ -2,7 +2,7 @@ const Boom = require('@hapi/boom');
 const Fs = require('fs');
 const Tmp = require('tmp');
 const Path = require('path');
-const { parseAsync } = require('json2csv');
+const { AsyncParser } = require('@json2csv/node');
 const Deepcopy = require('deepcopy');
 
 const {
@@ -46,6 +46,7 @@ const flattenLoweringObjs = (lowering_objs) => {
   const flat_lowerings = lowering_objs.map((lowering) => {
 
     const copied_lowering = Deepcopy(lowering);
+    copied_lowering.id = lowering.id; // weird bug where the original objectID doesn't copy.
 
     Object.keys(copied_lowering.lowering_additional_meta).forEach((key) => {
 
@@ -55,6 +56,8 @@ const flattenLoweringObjs = (lowering_objs) => {
       }
     });
 
+    copied_lowering.lowering_description = copied_lowering.lowering_description.replace('\n','\\n');
+
     delete copied_lowering.lowering_additional_meta;
     delete copied_lowering.lowering_hidden;
     delete copied_lowering.lowering_access_list;
@@ -62,7 +65,6 @@ const flattenLoweringObjs = (lowering_objs) => {
 
     copied_lowering.start_ts = copied_lowering.start_ts.toISOString();
     copied_lowering.stop_ts = copied_lowering.stop_ts.toISOString();
-    copied_lowering.id = copied_lowering.id.toString('hex');
     copied_lowering.lowering_tags = copied_lowering.lowering_tags.join(',');
 
     return copied_lowering;
@@ -91,6 +93,10 @@ const _renameAndClearFields = (doc) => {
   //rename id
   doc.id = doc._id;
   delete doc._id;
+
+  if (typeof doc.id === 'object') {
+    doc.id = doc.id.valueOf();
+  }
 
   if ( !useAccessControl ) {
     delete doc.lowering_access_list;
@@ -208,7 +214,8 @@ exports.plugin = {
 
               const csv_headers = buildLoweringCSVHeaders(flat_lowerings);
 
-              const csv_results = await parseAsync(flat_lowerings, { fields: csv_headers });
+              const json2csvParser = new AsyncParser({ fields: csv_headers });
+              const csv_results = await json2csvParser.parse(flat_lowerings).promise();
 
               return h.response(csv_results).code(200);
             }
@@ -356,7 +363,8 @@ exports.plugin = {
 
               const csv_headers = buildLoweringCSVHeaders(flat_lowerings);
 
-              const csv_results = await parseAsync(flat_lowerings, { fields: csv_headers });
+              const json2csvParser = new AsyncParser({ fields: csv_headers });
+              const csv_results = await json2csvParser.parse(flat_lowerings).promise();
 
               return h.response(csv_results).code(200);
             }
@@ -451,7 +459,8 @@ exports.plugin = {
 
               const csv_headers = buildLoweringCSVHeaders(flat_lowerings);
 
-              const csv_results = await parseAsync(flat_lowerings, { fields: csv_headers });
+              const json2csvParser = new AsyncParser({ fields: csv_headers });
+              const csv_results = await json2csvParser.parse(flat_lowerings).promise();
 
               return h.response(csv_results).code(200);
             }
@@ -539,7 +548,8 @@ exports.plugin = {
 
           const csv_headers = buildLoweringCSVHeaders(flat_lowerings);
 
-          const csv_results = await parseAsync(flat_lowerings, { fields: csv_headers });
+          const json2csvParser = new AsyncParser({ fields: csv_headers });
+          const csv_results = await json2csvParser.parse(flat_lowerings).promise();
 
           return h.response(csv_results).code(200);
         }
