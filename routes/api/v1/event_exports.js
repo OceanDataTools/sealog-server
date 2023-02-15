@@ -1,5 +1,5 @@
 const Boom = require('@hapi/boom');
-const { parseAsync } = require('json2csv');
+const { AsyncParser } = require('@json2csv/node');
 
 const {
   addEventRecordIDs,
@@ -151,7 +151,8 @@ exports.plugin = {
             const flat_events = flattenEventObjs(results);
             const csv_headers = buildEventCSVHeaders(flat_events);
 
-            const csv_results = await parseAsync(flat_events, { fields: csv_headers });
+            const json2csvParser = new AsyncParser({ fields: csv_headers });
+            const csv_results = await json2csvParser.parse(flat_events).promise();
 
             return h.response(csv_results).code(200);
           }
@@ -292,7 +293,8 @@ exports.plugin = {
             const flat_events = flattenEventObjs(results);
             const csv_headers = buildEventCSVHeaders(flat_events);
 
-            const csv_results = await parseAsync(flat_events, { fields: csv_headers });
+            const json2csvParser = new AsyncParser({ fields: csv_headers });
+            const csv_results = await json2csvParser.parse(flat_events).promise();
 
             return h.response(csv_results).code(200);
           }
@@ -429,7 +431,9 @@ exports.plugin = {
                 const flat_events = flattenEventObjs(results);
                 const csv_headers = buildEventCSVHeaders(flat_events);
 
-                const csv_results = await parseAsync(flat_events, { fields: csv_headers });
+                const json2csvParser = new AsyncParser({ fields: csv_headers });
+                const csv_results = await json2csvParser.parse(flat_events).promise();
+
 
                 return h.response(csv_results).code(200);
               }
@@ -506,7 +510,8 @@ exports.plugin = {
             const flat_events = flattenEventObjs(results);
             const csv_headers = buildEventCSVHeaders(flat_events);
 
-            const csv_results = await parseAsync(flat_events, { fields: csv_headers });
+            const json2csvParser = new AsyncParser({ fields: csv_headers });
+            const csv_results = await json2csvParser.parse(flat_events).promise();
 
             return h.response(csv_results).code(200);
           }
