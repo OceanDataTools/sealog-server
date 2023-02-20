@@ -32,6 +32,8 @@ const {
   loginSuccessResponse,
   registerPayload,
   resetPasswordPayload,
+  tokenRefreshPayload,
+  tokenRefreshSuccessResponse,
   userSuccessResponse,
   userToken
 } = require('../../../lib/validations');
@@ -376,7 +378,11 @@ exports.plugin = {
         try {
           await db.collection(usersTable).updateOne({ _id: new ObjectID(user._id) }, { $set: user });
 
-          return h.response({ token: Jwt.sign( { id: user._id, scope: _rolesToScope(user.roles), roles: user.roles }, SECRET_KEY), id: user._id.toString() }).code(200);
+          return h.response({
+            access_token: Jwt.sign( { id: user._id, scope: server.methods._rolesToScope(user.roles), roles: user.roles }, SECRET_KEY, { expiresIn: '1h' }),
+            refresh_token: Jwt.sign( { id: user._id }, SECRET_KEY, { expiresIn: '2h' }),
+            id: user._id.toString()
+          }).code(200);
         }
         catch (err) {
           return Boom.serverUnavailable('database error', err);
@@ -554,7 +560,9 @@ exports.plugin = {
         try {
           const user = await db.collection(usersTable).findOne({ _id: new ObjectID(request.auth.credentials.id) });
 
-          return h.response({ token: Jwt.sign( { id: user._id, scope: server.methods._rolesToScope(user.roles), roles: user.roles }, SECRET_KEY) }).code(200);
+          return h.response({
+            token: Jwt.sign( { id: user._id, scope: server.methods._rolesToScope(user.roles), roles: user.roles }, SECRET_KEY)
+          }).code(200);
         }
         catch (err) {
           console.log('ERROR:', err);
@@ -585,5 +593,55 @@ exports.plugin = {
         tags: ['auth', 'api']
       }
     });
+
+    server.route({
+      method: 'POST',
+      path: '/auth/refresh',
+      async handler(request, h) {
+
+        const db = request.mongo.db;
+        const ObjectID = request.mongo.ObjectID;
+        let decodedValue = null;
+
+        try {
+          decodedValue = Jwt.verify(request.payload.refreshToken, SECRET_KEY);
+        }
+        catch (err) {
+          console.log('ERROR:', err);
+          Boom.unauthorized('refresh token is invalid/expired');
+        }
+
+        try {
+          const user = await db.collection(usersTable).findOne({ _id: new ObjectID(decodedValue.id) });
+
+          if (!user) {
+            Boom.unauthorized('refresh token is invalid');
+          }
+
+          return h.response({
+            access_token: Jwt.sign( { id: user._id, scope: server.methods._rolesToScope(user.roles), roles: user.roles }, SECRET_KEY, { expiresIn: '1h' }),
+            refresh_token: Jwt.sign( { id: user._id }, SECRET_KEY, { expiresIn: '2h' })
+          }).code(200);
+        }
+        catch (err) {
+          console.log('ERROR:', err);
+          Boom.serverUnavailable('database error');
+        }
+      },
+      config: {
+        validate: {
+          payload: tokenRefreshPayload
+        },
+        response: {
+          status: {
+            200: tokenRefreshSuccessResponse
+          }
+        },
+        description: 'This is the route used for refreshing the JWT access token.',
+        notes: 'Route that verifies the refresh JWT in the post payload is valid and issues a new access and refresh token.',
+        tags: ['auth', 'api']
+      }
+    });
+
   }
 };
