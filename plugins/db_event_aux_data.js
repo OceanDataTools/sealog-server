@@ -2,24 +2,42 @@ const {
   eventAuxDataTable
 } = require('../config/db_constants');
 
+const {
+  event_aux_data_develDB_data
+} = require('../lib/db_init_data');
+
+let env = process.env.NODE_ENV || 'development';
+env = (env === 'test') ? 'development' : env;
+env = (env === 'debug') ? 'production' : env;
+
 exports.plugin = {
   name: 'db_populate_event_aux_data',
   dependencies: ['hapi-mongodb'],
   register: async (server, options) => {
 
     const db = server.mongo.db;
-    // const ObjectID = server.mongo.ObjectID;
 
-    console.log('Searching for Event Aux Data Collection');
     try {
+      console.log('Searching for Event Aux Data Collection');
       const result = await db.listCollections({ name: eventAuxDataTable }).toArray();
-      if (result.length > 0) {
-        console.log('Collection already exists... we\'re done here.');
-        return;
+      if (result.length > 0 ) {
+        if (env === 'production' ) {
+          console.log('Event Aux Data Collection already exists... we\'re done here.');
+          return;
+        }
+
+        try {
+          console.log('Event Aux Data Collection already exists... we\'re dropping it.');
+          await db.dropCollection(eventAuxDataTable);
+        }
+        catch (err) {
+          console.log('DROP ERROR:', err.code);
+          throw (err);
+        }
       }
     }
     catch (err) {
-      console.log('ERROR:', err.code);
+      console.log('LIST ERROR:', err.code);
       throw (err);
     }
 
@@ -27,12 +45,23 @@ exports.plugin = {
     try {
       const collection = await db.createCollection(eventAuxDataTable);
 
-      console.log('Creating additional indexes');
-      await collection.createIndex({ event_id: -1 });
+      if (env !== 'production' ) {
+        try {
+          console.log('Populating Event Aux Data Collection');
+          await collection.insertMany(event_aux_data_develDB_data);
+
+        }
+        catch (err) {
+          console.log('INSERT ERROR:', err.code);
+          throw (err);
+        }
+      }
+
     }
     catch (err) {
-      console.log('ERROR:', err.code);
+      console.log('CREATE ERROR:', err.code);
       throw (err);
     }
+
   }
 };
