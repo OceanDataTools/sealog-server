@@ -601,10 +601,22 @@ exports.plugin = {
 
         const db = request.mongo.db;
         const ObjectID = request.mongo.ObjectID;
+        let decodedValue = null;
 
         try {
-          const decodedValue = Jwt.verify(request.payload.refreshToken, SECRET_KEY);
+          decodedValue = Jwt.verify(request.payload.refreshToken, SECRET_KEY);
+        }
+        catch (err) {
+          console.log('ERROR:', err);
+          Boom.unauthorized('refresh token is invalid/expired');
+        }
+
+        try {
           const user = await db.collection(usersTable).findOne({ _id: new ObjectID(decodedValue.id) });
+
+          if (!user) {
+            Boom.unauthorized('refresh token is invalid');
+          }
 
           return h.response({
             access_token: Jwt.sign( { id: user._id, scope: server.methods._rolesToScope(user.roles), roles: user.roles }, SECRET_KEY, { expiresIn: '1h' }),
