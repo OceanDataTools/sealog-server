@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+'''
+FILE:           sealog_patch_event_data.py
+
+DESCRIPTION:    This script updates events based on a corrected json-formatted
+                sealog event export.
+
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    1.0
+CREATED:    2023-04-19
+REVISION:   
+
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2023
+'''
+
+import re
+import sys
+import json
+import time
+import logging
+import asyncio
+import websockets
+import yaml
+import requests
+from influxdb_client import InfluxDBClient
+
+from os.path import dirname, realpath
+sys.path.append(dirname(dirname(realpath(__file__))))
+
+from misc.python_sealog.events import get_events_by_cruise, get_events_by_lowering
+from misc.python_sealog.lowerings import get_lowering_uid_by_id
+from misc.python_sealog.cruises import get_cruise_uid_by_id
+
+from misc.python_sealog.settings import API_SERVER_URL, WS_SERVER_URL, LOWERINGS_API_PATH, EVENTS_API_PATH, EVENT_AUX_DATA_API_PATH, HEADERS
+
+#-----------------------------------------------------------------------------#
+
+# needs to be unique for all currently active dataInserter scripts.
+CLIENT_WSID = 'eventData-dataUpdater'
+
+HELLO = {
+    'type': 'hello',
+    'id': CLIENT_WSID,
+    'auth': {
+        'headers': HEADERS
+    },
+    'version': '2',
+    'subs': ['/ws/status/newEvents']
+}
+
+PING = {
+    'type':'ping',
+    'id':CLIENT_WSID
+}
+
+
+def patch_event_data(event, dry_run=False):
+    try:
+        event_id = event['id']
+        del event['id']
+        del event['aux_data']
+
+        logging.debug(json.dumps(event))
+
+        logging.debug("URL: %s\nData: %s" % API_SERVER_URL + EVENT_API_PATH, json.dumps(event))
+
+        if not dry_run:
+            # req = requests.patch(API_SERVER_URL + EVENT_API_PATH, headers=HEADERS, data = json.dumps(event))
+            logging.debug("Response: %s", req.text)
+
+    except Exception as err:
+        logging.warning("Error patch sealog event")
+        logging.debug(str(err))
+
+
+# -------------------------------------------------------------------------------------
+# The main loop of the utility
+# -------------------------------------------------------------------------------------
+if __name__ == '__main__':
+
+    import argparse
+    import os
+
+    parser = argparse.ArgumentParser(description='Event Data Updating Service')
+    parser.add_argument('-v', '--verbosity', dest='verbosity',
+                        default=0, action='count',
+                        help='Increase output verbosity')
+    parser.add_argument('-n', '--dry_run', action='store_true', help='compile the data but do not push to server')
+    parser.add_argument('event_data_file', help='json-formatted event data')
+    parsed_args = parser.parse_args()
+
+    ############################
+    # Set up logging before we do any other argument parsing (so that we
+    # can log problems with argument parsing).
+
+    LOGGING_FORMAT = '%(asctime)-15s %(levelname)s - %(message)s'
+    logging.basicConfig(format=LOGGING_FORMAT)
+
+    LOG_LEVELS = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
+    parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
+    logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
+
+    try:
+        event_data = json.load(parsed_args.event_data_file)
+
+    except:
+        logging.error("Unable to parse event data file")
+        sys.exit(1)
+
+    for event in event_data:
+        patch_event_data(event, parsed_args.dry_run)
