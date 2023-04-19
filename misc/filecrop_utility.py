@@ -14,7 +14,7 @@ CREATED:    2021-04-21
 REVISION:   2021-04-27
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2022
+                Copyright (C) OceanDataTools.org 2023
 '''
 
 import os
@@ -27,11 +27,12 @@ class FileCropUtility():
     times.
     '''
 
-    def __init__(self, start_dt=datetime(1970, 1, 1, 0, 0, 0, tzinfo=None), stop_dt=datetime.utcnow(), delimiter=',', dt_format='%Y-%m-%dT%H:%M:%S.%fZ'):
+    def __init__(self, start_dt=datetime(1970, 1, 1, 0, 0, 0, tzinfo=None), stop_dt=datetime.utcnow(), delimiter=',', dt_format='%Y-%m-%dT%H:%M:%S.%fZ', header=False):
         self.start_dt = start_dt
         self.stop_dt = stop_dt
         self.delimiter = delimiter
         self.dt_format = dt_format
+        self.header = header
 
     def cull_files(self, data_files):
         '''
@@ -48,6 +49,10 @@ class FileCropUtility():
         for data_file in data_files:
             logging.debug("File: %s", data_file)
             with open( data_file, 'rb' ) as file :
+
+                if self.header:
+                    _ = file.readline()
+
                 first_line = file.readline().decode().rstrip('\n')
                 try:
                     first_ts = datetime.strptime(first_line.split(self.delimiter)[0],self.dt_format)
@@ -114,3 +119,4 @@ class FileCropUtility():
 
                         if (line_ts - self.start_dt).total_seconds() >= 0 and (self.stop_dt - line_ts).total_seconds() >= 0:
                             yield line_str
+
