@@ -379,7 +379,7 @@ exports.plugin = {
           await db.collection(usersTable).updateOne({ _id: new ObjectID(user._id) }, { $set: user });
 
           return h.response({
-            access_token: Jwt.sign( { id: user._id, scope: server.methods._rolesToScope(user.roles), roles: user.roles }, SECRET_KEY, { expiresIn: '1h' }),
+            access_token: Jwt.sign( { id: user._id, scope: server.methods._rolesToScope(user.roles), roles: user.roles }, SECRET_KEY, { expiresIn: '1m' }),
             refresh_token: Jwt.sign( { id: user._id }, SECRET_KEY, { expiresIn: '2h' }),
             id: user._id.toString()
           }).code(200);
@@ -604,7 +604,7 @@ exports.plugin = {
         let decodedValue = null;
 
         try {
-          decodedValue = Jwt.verify(request.payload.refreshToken, SECRET_KEY);
+          decodedValue = Jwt.verify(request.payload.refresh_token, SECRET_KEY);
         }
         catch (err) {
           console.log('ERROR:', err);
