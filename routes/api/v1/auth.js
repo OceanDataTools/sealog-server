@@ -89,7 +89,7 @@ const _renameAndClearFields = (doc) => {
 
 const _hashPassword = async (password, saltRounds = 10) => {
 
-  hashedPassword = await new Promise((resolve, reject) => {
+  const hashedPassword = await new Promise((resolve, reject) => {
 
     Bcrypt.hash(password, saltRounds, (err, hash) => {
 
@@ -101,9 +101,7 @@ const _hashPassword = async (password, saltRounds = 10) => {
     });
   });
 
-  console.error("hashed password:", hashedPassword);
-  console.error(typeof(hashedPassword));
-  return hashedPassword
+  return hashedPassword;
 };
 
 
@@ -194,7 +192,7 @@ exports.plugin = {
             emailTransporter.sendMail(mailOptions, (err) => {
 
               if (err) {
-                console.log('ERROR:', err);
+                console.error('ERROR:', err);
               }
             });
           }
@@ -215,7 +213,7 @@ exports.plugin = {
             emailTransporter.sendMail(mailOptions, (err) => {
 
               if (err) {
-                console.log('ERROR:', err);
+                console.error('ERROR:', err);
               }
             });
           }
@@ -334,8 +332,6 @@ exports.plugin = {
 
             user = result;
 
-            console.error(request.payload.password, user.password);
-
             const pass = Bcrypt.compareSync(request.payload.password, user.password);
 
             if (!pass) {
@@ -348,7 +344,7 @@ exports.plugin = {
           }
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -361,7 +357,7 @@ exports.plugin = {
             }
           }
           catch (err) {
-            console.log(err);
+            console.error(err);
             return Boom.serverUnavailable('reCaptcha error');
           }
         }
@@ -478,7 +474,7 @@ exports.plugin = {
           emailTransporter.sendMail(mailOptions, (err) => {
 
             if (err) {
-              console.log('ERROR:', err);
+              console.error('ERROR:', err);
             }
           });
         }
@@ -519,7 +515,7 @@ exports.plugin = {
 
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
       },
@@ -559,7 +555,7 @@ exports.plugin = {
           }).code(200);
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
       },
@@ -601,7 +597,7 @@ exports.plugin = {
     //       decodedValue = Jwt.verify(request.payload.refresh_token, SECRET_KEY);
     //     }
     //     catch (err) {
-    //       console.log('ERROR:', err);
+    //       console.error('ERROR:', err);
     //       Boom.unauthorized('refresh token is invalid/expired');
     //     }
 
@@ -618,7 +614,7 @@ exports.plugin = {
     //       }).code(200);
     //     }
     //     catch (err) {
-    //       console.log('ERROR:', err);
+    //       console.error('ERROR:', err);
     //       Boom.serverUnavailable('database error');
     //     }
     //   },
