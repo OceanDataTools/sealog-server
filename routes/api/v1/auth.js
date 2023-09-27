@@ -87,16 +87,23 @@ const _renameAndClearFields = (doc) => {
   return doc;
 };
 
-const _hashedPassword = async (password, saltRounds=10) => {
+const _hashPassword = async (password, saltRounds = 10) => {
 
-  return await new Promise((resolve, reject) => {
+  hashedPassword = await new Promise((resolve, reject) => {
+
     Bcrypt.hash(password, saltRounds, (err, hash) => {
+
       if (err) {
         reject(err);
       }
+
       resolve(hash);
     });
   });
+
+  console.error("hashed password:", hashedPassword);
+  console.error(typeof(hashedPassword));
+  return hashedPassword
 };
 
 
@@ -106,7 +113,7 @@ exports.plugin = {
   register: (server, options) => {
 
     server.method('_rolesToScope', _rolesToScope);
-    server.method('_hashedPassword', _hashedPassword);
+    server.method('_hashPassword', _hashPassword);
 
     // Need to add a register route
     server.route({
@@ -164,25 +171,7 @@ exports.plugin = {
         user.system_user = false;
         user.disabled = disableRegisteringUsers;
         user.loginToken = randomAsciiString(20);
-
-
-        // const password = request.payload.password;
-
-        // const hashedPassword = await new Promise((resolve, reject) => {
-
-        //   Bcrypt.hash(password, saltRounds, (err, hash) => {
-
-        //     if (err) {
-        //       reject(err);
-        //     }
-
-        //     resolve(hash);
-        //   });
-        // });
-
-        // user.password = hashedPassword;
-
-        user.password = server.methods._hashedPassword(request.payload.password)
+        user.password = await server.methods._hashPassword(request.payload.password);
 
         try {
           const result = await db.collection(usersTable).insertOne(user);
@@ -293,22 +282,10 @@ exports.plugin = {
           }
         }
 
-        // const password = request.payload.password;
-
-        // const hashedPassword = await new Promise((resolve, reject) => {
-
-        //   Bcrypt.hash(password, saltRounds, (err, hash) => {
-
-        //     if (err) {
-        //       reject(err);
-        //     }
-
-        //     resolve(hash);
-        //   });
-        // });
-
         try {
-          await db.collection(usersTable).updateOne({ _id: user._id }, { $set: { password: server.methods._hashedPassword(request.payload.password), resetPasswordToken: null, resetPasswordExpires: null } });
+
+          const hashedPassword = await server.methods._hashPassword(request.payload.password);
+          await db.collection(usersTable).updateOne({ _id: user._id }, { $set: { password: hashedPassword, resetPasswordToken: null, resetPasswordExpires: null } });
           return h.response().code(204);
         }
         catch (err) {
@@ -356,6 +333,8 @@ exports.plugin = {
             }
 
             user = result;
+
+            console.error(request.payload.password, user.password);
 
             const pass = Bcrypt.compareSync(request.payload.password, user.password);
 
