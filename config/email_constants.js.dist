@@ -4,6 +4,9 @@
 // Only needed if using Mailgun
 // const Mg = require('nodemailer-mailgun-transport'); // eslint-disable-line no-unused-vars
 
+// Only needed if using Mailjet
+// const Mj = require('nodemailer-mailjet-transport'); // eslint-disable-line no-unused-vars
+
 // The sender address for all emails
 const senderAddress = 'sealog_admin@oceandatatools.org';
 
@@ -26,12 +29,15 @@ const registeringUserRoles = ['event_watcher', 'event_logger', 'event_manager', 
 // Activate per-cruise/per-lowering access permissions
 const useAccessControl = false;
 
-// Uncomment one of the following
+// ====================== Uncomment one of the following ======================
 
 // Not using email
+// ----------------------------------------------------------------------------
 const emailTransporter = null;
+// ----------------------------------------------------------------------------
 
 // Using GMail integration
+// ----------------------------------------------------------------------------
 // const emailTransporter = Nodemailer.createTransport({
 //   service: 'gmail',
 //   auth: {
@@ -39,14 +45,27 @@ const emailTransporter = null;
 //     pass: 'password'
 //   }
 // }); // eslint-disable-line no-dupe-keys
+// ----------------------------------------------------------------------------
 
 // Using Mailgun integration
+// ----------------------------------------------------------------------------
 // const emailTransporter = Nodemailer.createTransport(Mg({
 //   auth: {
 //     api_key: 'key-1234123412341234',
-//     domain: 'one of your domain names listed at your https://app.mailgun.com/app/sending/domains'
+//     domain: 'mailgun domain names listed at https://app.mailgun.com/app/sending/domains'
 //   }
 // })); // eslint-disable-line no-dupe-keys
+// ----------------------------------------------------------------------------
+
+// Using Mailjet integration
+// ----------------------------------------------------------------------------
+// const emailTransporter = Nodemailer.createTransport(Mj({
+//   auth: {
+//     apiKey: 'mj-key',
+//     apiSecret: 'mj-secret'
+//   }
+// })); // eslint-disable-line no-dupe-keys
+// ----------------------------------------------------------------------------
 
 module.exports = {
   senderAddress,

@@ -71,7 +71,7 @@ source_dir = '/mnt/ramdisk'
 
 # ---------------------------------------------------------
 
-dest_dir = '/home/mt/sealog-Sub-files/images'
+dest_dir = '/data/sealog-files/images'
 
 sources = [
     {

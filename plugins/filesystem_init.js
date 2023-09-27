@@ -1,5 +1,5 @@
 const Fs = require('fs');
-const  Mkdirp = require('mkdirp');
+const Mkdirp = require('mkdirp');
 
 const {
   IMAGE_PATH,
