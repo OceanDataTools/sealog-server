@@ -17,7 +17,6 @@ const {
   senderAddress,
   emailTransporter,
   reCaptchaSecret,
-  resetPasswordURL,
   registeringUserRoles,
   disableRegisteringUsers,
   notificationEmailAddresses
@@ -461,7 +460,7 @@ exports.plugin = {
           }
         }
 
-        const resetLink = resetPasswordURL + token;
+        const resetLink = request.connection.info.protocol + '://' + request.info.host + '/resetPassword/' + token;
         const mailOptions = {
           from: senderAddress, // sender address
           to: request.payload.email, // list of receivers
