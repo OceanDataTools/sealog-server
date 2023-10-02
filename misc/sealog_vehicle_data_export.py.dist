@@ -187,13 +187,25 @@ def _export_lowering_sealog_data_files(cruise, lowering): # pylint: disable=too-
     logging.info("Export Images")
     framegrab_list = get_framegrab_list_by_lowering(lowering['id'])
 
+    # Removing files in export directory that are no longer part of the export.
+    existing_framegrab_list = os.listdir(os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), IMAGES_DIRNAME))
+    delete_framegrab_list = list(set(existing_framegrab_list) - set([os.path.basename(filepath) for filepath in framegrab_list]))
+    if delete_framegrab_list:
+        for filename in delete_framegrab_list:
+            try:
+                logging.info('Deleting: %s', filename)
+                os.remove(os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), IMAGES_DIRNAME, filename))
+            except:
+                pass
+
+
     with tempfile.NamedTemporaryFile(mode='w+b', delete=False) as file:
         for framegrab in framegrab_list:
 
             framegrab = os.path.basename(framegrab)
             file.write(str.encode(framegrab + '\n'))
 
-        subprocess.call(['rsync','-avi','--progress', '--delete', '--files-from=' + file.name , os.path.join(API_SERVER_FILE_PATH, 'images', ''), os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), IMAGES_DIRNAME)])
+        subprocess.call(['rsync','-avi','--progress', '--files-from=' + file.name , os.path.join(API_SERVER_FILE_PATH, 'images', ''), os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), IMAGES_DIRNAME)])
 
 
 def _export_cruise_sealog_data_files(cruise):
