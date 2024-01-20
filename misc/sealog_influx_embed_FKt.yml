@@ -1,0 +1,206 @@
+-
+    data_source: vesselRealtimeNavData
+    query_measurements:
+        - posmv
+    aux_record_lookup:
+        POSMV_HeadingTrue:
+            name: heading
+            uom: deg
+            round: 3
+        POSMV_Latitude:
+            name: latitude
+            uom: ddeg
+            round: 6
+        POSMV_Longitude:
+            name: longitude
+            uom: ddeg
+            round: 6
+        POSMV_SpeedKt:
+            name: speed
+            uom: knots
+            round: 3
+        POSMV_CourseTrue:
+            name: course
+            uom: deg
+            round: 1
+-
+    data_source: vesselSeawater
+    query_measurements:
+        - minisvs_fwd
+        - transmissometer_1
+        - fluorometer_1
+        - tsg_sbe45_1
+    aux_record_lookup:
+        MiniSVS_Fwd_SoundVelocity:
+            name: sound_velocity
+            uom: m/s
+            round: 2
+        SBE_CST_1_CalcBeams:
+            name: calc_beam_atten_coef
+            uom: 1/m
+            round: 3
+        SBE_CST_1_CorrSigCount:
+            name: corrected_signal_count
+            uom: count
+            round: 3
+        Fluoro_1_ChlSigRaw:
+            name: fluorescence_raw
+            uom: count    
+            round: 3  
+        TSG_SBE45_1_Temperature:
+            name: temperature
+            uom: C
+            round: 3
+        TSG_SBE45_1_Salinity:
+            name: salinity
+            uom: PSU
+            round: 3
+        TSG_SBE45_1_Conductivity:
+            name: conductivity
+            uom: S/m
+            round: 3 
+-
+    data_source: vesselWeather
+    query_measurements:
+        - met4_fm
+        - windsonic_fm
+        - true_wind_fm
+    aux_record_lookup:
+        MET4_FM_AirPres:
+            name: air_pressure
+            uom: hPa
+            round: 3
+        MET4_FM_AirTemp:
+            name: air_temperature
+            uom: C
+            round: 3
+        Windsonic_WindSpd:
+            name: relative_wind_speed
+            uom: knots
+            modify:
+                -
+                    operation:
+                        -
+                            multiply: 1.9438452
+            round: 3
+        Windsonic_WindDir_Corr:
+            name: relative_wind_dir
+            uom: deg
+            round: 3
+        FM_TrueWindSpd:
+            name: true_wind_speed
+            uom: knots
+            modify:
+                -
+                    operation:
+                        -
+                            multiply: 1.9438452
+            round: 3
+        FM_TrueWindDir:
+            name: true_wind_dir
+            uom: deg
+            round: 3
+-
+    data_source: vesselAcoustics
+    query_measurements:
+        - em124
+        - em712
+        - em2040
+    aux_record_lookup:
+        EM124_Depth_xducer_m:
+            name: em124_depth
+            uom: m
+            round: 3 
+        EM712_Depth_xducer_m:
+            name: em712_depth
+            uom: m
+            round: 3        
+        EM2040_Depth_xducer_m:
+            name: em2040_depth
+            uom: m
+            round: 3        
+-
+    data_source: usbl
+    query_measurements:
+        - usbl_gga
+    aux_record_lookup:
+        USBL_Depth_DELTA:
+            name: usbl_depth_delta
+            uom: m
+            round: 6 
+        USBL_Depth_ECHO:
+            name: usbl_depth_echo
+            uom: m
+            round: 6 
+        USBL_Depth_MIKE:
+            name: usbl_depth_mike
+            uom: m
+            round: 6        
+        USBL_Latitude_DELTA:
+            name: usbl_latitude_delta
+            uom: ddeg
+            round: 6 
+        USBL_Latitude_ECHO:
+            name: usbl_latitude_echo
+            uom: ddeg
+            round: 6     
+        USBL_Latitude_MIKE:
+            name: usbl_latitude_mike
+            uom: ddeg
+            round: 6      
+        USBL_Longitude_DELTA:
+            name: usbl_longitude_delta
+            uom: ddeg
+            round: 6 
+        USBL_Longitude_ECHO:
+            name: usbl_longitude_echo
+            uom: ddeg
+            round: 6 
+        USBL_Longitude_MIKE:
+            name: usbl_longitude_mike
+            uom: ddeg
+            round: 6 
+-
+    data_source: ctdSBE911
+    query_measurements:
+        - ctd_sbe911
+    aux_record_lookup:
+        CTD_SBE911_Pressure:
+            name: ctd_pressure
+            uom: dbar
+            round: 3
+        CTD_SBE911_Temperature:
+            name: ctd_temperature
+            uom: C
+            round: 3
+        CTD_SBE911_Salinity:
+            name: ctd_salinity
+            uom: PSU
+            round: 3
+        CTD_SBE911_Density:
+            name: ctd_density
+            uom: kg/m3
+            round: 3
+        CTD_SBE911_Conductivity:
+            name: ctd_conductivity
+            uom: S/m
+            round: 3
+        CTD_SBE911_Fluorescence:
+            name: ctd_fluorescence
+            uom: mg/m3
+            round: 3
+        CTD_SBE911_Oxygen:
+            name: ctd_oxygen
+            uom: umol/kg
+            round: 3
+        CTD_SBE911_BeamTransmission:
+            name: ctd_beam_trans
+            uom: percent
+            round: 3
+        CTD_SBE911_Turbidity:
+            name: ctd_turbidity
+            uom: NTU
+            round: 3
+        
+
+

@@ -1,0 +1,190 @@
+#!/usr/bin/env python3
+'''
+FILE:           sealog_cruise_sync.py
+
+DESCRIPTION:    This script listens for new cruise records and cruise record updates
+                and syncs those new/updated records with other sealog instances
+
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    1.0
+CREATED:    2021-04-21
+REVISION:   2022-02-13
+
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2022
+'''
+
+import sys
+import json
+import logging
+import asyncio
+import websockets
+import requests
+
+from copy import deepcopy
+
+from os.path import dirname, realpath
+sys.path.append(dirname(dirname(realpath(__file__))))
+
+from misc.python_sealog.settings import WS_SERVER_URL, HEADERS, CRUISES_API_PATH
+
+CLIENT_WSID = 'cruiseSync'
+
+HELLO = {
+    'type': 'hello',
+    'id': CLIENT_WSID,
+    'auth': {
+        'headers': HEADERS
+    },
+    'version': '2',
+    'subs': ['/ws/status/newCruises', '/ws/status/updateCruises']
+}
+
+PING = {
+    'type':'ping',
+    'id':CLIENT_WSID
+}
+
+SEALOG_SERVER_INSTANCES = [
+    {
+        'apiServerURL': 'http://localhost:8100/sealog-server',
+        'token':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYTlmNSIsInNjb3BlIjpbImFkbWluIl0sInJvbGVzIjpbImFkbWluIiwiZXZlbnRfd2F0Y2hlciIsImV2ZW50X2xvZ2dlciIsImV2ZW50X21hbmFnZXIiLCJjcnVpc2VfbWFuYWdlciJdLCJpYXQiOjE2NzA2NTg5ODV9.W8e7A13z111zsrJqGtn4fhOJjGaF4M02qbBGljlnpAs'
+    }
+]
+
+
+def update_cruise_record(cruise_record):
+    '''
+    Update the cruise record on the other sealog-servers
+    '''
+
+    for instance in SEALOG_SERVER_INSTANCES:
+        # check to see if a cruise record with the cruiseID in cruise_record already exists
+
+        instance_headers = {
+            "authorization": instance['token']
+        }
+
+        cruise_found = None
+
+        try:
+            url = instance['apiServerURL'] + CRUISES_API_PATH + '/' + cruise_record['id']
+            req = requests.get(url, headers=instance_headers)
+
+            if req.status_code != 404:
+                logging.debug("Cruise found for Cruise UID: %s", cruise_record['id'])
+                logging.debug(req.text)
+                cruise_found = json.loads(req.text)
+                logging.debug(json.dumps(cruise_found, indent=2))
+
+            else:
+                logging.debug("Cruise NOT found for Cruise UID: %s", cruise_record['id'])
+
+        except Exception as error:
+            logging.error(str(error))
+            raise error
+
+        # if a cruise record with the cruiseID does exist, perform an update
+        if cruise_found is not None:
+            try:
+                url = instance['apiServerURL'] + CRUISES_API_PATH + '/' + cruise_found['id']
+                logging.debug(url)
+                logging.debug(json.dumps(cruise_record))
+                update_cruise_record = deepcopy(cruise_record)
+                del update_cruise_record['id']
+                req = requests.patch(url, headers=instance_headers, data = json.dumps(update_cruise_record))
+                logging.debug(req.text)
+
+            except Exception as error:
+                logging.error('Error updating existing cruise record')
+                logging.debug(str(error))
+                raise error
+
+        # if a cruise record with the cruiseID does NOT exist, perform an insert
+        else:
+            try:
+                url = instance['apiServerURL'] + CRUISES_API_PATH
+                logging.debug(url)
+                logging.debug(json.dumps(cruise_record))
+                req = requests.post(url, headers=instance_headers, data = json.dumps(cruise_record))
+                logging.debug(req.text)
+
+            except Exception as error:
+                logging.error('Error inserting new cruise record')
+                logging.debug(str(error))
+                raise error
+
+
+# -------------------------------------------------------------------------------------
+# The main loop of the utility
+# -------------------------------------------------------------------------------------
+async def cruise_sync():
+    '''
+    Listen to the newCruise and updateCruise subscriptions and call
+    update_cruise_record whenever there is a change.
+    '''
+
+    try:
+        async with websockets.connect(WS_SERVER_URL) as websocket:
+
+            await websocket.send(json.dumps(HELLO))
+
+            while True:
+
+                cruise = await websocket.recv()
+                cruise_obj = json.loads(cruise)
+
+                if cruise_obj['type'] and cruise_obj['type'] == 'ping':
+
+                    await websocket.send(json.dumps(PING))
+
+                elif cruise_obj['type'] and cruise_obj['type'] == 'pub':
+
+                    logging.debug(json.dumps(cruise_obj, indent=2))
+                    logging.info("Updating cruise record on other sealog instances")
+                    update_cruise_record(cruise_obj['message'])
+
+                else:
+                    logging.debug("Skipping because cruise value is in the exclude set")
+
+    except Exception as error:
+        logging.error(str(error))
+
+# -------------------------------------------------------------------------------------
+# Required python code for running the script as a stand-alone utility
+# -------------------------------------------------------------------------------------
+if __name__ == '__main__':
+
+    import argparse
+    import os
+
+    parser = argparse.ArgumentParser(description='Cruise Sync Service')
+    parser.add_argument('-v', '--verbosity', dest='verbosity',
+                                            default=0, action='count',
+                                            help='Increase output verbosity')
+
+    parsed_args = parser.parse_args()
+
+    ############################
+    # Set up logging before we do any other argument parsing (so that we
+    # can log problems with argument parsing).
+
+    LOGGING_FORMAT = '%(asctime)-15s %(levelname)s - %(message)s'
+    logging.basicConfig(format=LOGGING_FORMAT)
+
+    LOG_LEVELS = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
+    parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
+    logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
+
+    # Run the main loop
+    try:
+        asyncio.get_event_loop().run_until_complete(cruise_sync())
+    except KeyboardInterrupt:
+        print('Interrupted')
+        try:
+            sys.exit(0)
+        except SystemExit:
+            os._exit(0) # pylint: disable=protected-access

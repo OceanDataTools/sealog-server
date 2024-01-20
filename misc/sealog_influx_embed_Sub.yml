@@ -1,0 +1,158 @@
+-
+    data_source: vesselRealtimeNavData
+    query_measurements:
+        - posmv
+    aux_record_lookup:
+        POSMV_HeadingTrue:
+            name: heading
+            uom: deg
+            round: 3
+        POSMV_Latitude:
+            name: latitude
+            uom: ddeg
+            round: 6
+        POSMV_Longitude:
+            name: longitude
+            uom: ddeg
+            round: 6
+-
+    data_source: vehicleRealtimeNavData
+    query_measurements:
+        - sb_sprint
+    aux_record_lookup:
+        SB_Sprint_HeadingTrue:
+            name: heading
+            uom: deg
+            round: 3
+        SB_Sprint_Latitude:
+            name: latitude
+            uom: ddeg
+            round: 6
+        SB_Sprint_Longitude:
+            name: longitude
+            uom: ddeg
+            round: 6
+        SB_Sprint_Depth_m:
+            name: depth
+            uom: m
+            round: 2
+        SB_Sprint_Altitude_m:
+            name: altitude
+            uom: m
+            round: 2
+-
+    data_source: vehicleRealtimeUSBLData
+    query_measurements:
+        - usbl_gga
+    aux_record_lookup:
+        USBL_Latitude_ALPHA:
+            name: latitude
+            uom: ddeg
+            round: 6
+        USBL_Longitude_ALPHA:
+            name: longitude
+            uom: ddeg
+            round: 6
+        USBL_Depth_ALPHA:
+            name: depth
+            uom: m
+            round: 2
+            modify:
+                -
+                    operation:
+                        -
+                            multiply: -1
+-
+    data_source: vehicleRealtimeCTDData
+    query_measurements:
+        - sb_ctd_sbe49
+    aux_record_lookup:
+        SB_CTD_SBE49_Conductivity:
+            name: cond
+            uom: uS/cm
+            round: 2
+        SB_CTD_SBE49_WaterTemp:
+            name: temp
+            uom: C
+            round: 2
+        SB_CTD_SBE49_WaterPres:
+            name: pres
+            uom: dbar
+            round: 2
+        SB_CTD_SBE49_Salinity:
+            name: sal
+            uom: ppt
+            round: 3
+        SB_CTD_SBE49_SoundVelocity:
+            name: sv
+            uom: m/s
+            round: 2
+        SB_CTD_SBE49_Depth_Corr:
+            name: depth
+            uom: m
+            round: 2
+-
+    data_source: vehicleRealtimeO2Data
+    query_measurements:
+        - sb_oxygen
+        - pt_uaf_oxygen
+    aux_record_lookup:
+        SB_Oxygen_Concentration:
+            name: concentration_raw
+            uom: "\u03BC mol"
+            round: 3
+        SB_Oxygen_Saturation:
+            name: saturation_raw
+            uom: "%"
+            round: 3
+        SB_Oxygen_Concentration_Corr:
+            name: concentration_corr
+            uom: "\u03BC mol"
+            round: 3
+        SB_Oxygen_Saturation_Corr:
+            name: saturation_corr
+            uom: "%"
+            round: 3
+        PT_SB_Oxygen_Concentration:
+            name: pt_concentration
+            uom: "\u03BC mol"
+            round: 3
+        PT_SB_Oxygen_Saturation:
+            name: pt_saturation
+            uom: "%"
+            round: 3
+-
+    data_source: vehicleRealtimeParoData
+    query_measurements:
+        - sb_paro
+    aux_record_lookup:
+        SB_Paro_Depth_Corr:
+            name: depth
+            uom: m
+            round: 2
+
+-
+    data_source: vehicleRealtimeCTDUVSVXData
+    query_measurements:
+        - sb_ctd_uvsvx
+    aux_record_lookup:
+        SB_CTD_UVSVX_Temperature:
+            name: temp
+            uom: C
+            round: 2
+        SB_CTD_UVSVX_Pressure:
+            name: pres
+            uom: dbar
+            round: 2
+        SB_CTD_UVSVX_Salinity:
+            name: sal
+            uom: ppt
+            round: 3
+        SB_CTD_UVSVX_SoundVelocity:
+            name: sv
+            uom: m/s
+            round: 2
+        SB_CTD_UVSVX_Depth_TEOS:
+            name: depth_teos
+            uom: m
+            round: 2
