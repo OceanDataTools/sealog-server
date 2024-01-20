@@ -42,12 +42,56 @@ read -p "Enter your choice (1 or 2): " choice
 case $choice in
     1)
         echo "You chose Sealog-FKt."
-        echo "Copying over Fkt config files"
-        cp config/db_constants_FKt.js config/db_constants.js
-        cp config/email_constants_FKt.js config/email_constants.js
-        cp config/manifest_FKt.js config/manifest.js
-        cp config/path_constants_FKt.js config/path_constants.js
-        cp config/secret_FKt.js config/secret.js
+
+        echo "Setting up git pre-commit hook"
+        cat <<EOF > .git/hooks/pre-commit
+#!/bin/bash
+
+# This is the pre-commit hook
+
+# Update pip requirements file
+$install_dir/venv/bin/pip freeze > $install_dir/requirements.txt
+git add "$install_dir/requirements.txt"
+
+# Copy production config files to their repo filenames
+cp "$install_dir/config/db_constants.js" "$install_dir/config/db_constants_FKt.js"
+cp "$install_dir/config/email_constants.js" "$install_dir/config/email_constants_FKt.js"
+cp "$install_dir/config/manifest.js" "$install_dir/config/manifest_FKt.js"
+cp "$install_dir/config/path_constants.js" "$install_dir/config/path_constants_FKt.js"
+cp "$install_dir/config/secret.js" "$install_dir/config/secret_FKt.js"
+
+# Stage the changes
+git add "$install_dir"
+
+# Continue with the commit
+exit 0
+EOF
+
+        chmod +x .git/hooks/pre-commit
+
+        echo "Setting up git post-checkout hook"
+        cat <<EOF > .git/hooks/post-checkout
+#!/bin/bash
+
+# This is the post-checkout hook
+
+$install_dir/venv/bin/pip install -r $install_dir/requirements.txt
+
+# Copy repo config files to their production filenames
+cp $install_dir/config/db_constants_FKt.js" "$install_dir/config/db_constants.js"
+cp $install_dir/config/email_constants_FKt.js" "$install_dir/config/email_constants.js"
+cp $install_dir/config/manifest_FKt.js" "$install_dir/config/manifest.js"
+cp $install_dir/config/path_constants_FKt.js" "$install_dir/config/path_constants.js"
+cp $install_dir/config/secret_FKt.js" "$install_dir/config/secret.js"
+
+# Stage the changes
+git add "$install_dir"
+
+# Continue with the commit
+exit 0
+EOF
+
+        chmod +x .git/hooks/post-checkout
 
         echo "Building supervisor config file"
         sudo cat <<EOF > /etc/supervisor/conf.d/sealog-server-FKt.conf
@@ -101,22 +145,26 @@ autostart=false
 autorestart=false
 stopsignal=QUIT
 EOF
+        ;;
+    2)
+        echo "You chose Sealog-Sub."
 
-	echo "Setting up git pre-commit hook"
+        echo "Setting up git pre-commit hook"
         cat <<EOF > .git/hooks/pre-commit
 #!/bin/bash
 
 # This is the pre-commit hook
 
+# Update pip requirements file
 $install_dir/venv/bin/pip freeze > $install_dir/requirements.txt
 git add "$install_dir/requirements.txt"
 
-# Copy the file to the destination directory
-cp "$install_dir/config/db_constants.js" "$install_dir/config/db_constants_FKt.js"
-cp "$install_dir/config/email_constants.js" "$install_dir/config/email_constants_FKt.js"
-cp "$install_dir/config/manifest.js" "$install_dir/config/manifest_FKt.js"
-cp "$install_dir/config/path_constants.js" "$install_dir/config/path_constants_FKt.js"
-cp "$install_dir/config/secret.js" "$install_dir/config/secret_FKt.js"
+# Copy production config files to their repo filenames
+cp "$install_dir/config/db_constants.js" "$install_dir/config/db_constants_Sub.js"
+cp "$install_dir/config/email_constants.js" "$install_dir/config/email_constants_Sub.js"
+cp "$install_dir/config/manifest.js" "$install_dir/config/manifest_Sub.js"
+cp "$install_dir/config/path_constants.js" "$install_dir/config/path_constants_Sub.js"
+cp "$install_dir/config/secret.js" "$install_dir/config/secret_Sub.js"
 
 # Stage the changes
 git add "$install_dir"
@@ -125,19 +173,32 @@ git add "$install_dir"
 exit 0
 EOF
 
-chmod +x .git/hooks/pre-commit
+        chmod +x .git/hooks/pre-commit
 
-        ;;
-    2)
-        echo "You chose Sealog-Sub."
-        echo "Copying over Fkt config files"
-        cp ./config/db_constants_Sub.js ./config/db_constants.js
-        cp ./config/email_constants_Sub.js ./config/email_constants.js
-        cp ./config/manifest_Sub.js ./config/manifest.js
-        cp ./config/path_constants_Sub.js ./config/path_constants.js
-        cp ./config/secret_Sub.js ./config/secret.js
+        echo "Setting up git post-checkout hook"
+        cat <<EOF > .git/hooks/post-checkout
+#!/bin/bash
 
-        echo "Building supervisor config file"
+# This is the post-checkout hook
+
+$install_dir/venv/bin/pip install -r $install_dir/requirements.txt
+
+# Copy repo config files to their production filenames
+cp $install_dir/config/db_constants_Sub.js" "$install_dir/config/db_constants.js"
+cp $install_dir/config/email_constants_Sub.js" "$install_dir/config/email_constants.js"
+cp $install_dir/config/manifest_Sub.js" "$install_dir/config/manifest.js"
+cp $install_dir/config/path_constants_Sub.js" "$install_dir/config/path_constants.js"
+cp $install_dir/config/secret_Sub.js" "$install_dir/config/secret.js"
+
+# Stage the changes
+git add "$install_dir"
+
+# Continue with the commit
+exit 0
+EOF
+
+        chmod +x .git/hooks/post-checkout
+
         echo "Building supervisor config file"
         sudo cat <<EOF > /etc/supervisor/conf.d/sealog-server-Sub.conf
 [program:sealog-server-Sub]
@@ -220,37 +281,18 @@ autostart=false
 autorestart=false
 stopsignal=QUIT
 EOF
-
-	echo "Setting up git pre-commit hook"
-        cat <<EOF > .git/hooks/pre-commit
-#!/bin/bash
-
-# This is the pre-commit hook
-
-$install_dir/venv/bin/pip freeze > $install_dir/requirements.txt
-git add "$install_dir/requirements.txt"
-
-# Copy the file to the destination directory
-cp "$install_dir/config/db_constants.js" "$install_dir/config/db_constants_Sub.js"
-cp "$install_dir/config/email_constants.js" "$install_dir/config/email_constants_Sub.js"
-cp "$install_dir/config/manifest.js" "$install_dir/config/manifest_Sub.js"
-cp "$install_dir/config/path_constants.js" "$install_dir/config/path_constants_Sub.js"
-cp "$install_dir/config/secret.js" "$install_dir/config/secret_Sub.js"
-
-# Stage the changes
-git add "$install_dir/config"
-
-# Continue with the commit
-exit 0
-EOF
-
-chmod +x .git/hooks/pre-commit
-
 ;;
     *)
         echo "Invalid choice. Please enter 1 or 2."
         ;;
 esac
+
+echo "Setup Sealog config files"
+.git/hooks/post-checkout
+
+echo "Starting supervisor processes"
+sudo supervisorctl reread
+sudo supervisorctl update
 
 # Down
 cd $current_dir
