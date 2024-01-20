@@ -17,7 +17,6 @@ const {
   senderAddress,
   emailTransporter,
   reCaptchaSecret,
-  resetPasswordURL,
   registeringUserRoles,
   disableRegisteringUsers,
   notificationEmailAddresses
@@ -182,11 +181,6 @@ exports.plugin = {
             subject: 'New Sealog User Registration',
             html: `<p>New user: ${user.username}  ( ${user.fullname} ) has just registered an account with Sealog (${request.info.hostname}). Please ensure this user's access permissions have been configured correctly.</p>`
           };
-
-          if (notificationEmailAddresses.length > 0) {
-            mailOptions.bcc = notificationEmailAddresses.join(',');
-          }
-
 
           if (emailTransporter !== null) {
             emailTransporter.sendMail(mailOptions, (err) => {
