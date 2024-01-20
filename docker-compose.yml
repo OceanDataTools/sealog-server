@@ -23,7 +23,7 @@ services:
 
     volumes:
       #- sealog-exports:/home/sealog/sealog-exports
-      - sealog-files:/home/sealog/sealog-files
+      - sealog-files:<INSERT_PATH>
       # Custom configuration files in ./config, uncomment the following:
       #- config:/usr/src/app/config
 
