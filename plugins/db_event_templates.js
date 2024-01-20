@@ -2,53 +2,66 @@ const {
   eventTemplatesTable
 } = require('../config/db_constants');
 
+const {
+  event_templates_develDB_data
+} = require('../lib/db_init_data');
+
+let env = process.env.NODE_ENV || 'development';
+env = (env === 'test') ? 'development' : env;
+env = (env === 'debug') ? 'production' : env;
+
 exports.plugin = {
   name: 'db_populate_event_templates',
   dependencies: ['hapi-mongodb'],
   register: async (server, options) => {
 
     const db = server.mongo.db;
-    // const ObjectID = server.mongo.ObjectID;
 
-    console.log('Searching for Event Template Collection');
     try {
+      console.log('Searching for Event Templates Collection');
       const result = await db.listCollections({ name: eventTemplatesTable }).toArray();
-      if (result.length > 0) {
+      if (result.length > 0 ) {
+        if (env === 'production' ) {
+          console.log('Event Templates Collection already exists... we\'re done here.');
+          return;
+        }
 
-        // Database migration logic
-        const eventTemplates = await db.collection(eventTemplatesTable).find().toArray();
-
-        eventTemplates.forEach(async (eventTemplate) => {
-
-          // Add template_categories to eventTemplate if not present
-          if ( eventTemplate.template_categories === undefined ) {
-            console.log('Mirgation: Adding missing template_categories to event template');
-            await db.collection(eventTemplatesTable).updateOne( { _id: eventTemplate._id }, { $set: { 'template_categories': [] } } );
-          }
-
-          // Add disabled to eventTemplate if not present
-          if ( eventTemplate.disabled === undefined ) {
-            console.log('Mirgation: Adding missing disabled to event template');
-            await db.collection(eventTemplatesTable).updateOne( { _id: eventTemplate._id }, { $set: { 'disabled': false } } );
-          }
-        });
-
-        console.log('Collection already exists... we\'re done here.');
-        return;
+        try {
+          console.log('Event Templates Collection already exists... we\'re dropping it.');
+          await db.dropCollection(eventTemplatesTable);
+        }
+        catch (err) {
+          console.log('DROP ERROR:', err.code);
+          throw (err);
+        }
       }
     }
     catch (err) {
-      console.log('ERROR:', err.code);
+      console.log('LIST ERROR:', err.code);
       throw (err);
     }
 
-    console.log('Creating Event Template Collection');
+    console.log('Creating Event Templates Collection');
     try {
-      await db.createCollection(eventTemplatesTable);
+      const collection = await db.createCollection(eventTemplatesTable);
+
+      if (env !== 'production' ) {
+        try {
+          console.log('Populating Event Templates Collection');
+          await collection.insertMany(event_templates_develDB_data);
+
+        }
+        catch (err) {
+          console.log('INSERT ERROR:', err.code);
+          throw (err);
+        }
+      }
+
     }
     catch (err) {
-      console.log('ERROR:', err.code);
+      console.log('CREATE ERROR:', err.code);
       throw (err);
     }
+
   }
 };

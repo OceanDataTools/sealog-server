@@ -23,6 +23,8 @@ import time
 import logging
 import requests
 
+from datetime import datetime, timedelta
+
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
@@ -40,21 +42,26 @@ ASNAP_EVENT = {
 }
 
 
-def asnap_service(interval):
+def asnap_service(interval, timeout=0):
     """
     Submit ASNAP events to the sealog-server at the specified interval
     """
 
-    run_flag = True
+    run_flag = False
+    timeout_endtime = None
 
     # wait for even second
-    wait_time = time.time() % 1
+    wait_time = 1 - (time.time() % 1)
+    logging.debug("Waiting %0.3f seconds", wait_time)
     time.sleep(wait_time)
 
     while True:
+
+        # get asnap variable from Sealog server API
         try:
             asnap_status = get_custom_var_by_name(ASNAP_STATUS_VAR_NAME)
 
+            # turn on run flag based on custom var
             run_flag = asnap_status['custom_var_value'] == 'On'
 
         except Exception as error:
@@ -62,6 +69,18 @@ def asnap_service(interval):
             logging.debug(str(error))
             time.sleep(5)
             continue
+
+        # when ASNAP turns on, start timeout
+        if timeout > 0 and timeout_endtime is None and run_flag: 
+            timeout_endtime = datetime.now() + timedelta(minutes=timeout)
+
+        # when ASNAP turns off, reset timeout
+        if timeout_endtime is not None and not run_flag: 
+            timeout_endtime = None
+
+        # if timeout has expired, exit program
+        if timeout_endtime and datetime.now() > timeout_endtime:
+            break
 
         if run_flag:
             try:
@@ -72,7 +91,7 @@ def asnap_service(interval):
                 logging.error("Error submitting new ASNAP event: %s", json.dumps(ASNAP_EVENT))
                 logging.debug(str(error))
 
-        wait_time = time.time() % 1
+        wait_time = 1 - (time.time() % 1)
         time.sleep(interval - 1 + wait_time)
 
 # -------------------------------------------------------------------------------------
@@ -88,6 +107,7 @@ if __name__ == '__main__':
                         default=0, action='count',
                         help='Increase output verbosity')
     parser.add_argument('-i', '--interval', default=DEFAULT_INTERVAL, type=int, help='ASNAP interval in seconds.')
+    parser.add_argument('-t', '--timeout', dest='timeout', default=0, type=int, help="set a timeout (in minutes) to stop submitting ASNAP events")
 
     parsed_args = parser.parse_args()
 
@@ -104,8 +124,12 @@ if __name__ == '__main__':
 
     logging.info("Interval set to %s seconds.", parsed_args.interval)
 
+    if parsed_args.timeout != 0:
+        logging.info("Timeout set to %s minutes.", parsed_args.timeout)
+
+
     try:
-        asnap_service(parsed_args.interval)
+        asnap_service(parsed_args.interval, parsed_args.timeout)
     except KeyboardInterrupt:
         print('Interrupted')
         try:
