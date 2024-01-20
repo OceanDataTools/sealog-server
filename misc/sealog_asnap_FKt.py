@@ -1,0 +1,114 @@
+#!/usr/bin/env python3
+'''
+FILE:           sealog_asnap.py
+
+DESCRIPTION:    This script generates and submits ASNAP events to the sealog-
+                server at a specified interval.
+
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    1.1
+CREATED:    2018-09-26
+REVISION:   2023-02-10
+
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2023
+'''
+
+import sys
+import json
+import time
+import logging
+import requests
+
+from os.path import dirname, realpath
+sys.path.append(dirname(dirname(realpath(__file__))))
+
+from misc.python_sealog.custom_vars import get_custom_var_by_name
+from misc.python_sealog.settings import API_SERVER_URL, EVENTS_API_PATH, HEADERS
+
+ASNAP_STATUS_VAR_NAME = 'asnapStatus'
+
+DEFAULT_INTERVAL = 10 #seconds
+
+ASNAP_EVENT = {
+    "event_value": "ASNAP",
+    "event_options": [],
+    "event_free_text": ""
+}
+
+
+def asnap_service(interval):
+    """
+    Submit ASNAP events to the sealog-server at the specified interval
+    """
+
+    run_flag = True
+
+    # wait for even second
+    wait_time = time.time() % 1
+    time.sleep(wait_time)
+
+    while True:
+        try:
+            asnap_status = get_custom_var_by_name(ASNAP_STATUS_VAR_NAME)
+
+            run_flag = asnap_status['custom_var_value'] == 'On'
+
+        except Exception as error:
+            logging.error("Error retrieving the asnapStatus variable")
+            logging.debug(str(error))
+            time.sleep(5)
+            continue
+
+        if run_flag:
+            try:
+                logging.info("Submitting ASNAP Event")
+                requests.post(API_SERVER_URL + EVENTS_API_PATH, headers=HEADERS, data = json.dumps(ASNAP_EVENT))
+
+            except Exception as error:
+                logging.error("Error submitting new ASNAP event: %s", json.dumps(ASNAP_EVENT))
+                logging.debug(str(error))
+
+        wait_time = time.time() % 1
+        time.sleep(interval - 1 + wait_time)
+
+# -------------------------------------------------------------------------------------
+# Required python code for running the script as a stand-alone utility
+# -------------------------------------------------------------------------------------
+if __name__ == '__main__':
+
+    import argparse
+    import os
+
+    parser = argparse.ArgumentParser(description='ASNAP event submission service')
+    parser.add_argument('-v', '--verbosity', dest='verbosity',
+                        default=0, action='count',
+                        help='Increase output verbosity')
+    parser.add_argument('-i', '--interval', default=DEFAULT_INTERVAL, type=int, help='ASNAP interval in seconds.')
+
+    parsed_args = parser.parse_args()
+
+    ############################
+    # Set up logging before we do any other argument parsing (so that we
+    # can log problems with argument parsing).
+
+    LOGGING_FORMAT = '%(asctime)-15s %(levelname)s - %(message)s'
+    logging.basicConfig(format=LOGGING_FORMAT)
+
+    LOG_LEVELS = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
+    parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
+    logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
+
+    logging.info("Interval set to %s seconds.", parsed_args.interval)
+
+    try:
+        asnap_service(parsed_args.interval)
+    except KeyboardInterrupt:
+        print('Interrupted')
+        try:
+            sys.exit(0)
+        except SystemExit:
+            os._exit(0) # pylint: disable=protected-access

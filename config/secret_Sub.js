@@ -1,0 +1,2 @@
+//create this with: node -e "console.log(require('crypto').randomBytes(256).toString('base64'));"
+module.exports = 'r+aIaLGw7FdhrKUSLzVgI2zml8nwaLQnywSc3+ZluMSULLaYu4ahaF3k9yizF9jueogbeEhxeSH4mSI63CMlpMkNA7xB3gfBsIVFr2WYsfzeYXQuQbYLSrkVkMPgW0oY7REd7cqCBgLueUheF/XudnavJ7txfhf+TUybi7EsQOOchF1d0bgXyFyp/MYZrE95oIZoPYnF2XW0RB0O95GOaSdNdSIPNDuNGeG5AA0WDR3wpcdPkplYTRBUvpEdSPC/B8RbHVj/pCiltI/oTtQLC3JK7na7BVCZRsYTpc1cbbxHbfjy0sFDvdaZNoZs3JcwDMZx+dq3agl+sjv7YHp6qw==';
