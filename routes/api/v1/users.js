@@ -20,8 +20,7 @@ const {
 
 const {
   senderAddress,
-  emailTransporter,
-  resetPasswordURL
+  emailTransporter
 } = require('../../../config/email_constants');
 
 const {
@@ -264,7 +263,8 @@ exports.plugin = {
           Boom.serverUnavailable('database error');
         }
 
-        const resetLink = resetPasswordURL + token;
+        // const resetLink = resetPasswordURL + token;
+        const resetLink = `${request.payload.resetURL}${token}`;
         const mailOptions = {
           from: senderAddress, // sender address
           to: request.payload.email, // list of receivers

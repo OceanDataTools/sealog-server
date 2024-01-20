@@ -1,5 +1,5 @@
 // The sender address for all emails
-const senderAddress = 'sealog_admin@oceandatatools.org';
+const senderAddress = 'cbassin+sealog@schmidtocean.org';
 
 // Additional receipents for and sent emails.
 const notificationEmailAddresses = ['sealog_admin@oceandatatools.org'];
@@ -58,8 +58,8 @@ const Nodemailer = require('nodemailer'); // eslint-disable-line no-unused-vars
 // const Mj = require('nodemailer-mailjet-transport'); // eslint-disable-line no-unused-vars
 // emailTransporter = Nodemailer.createTransport(Mj({
 //   auth: {
-//     apiKey: '<API_KEY>',
-//     apiSecret: '<API_SECRET>'
+//     apiKey: '<MJ_API_KEY>',
+//     apiSecret: '<MJ_API_SECRET>'
 //   }
 // })); // eslint-disable-line no-dupe-keys
 
