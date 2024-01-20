@@ -1,9 +1,9 @@
-// const Fs = require('fs');
+// const readFileSync = require('fs').readFileSync;
 const Pkg = require('../package.json');
 
 // const tlsOptions = {
-//   key: Fs.readFileSync(<privKey.pem>),
-//   cert: Fs.readFileSync(<fullchain.pem>)
+//   key: readFileSync(<privKey.pem>),
+//   cert: readFileSync(<fullchain.pem>)
 // };
 
 const swagger_options = {
@@ -66,26 +66,26 @@ const {
 } = require('../config/db_constants');
 
 let env = process.env.NODE_ENV || 'development';
-
 env = (env === 'test') ? 'development' : env;
+
 const envKey = (key) => {
 
   const configuration = {
     development: {
       host: '0.0.0.0',
-      port: 8000,
+      port: process.env.PORT || 8000,
       prefix: '/sealog-server',
       db: sealogDB_devel
     },
     debug: {
       host: '0.0.0.0',
-      port: 8000,
+      port: process.env.PORT || 8000,
       prefix: '/sealog-server',
       db: sealogDB
     },
     production: {
       host: '0.0.0.0',
-      port: 8000,
+      port: process.env.PORT || 8000,
       prefix: '/sealog-server',
       db: sealogDB
     }
@@ -94,12 +94,12 @@ const envKey = (key) => {
   return configuration[env][key];
 };
 
-const mongodb_URL = 'mongodb://localhost:27017/' + envKey('db');
+const mongodb_URL = (process.env.MONGO_URL || 'mongodb://localhost:27017/') + envKey('db');
 
 const manifest = {
   server: {
-    host: envKey('host') || '127.0.0.1',
-    port: envKey('port') || '8000',
+    host: envKey('host'),
+    port: envKey('port'),
     // tls: tlsOptions,
     routes: {
       cors: true
@@ -178,8 +178,8 @@ const manifest = {
       },
       { plugin: 'hapi-pino',
         options: {
-          logRequestComplete: process.env.NODE_ENV !== 'production',
-          prettyPrint: process.env.NODE_ENV !== 'production',
+          logRequestComplete: env !== 'production',
+          level: (env !== 'production') ? 'debug' : 'info',
           redact: ['req.headers.authorization']
         }
       },
@@ -187,51 +187,23 @@ const manifest = {
         routes: {
           prefix: envKey('prefix')
         }
-      }
+      },
+      { plugin: './plugins/db_cruises' },
+      { plugin: './plugins/db_custom_vars' },
+      { plugin: './plugins/db_event_aux_data' },
+      { plugin: './plugins/db_event_templates' },
+      { plugin: './plugins/db_events' },
+      { plugin: './plugins/db_lowerings' },
+      { plugin: './plugins/db_users' }
     ]
   }
 };
 
-if (process.env.NODE_ENV === 'development') { // DEVELOPMENT
+if (env === 'development') { // DEVELOPMENT
 
   manifest.register.plugins.push({ 'plugin': 'blipp' });
-  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_cruises' });
-  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_custom_vars' });
-  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_event_aux_data' });
-  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_event_templates' });
-  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_events' });
-  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_lowerings' });
-  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_users' });
 }
-else if (process.env.NODE_ENV === 'test') { // TESTING
-
-  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_cruises' });
-  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_custom_vars' });
-  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_event_aux_data' });
-  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_event_templates' });
-  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_events' });
-  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_lowerings' });
-  manifest.register.plugins.push({ 'plugin': './plugins/dbDevel_users' });
-}
-else if (process.env.NODE_ENV === 'production') { // PRODUCTION
-
-  manifest.register.plugins.push({ 'plugin': './plugins/db_cruises' });
-  manifest.register.plugins.push({ 'plugin': './plugins/db_custom_vars' });
-  manifest.register.plugins.push({ 'plugin': './plugins/db_event_aux_data' });
-  manifest.register.plugins.push({ 'plugin': './plugins/db_event_templates' });
-  manifest.register.plugins.push({ 'plugin': './plugins/db_events' });
-  manifest.register.plugins.push({ 'plugin': './plugins/db_lowerings' });
-  manifest.register.plugins.push({ 'plugin': './plugins/db_users' });
-}
-else if (env === 'debug') { // DEBUG
-
-  manifest.register.plugins.push({ 'plugin': './plugins/db_cruises' });
-  manifest.register.plugins.push({ 'plugin': './plugins/db_custom_vars' });
-  manifest.register.plugins.push({ 'plugin': './plugins/db_event_aux_data' });
-  manifest.register.plugins.push({ 'plugin': './plugins/db_event_templates' });
-  manifest.register.plugins.push({ 'plugin': './plugins/db_events' });
-  manifest.register.plugins.push({ 'plugin': './plugins/db_lowerings' });
-  manifest.register.plugins.push({ 'plugin': './plugins/db_users' });
-}
+// else if (env === 'production' || env === 'debug') { // PRODUCTION or DEBUG
+// }
 
 module.exports = manifest;

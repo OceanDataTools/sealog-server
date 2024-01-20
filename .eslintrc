@@ -23,7 +23,7 @@
     "no-extend-native": "warn",
     "no-lone-blocks": "warn",
     "no-trailing-spaces": "warn",
-    "no-underscore-dangle": ["warn", { "allow": ["_id", "_data", "_rolesToScope", "_renameAndClearFields"], "allowAfterThis": true }],
+    "no-underscore-dangle": ["warn", { "allow": ["_id", "_data", "_rolesToScope", "_renameAndClearFields", "_hashPassword"], "allowAfterThis": true }],
     "no-unused-vars": ["warn", {
       "vars": "all",
       "args": "after-used",

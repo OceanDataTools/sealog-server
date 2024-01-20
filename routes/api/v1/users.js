@@ -1,10 +1,7 @@
 const { randomAsciiString } = require('../../../lib/utils');
 
-const Bcrypt = require('bcryptjs');
 const Boom = require('@hapi/boom');
 const Crypto = require('crypto');
-
-const saltRounds = 10;
 
 const resetPasswordTokenExpires = 24; //hours
 
@@ -20,8 +17,7 @@ const {
 
 const {
   senderAddress,
-  emailTransporter,
-  resetPasswordURL
+  emailTransporter
 } = require('../../../config/email_constants');
 
 const {
@@ -227,19 +223,7 @@ exports.plugin = {
 
         user.last_login = new Date('1970-01-01T00:00:00.000Z');
 
-        const password = request.payload.password;
-
-        const hashedPassword = await new Promise((resolve, reject) => {
-
-          Bcrypt.hash(password, saltRounds, (err, hash) => {
-
-            if (err) {
-              reject(err);
-            }
-
-            resolve(hash);
-          });
-        });
+        const hashedPassword = await server.methods._hashPassword(request.payload.password);
 
         user.password = hashedPassword;
         user.loginToken = randomAsciiString(20);
@@ -264,7 +248,7 @@ exports.plugin = {
           Boom.serverUnavailable('database error');
         }
 
-        const resetLink = resetPasswordURL + token;
+        const resetLink = request.connection.info.protocol + '://' + request.info.host + '/resetPassword/' + token;
         const mailOptions = {
           from: senderAddress, // sender address
           to: request.payload.email, // list of receivers
@@ -380,20 +364,7 @@ exports.plugin = {
         const user = request.payload;
 
         if (request.payload.password) {
-          const password = request.payload.password;
-
-          const hashedPassword = await new Promise((resolve, reject) => {
-
-            Bcrypt.hash(password, saltRounds, (err, hash) => {
-
-              if (err) {
-                reject(err);
-              }
-
-              resolve(hash);
-            });
-          });
-
+          const hashedPassword = await server.methods._hashPassword(request.payload.password);
           user.password = hashedPassword;
         }
 
