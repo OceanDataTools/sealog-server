@@ -94,7 +94,7 @@ EOF
         chmod +x .git/hooks/post-checkout
 
         echo "Building supervisor config file"
-        sudo cat <<EOF > /etc/supervisor/conf.d/sealog-server-FKt.conf
+        cat <<EOF > $install_dir/sealog-server-FKt.conf
 [program:sealog-server-FKt]
 directory=/opt/sealog-server-FKt
 command=node server.js
@@ -145,6 +145,7 @@ autostart=false
 autorestart=false
 stopsignal=QUIT
 EOF
+        sudo mv $install_dir/sealog-server-FKt.conf /etc/supervisor/conf.d
         ;;
     2)
         echo "You chose Sealog-Sub."
@@ -200,7 +201,7 @@ EOF
         chmod +x .git/hooks/post-checkout
 
         echo "Building supervisor config file"
-        sudo cat <<EOF > /etc/supervisor/conf.d/sealog-server-Sub.conf
+        sudo cat <<EOF > $install_dir/sealog-server-Sub.conf
 [program:sealog-server-Sub]
 directory=/opt/sealog-server-Sub
 command=node server.js
@@ -282,6 +283,8 @@ autorestart=false
 stopsignal=QUIT
 EOF
 ;;
+        sudo mv $install_dir/sealog-server-Sub.conf /etc/supervisor/conf.d
+
     *)
         echo "Invalid choice. Please enter 1 or 2."
         ;;
