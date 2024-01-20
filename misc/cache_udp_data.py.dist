@@ -16,7 +16,7 @@ CREATED:    2018-09-26
 REVISION:   2021-04-27
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2023
+                Copyright (C) OceanDataTools.org 2024
 '''
 
 import socket
