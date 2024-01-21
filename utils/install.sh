@@ -83,9 +83,6 @@ cp "$install_dir/config/manifest_FKt.js" "$install_dir/config/manifest.js"
 cp "$install_dir/config/path_constants_FKt.js" "$install_dir/config/path_constants.js"
 cp "$install_dir/config/secret_FKt.js" "$install_dir/config/secret.js"
 
-# Stage the changes
-git add "$install_dir/config"
-
 # Continue with the commit
 exit 0
 EOF
@@ -189,9 +186,6 @@ cp "$install_dir/config/email_constants_Sub.js" "$install_dir/config/email_const
 cp "$install_dir/config/manifest_Sub.js" "$install_dir/config/manifest.js"
 cp "$install_dir/config/path_constants_Sub.js" "$install_dir/config/path_constants.js"
 cp "$install_dir/config/secret_Sub.js" "$install_dir/config/secret.js"
-
-# Stage the changes
-git add "$install_dir/config"
 
 # Continue with the commit
 exit 0
