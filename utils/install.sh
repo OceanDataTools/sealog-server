@@ -58,9 +58,14 @@ cp "$install_dir/config/email_constants.js" "$install_dir/config/email_constants
 cp "$install_dir/config/manifest.js" "$install_dir/config/manifest_FKt.js"
 cp "$install_dir/config/path_constants.js" "$install_dir/config/path_constants_FKt.js"
 cp "$install_dir/config/secret.js" "$install_dir/config/secret_FKt.js"
+cp "$install_dir/misc/influx_sealog/settings.py" "$install_dir/misc/influx_sealog/settings_FKt.py"
+cp "$install_dir/misc/python_sealog/settings.py" "$install_dir/misc/python_sealog/settings_FKt.py"
+
 
 # Stage the changes
 git add "$install_dir/config"
+git add "$install_dir/misc/influx_sealog/settings_FKt.py"
+git add "$install_dir/misc/python_sealog/settings_FKt.py"
 
 # Continue with the commit
 exit 0
@@ -82,6 +87,9 @@ cp "$install_dir/config/email_constants_FKt.js" "$install_dir/config/email_const
 cp "$install_dir/config/manifest_FKt.js" "$install_dir/config/manifest.js"
 cp "$install_dir/config/path_constants_FKt.js" "$install_dir/config/path_constants.js"
 cp "$install_dir/config/secret_FKt.js" "$install_dir/config/secret.js"
+cp "$install_dir/misc/influx_sealog/settings_FKt.py" "$install_dir/misc/influx_sealog/settings.py"
+cp "$install_dir/misc/python_sealog/settings_FKt.py" "$install_dir/misc/python_sealog/settings.py"
+
 
 # Continue with the commit
 exit 0
@@ -162,9 +170,13 @@ cp "$install_dir/config/email_constants.js" "$install_dir/config/email_constants
 cp "$install_dir/config/manifest.js" "$install_dir/config/manifest_Sub.js"
 cp "$install_dir/config/path_constants.js" "$install_dir/config/path_constants_Sub.js"
 cp "$install_dir/config/secret.js" "$install_dir/config/secret_Sub.js"
+cp "$install_dir/misc/influx_sealog/settings.py" "$install_dir/misc/influx_sealog/settings_Sub.py"
+cp "$install_dir/misc/python_sealog/settings.py" "$install_dir/misc/python_sealog/settings_Sub.py"
 
 # Stage the changes
 git add "$install_dir/config"
+git add "$install_dir/misc/influx_sealog/settings_Sub.py"
+git add "$install_dir/misc/python_sealog/settings_Sub.py"
 
 # Continue with the commit
 exit 0
@@ -186,6 +198,8 @@ cp "$install_dir/config/email_constants_Sub.js" "$install_dir/config/email_const
 cp "$install_dir/config/manifest_Sub.js" "$install_dir/config/manifest.js"
 cp "$install_dir/config/path_constants_Sub.js" "$install_dir/config/path_constants.js"
 cp "$install_dir/config/secret_Sub.js" "$install_dir/config/secret.js"
+cp "$install_dir/misc/influx_sealog/settings_Sub.py" "$install_dir/misc/influx_sealog/settings.py"
+cp "$install_dir/misc/python_sealog/settings_Sub.py" "$install_dir/misc/python_sealog/settings.py"
 
 # Continue with the commit
 exit 0
@@ -280,6 +294,26 @@ EOF
     *)
         echo "Invalid choice. Please enter 1 or 2."
         ;;
+esac
+
+
+echo "Development or production environment:"
+echo "1. Development"
+echo "2. Production"
+
+read -p "Enter your choice (1 or 2): " choice
+
+case $choice in
+    1)
+    sed -i "s/settings_FKt/settings_devel_FKt/g" "$install_dir/.git/hooks/pre-commit"
+    sed -i "s/settings_FKt/settings_devel_FKt/g" "$install_dir/.git/hooks/post-merge"
+    sed -i "s/settings_Sub/settings_devel_Sub/g" "$install_dir/.git/hooks/pre-commit"
+    sed -i "s/settings_Sub/settings_devel_Sub/g" "$install_dir/.git/hooks/post-merge"
+    ;;
+
+    # 2)
+
+    # ;;
 esac
 
 echo "Setup Sealog config files"
