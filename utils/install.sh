@@ -60,7 +60,7 @@ cp "$install_dir/config/path_constants.js" "$install_dir/config/path_constants_F
 cp "$install_dir/config/secret.js" "$install_dir/config/secret_FKt.js"
 
 # Stage the changes
-git add "$install_dir"
+git add "$install_dir/config"
 
 # Continue with the commit
 exit 0
@@ -84,7 +84,7 @@ cp "$install_dir/config/path_constants_FKt.js" "$install_dir/config/path_constan
 cp "$install_dir/config/secret_FKt.js" "$install_dir/config/secret.js"
 
 # Stage the changes
-git add "$install_dir"
+git add "$install_dir/config"
 
 # Continue with the commit
 exit 0
@@ -167,7 +167,7 @@ cp "$install_dir/config/path_constants.js" "$install_dir/config/path_constants_S
 cp "$install_dir/config/secret.js" "$install_dir/config/secret_Sub.js"
 
 # Stage the changes
-git add "$install_dir"
+git add "$install_dir/config"
 
 # Continue with the commit
 exit 0
@@ -191,7 +191,7 @@ cp "$install_dir/config/path_constants_Sub.js" "$install_dir/config/path_constan
 cp "$install_dir/config/secret_Sub.js" "$install_dir/config/secret.js"
 
 # Stage the changes
-git add "$install_dir"
+git add "$install_dir/config"
 
 # Continue with the commit
 exit 0
