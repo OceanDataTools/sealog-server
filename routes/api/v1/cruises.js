@@ -44,6 +44,7 @@ const flattenCruiseObjs = (cruise_objs) => {
   const flat_cruises = cruise_objs.map((cruise) => {
 
     const copied_cruise = Deepcopy(cruise);
+    copied_cruise.id = cruise.id; // weird bug where the original objectID doesn't copy.
 
     Object.keys(copied_cruise.cruise_additional_meta).forEach((key) => {
 
@@ -53,6 +54,8 @@ const flattenCruiseObjs = (cruise_objs) => {
       }
     });
 
+    copied_cruise.cruise_description = copied_cruise.cruise_description.replace('\n','\\n');
+
     delete copied_cruise.cruise_additional_meta;
     delete copied_cruise.cruise_hidden;
     delete copied_cruise.cruise_access_list;
@@ -60,7 +63,6 @@ const flattenCruiseObjs = (cruise_objs) => {
 
     copied_cruise.start_ts = copied_cruise.start_ts.toISOString();
     copied_cruise.stop_ts = copied_cruise.stop_ts.toISOString();
-    copied_cruise.id = copied_cruise.id.toString('hex');
     copied_cruise.cruise_tags = copied_cruise.cruise_tags.join(',');
 
     return copied_cruise;
@@ -90,12 +92,17 @@ const _renameAndClearFields = (doc) => {
   doc.id = doc._id;
   delete doc._id;
 
+  if (typeof doc.id === 'object') {
+    doc.id = doc.id.valueOf();
+  }
+
   if ( !useAccessControl ) {
     delete doc.cruise_access_list;
   }
 
   return doc;
 };
+
 
 exports.plugin = {
   name: 'routes-api-cruises',

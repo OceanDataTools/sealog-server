@@ -4,10 +4,6 @@ const senderAddress = 'sealog_admin@oceandatatools.org';
 // Additional receipents for and sent emails.
 const notificationEmailAddresses = ['sealog_admin@oceandatatools.org'];
 
-// URL of password reset form
-// Set the protocol (http/https), serverURL/IP and port number to match the server's configuration
-const resetPasswordURL = 'http://localhost:8080/resetPassword/';
-
 // Server-side reCaptcha key, set to '' if not using reCaptcha bot protection
 const reCaptchaSecret = '';
 

@@ -14,7 +14,7 @@ CREATED:    2021-01-01
 REVISION:   2022-02-13
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2022
+                Copyright (C) OceanDataTools.org 2024
 '''
 
 import sys
@@ -40,7 +40,7 @@ def get_event_aux_data_by_cruise(cruise_uid, datasource=[], limit=0, api_server_
     params = {}
 
     if datasource:
-        params['datasource']: datasource
+        params['datasource'] = datasource
 
     if limit > 0:
         params['limit'] = limit
@@ -74,7 +74,7 @@ def get_event_aux_data_by_lowering(lowering_uid, datasource=[], limit=0, api_ser
     params = {}
 
     if datasource:
-        params['datasource']: datasource
+        params['datasource'] = datasource
 
     if limit > 0:
         params['limit'] = limit

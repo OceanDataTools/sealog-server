@@ -431,7 +431,6 @@ exports.plugin = {
                 const parser = new AsyncParser({ fields: csv_headers }, {}, {});
                 const csv_results = await parser.parse(flat_events).promise();
 
-
                 return h.response(csv_results).code(200);
               }
 

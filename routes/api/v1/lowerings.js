@@ -46,6 +46,7 @@ const flattenLoweringObjs = (lowering_objs) => {
   const flat_lowerings = lowering_objs.map((lowering) => {
 
     const copied_lowering = Deepcopy(lowering);
+    copied_lowering.id = lowering.id; // weird bug where the original objectID doesn't copy.
 
     Object.keys(copied_lowering.lowering_additional_meta).forEach((key) => {
 
@@ -55,6 +56,8 @@ const flattenLoweringObjs = (lowering_objs) => {
       }
     });
 
+    copied_lowering.lowering_description = copied_lowering.lowering_description.replace('\n','\\n');
+
     delete copied_lowering.lowering_additional_meta;
     delete copied_lowering.lowering_hidden;
     delete copied_lowering.lowering_access_list;
@@ -62,7 +65,6 @@ const flattenLoweringObjs = (lowering_objs) => {
 
     copied_lowering.start_ts = copied_lowering.start_ts.toISOString();
     copied_lowering.stop_ts = copied_lowering.stop_ts.toISOString();
-    copied_lowering.id = copied_lowering.id.toString('hex');
     copied_lowering.lowering_tags = copied_lowering.lowering_tags.join(',');
 
     return copied_lowering;
@@ -91,6 +93,10 @@ const _renameAndClearFields = (doc) => {
   //rename id
   doc.id = doc._id;
   delete doc._id;
+
+  if (typeof doc.id === 'object') {
+    doc.id = doc.id.valueOf();
+  }
 
   if ( !useAccessControl ) {
     delete doc.lowering_access_list;

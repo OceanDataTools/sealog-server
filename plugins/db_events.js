@@ -2,6 +2,14 @@ const {
   eventsTable
 } = require('../config/db_constants');
 
+const {
+  events_develDB_data
+} = require('../lib/db_init_data');
+
+let env = process.env.NODE_ENV || 'development';
+env = (env === 'test') ? 'development' : env;
+env = (env === 'debug') ? 'production' : env;
+
 exports.plugin = {
   name: 'db_populate_events',
   dependencies: ['hapi-mongodb'],
@@ -96,5 +104,6 @@ exports.plugin = {
       console.log('CREATE ERROR:', err.code);
       throw (err);
     }
+
   }
 };
