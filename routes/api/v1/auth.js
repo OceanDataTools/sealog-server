@@ -198,7 +198,7 @@ exports.plugin = {
 
           mailOptions = {
             from: senderAddress, // sender address
-            to: notificationEmailAddresses.join(), // list of receipents to be notified.
+            to: notificationEmailAddresses.join(','), // list of receipents to be notified.
             subject: 'New Sealog User Registration', // Subject line
             html: `<p>New user: ${user.username}  ( ${user.fullname} ) has just registered an account with Sealog (${request.info.hostname}). Please ensure this user's access permissions have been configured correctly.</p>`
           };

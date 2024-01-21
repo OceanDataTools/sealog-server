@@ -17,43 +17,49 @@ exports.plugin = {
 
     const db = server.mongo.db;
 
-    try {
-      console.log('Searching for Custom Vars Collection');
-      const result = await db.listCollections({ name: customVarsTable }).toArray();
-      if (result.length > 0 ) {
-        if (env === 'production' ) {
-          console.log('Custom Vars Collection already exists... we\'re done here.');
-          return;
-        }
-
-        try {
-          console.log('Custom Vars Collection already exists... we\'re dropping it.');
-          await db.dropCollection(customVarsTable);
-        }
-        catch (err) {
-          console.log('DROP ERROR:', err.code);
-          throw (err);
-        }
+    const init_data = [
+      {
+        _id: ObjectID('59810167212b348aed7fa9f5'),
+        custom_var_name: 'asnapStatus',
+        custom_var_value: 'Off'
+      },
+      {
+        _id: ObjectID('59810167212b348aed7fa9f6'),
+        custom_var_name: 'freeSpaceInBytes',
+        custom_var_value: '0'
+      },
+      {
+        _id: ObjectID('59810167212b348aed7fa9f7'),
+        custom_var_name: 'freeSpacePercentage',
+        custom_var_value: '0'
       }
-    }
-    catch (err) {
-      console.log('LIST ERROR:', err.code);
-      throw (err);
+
+    ];
+
+    console.log('Searching for Custom Vars Collection');
+    const result = await db.listCollections({ name: customVarsTable }).toArray();
+
+    if (result.length) {
+      if (process.env.NODE_ENV !== 'development') {
+        console.log('Custom Vars Collection already exists... we\'re done here.');
+        return;
+      }
+
+      console.log('Custom Vars Collection exists... dropping it!');
+      try {
+        await db.dropCollection(customVarsTable);
+      }
+      catch (err) {
+        console.log('DROP ERROR:', err.code);
+        throw (err);
+      }
     }
 
     console.log('Creating Custom Vars Collection');
     try {
       const collection = await db.createCollection(customVarsTable);
-
-      try {
-        console.log('Populating Custom Vars Collection');
-        await collection.insertMany(custom_vars_init_data);
-
-      }
-      catch (err) {
-        console.log('INSERT ERROR:', err.code);
-        throw (err);
-      }
+      console.log('Populating Custom Vars Collection');
+      await collection.insertMany(init_data);
     }
     catch (err) {
       console.log('CREATE ERROR:', err.code);

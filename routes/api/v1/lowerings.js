@@ -211,11 +211,9 @@ exports.plugin = {
             if (request.query.format && request.query.format === 'csv') {
 
               const flat_lowerings = flattenLoweringObjs(mod_lowerings);
-
               const csv_headers = buildLoweringCSVHeaders(flat_lowerings);
-
-              const json2csvParser = new AsyncParser({ fields: csv_headers });
-              const csv_results = await json2csvParser.parse(flat_lowerings).promise();
+              const parser = new AsyncParser({ fields: csv_headers }, {}, {});
+              const csv_results = await parser.parse(flat_lowerings).promise();
 
               return h.response(csv_results).code(200);
             }
@@ -360,11 +358,9 @@ exports.plugin = {
             if (request.query.format && request.query.format === 'csv') {
 
               const flat_lowerings = flattenLoweringObjs(mod_lowerings);
-
               const csv_headers = buildLoweringCSVHeaders(flat_lowerings);
-
-              const json2csvParser = new AsyncParser({ fields: csv_headers });
-              const csv_results = await json2csvParser.parse(flat_lowerings).promise();
+              const parser = new AsyncParser({ fields: csv_headers }, {}, {});
+              const csv_results = await parser.parse(flat_lowerings).promise();
 
               return h.response(csv_results).code(200);
             }
@@ -456,11 +452,9 @@ exports.plugin = {
             if (request.query.format && request.query.format === 'csv') {
 
               const flat_lowerings = flattenLoweringObjs([_renameAndClearFields(lowering)]);
-
               const csv_headers = buildLoweringCSVHeaders(flat_lowerings);
-
-              const json2csvParser = new AsyncParser({ fields: csv_headers });
-              const csv_results = await json2csvParser.parse(flat_lowerings).promise();
+              const parser = new AsyncParser({ fields: csv_headers }, {}, {});
+              const csv_results = await parser.parse(flat_lowerings).promise();
 
               return h.response(csv_results).code(200);
             }
@@ -545,11 +539,9 @@ exports.plugin = {
         if (request.query.format && request.query.format === 'csv') {
 
           const flat_lowerings = flattenLoweringObjs([_renameAndClearFields(lowering)]);
-
           const csv_headers = buildLoweringCSVHeaders(flat_lowerings);
-
-          const json2csvParser = new AsyncParser({ fields: csv_headers });
-          const csv_results = await json2csvParser.parse(flat_lowerings).promise();
+          const parser = new AsyncParser({ fields: csv_headers }, {}, {});
+          const csv_results = await parser.parse(flat_lowerings).promise();
 
           return h.response(csv_results).code(200);
         }

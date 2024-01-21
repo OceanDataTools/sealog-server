@@ -2,7 +2,7 @@
 const senderAddress = 'sealog_admin@oceandatatools.org';
 
 // Additional receipents for and sent emails.
-const notificationEmailAddresses = [];
+const notificationEmailAddresses = ['sealog_admin@oceandatatools.org'];
 
 // Server-side reCaptcha key, set to '' if not using reCaptcha bot protection
 const reCaptchaSecret = '';
@@ -11,25 +11,22 @@ const reCaptchaSecret = '';
 const disableRegisteringUsers = false;
 
 // Default roles of self-registering users
-const registeringUserRoles = ['event_watcher', 'event_logger', 'event_manager', 'cruise_manager'];
+const registeringUserRoles = ['event_watcher', 'event_logger'];
 
 // Activate per-cruise/per-lowering access permissions
 const useAccessControl = false;
 
-// Email integration
-const emailTransporter = null;
+// Needed for email integration
+let emailTransporter = null;
+const Nodemailer = require('nodemailer'); // eslint-disable-line no-unused-vars
 
-// ====================== Uncomment ONE of the following ======================
+// ========================================================================= //
+// Uncomment ONE of the following sections for email integration
+// ========================================================================= //
 
-// Using GMail integration
-// ----------------------------------------------------------------------------
-// To do this you need to complete the following steps with the desired account:
-// 1. Turn on two-factor-authentication.
-// 2. From "manage account" search for "app password"
-// 3. Create a new app profile by adding an app name
-// 4. use the password provided inplace of the standard gmail account password.
-// ----------------------------------------------------------------------------
-// const Nodemailer = require('nodemailer'); // eslint-disable-line no-unused-vars
+// ------------------------------------------------------------------------- //
+// GMail integration
+// ------------------------------------------------------------------------- //
 // emailTransporter = Nodemailer.createTransport({
 //   service: 'gmail',
 //   auth: {
@@ -38,25 +35,27 @@ const emailTransporter = null;
 //   }
 // }); // eslint-disable-line no-dupe-keys
 
-// Using Mailgun integration
-// ----------------------------------------------------------------------------
-// const Nodemailer = require('nodemailer'); // eslint-disable-line no-unused-vars
+
+// ------------------------------------------------------------------------- //
+// MailGun integration
+// ------------------------------------------------------------------------- //
 // const Mg = require('nodemailer-mailgun-transport'); // eslint-disable-line no-unused-vars
 // emailTransporter = Nodemailer.createTransport(Mg({
 //   auth: {
-//     api_key: 'key-1234123412341234',
-//     domain: 'mailgun-domain-name'
+//     api_key: '<MG_API_KEY>',
+//     domain: '<ONE OF YOUR DOMAIN NAMES LISTED AT YOUR https://app.mailgun.com/app/sending/domains>'
 //   }
 // })); // eslint-disable-line no-dupe-keys
 
-// Using Mailjet integration
-// ----------------------------------------------------------------------------
-// const Nodemailer = require('nodemailer'); // eslint-disable-line no-unused-vars
+
+// ------------------------------------------------------------------------- //
+// MailJet integration
+// ------------------------------------------------------------------------- //
 // const Mj = require('nodemailer-mailjet-transport'); // eslint-disable-line no-unused-vars
 // emailTransporter = Nodemailer.createTransport(Mj({
 //   auth: {
-//     apiKey: 'mj-key',
-//     apiSecret: 'mj-secret'
+//     apiKey: '<API_KEY>',
+//     apiSecret: '<API_SECRET>'
 //   }
 // })); // eslint-disable-line no-dupe-keys
 
@@ -65,6 +64,7 @@ module.exports = {
   emailTransporter,
   notificationEmailAddresses,
   reCaptchaSecret,
+  resetPasswordURL,
   disableRegisteringUsers,
   registeringUserRoles,
   useAccessControl

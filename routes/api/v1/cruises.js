@@ -221,11 +221,9 @@ exports.plugin = {
             if (request.query.format && request.query.format === 'csv') {
 
               const flat_cruises = flattenCruiseObjs(mod_cruises);
-
               const csv_headers = buildCruiseCSVHeaders(flat_cruises);
-
-              const json2csvParser = new AsyncParser({ fields: csv_headers });
-              const csv_results = await json2csvParser.parse(flat_cruises).promise();
+              const parser = new AsyncParser({ fields: csv_headers }, {}, {});
+              const csv_results = await parser.parse(flat_cruises).promise();
 
               return h.response(csv_results).code(200);
             }
@@ -326,11 +324,9 @@ exports.plugin = {
             if (request.query.format && request.query.format === 'csv') {
 
               const flat_cruises = flattenCruiseObjs([_renameAndClearFields(cruise)]);
-
               const csv_headers = buildCruiseCSVHeaders(flat_cruises);
-
-              const json2csvParser = new AsyncParser({ fields: csv_headers });
-              const csv_results = await json2csvParser.parse(flat_cruises).promise();
+              const parser = new AsyncParser({ fields: csv_headers }, {}, {});
+              const csv_results = await parser.parse(flat_cruises).promise();
 
               return h.response(csv_results).code(200);
             }
@@ -422,11 +418,9 @@ exports.plugin = {
             if (request.query.format && request.query.format === 'csv') {
 
               const flat_cruises = flattenCruiseObjs([_renameAndClearFields(cruise)]);
-
               const csv_headers = buildCruiseCSVHeaders(flat_cruises);
-
-              const json2csvParser = new AsyncParser({ fields: csv_headers });
-              const csv_results = await json2csvParser.parse(flat_cruises).promise();
+              const parser = new AsyncParser({ fields: csv_headers }, {}, {});
+              const csv_results = await parser.parse(flat_cruises).promise();
 
               return h.response(csv_results).code(200);
             }
@@ -511,11 +505,9 @@ exports.plugin = {
         if (request.query.format && request.query.format === 'csv') {
 
           const flat_cruises = flattenCruiseObjs([_renameAndClearFields(cruise)]);
-
           const csv_headers = buildCruiseCSVHeaders(flat_cruises);
-
-          const json2csvParser = new AsyncParser({ fields: csv_headers });
-          const csv_results = await json2csvParser.parse(flat_cruises).promise();
+          const parser = new AsyncParser({ fields: csv_headers }, {}, {});
+          const csv_results = await parser.parse(flat_cruises).promise();
 
           return h.response(csv_results).code(200);
         }

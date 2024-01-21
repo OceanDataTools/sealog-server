@@ -156,9 +156,8 @@ exports.plugin = {
         if (request.query.format && request.query.format === 'csv') {
           const flat_events = flattenEventObjs(results);
           const csv_headers = buildEventCSVHeaders(flat_events);
-
-          const json2csvParser = new AsyncParser({ fields: csv_headers });
-          const csv_results = await json2csvParser.parse(flat_events).promise();
+          const parser = new AsyncParser({ fields: csv_headers }, {}, {});
+          const csv_results = await parser.parse(flat_events).promise();
 
           return h.response(csv_results).code(200);
         }
@@ -399,9 +398,8 @@ exports.plugin = {
         if (request.query.format && request.query.format === 'csv') {
           const flat_events = flattenEventObjs(results);
           const csv_headers = buildEventCSVHeaders(flat_events);
-
-          const json2csvParser = new AsyncParser({ fields: csv_headers });
-          const csv_results = await json2csvParser.parse(flat_events).promise();
+          const parser = new AsyncParser({ fields: csv_headers }, {}, {});
+          const csv_results = await parser.parse(flat_events).promise();
 
           return h.response(csv_results).code(200);
         }
@@ -633,9 +631,8 @@ exports.plugin = {
             if (request.query.format && request.query.format === 'csv') {
               const flat_events = flattenEventObjs(results);
               const csv_headers = buildEventCSVHeaders(flat_events);
-
-              const json2csvParser = new AsyncParser({ fields: csv_headers });
-              const csv_results = await json2csvParser.parse(flat_events).promise();
+              const parser = new AsyncParser({ fields: csv_headers }, {}, {});
+              const csv_results = await parser.parse(flat_events).promise();
 
               return h.response(csv_results).code(200);
             }
@@ -792,9 +789,8 @@ exports.plugin = {
           if (request.query.format && request.query.format === 'csv') {
             const flat_events = flattenEventObjs([result]);
             const csv_headers = buildEventCSVHeaders(flat_events);
-
-            const json2csvParser = new AsyncParser({ fields: csv_headers });
-            const csv_results = await json2csvParser.parse(flat_events).promise();
+            const parser = new AsyncParser({ fields: csv_headers }, {}, {});
+            const csv_results = await parser.parse(flat_events).promise();
 
             return h.response(csv_results).code(200);
           }
