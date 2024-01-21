@@ -1,14 +1,8 @@
-// Only needed if using email integration
-// const Nodemailer = require('nodemailer'); // eslint-disable-line no-unused-vars
-
-// Only needed if using Mailgun
-// const Mg = require('nodemailer-mailgun-transport'); // eslint-disable-line no-unused-vars
-
 // The sender address for all emails
 const senderAddress = 'sealog_admin@oceandatatools.org';
 
 // Additional receipents for and sent emails.
-const notificationEmailAddresses = [];
+const notificationEmailAddresses = 'sealog_admin@oceandatatools.org';
 
 // URL of password reset form
 // Set the protocol (http/https), serverURL/IP and port number to match the server's configuration
@@ -21,18 +15,23 @@ const reCaptchaSecret = '';
 const disableRegisteringUsers = false;
 
 // Default roles of self-registering users
-const registeringUserRoles = ['event_watcher', 'event_logger', 'event_manager', 'cruise_manager'];
+const registeringUserRoles = ['event_watcher', 'event_logger'];
 
 // Activate per-cruise/per-lowering access permissions
 const useAccessControl = false;
 
-// Uncomment one of the following
+// Needed for email integration
+let emailTransporter = null;
+const Nodemailer = require('nodemailer'); // eslint-disable-line no-unused-vars
 
-// Not using email
-const emailTransporter = null;
+// ========================================================================= //
+// Uncomment ONE of the following sections for email integration
+// ========================================================================= //
 
-// Using GMail integration
-// const emailTransporter = Nodemailer.createTransport({
+// ------------------------------------------------------------------------- //
+// GMail integration
+// ------------------------------------------------------------------------- //
+// emailTransporter = Nodemailer.createTransport({
 //   service: 'gmail',
 //   auth: {
 //     user: 'username@gmail.com',
@@ -40,11 +39,27 @@ const emailTransporter = null;
 //   }
 // }); // eslint-disable-line no-dupe-keys
 
-// Using Mailgun integration
-// const emailTransporter = Nodemailer.createTransport(Mg({
+
+// ------------------------------------------------------------------------- //
+// MailGun integration
+// ------------------------------------------------------------------------- //
+// const Mg = require('nodemailer-mailgun-transport'); // eslint-disable-line no-unused-vars
+// emailTransporter = Nodemailer.createTransport(Mg({
 //   auth: {
-//     api_key: 'key-1234123412341234',
-//     domain: 'one of your domain names listed at your https://app.mailgun.com/app/sending/domains'
+//     api_key: '<MG_API_KEY>',
+//     domain: '<ONE OF YOUR DOMAIN NAMES LISTED AT YOUR https://app.mailgun.com/app/sending/domains>'
+//   }
+// })); // eslint-disable-line no-dupe-keys
+
+
+// ------------------------------------------------------------------------- //
+// MailJet integration
+// ------------------------------------------------------------------------- //
+// const Mj = require('nodemailer-mailjet-transport'); // eslint-disable-line no-unused-vars
+// emailTransporter = Nodemailer.createTransport(Mj({
+//   auth: {
+//     apiKey: '<API_KEY>',
+//     apiSecret: '<API_SECRET>'
 //   }
 // })); // eslint-disable-line no-dupe-keys
 
@@ -52,8 +67,8 @@ module.exports = {
   senderAddress,
   emailTransporter,
   notificationEmailAddresses,
-  resetPasswordURL,
   reCaptchaSecret,
+  resetPasswordURL,
   disableRegisteringUsers,
   registeringUserRoles,
   useAccessControl
