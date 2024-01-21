@@ -195,14 +195,7 @@ const manifest = {
         routes: {
           prefix: envKey('prefix')
         }
-      },
-      { plugin: './plugins/db_cruises' },
-      { plugin: './plugins/db_custom_vars' },
-      { plugin: './plugins/db_event_aux_data' },
-      { plugin: './plugins/db_event_templates' },
-      { plugin: './plugins/db_events' },
-      { plugin: './plugins/db_lowerings' },
-      { plugin: './plugins/db_users' }
+      }
     ]
   }
 };

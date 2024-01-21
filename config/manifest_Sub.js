@@ -178,6 +178,13 @@ const manifest = {
           prefix: envKey('prefix') + '/api/v1'
         }
       },
+      { plugin: './plugins/db_cruises', options: {} },
+      { plugin: './plugins/db_custom_vars', options: {} },
+      { plugin: './plugins/db_event_aux_data', options: {} },
+      { plugin: './plugins/db_event_templates', options: {} },
+      { plugin: './plugins/db_events', options: {} },
+      { plugin: './plugins/db_lowerings', options: {} },
+      { plugin: './plugins/db_users', options: {} },
       { plugin: 'hapi-pino',
         options: {
           logRequestComplete: process.env.NODE_ENV !== 'production',
