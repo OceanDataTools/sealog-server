@@ -16,6 +16,7 @@ exports.plugin = {
   register: async (server, options) => {
 
     const db = server.mongo.db;
+    const ObjectID = server.mongo.ObjectID;
 
     const init_data = [
       {

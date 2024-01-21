@@ -1,19 +1,22 @@
+const Bcrypt = require('bcryptjs');
+const { randomAsciiString } = require('../lib/utils');
+
+const saltRounds = 10;
+
 const {
   usersTable
 } = require('../config/db_constants');
-
-const {
-  users_init_data
-} = require('../lib/db_init_data');
-
-let env = process.env.NODE_ENV || 'development';
-env = (env === 'test') ? 'development' : env;
-env = (env === 'debug') ? 'production' : env;
 
 exports.plugin = {
   name: 'db_populate_users',
   dependencies: ['hapi-mongodb'],
   register: async (server, options) => {
+
+    const hashedPassword = async (password) => {
+
+      return await Bcrypt.hash( password, saltRounds );
+
+    };
 
     const db = server.mongo.db;
     const ObjectID = server.mongo.ObjectID;

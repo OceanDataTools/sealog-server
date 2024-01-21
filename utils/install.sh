@@ -24,14 +24,13 @@ echo "Install directory is: $install_dir"
 
 cd $install_dir
 
-echo "Creating python virtual environment"
-python3 -m venv venv
+if [ ! -d venv ]; then
+    echo "Creating python virtual environment"
+    python3 -m venv venv
+fi
 
 echo "Activating python virtual environment"
 source venv/bin/activate
-
-echo "Installing python libraries"
-pip install -r requirements.txt
 
 echo "Choose an option:"
 echo "1. Sealog-FKt"
@@ -78,11 +77,11 @@ EOF
 $install_dir/venv/bin/pip install -r $install_dir/requirements.txt
 
 # Copy repo config files to their production filenames
-cp $install_dir/config/db_constants_FKt.js" "$install_dir/config/db_constants.js"
-cp $install_dir/config/email_constants_FKt.js" "$install_dir/config/email_constants.js"
-cp $install_dir/config/manifest_FKt.js" "$install_dir/config/manifest.js"
-cp $install_dir/config/path_constants_FKt.js" "$install_dir/config/path_constants.js"
-cp $install_dir/config/secret_FKt.js" "$install_dir/config/secret.js"
+cp "$install_dir/config/db_constants_FKt.js" "$install_dir/config/db_constants.js"
+cp "$install_dir/config/email_constants_FKt.js" "$install_dir/config/email_constants.js"
+cp "$install_dir/config/manifest_FKt.js" "$install_dir/config/manifest.js"
+cp "$install_dir/config/path_constants_FKt.js" "$install_dir/config/path_constants.js"
+cp "$install_dir/config/secret_FKt.js" "$install_dir/config/secret.js"
 
 # Stage the changes
 git add "$install_dir"
@@ -145,7 +144,7 @@ autostart=false
 autorestart=false
 stopsignal=QUIT
 EOF
-        sudo mv $install_dir/sealog-server-FKt.conf /etc/supervisor/conf.d
+        sudo mv "$install_dir/sealog-server-FKt.conf" /etc/supervisor/conf.d
         ;;
     2)
         echo "You chose Sealog-Sub."
@@ -185,11 +184,11 @@ EOF
 $install_dir/venv/bin/pip install -r $install_dir/requirements.txt
 
 # Copy repo config files to their production filenames
-cp $install_dir/config/db_constants_Sub.js" "$install_dir/config/db_constants.js"
-cp $install_dir/config/email_constants_Sub.js" "$install_dir/config/email_constants.js"
-cp $install_dir/config/manifest_Sub.js" "$install_dir/config/manifest.js"
-cp $install_dir/config/path_constants_Sub.js" "$install_dir/config/path_constants.js"
-cp $install_dir/config/secret_Sub.js" "$install_dir/config/secret.js"
+cp "$install_dir/config/db_constants_Sub.js" "$install_dir/config/db_constants.js"
+cp "$install_dir/config/email_constants_Sub.js" "$install_dir/config/email_constants.js"
+cp "$install_dir/config/manifest_Sub.js" "$install_dir/config/manifest.js"
+cp "$install_dir/config/path_constants_Sub.js" "$install_dir/config/path_constants.js"
+cp "$install_dir/config/secret_Sub.js" "$install_dir/config/secret.js"
 
 # Stage the changes
 git add "$install_dir"
@@ -282,9 +281,8 @@ autostart=false
 autorestart=false
 stopsignal=QUIT
 EOF
-;;
-        sudo mv $install_dir/sealog-server-Sub.conf /etc/supervisor/conf.d
-
+        sudo mv "$install_dir/sealog-server-Sub.conf" /etc/supervisor/conf.d
+        ;;
     *)
         echo "Invalid choice. Please enter 1 or 2."
         ;;
