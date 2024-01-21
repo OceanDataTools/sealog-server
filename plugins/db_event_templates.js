@@ -8,46 +8,223 @@ exports.plugin = {
   register: async (server, options) => {
 
     const db = server.mongo.db;
-    // const ObjectID = server.mongo.ObjectID;
+    const ObjectID = server.mongo.ObjectID;
 
-    console.log('Searching for Event Template Collection');
-    try {
-      const result = await db.listCollections({ name: eventTemplatesTable }).toArray();
-      if (result.length > 0) {
-
-        // Database migration logic
-        const eventTemplates = await db.collection(eventTemplatesTable).find().toArray();
-
-        eventTemplates.forEach(async (eventTemplate) => {
-
-          // Add template_categories to eventTemplate if not present
-          if ( eventTemplate.template_categories === undefined ) {
-            console.log('Mirgation: Adding missing template_categories to event template');
-            await db.collection(eventTemplatesTable).updateOne( { _id: eventTemplate._id }, { $set: { 'template_categories': [] } } );
+    const init_data = [
+      {
+        _id: ObjectID('5a71c3d7fa96aa1977822b2c'),
+        event_name: 'FISH',
+        event_value: 'FISH',
+        event_free_text_required: false,
+        system_template: false,
+        template_categories: ['biology'],
+        disabled: false,
+        event_options: [{
+          event_option_name: 'Status',
+          event_option_type: 'dropdown',
+          event_option_default_value: '',
+          event_option_values: ['alive','dead','undead'],
+          event_option_allow_freeform: false,
+          event_option_required: false
+        }]
+      },
+      {
+        _id: ObjectID('5a71c3d7fa96aa1977822b2d'),
+        event_name: 'ROCK',
+        event_value: 'ROCK',
+        event_free_text_required: false,
+        system_template: false,
+        template_categories: ['geology'],
+        disabled: false,
+        event_options: [{
+          event_option_name: 'Color',
+          event_option_type: 'dropdown',
+          event_option_default_value: '',
+          event_option_values: ['black','red','green'],
+          event_option_allow_freeform: false,
+          event_option_required: false
+        }]
+      },
+      {
+        _id: ObjectID('5a71c3d7fa96aa1977822b2e'),
+        event_name: 'CORAL',
+        event_value: 'CORAL',
+        event_free_text_required: false,
+        system_template: false,
+        template_categories: ['biology'],
+        disabled: false,
+        event_options: [{
+          event_option_name: 'Color',
+          event_option_type: 'dropdown',
+          event_option_default_value: '',
+          event_option_values: ['black','red','purple'],
+          event_option_allow_freeform: false,
+          event_option_required: false
+        }]
+      },
+      {
+        _id: ObjectID('5a71c3d7fa96aa1977822b2f'),
+        event_name: 'CRAB',
+        event_value: 'CRAB',
+        event_free_text_required: false,
+        system_template: false,
+        template_categories: ['biology'],
+        disabled: false,
+        event_options: [{
+          event_option_name: 'Color',
+          event_option_type: 'dropdown',
+          event_option_default_value: '',
+          event_option_values: ['blue','red','green'],
+          event_option_allow_freeform: false,
+          event_option_required: false
+        }]
+      },
+      {
+        _id: ObjectID('5a71c3d7fa96aa1977822b30'),
+        event_name: 'SQUID',
+        event_value: 'SQUID',
+        event_free_text_required: false,
+        system_template: false,
+        template_categories: ['biology'],
+        disabled: false,
+        event_options: [{
+          event_option_name: 'Color',
+          event_option_type: 'dropdown',
+          event_option_default_value: '',
+          event_option_values: ['purple','red','pink'],
+          event_option_allow_freeform: false,
+          event_option_required: false
+        }]
+      },
+      {
+        _id: ObjectID('5a71c3d7fa96aa1977822b31'),
+        event_name: 'SAMPLE',
+        event_value: 'SAMPLE',
+        event_free_text_required: false,
+        system_template: true,
+        template_categories: ['operations'],
+        disabled: false,
+        event_options: [
+          {
+            event_option_allow_freeform: false,
+            event_option_name: 'Sample ID',
+            event_option_required: true,
+            event_option_type: 'text',
+            event_option_values: []
+          },
+          {
+            event_option_allow_freeform: false,
+            event_option_name: 'Sample Type',
+            event_option_required: true,
+            event_option_type: 'dropdown',
+            event_option_values: ['push core','physical sample','fluid sample','slurp','majors','gas tight','hog bio', 'hog chem']
           }
-
-          // Add disabled to eventTemplate if not present
-          if ( eventTemplate.disabled === undefined ) {
-            console.log('Mirgation: Adding missing disabled to event template');
-            await db.collection(eventTemplatesTable).updateOne( { _id: eventTemplate._id }, { $set: { 'disabled': false } } );
+        ]
+      },
+      {
+        '_id': ObjectID('5a71c3d7fa96aa1977822b32'),
+        event_name: 'PROBLEM',
+        event_value: 'PROBLEM',
+        event_free_text_required: false,
+        system_template: true,
+        template_categories: ['operations'],
+        disabled: false,
+        event_options: []
+      },
+      {
+        '_id': ObjectID('5a71c3d7fa96aa1977822b33'),
+        event_name: 'SUPER_EVENT',
+        event_value: 'SUPER_EVENT',
+        event_free_text_required: false,
+        system_template: false,
+        template_categories: ['biology','geology','operations'],
+        disabled: false,
+        event_options: [
+          {
+            event_option_allow_freeform: false,
+            event_option_name: 'first text option',
+            event_option_required: false,
+            event_option_type: 'text',
+            event_option_values: []
+          },
+          {
+            event_option_allow_freeform: false,
+            event_option_name: 'second text option',
+            event_option_required: true,
+            event_option_type: 'text',
+            event_option_values: []
+          },
+          {
+            event_option_allow_freeform: false,
+            event_option_name: 'first checkbox option',
+            event_option_required: false,
+            event_option_type: 'checkboxes',
+            event_option_values: ['1','2','3','4']
+          },
+          {
+            event_option_allow_freeform: false,
+            event_option_name: 'first select option',
+            event_option_required: false,
+            event_option_type: 'dropdown',
+            event_option_values: ['1','2','3','4']
+          },
+          {
+            event_option_allow_freeform: false,
+            event_option_default_value: '1',
+            event_option_name: 'second select option',
+            event_option_required: false,
+            event_option_type: 'dropdown',
+            event_option_values: ['1','2','3','4']
+          },
+          {
+            event_option_allow_freeform: false,
+            event_option_name: 'third select option',
+            event_option_required: true,
+            event_option_type: 'dropdown',
+            event_option_values: ['1','2','3','4']
+          },
+          {
+            event_option_allow_freeform: false,
+            event_option_default_value: '1',
+            event_option_name: 'fourth select option',
+            event_option_required: true,
+            event_option_type: 'dropdown',
+            event_option_values: ['1','2','3','4']
           }
-        });
+        ]
+      }
+    ];
 
-        console.log('Collection already exists... we\'re done here.');
+    console.log('Searching for Event Templates Collection');
+    const result = await db.listCollections({ name: eventTemplatesTable }).toArray();
+
+    if (result.length) {
+      if (process.env.NODE_ENV !== 'development') {
+        console.log('Event Templates Collection already exists... we\'re done here.');
         return;
+      }
+
+      console.log('Event Templates Collection exists... dropping it!');
+      try {
+        await db.dropCollection(eventTemplatesTable);
+      }
+      catch (err) {
+        console.log('DROP ERROR:', err.code);
+        throw (err);
+      }
+    }
+
+    console.log('Creating Event Templates Collection');
+    try {
+      const collection = await db.createCollection(eventTemplatesTable);
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Populating Event Templates Collection');
+        await collection.insertMany(init_data);
       }
     }
     catch (err) {
-      console.log('ERROR:', err.code);
-      throw (err);
-    }
-
-    console.log('Creating Event Template Collection');
-    try {
-      await db.createCollection(eventTemplatesTable);
-    }
-    catch (err) {
-      console.log('ERROR:', err.code);
+      console.log('CREATE ERROR:', err.code);
       throw (err);
     }
   }
