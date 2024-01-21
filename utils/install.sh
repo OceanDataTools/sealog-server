@@ -68,11 +68,11 @@ EOF
 
         chmod +x .git/hooks/pre-commit
 
-        echo "Setting up git post-checkout hook"
-        cat <<EOF > .git/hooks/post-checkout
+        echo "Setting up git post-merge hook"
+        cat <<EOF > .git/hooks/post-merge
 #!/bin/bash
 
-# This is the post-checkout hook
+# This is the post-merge hook
 
 $install_dir/venv/bin/pip install -r $install_dir/requirements.txt
 
@@ -87,7 +87,7 @@ cp "$install_dir/config/secret_FKt.js" "$install_dir/config/secret.js"
 exit 0
 EOF
 
-        chmod +x .git/hooks/post-checkout
+        chmod +x .git/hooks/post-merge
 
         echo "Building supervisor config file"
         cat <<EOF > $install_dir/sealog-server-FKt.conf
@@ -172,11 +172,11 @@ EOF
 
         chmod +x .git/hooks/pre-commit
 
-        echo "Setting up git post-checkout hook"
-        cat <<EOF > .git/hooks/post-checkout
+        echo "Setting up git post-merge hook"
+        cat <<EOF > .git/hooks/post-merge
 #!/bin/bash
 
-# This is the post-checkout hook
+# This is the post-merge hook
 
 $install_dir/venv/bin/pip install -r $install_dir/requirements.txt
 
@@ -191,7 +191,7 @@ cp "$install_dir/config/secret_Sub.js" "$install_dir/config/secret.js"
 exit 0
 EOF
 
-        chmod +x .git/hooks/post-checkout
+        chmod +x .git/hooks/post-merge
 
         echo "Building supervisor config file"
         sudo cat <<EOF > $install_dir/sealog-server-Sub.conf
@@ -283,7 +283,7 @@ EOF
 esac
 
 echo "Setup Sealog config files"
-.git/hooks/post-checkout
+.git/hooks/post-merge
 
 echo "Starting supervisor processes"
 sudo supervisorctl reread
