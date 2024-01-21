@@ -18,7 +18,7 @@ LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for det
 '''
 
 # URL to influx server
-INFLUX_SERVER_URL = "http://10.23.9.24:8086"
+INFLUX_SERVER_URL = "http://10.128.0.28:8086"
 
 # Influx server authorization token
 INFLUX_TOKEN = "v4thZIR5_EsdMqOQWNJZ2HvfPLpWqynBD4NPwYJYFtW3XP7ifdX557vDpfGycveMdQ6LlPjmRHk7OFUuVzQM6Q=="
