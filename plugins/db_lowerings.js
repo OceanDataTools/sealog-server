@@ -2,14 +2,6 @@ const {
   loweringsTable
 } = require('../config/db_constants');
 
-const {
-  lowerings_develDB_data
-} = require('../lib/db_init_data');
-
-let env = process.env.NODE_ENV || 'development';
-env = (env === 'test') ? 'development' : env;
-env = (env === 'debug') ? 'production' : env;
-
 exports.plugin = {
   name: 'db_populate_lowerings',
   dependencies: ['hapi-mongodb'],
