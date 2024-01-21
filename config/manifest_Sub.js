@@ -188,7 +188,6 @@ const manifest = {
       { plugin: 'hapi-pino',
         options: {
           logRequestComplete: process.env.NODE_ENV !== 'production',
-          prettyPrint: process.env.NODE_ENV !== 'production',
           redact: ['req.headers.authorization']
         }
       },
