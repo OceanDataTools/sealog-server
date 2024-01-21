@@ -61,41 +61,32 @@ exports.plugin = {
     ];
 
     console.log('Searching for Users Collection');
-    try {
-      const result = await db.listCollections({ name: usersTable }).toArray();
-      if (result.length > 0) {
+    const result = await db.listCollections({ name: usersTable }).toArray();
 
-        // Database migration logic
-        const users = await db.collection(usersTable).find().toArray();
-
-        users.forEach(async (user) => {
-
-          // Add loginToken to users if not present
-          if ( user.loginToken === undefined ) {
-            console.log('Mirgation: Adding missing loginToken to user');
-            await db.collection(usersTable).updateOne( { _id: user._id }, { $set: { 'loginToken': randomAsciiString(20) } } );
-          }
-        });
-
-        console.log('Collection already exists... we\'re done here.');
+    if (result.length) {
+      if (process.env.NODE_ENV !== 'development') {
+        console.log('Users Collection already exists... we\'re done here.');
         return;
       }
-    }
-    catch (err) {
-      console.log('ERROR:', err.code);
-      throw (err);
+
+      console.log('Users Collection exists... dropping it!');
+      try {
+        await db.dropCollection(usersTable);
+      }
+      catch (err) {
+        console.log('DROP ERROR:', err.code);
+        throw (err);
+      }
     }
 
+    console.log('Creating Users Collection');
     try {
-      console.log('Creating Users Collection');
       const collection = await db.createCollection(usersTable);
-
       console.log('Populating Users Collection');
       await collection.insertMany(init_data);
-
     }
     catch (err) {
-      console.log('ERROR:', err.code);
+      console.log('CREATE ERROR:', err.code);
       throw (err);
     }
   }
