@@ -19,7 +19,7 @@ exports.plugin = {
         console.log('Image Directory created')
       ).catch(err =>
         console.error(err)
-      );	
+      );
     }
     else {
       console.log('Image Directory found.');
@@ -29,7 +29,7 @@ exports.plugin = {
     if (!Fs.existsSync(CRUISE_PATH)) {
       console.log('Cruise Directory not found... trying to create.');
       await mkdirp(CRUISE_PATH).then(made =>
-	console.log('Cruise Directory created')
+      console.log('Cruise Directory created')
       ).catch(err =>
         console.error(err)
       );

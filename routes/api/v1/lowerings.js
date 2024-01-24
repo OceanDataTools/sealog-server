@@ -55,6 +55,8 @@ const flattenLoweringObjs = (lowering_objs) => {
       }
     });
 
+    copied_lowering.lowering_description = copied_lowering.lowering_description.replace('\n','\\n');
+
     delete copied_lowering.lowering_additional_meta;
     delete copied_lowering.lowering_hidden;
     delete copied_lowering.lowering_access_list;

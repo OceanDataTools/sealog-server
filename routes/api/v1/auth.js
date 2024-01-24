@@ -1,5 +1,5 @@
 const SECRET_KEY = require('../../../config/secret');
-const { randomAsciiString } = require('../../../lib/utils');
+const { randomAsciiString, hashedPassword } = require('../../../lib/utils');
 
 const Bcrypt = require('bcryptjs');
 const Boom = require('@hapi/boom');
@@ -85,8 +85,6 @@ const _renameAndClearFields = (doc) => {
   return doc;
 };
 
-const saltRounds = 10;
-
 exports.plugin = {
   name: 'routes-auth',
   dependencies: ['hapi-mongodb'],
@@ -150,23 +148,7 @@ exports.plugin = {
         user.system_user = false;
         user.disabled = disableRegisteringUsers;
         user.loginToken = randomAsciiString(20);
-
-
-        const password = request.payload.password;
-
-        const hashedPassword = await new Promise((resolve, reject) => {
-
-          Bcrypt.hash(password, saltRounds, (err, hash) => {
-
-            if (err) {
-              reject(err);
-            }
-
-            resolve(hash);
-          });
-        });
-
-        user.password = hashedPassword;
+        user.password = hashedPassword(request.payload.password);
 
         try {
           const result = await db.collection(usersTable).insertOne(user);
@@ -277,22 +259,10 @@ exports.plugin = {
           }
         }
 
-        const password = request.payload.password;
-
-        const hashedPassword = await new Promise((resolve, reject) => {
-
-          Bcrypt.hash(password, saltRounds, (err, hash) => {
-
-            if (err) {
-              reject(err);
-            }
-
-            resolve(hash);
-          });
-        });
+        const hashedPasswd = hashedPassword(request.payload.password);
 
         try {
-          await db.collection(usersTable).updateOne({ _id: user._id }, { $set: { password: hashedPassword, resetPasswordToken: null, resetPasswordExpires: null } });
+          await db.collection(usersTable).updateOne({ _id: user._id }, { $set: { password: hashedPasswd, resetPasswordToken: null, resetPasswordExpires: null } });
           return h.response().code(204);
         }
         catch (err) {
@@ -465,7 +435,8 @@ exports.plugin = {
           }
         }
 
-        const resetLink = resetPasswordURL + token;
+        // const resetLink = resetPasswordURL + token;
+        const resetLink = request.connection.info.protocol + '://' + request.info.host + '/resetPassword/' + token;
         const mailOptions = {
           from: senderAddress, // sender address
           to: request.payload.email, // list of receivers

@@ -53,6 +53,8 @@ const flattenCruiseObjs = (cruise_objs) => {
       }
     });
 
+    copied_cruise.cruise_description = copied_cruise.cruise_description.replace('\n','\\n');
+
     delete copied_cruise.cruise_additional_meta;
     delete copied_cruise.cruise_hidden;
     delete copied_cruise.cruise_access_list;
