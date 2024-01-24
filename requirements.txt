@@ -12,5 +12,6 @@ requests==2.31.0
 Rx==3.2.0
 six==1.16.0
 typing_extensions==4.9.0
+PyYAML==6.0.1
 urllib3==2.1.0
 websockets==12.0

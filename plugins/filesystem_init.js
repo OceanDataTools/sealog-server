@@ -1,5 +1,5 @@
 const Fs = require('fs');
-const Mkdirp = require('mkdirp');
+const { mkdirp } = require('mkdirp');
 
 const {
   IMAGE_PATH,
@@ -27,7 +27,11 @@ exports.plugin = {
     console.log('Searching for Image Directory');
     if (!Fs.existsSync(IMAGE_PATH)) {
       console.log('Image Directory not found... trying to create.');
-      await createDir(IMAGE_PATH);
+      await mkdirp(IMAGE_PATH).then(made => 
+        console.log('Image Directory created')
+      ).catch(err =>
+        console.error(err)
+      );	
     }
     else {
       console.log('Image Directory found.');
@@ -36,7 +40,11 @@ exports.plugin = {
     console.log('Searching for Cruise Directory');
     if (!Fs.existsSync(CRUISE_PATH)) {
       console.log('Cruise Directory not found... trying to create.');
-      await createDir(CRUISE_PATH);
+      await mkdirp(CRUISE_PATH).then(made =>
+      	console.log('Cruise Directory created')
+      ).catch(err =>
+        console.error(err)
+      );
     }
     else {
       console.log('Cruise Directory found.');
@@ -45,7 +53,11 @@ exports.plugin = {
     console.log('Searching for Lowering Directory');
     if (!Fs.existsSync(LOWERING_PATH)) {
       console.log('Lowering Directory not found... trying to create.');
-      await createDir(LOWERING_PATH);
+      await mkdirp(LOWERING_PATH).then(made => 
+        console.log('Lowering Directory created')
+      ).catch(err =>
+        console.error(err)
+      );
     }
     else {
       console.log('Lowering Directory found.');
