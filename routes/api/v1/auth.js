@@ -17,7 +17,7 @@ const {
   senderAddress,
   emailTransporter,
   reCaptchaSecret,
-  resetPasswordURL,
+  // resetPasswordURL,
   registeringUserRoles,
   disableRegisteringUsers,
   notificationEmailAddresses
