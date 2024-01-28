@@ -21,7 +21,7 @@ const registeringUserRoles = ['event_watcher', 'event_logger'];
 const useAccessControl = false;
 
 // Needed for email integration
-let emailTransporter = null;
+let emailTransporter = null; //eslint-disable-line prefer-const
 const Nodemailer = require('nodemailer'); // eslint-disable-line no-unused-vars
 
 // ========================================================================= //
