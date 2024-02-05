@@ -318,7 +318,7 @@ exports.plugin = {
       async handler(request, h) {
 
         //TODO - add code so that only admins and the user can do this.
-        if (!(request.auth.credentials.id === request.params.id || request.auth.credentials.roles.includes('admin'))){
+        if (!(request.auth.credentials.id === request.params.id || request.auth.credentials.roles.includes('admin'))) {
           return Boom.badRequest('Only admins and the owner can edit users');
         }
 
@@ -408,7 +408,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategy: 'jwt'
           // scope: ['admin', 'write_users']
         },
         validate: {
