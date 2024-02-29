@@ -2,21 +2,54 @@
 
 ### Prerequisites
 
- - [MongoDB](https://www.mongodb.com) >=v3.6.x
- - [nodeJS](https://nodejs.org) >=12.x
+ - [MongoDB](https://www.mongodb.com) >=v6.x
+ - [nodeJS](https://nodejs.org) >=21.x
  - [npm](https://www.npmjs.com) >=6.13.x
  - [git](https://git-scm.com)
  
  
-#### Installing MongoDB 3.6 on Ubuntu 20.04 LTS
+#### Installing MongoDB 3.6 on Ubuntu 22.04 LTS
 
+Install the dependecies:
 ```
-sudo apt-get install mongodb
+sudo apt install gnupg wget apt-transport-https ca-certificates software-properties-common
 ```
- 
-#### Installing NodeJS/npm on Ubuntu 20.04 LTS
-Recommend using these instuctions, skipping the distro-version section and following the section on “How to install Using a PPA".  ***NOTE:*** tweak these instructions to install version 12:
-https://www.digitalocean.com/community/tutorials/how-to-install-node-js-on-ubuntu-20-04
+
+Download/Install the GPG Keys for MongoDB:
+```
+curl -fsSL https://pgp.mongodb.com/server-6.0.asc |  sudo gpg -o /usr/share/keyrings/mongodb-server-6.0.gpg --dearmor
+```
+
+Setup the MongoDB Apt repository:
+```
+echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+```
+
+Use `apt` to install MongoDB:
+```
+apt-get update
+apt-get install mongodb-org
+```
+
+Start MongoDB and setup to start at boot:
+```
+systemctl start mongod
+systemctl status mongod
+systemctl enable mongod
+```
+
+#### Installing NodeJS/npm on Ubuntu 22.04 LTS
+
+Download the nvm install script:
+```
+wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+```
+Install the LTS version of NodeJS using `nvm`
+```
+nvm install --lts
+sudo ln -s $HOME/.nvm/versions/node/v20.11.0/bin/npm /usr/local/bin/
+sudo ln -s $HOME/.nvm/versions/node/v20.11.0/bin/node /usr/local/bin/
+```
 
 ### Clone the repository
 
@@ -41,7 +74,7 @@ cp ./config/secret.js.dist ./config/secret.js
 
 Set the `sealogDB` and `sealogDB_devel` names in the `./config/db_constants.js` file to meet your specific installation requirements.  If you are only running one instance of Sealog Server on the server then the defaults are sufficient
 
-Set the `senderAddress`, `resetPasswordURL` locations in the `./config/email_constants.js` file to meet your specific installation requirements.  The `resetPasswordURL` most likely only needs to have 'localhost' replaced with the servers hostname/IP unless running a higly customized version of Sealog.
+Set the `senderAddress`, `notificationEmailAddresses` and `resetPasswordURL` locations in the `./config/email_constants.js` file to meet your specific installation requirements.  The `resetPasswordURL` most likely only needs to have 'localhost' replaced with the servers hostname/IP unless running a higly customized version of Sealog.
 
 You will also need to uncomment the type of email integration used.  By default email is disabled but the distribution file includes commented code blocks for gmail and mailgun integration.
 
@@ -56,11 +89,16 @@ node -e "console.log(require('crypto').randomBytes(256).toString('base64'));"
 Save the key between the single quotes in the `secrets.js` file
 i.e. `module.exports = '<replace with secret key>'`
 
+### Move installation to production location
+
+```
+sudo mv $opt-server /opt/
+cd /opt/sealog-server`
+```
+
 ### Install the nodeJS modules
 
-From a terminal run:
 ```
-cd ./sealog-server
 npm install
 ```
 
@@ -87,7 +125,7 @@ npm start
 
 **This will start the server in production mode.**  This mode will connect to a mongo database that was already setup for use with sealog-server.  If no database is found, sealog-server will attempt to create it.  Running in production mode for the first time will create an admin account (admin:demo) and 1 regular user account (guest).  There is no password set for the regular account.
 
-To recommended way to setup Sealog to run at boot is to used Supervisor.  To install Supervisor for Ubuntu type:
+The recommended way to setup Sealog to start at boot is to use Supervisor.  To install Supervisor no Ubuntu:
 
 ```
 sudo apt-get install supervisor
@@ -98,10 +136,10 @@ Create a supervisor configuration file:
 sudo pico /etc/supervisor/conf.d/sealog-server.conf
 ```
 
-Copy/Paste the following into the file (assumes sealog-server is located in `/home/sealog` and that the desired user is `sealog`):
+Copy/Paste the following into the file and that the desired user is `sealog`):
 ```
 [program:sealog-server]
-directory=/home/sealog/sealog-server
+directory=/opt/sealog-server
 command=node server.js
 environment=NODE_ENV="production"
 redirect_stderr=true
@@ -183,7 +221,7 @@ sudo apt-get install python3 python3-dev python3-pip python3-venv
 
 Goto the sealog-server installation directory and create the python virtual environment.
 ```
-cd ~/sealog-server
+cd /opt/sealog-server
 python3 -m venv ./venv
 ```
 
@@ -199,7 +237,7 @@ Automatic snapshots or ASNAP is a service that when enabled will submit an ASNAP
 
 ### Configuring the ASNAP service:
 ```
-cp ~/sealog-server/misc/sealog_asnap.py.dist ~/sealog-server/misc/sealog_asnap.py
+cp /opt/sealog-server/misc/sealog_asnap.py.dist ~/sealog-server/misc/sealog_asnap.py
 ```
 
 Edit the supervisor configuration file:
@@ -207,11 +245,11 @@ Edit the supervisor configuration file:
 sudo pico /etc/supervisor/conf.d/sealog-server.conf
 ```
 
-Append the following to the supervisor configuration file (assumes sealog-server is located in `/home/sealog` and that the desired user is `sealog`):
+Append the following to the supervisor configuration file (assumes the desired user is `sealog`):
 ```
 [program:sealog-asnap]
-directory=/home/sealog/sealog-server/misc
-command=/home/sealog/sealog-server/venv/bin/python sealog_asnap.py
+directory=/opt/sealog-server/misc
+command=/opt/sealog-server/venv/bin/python sealog_asnap.py
 redirect_stderr=true
 stdout_logfile=/var/log/sealog-asnap_STDOUT.log
 user=sealog
@@ -223,7 +261,7 @@ stopsignal=QUIT
 The default ASNAP interval is 10 seconds.  To change that add the `--interval <seconds>` argument to the command statement. i.e.
 
 ```
-command=/home/sealog/sealog-server/venv/bin/python sealog_asnap.py --interval 300
+command=/opt/sealog-server/venv/bin/python sealog_asnap.py --interval 300
 ```
 
 ## Auto-Actions
@@ -232,7 +270,7 @@ Auto-Actions is a service that triggered additional actions based on submitted e
 
 ### Configuring the Auto-Actions service:
 ```
-cp ~/sealog-server/misc/sealog_auto_actions.py.dist ~/sealog-server/misc/sealog_auto_actions.py
+cp /opt/sealog-server/misc/sealog_auto_actions.py.dist /opt/sealog-server/misc/sealog_auto_actions.py
 ```
 
 Edit the supervisor configuration file:
@@ -240,11 +278,11 @@ Edit the supervisor configuration file:
 sudo pico /etc/supervisor/conf.d/sealog-server.conf
 ```
 
-Append the following to the supervisor configuration file (assumes sealog-server is located in `/home/sealog` and that the desired user is `sealog`):
+Append the following to the supervisor configuration file (assumes the desired user is `sealog`):
 ```
 [program:sealog-auto-actions]
-directory=/home/sealog/sealog-server/misc
-command=/home/sealog/sealog-server/venv/bin/python sealog_auto_actions.py
+directory=/opt/sealog-server/misc
+command=/opt/sealog-server/venv/bin/python sealog_auto_actions.py
 redirect_stderr=true
 stdout_logfile=/var/log/sealog-auto-actions_STDOUT.log
 user=sealog
@@ -262,24 +300,24 @@ One of the first things operators will want to do after they install Sealog is f
 First the appropriate boilerplate file needs to be enabled.
 
 ```
-cp ~/sealog-server/misc/sealog_vehicle_data_export.py.dist ~/sealog-server/misc/sealog_data_export.py
+cp /opt/sealog-server/misc/sealog_vehicle_data_export.py.dist /opt/sealog-server/misc/sealog_data_export.py
 ```
 or
 ```
-cp ~/sealog-server/misc/sealog_vessel_data_export.py.dist ~/sealog-server/misc/sealog_data_export.py
+cp /opt/sealog-server/misc/sealog_vessel_data_export.py.dist /opt/sealog-server/misc/sealog_data_export.py
 ```
 
 Next the `sealog_data_export.py` file needs to be customized for the actual installation.  Open the file and change the following variables to match the desired behavior.
 
 Sealog for Vehicles:
 ```
-EXPORT_ROOT_DIR = '/home/sealog/sealog-export'
+EXPORT_ROOT_DIR = '/data/sealog-export'
 VEHICLE_NAME = 'Explorer'
 ```
 
 Sealog for Vessels:
 ```
-EXPORT_ROOT_DIR = '/home/sealog/sealog-export'
+EXPORT_ROOT_DIR = '/data/sealog-export'
 VESSEL_NAME = 'Discoverer'
 ```
 
