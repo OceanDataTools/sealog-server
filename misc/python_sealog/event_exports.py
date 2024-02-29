@@ -38,7 +38,7 @@ def get_event_export(event_uid, export_format='json', event_filter=[], add_recor
 
     params = {
         'format': export_format,
-        'add_record_ids': 'true' if add_record_ids else 'false',
+        'add_record_ids': add_record_ids,
     }
 
     try:
@@ -72,7 +72,7 @@ def get_event_exports(export_format='json', event_filter=[], startTS=None, stopT
 
     params = {
         'format': export_format,
-        'add_record_ids': 'true' if add_record_ids else 'false',
+        'add_record_ids': add_record_ids,
     }
 
     if event_filter:
@@ -117,7 +117,7 @@ def get_event_exports_by_cruise(cruise_uid, export_format='json', event_filter=[
 
     params = {
         'format': export_format,
-        'add_record_ids': 'true' if add_record_ids else 'false',
+        'add_record_ids': add_record_ids,
     }
 
     if event_filter:
@@ -157,7 +157,7 @@ def get_event_exports_by_lowering(lowering_uid, export_format='json', event_filt
 
     params = {
         'format': export_format,
-        'add_record_ids': 'true' if add_record_ids else 'false',
+        'add_record_ids': add_record_ids,
     }
 
     if event_filter:
