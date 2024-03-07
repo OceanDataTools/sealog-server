@@ -102,7 +102,7 @@ exports.plugin = {
     const result = await db.listCollections({ name: loweringsTable }).toArray();
 
     if (result.length) {
-      if (process.env.NODE_ENV !== 'development') {
+      if (process.env.NODE_ENV === 'production') {
         console.log('Lowerings Collection already exists... we\'re done here.');
         return;
       }

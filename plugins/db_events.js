@@ -68,7 +68,7 @@ exports.plugin = {
     const result = await db.listCollections({ name: eventsTable }).toArray();
 
     if (result.length) {
-      if (process.env.NODE_ENV !== 'development') {
+      if (process.env.NODE_ENV === 'production') {
         console.log('Events Collection already exists... we\'re done here.');
         return;
       }
