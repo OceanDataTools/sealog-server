@@ -886,7 +886,7 @@ exports.plugin = {
           }
         }
 
-        const publish = event.publish || true;
+        const publish = (typeof event.publish !== 'undefined') ? event.publish :  true;
         delete event.publish;
 
         try {
