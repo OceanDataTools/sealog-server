@@ -429,8 +429,7 @@ exports.plugin = {
           }
         }
 
-        const resetLink = resetPasswordURL + token;
-        // const resetLink = request.connection.info.protocol + '://' + request.info.host + '/resetPassword/' + token;
+        const resetLink = `${request.payload.resetURL}${token}`;
         const mailOptions = {
           from: senderAddress,
           to: request.payload.email,
