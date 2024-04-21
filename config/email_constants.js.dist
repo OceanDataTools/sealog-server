@@ -55,7 +55,7 @@ const Nodemailer = require('nodemailer'); // eslint-disable-line no-unused-vars
 // ------------------------------------------------------------------------- //
 // MailJet integration
 // ------------------------------------------------------------------------- //
-// const Mj = require('nodemailer-mailjet-transport'); // eslint-disable-line no-unused-vars
+// const Mj = require('../lib/nodemailer-mailjet-transport'); // eslint-disable-line no-unused-vars
 // emailTransporter = Nodemailer.createTransport(Mj({
 //   auth: {
 //     apiKey: '<API_KEY>',
