@@ -1,6 +1,6 @@
 {
   "name": "sealog-server",
-  "version": "2.2.9",
+  "version": "2.2.10",
   "license": "MIT",
   "description": "Sealog event-logging server",
   "bugs": {
@@ -29,12 +29,12 @@
   ],
   "dependencies": {
     "@hapi/glue": "^9.0.1",
-    "@hapi/hapi": "^21.3.3",
+    "@hapi/hapi": "^21.3.8",
     "@hapi/inert": "^7.1.0",
     "@hapi/nes": "^13.0.1",
     "@hapi/vision": "^7.0.3",
     "@json2csv/node": "^7.0.6",
-    "axios": "^1.6.7",
+    "axios": "^1.6.8",
     "bcryptjs": "^2.4.3",
     "check-disk-space": "^3.4.0",
     "deepcopy": "^2.1.0",
@@ -42,12 +42,12 @@
     "hapi-mongodb": "^10.0.3",
     "hapi-pino": "^12.1.0",
     "hapi-swagger": "^17.2.1",
-    "joi": "^17.12.2",
+    "joi": "^17.12.3",
     "mkdirp": "^3.0.1",
     "mongodb": "^4.17.2",
-    "nodemailer": "^6.9.10",
+    "node-mailjet": "^6.0.5",
+    "nodemailer": "^6.9.13",
     "nodemailer-mailgun-transport": "^2.1.5",
-    "nodemailer-mailjet-transport": "^1.0.4",
     "nodemon": "^3.1.0",
     "pino-pretty": "^10.3.1",
     "tmp": "^0.2.3"

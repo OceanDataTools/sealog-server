@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  sealog-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - mongo
+    environment:
+      - SEALOG_DB_NAME=sealogDB_devel
+      - SEALOG_SERVER_PORT=8000
+      - SEALOG_SERVER_SECRET=<SECRET> #create this with: node -e "console.log(require('crypto').randomBytes(256).toString('base64'));"
+      - NODE_ENV=production
+      - MONGO_URL=mongodb://mongo:27017/
+    image: sealog-server
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    volumes:
+      - sealog-files:/data/sealog-files
+
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - db_data:/data/db
+
+volumes:
+  db_data:
+  sealog-files:
