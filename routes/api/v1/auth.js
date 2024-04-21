@@ -159,9 +159,9 @@ exports.plugin = {
           const disabledAccountTxt = (disableRegisteringUsers) ? '<p>For security reasons, accounts created via self-registration are disabled by default.  The system adminstrator has been notified of your account request and will enable the account shortly.</p>' : '';
 
           let mailOptions = {
-            from: senderAddress, // sender address
-            to: request.payload.email, // list of receivers
-            subject: 'Welcome to Sealog', // Subject line
+            from: senderAddress,
+            to: request.payload.email,
+            subject: 'Welcome to Sealog',
             html: `<p>Welcome to Sealog. If you are receiving this email you have just created an account on Sealog (${request.info.hostname}).</p>
             ${disabledAccountTxt}
             <p>If you have any questions please reply to this email address</p><p>Thanks!</p>`
@@ -171,15 +171,15 @@ exports.plugin = {
             emailTransporter.sendMail(mailOptions, (err) => {
 
               if (err) {
-                console.log('ERROR:', err);
+                console.error('ERROR: ', err);
               }
             });
           }
 
           mailOptions = {
-            from: senderAddress, // sender address
-            to: notificationEmailAddresses.join(','), // list of receipents to be notified.
-            subject: 'New Sealog User Registration', // Subject line
+            from: senderAddress,
+            to: notificationEmailAddresses.join(','),
+            subject: 'New Sealog User Registration',
             html: `<p>New user: ${user.username}  ( ${user.fullname} ) has just registered an account with Sealog (${request.info.hostname}). Please ensure this user's access permissions have been configured correctly.</p>`
           };
 
@@ -438,9 +438,9 @@ exports.plugin = {
         const resetLink = resetPasswordURL + token;
         // const resetLink = request.connection.info.protocol + '://' + request.info.host + '/resetPassword/' + token;
         const mailOptions = {
-          from: senderAddress, // sender address
-          to: request.payload.email, // list of receivers
-          subject: 'Sealog Password Reset Request', // Subject line
+          from: senderAddress,
+          to: request.payload.email,
+          subject: 'Sealog Password Reset Request',
           html: `<p>Sealog has recieved a request to reset the Sealog account associated with this email address. If you did not request this then please just ignore this message. If you would like to change your password please click on the link below.  This link will expire in ${resetPasswordTokenExpires.toString()} minutes:</p>
           <p><a href='${resetLink}'>${resetLink}</a></p>`
         };
