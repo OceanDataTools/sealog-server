@@ -11,7 +11,7 @@ services:
       - SEALOG_DB_NAME=sealogDB_devel
       - SEALOG_SERVER_PORT=8000
       - SEALOG_SERVER_SECRET=zrADTg8qv46wTp/4febwITT3vId4Zz9OWcRSdGIhbbdWSUHYgkOrlDKypEMrqXMoz0xtJPQp00JrEeDMAaHBYdRJQpxDaPWDSm6Js6jPmO51GqxSf8QxkAkN3cBKhiDs67G48Md5bUCwD3CjWaydkDFUMpxSQf6Rj+31mNgNzRjj8r1aMxuYza65ekwJjkQvv7XQG9L3ASZRh278a5KnEh4DK4kvJw7pZ5Ti0C87OSwjMFSs+hiYiO+xlaUcFBlZVP5EIC7qnQ98agn6dvX1+cmvSqu1ljRKCDzFO70576IAUnU8q2JhLK75vIp3aX40g0E2qY8UQ0QL78JzIn1Jsw==
-      - NODE_ENV=development
+      - NODE_ENV=production
       - MONGO_URL=mongodb://mongo:27017/
     image: sealog-server
     ports:
