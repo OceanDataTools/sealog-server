@@ -887,9 +887,7 @@ exports.plugin = {
         }
 
         const publish = event.publish || true;
-        if (event.publish) {
-          delete event.publish;
-        }
+        delete event.publish;
 
         try {
           const result = await db.collection(eventsTable).insertOne(event);
