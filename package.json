@@ -47,7 +47,6 @@
     "mongodb": "^4.17.2",
     "nodemailer": "^6.9.13",
     "nodemailer-mailgun-transport": "^2.1.5",
-    "nodemailer-mailjet-transport": "^1.0.4",
     "nodemon": "^3.1.0",
     "pino-pretty": "^10.3.1",
     "tmp": "^0.2.3"
