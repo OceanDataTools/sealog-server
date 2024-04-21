@@ -181,7 +181,7 @@ exports.plugin = {
     const result = await db.listCollections({ name: eventAuxDataTable }).toArray();
 
     if (result.length) {
-      if (process.env.NODE_ENV === 'production') {
+      if (process.env.NODE_ENV !== 'development') {
         console.log('Event Aux Data Collection already exists... we\'re done here.');
         return;
       }

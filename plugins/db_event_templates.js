@@ -199,7 +199,7 @@ exports.plugin = {
     const result = await db.listCollections({ name: eventTemplatesTable }).toArray();
 
     if (result.length) {
-      if (process.env.NODE_ENV === 'production') {
+      if (process.env.NODE_ENV !== 'development') {
         console.log('Event Templates Collection already exists... we\'re done here.');
         return;
       }
