@@ -886,6 +886,11 @@ exports.plugin = {
           }
         }
 
+        const publish = event.publish || true;
+        if (event.publish) {
+          delete event.publish;
+        }
+
         try {
           const result = await db.collection(eventsTable).insertOne(event);
 
@@ -893,7 +898,7 @@ exports.plugin = {
           _renameAndClearFields(event);
 
           const diff = (new Date().getTime() - event.ts.getTime()) / 1000;
-          if (Math.abs(Math.round(diff)) < THRESHOLD) {
+          if (publish && Math.abs(Math.round(diff)) < THRESHOLD) {
             server.publish('/ws/status/newEvents', event);
           }
 
