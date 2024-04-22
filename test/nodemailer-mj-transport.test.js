@@ -24,7 +24,7 @@ const { emailTransporter } = require('../config/email_constants');
 
 let mailOptions = {
 	from: senderAddress,
-	to: 'oceandatarat@gmail.com',
+	to: '<RECIPIENT_ADDR>',
 	bcc: notificationEmailAddresses,
 	subject: 'Welcome to Sealog',
 	html: `<p>Welcome to Sealog. If you are receiving this email you have just created an account on Sealog (...).</p>
