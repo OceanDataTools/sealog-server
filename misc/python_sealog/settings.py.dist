@@ -39,5 +39,5 @@ API_SERVER_FILE_PATH = '/home/sealog/sealog-files'
 TOKEN = ''
 
 HEADERS = {
-  "authorization": TOKEN
+  'Authorization': 'Bearer ' + TOKEN
 }

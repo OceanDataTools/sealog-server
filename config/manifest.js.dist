@@ -54,7 +54,7 @@ const swagger_options = {
   securityDefinitions: {
     API_KEY: {
       type: 'apiKey',
-      name: 'authorization',
+      name: 'Authorization',
       in: 'header'
     }
   }
@@ -188,7 +188,7 @@ const manifest = {
       { plugin: 'hapi-pino',
         options: {
           logRequestComplete: env !== 'production',
-          redact: ['req.headers.authorization']
+          redact: ['req.headers.Authorization']
         }
       },
       { plugin: 'hapi-swagger', options: swagger_options,
