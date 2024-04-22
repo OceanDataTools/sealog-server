@@ -46,9 +46,13 @@ wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 ```
 Install the LTS version of NodeJS using `nvm`
 ```
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 nvm install --lts
-sudo ln -s $HOME/.nvm/versions/node/v20.11.0/bin/npm /usr/local/bin/
-sudo ln -s $HOME/.nvm/versions/node/v20.11.0/bin/node /usr/local/bin/
+NODE_VERSION=node -v
+sudo ln -s $HOME/.nvm/versions/node/${NODE_VERSION}/bin/npm /usr/local/bin/
+sudo ln -s $HOME/.nvm/versions/node/${NODE_VERSION}/bin/node /usr/local/bin/
 ```
 
 ### Clone the repository
@@ -76,7 +80,7 @@ Set the `sealogDB` and `sealogDB_devel` names in the `./config/db_constants.js` 
 
 Set the `senderAddress` and `notificationEmailAddresses` locations in the `./config/email_constants.js` file to meet your specific installation requirements.
 
-You will also need to uncomment the type of email integration used.  By default email is disabled but the distribution file includes commented code blocks for gmail and mailgun integration.
+You will also need to uncomment the type of email integration used.  By default email is disabled but the distribution file includes commented code blocks for gmail, mailgun and mailjet integration.
 
 Set the `host`, `port`, `wsPort`, and `prefix` values in the `./config/manifest.js` file to meet your specific installation requirements.  There are 3 sets of these variables for the various ways sealog-server can be run.  If you are only running one instance of Sealog Server on the server then the defaults are sufficient
 
@@ -92,7 +96,7 @@ i.e. `module.exports = '<replace with secret key>'`
 ### Move installation to production location
 
 ```
-sudo mv $opt-server /opt/
+sudo mv sealog-server /opt/
 cd /opt/sealog-server`
 ```
 
@@ -106,7 +110,7 @@ npm install
 
 From a terminal run:
 ```
-cd ./sealog-server
+cd /opt/sealog-server
 npm run start-devel
 ```
 
@@ -119,7 +123,7 @@ Running in development mode will create an admin account (testadmin:password) an
 From a terminal run:
 
 ```
-cd ./sealog-server
+cd /opt/sealog-server
 npm start
 ```
 
@@ -228,7 +232,7 @@ python3 -m venv ./venv
 Activate the python virtual environment and install the requried python libraries
 ```
 source ./venv/bin/activate
-pip install pymongo websockets requests
+pip install -r requirements.txt
 ```
 
 ## Automatic Snapshot (ASNAP)
