@@ -74,7 +74,7 @@ cp ./config/secret.js.dist ./config/secret.js
 
 Set the `sealogDB` and `sealogDB_devel` names in the `./config/db_constants.js` file to meet your specific installation requirements.  If you are only running one instance of Sealog Server on the server then the defaults are sufficient
 
-Set the `senderAddress`, `notificationEmailAddresses` and `resetPasswordURL` locations in the `./config/email_constants.js` file to meet your specific installation requirements.  The `resetPasswordURL` most likely only needs to have 'localhost' replaced with the servers hostname/IP unless running a higly customized version of Sealog.
+Set the `senderAddress` and `notificationEmailAddresses` locations in the `./config/email_constants.js` file to meet your specific installation requirements.
 
 You will also need to uncomment the type of email integration used.  By default email is disabled but the distribution file includes commented code blocks for gmail and mailgun integration.
 

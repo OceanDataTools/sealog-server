@@ -4,10 +4,6 @@ const senderAddress = '<SENDER_ADDRESS>';
 // Additional receipents for and sent emails.
 const notificationEmailAddresses = ['<BCC_ADDRESS>'];
 
-// URL of password reset form
-// Set the protocol (http/https), serverURL/IP and port number to match the server's configuration
-const resetPasswordURL = 'http://localhost:8080/resetPassword/';
-
 // Server-side reCaptcha key, set to '' if not using reCaptcha bot protection
 const reCaptchaSecret = '';
 
@@ -56,6 +52,7 @@ const Nodemailer = require('nodemailer'); // eslint-disable-line no-unused-vars
 // MailJet integration
 // ------------------------------------------------------------------------- //
 // const Mj = require('../lib/nodemailer-mailjet-transport'); // eslint-disable-line no-unused-vars
+
 // emailTransporter = Nodemailer.createTransport(Mj({
 //   auth: {
 //     apiKey: process.env.MJ_APIKEY_PUBLIC || '<API_KEY>',
@@ -68,7 +65,6 @@ module.exports = {
   emailTransporter,
   notificationEmailAddresses,
   reCaptchaSecret,
-  resetPasswordURL,
   disableRegisteringUsers,
   registeringUserRoles,
   useAccessControl
