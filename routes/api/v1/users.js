@@ -198,6 +198,7 @@ exports.plugin = {
         }
 
         const user = request.payload;
+        delete user.resetURL;
 
         if (request.payload.id) {
           try {
@@ -263,12 +264,11 @@ exports.plugin = {
           Boom.serverUnavailable('database error');
         }
 
-        // const resetLink = resetPasswordURL + token;
         const resetLink = `${request.payload.resetURL}${token}`;
         const mailOptions = {
-          from: senderAddress, // sender address
-          to: request.payload.email, // list of receivers
-          subject: 'Sealog - New User Created', // Subject line
+          from: senderAddress,
+          to: request.payload.email,
+          subject: 'Sealog - New User Created',
           html: `<p>A new Sealog user account was created and associated with this email address.  The username for this account is: ${user.username}</p>
           <p>To set the password for this account please click on the link below.  This link will expire in ${resetPasswordTokenExpires.toString()} hours.</p>
           <p><a href="${resetLink}">${resetLink}</a></p>
