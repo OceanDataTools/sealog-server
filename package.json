@@ -29,7 +29,7 @@
   ],
   "dependencies": {
     "@hapi/glue": "^9.0.1",
-    "@hapi/hapi": "^21.3.8",
+    "@hapi/hapi": "^21.3.9",
     "@hapi/inert": "^7.1.0",
     "@hapi/nes": "^13.0.1",
     "@hapi/vision": "^7.0.3",
@@ -50,6 +50,7 @@
     "nodemailer-mailgun-transport": "^2.1.5",
     "nodemon": "^3.1.0",
     "pino-pretty": "^10.3.1",
+    "read-pkg": "^9.0.1",
     "tmp": "^0.2.3"
   },
   "devDependencies": {

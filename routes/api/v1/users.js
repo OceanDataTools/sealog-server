@@ -197,6 +197,7 @@ exports.plugin = {
           Boom.serverUnavailable('database error');
         }
 
+        const resetURL = request.payload.resetURL;
         const user = request.payload;
         delete user.resetURL;
 
@@ -264,7 +265,7 @@ exports.plugin = {
           Boom.serverUnavailable('database error');
         }
 
-        const resetLink = `${request.payload.resetURL}${token}`;
+        const resetLink = `${resetURL}${token}`;
         const mailOptions = {
           from: senderAddress,
           to: request.payload.email,
