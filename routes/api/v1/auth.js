@@ -167,13 +167,12 @@ exports.plugin = {
               <p>If you have any questions please reply to this email address</p><p>Thanks!</p>`
             };
 
-              emailTransporter.sendMail(mailOptions, (err) => {
+            emailTransporter.sendMail(mailOptions, (err) => {
 
-                if (err) {
-                  console.error('ERROR: ', err);
-                }
-              });
-            }
+              if (err) {
+                console.error('ERROR: ', err);
+              }
+            });
 
             mailOptions = {
               from: senderAddress,
