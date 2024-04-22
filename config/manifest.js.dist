@@ -50,14 +50,15 @@ const swagger_options = {
     }
   ],
   grouping: 'tags',
-  security: [{ API_KEY: [] }],
   securityDefinitions: {
-    API_KEY: {
+    jwt: {
       type: 'apiKey',
       name: 'Authorization',
       in: 'header'
     }
-  }
+  },
+  security: [{ jwt: [] }],
+  schemes: ['http','https']
 };
 
 const {
