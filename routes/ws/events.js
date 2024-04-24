@@ -10,7 +10,7 @@ exports.plugin = {
 
     server.subscription('/ws/status/newEvents', { 
       auth: {
-        mode: 'jwt'
+        type: 'direct'
       },
     });
 
@@ -22,7 +22,7 @@ exports.plugin = {
 
     server.subscription('/ws/status/updateEvents', { 
       auth: {
-        mode: 'jwt'
+        type: 'direct'
       },
     });
 
@@ -34,7 +34,7 @@ exports.plugin = {
 
     server.subscription('/ws/status/deleteEvents', { 
       auth: {
-        mode: 'jwt'
+        type: 'direct'
       },
     });
 
@@ -46,7 +46,7 @@ exports.plugin = {
 
     server.subscription('/ws/status/updateCustomVars', { 
       auth: {
-        mode: 'jwt'
+        type: 'direct'
       },
     });
 
@@ -58,7 +58,7 @@ exports.plugin = {
 
     server.subscription('/ws/status/newCruises', { 
       auth: {
-        mode: 'jwt'
+        type: 'direct'
       },
     });
 
@@ -70,7 +70,7 @@ exports.plugin = {
 
     server.subscription('/ws/status/updateCruises', { 
       auth: {
-        mode: 'jwt'
+        type: 'direct'
       },
     });
 
@@ -82,7 +82,7 @@ exports.plugin = {
 
     server.subscription('/ws/status/newLowerings', { 
       auth: {
-        mode: 'jwt'
+        type: 'direct'
       },
     });
 
@@ -94,7 +94,7 @@ exports.plugin = {
 
     server.subscription('/ws/status/updateLowerings', { 
       auth: {
-        mode: 'jwt'
+        type: 'direct'
       },
     });
 
