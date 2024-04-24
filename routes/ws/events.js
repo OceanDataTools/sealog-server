@@ -8,10 +8,10 @@ exports.plugin = {
       server.publish('/ws/status/newEvents', payload );
     });
 
-    server.subscription('/ws/status/newEvents', { 
+    server.subscription('/ws/status/newEvents', {
       auth: {
         type: 'direct'
-      },
+      }
     });
 
 
@@ -20,10 +20,10 @@ exports.plugin = {
       server.publish('/ws/status/updateEvents', payload );
     });
 
-    server.subscription('/ws/status/updateEvents', { 
+    server.subscription('/ws/status/updateEvents', {
       auth: {
         type: 'direct'
-      },
+      }
     });
 
 
@@ -32,10 +32,10 @@ exports.plugin = {
       server.publish('/ws/status/deleteEvents', payload );
     });
 
-    server.subscription('/ws/status/deleteEvents', { 
+    server.subscription('/ws/status/deleteEvents', {
       auth: {
         type: 'direct'
-      },
+      }
     });
 
 
@@ -44,10 +44,10 @@ exports.plugin = {
       server.publish('/ws/status/updateCustomVars', payload );
     });
 
-    server.subscription('/ws/status/updateCustomVars', { 
+    server.subscription('/ws/status/updateCustomVars', {
       auth: {
         type: 'direct'
-      },
+      }
     });
 
 
@@ -56,10 +56,10 @@ exports.plugin = {
       server.publish('/ws/status/newCruises', payload );
     });
 
-    server.subscription('/ws/status/newCruises', { 
+    server.subscription('/ws/status/newCruises', {
       auth: {
         type: 'direct'
-      },
+      }
     });
 
 
@@ -68,10 +68,10 @@ exports.plugin = {
       server.publish('/ws/status/updateCruises', payload );
     });
 
-    server.subscription('/ws/status/updateCruises', { 
+    server.subscription('/ws/status/updateCruises', {
       auth: {
         type: 'direct'
-      },
+      }
     });
 
 
@@ -80,10 +80,10 @@ exports.plugin = {
       server.publish('/ws/status/newLowerings', payload );
     });
 
-    server.subscription('/ws/status/newLowerings', { 
+    server.subscription('/ws/status/newLowerings', {
       auth: {
         type: 'direct'
-      },
+      }
     });
 
 
@@ -92,10 +92,10 @@ exports.plugin = {
       server.publish('/ws/status/updateLowerings', payload );
     });
 
-    server.subscription('/ws/status/updateLowerings', { 
+    server.subscription('/ws/status/updateLowerings', {
       auth: {
         type: 'direct'
-      },
+      }
     });
 
   }
