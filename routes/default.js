@@ -10,6 +10,9 @@ const {
   LOWERING_PATH
 } = require('../config/path_constants');
 
+const {
+  authorizationHeader
+} = require('../lib/validations');
 
 const IMAGE_ROUTE = '/files/images';
 const CRUISE_ROUTE = '/files/cruises';
@@ -56,10 +59,6 @@ const handleFileDelete = (filePath) => {
     Fs.unlinkSync(filePath);
   }
 };
-
-const authorizationHeader = Joi.object({
-  authorization: Joi.string().required()
-}).options({ allowUnknown: true }).label('authorizationHeader');
 
 const fileParam = Joi.object({
   param: Joi.string().required()

@@ -64,7 +64,7 @@ async def transmit_event(server, event, path):
     # check to see if a cruise record with the cruiseID in cruise_record already exists
 
     headers = {
-        "authorization": server['token']
+        'Authorization': 'Bearer ' + server['token']
     }
 
     url = server['apiServerURL'] + EVENTS_API_PATH
@@ -98,7 +98,7 @@ async def transmit_event_auxdata(server, event_auxdata, path):
     # check to see if a cruise record with the cruiseID in cruise_record already exists
 
     headers = {
-        "authorization": server['token']
+        'Authorization': 'Bearer ' + server['token']
     }
 
     url = server['apiServerURL'] + EVENT_AUX_DATA_API_PATH
@@ -200,7 +200,7 @@ async def receiver(server):
 
                 logging.debug("Send HELLO packet")
                 hello = HELLO
-                hello['auth']['headers'] = { "authorization": server['token'] }
+                hello['auth']['headers'] = { 'Authorization': 'Bearer ' + server['token'] }
                 await websocket.send(json.dumps(hello))
 
                 while True:

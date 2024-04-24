@@ -66,7 +66,7 @@ Submitting an event to the Sealog Server requires a JWT who's associated user in
 
 From the terminal:
 ```
-curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' --header 'Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBjNDVkN2I0LTU4ODEtNGU2NC04ZmQzLTIwNTczMjVlMmFmZSIsInNjb3BlIjpbImV2ZW50X21hbmFnZXIiLCJldmVudF9sb2dnZXIiLCJldmVudF93YXRjaGVyIl0sImlhdCI6MTUwMDAzNTc1NX0.WoOLfXxCIxIZEswy1lsbjm7XxDcbfd_NuZsL2-NB_Qw' -d '{"event_value": "TEST"}' 'https://sealog-vehicle.oceandatatools.org:9200/sealog-server/api/v1/events'
+curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBjNDVkN2I0LTU4ODEtNGU2NC04ZmQzLTIwNTczMjVlMmFmZSIsInNjb3BlIjpbImV2ZW50X21hbmFnZXIiLCJldmVudF9sb2dnZXIiLCJldmVudF93YXRjaGVyIl0sImlhdCI6MTUwMDAzNTc1NX0.WoOLfXxCIxIZEswy1lsbjm7XxDcbfd_NuZsL2-NB_Qw' -d '{"event_value": "TEST"}' 'https://sealog-vehicle.oceandatatools.org:9200/sealog-server/api/v1/events'
 ```
 
 This will respond with:
@@ -102,7 +102,7 @@ r = requests.post(root_url + api_path, data=payload)
 token = json.loads(r.text)['token']
 
 api_path = '/api/v1/events'
-headers = {'authorization': token}
+headers = {'Authorization': 'Bearer ' + token}
 
 payload = {
   "event_value": "HELLO_WORLD"
