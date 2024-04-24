@@ -8,7 +8,11 @@ exports.plugin = {
       server.publish('/ws/status/newEvents', payload );
     });
 
-    server.subscription('/ws/status/newEvents');
+    server.subscription('/ws/status/newEvents', { 
+      auth: {
+        mode: 'jwt'
+      },
+    });
 
 
     server.method('publishUpdateEvent', ( payload ) => {
@@ -16,7 +20,11 @@ exports.plugin = {
       server.publish('/ws/status/updateEvents', payload );
     });
 
-    server.subscription('/ws/status/updateEvents');
+    server.subscription('/ws/status/updateEvents', { 
+      auth: {
+        mode: 'jwt'
+      },
+    });
 
 
     server.method('publishDeleteEvent', ( payload ) => {
@@ -24,7 +32,11 @@ exports.plugin = {
       server.publish('/ws/status/deleteEvents', payload );
     });
 
-    server.subscription('/ws/status/deleteEvents');
+    server.subscription('/ws/status/deleteEvents', { 
+      auth: {
+        mode: 'jwt'
+      },
+    });
 
 
     server.method('publishUpdateCustomVar', ( payload ) => {
@@ -32,7 +44,11 @@ exports.plugin = {
       server.publish('/ws/status/updateCustomVars', payload );
     });
 
-    server.subscription('/ws/status/updateCustomVars');
+    server.subscription('/ws/status/updateCustomVars', { 
+      auth: {
+        mode: 'jwt'
+      },
+    });
 
 
     server.method('publishNewCruise', ( payload ) => {
@@ -40,7 +56,11 @@ exports.plugin = {
       server.publish('/ws/status/newCruises', payload );
     });
 
-    server.subscription('/ws/status/newCruises');
+    server.subscription('/ws/status/newCruises', { 
+      auth: {
+        mode: 'jwt'
+      },
+    });
 
 
     server.method('publishUpdateCruise', ( payload ) => {
@@ -48,7 +68,11 @@ exports.plugin = {
       server.publish('/ws/status/updateCruises', payload );
     });
 
-    server.subscription('/ws/status/updateCruises');
+    server.subscription('/ws/status/updateCruises', { 
+      auth: {
+        mode: 'jwt'
+      },
+    });
 
 
     server.method('publishNewLowering', ( payload ) => {
@@ -56,7 +80,11 @@ exports.plugin = {
       server.publish('/ws/status/newLowerings', payload );
     });
 
-    server.subscription('/ws/status/newLowerings');
+    server.subscription('/ws/status/newLowerings', { 
+      auth: {
+        mode: 'jwt'
+      },
+    });
 
 
     server.method('publishUpdateLowering', ( payload ) => {
@@ -64,7 +92,11 @@ exports.plugin = {
       server.publish('/ws/status/updateLowerings', payload );
     });
 
-    server.subscription('/ws/status/updateLowerings');
+    server.subscription('/ws/status/updateLowerings', { 
+      auth: {
+        mode: 'jwt'
+      },
+    });
 
   }
 };
