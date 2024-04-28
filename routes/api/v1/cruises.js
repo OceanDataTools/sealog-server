@@ -35,7 +35,7 @@ const {
 } = require('../../../lib/validations');
 
 const {
-  rmDir,
+  rmPath,
   mvFilesToDir
 } = require('../../../lib/utils');
 
@@ -816,7 +816,7 @@ exports.plugin = {
           try {
             request.payload.cruise_additional_meta.cruise_files.map((file) => {
               // console.log("move files from", Path.join(Tmp.tmpdir,file), "to", Path.join(CRUISE_PATH, request.params.id));
-              mvFilesToDir(Path.join(Tmp.tmpdir,file), Path.join(CRUISE_PATH, request.params.id));
+              mvFilesToDir(Path.join(Tmp.tmpdir,file), Path.join(CRUISE_PATH, request.params.id), true);
             });
 
           }
@@ -1101,7 +1101,7 @@ exports.plugin = {
           const deleteCruise = await db.collection(cruisesTable).deleteOne(query);
 
           if (Fs.existsSync(CRUISE_PATH + '/' + request.params.id)) {
-            rmDir(CRUISE_PATH + '/' + request.params.id);
+            rmPath(CRUISE_PATH + '/' + request.params.id);
           }
 
           return h.response(deleteCruise).code(204);
@@ -1147,7 +1147,7 @@ exports.plugin = {
         }
 
         try {
-          rmDir(CRUISE_PATH);
+          rmPath(CRUISE_PATH);
           if (!Fs.existsSync(CRUISE_PATH)) {
             Fs.mkdirSync(CRUISE_PATH);
           }

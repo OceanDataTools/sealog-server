@@ -21,7 +21,7 @@ const {
 } = require('../../../config/db_constants');
 
 const {
-  rmDir,
+  rmPath,
   mvFilesToDir
 } = require('../../../lib/utils');
 
@@ -840,7 +840,7 @@ exports.plugin = {
           try {
             request.payload.lowering_additional_meta.lowering_files.map((file) => {
 
-              mvFilesToDir(Path.join(Tmp.tmpdir,file), Path.join(LOWERING_PATH, request.params.id));
+              mvFilesToDir(Path.join(Tmp.tmpdir,file), Path.join(LOWERING_PATH, request.params.id), true);
             });
           }
           catch (err) {
@@ -1102,7 +1102,7 @@ exports.plugin = {
         }
 
         try {
-          rmDir(LOWERING_PATH);
+          rmPath(LOWERING_PATH);
           if (!Fs.existsSync(LOWERING_PATH)) {
             Fs.mkdirSync(LOWERING_PATH);
           }
