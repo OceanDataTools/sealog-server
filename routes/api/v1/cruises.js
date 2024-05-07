@@ -642,19 +642,11 @@ exports.plugin = {
         }
         else if ( cruise.cruise_access_list && cruise.cruise_access_list.length > 0 ) {
           try {
-            const users = db.collection(usersTable).toArray();
+            const users = await db.collection(usersTable).find().toArray();
             const user_ids = users.map((user) => user._id);
-            const user_are_valid = cruise.cruise_access_list.reduce((result, user_id) => {
+            const users_are_valid = cruise.cruise_access_list.every((value) => user_ids.includes(value));
 
-              if (!user_ids.includes(user_id)) {
-                result = false;
-              }
-
-              return result;
-
-            }, true);
-
-            if (!user_are_valid) {
+            if (!users_are_valid) {
               return Boom.badRequest('cruise_access_list includes invalid user IDs');
             }
           }
@@ -788,21 +780,17 @@ exports.plugin = {
         }
 
         // Validate user ids in access list
+
+        // list1.every(value => list2.includes(value));
+
+
         if ( cruise.cruise_access_list && cruise.cruise_access_list.length > 0 ) {
           try {
-            const users = db.collection(usersTable).toArray();
-            const user_ids = users.map((user) => user._id);
+            const users = await db.collection(usersTable).find().toArray();
+            const user_ids = users.map((user) => user._id.toString());
+            const users_are_valid = cruise.cruise_access_list.every((value) => user_ids.includes(value));
 
-            const user_are_valid = cruise.cruise_access_list.reduce((result, user_id) => {
-
-              if (!user_ids.includes(user_id)) {
-                result = false;
-              }
-
-              return result;
-            }, true);
-
-            if (!user_are_valid) {
+            if (!users_are_valid) {
               return Boom.badRequest('cruise_access_list include invalid user IDs');
             }
           }
@@ -888,6 +876,7 @@ exports.plugin = {
         const loweringQuery = { start_ts: { '$gte': updatedCruise.start_ts }, stop_ts: { '$lt': updatedCruise.stop_ts } };
 
         try {
+          console.error('here 2');
           const cruiseLowerings = await db.collection(loweringsTable).find(loweringQuery).toArray();
           // console.log(cruiseLowerings);
           cruiseLowerings.forEach((lowering) => {
@@ -969,31 +958,14 @@ exports.plugin = {
           const user_ids = users.map((user) => user._id.toString());
 
           if (request.payload.add) {
-            const users_are_valid = request.payload.add.reduce((result, user_id) => {
-
-              if (!user_ids.includes(user_id)) {
-                result = false;
-              }
-
-              return result;
-
-            }, true);
-
+            const users_are_valid = request.payload.add.every((value) => user_ids.includes(value));
             if (!users_are_valid) {
               return Boom.badRequest('cruise_access_list include invalid user IDs');
             }
           }
 
           if (request.payload.remove) {
-            const users_are_valid = request.payload.remove.reduce((result, user_id) => {
-
-              if (!user_ids.includes(user_id)) {
-                result = false;
-              }
-
-              return result;
-
-            }, true);
+            const users_are_valid = request.payload.remove.every((value) => user_ids.includes(value));
 
             if (!users_are_valid) {
               return Boom.badRequest('cruise_access_list include invalid user IDs');
