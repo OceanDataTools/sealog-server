@@ -1,10 +1,16 @@
-// const Fs = require('fs');
+const Fs = require('fs');
 const Pkg = require('../package.json');
 
-// const tlsOptions = {
-//   key: Fs.readFileSync(<privKey.pem>),
-//   cert: Fs.readFileSync(<fullchain.pem>)
-// };
+let tlsOptions = null;
+try {
+  tlsOptions = {
+    key: Fs.readFileSync(process.env.SEALOG_SERVER_TLS_PRIVKEY || '<privKey.pem>'),
+    cert: Fs.readFileSync(process.env.SEALOG_SERVER_TLS_FULLCHAIN || '<fullchain.pem>')
+  };
+}
+catch {
+  console.warn('TLS (Https) not enabled');
+}
 
 const swagger_options = {
   info: {
@@ -66,7 +72,6 @@ const {
 } = require('../config/db_constants');
 
 const port = process.env.SEALOG_SERVER_PORT || 8000;
-const prefix = process.env.SEALOG_SERVER_PREFIX || '/sealog-server';
 let env = process.env.NODE_ENV || 'development';
 env = (env === 'test') ? 'development' : env;
 
@@ -76,19 +81,16 @@ const envKey = (key) => {
     development: {
       host: '0.0.0.0',
       port,
-      prefix,
       db: sealogDB_devel
     },
     debug: {
       host: '0.0.0.0',
       port,
-      prefix,
       db: sealogDB
     },
     production: {
       host: '0.0.0.0',
       port,
-      prefix,
       db: sealogDB
     }
   };
@@ -96,13 +98,13 @@ const envKey = (key) => {
   return configuration[env][key];
 };
 
-const mongodb_URL = process.env.MONGO_URL || 'mongodb://localhost:27017/' + (process.env.SEALOG_DB_NAME || envKey('db'));
+const mongodb_URL = process.env.MONGO_URL || 'mongodb://localhost:27017/' + envKey('db');
 
 const manifest = {
   server: {
     host: envKey('host'),
     port: envKey('port'),
-    // tls: tlsOptions,
+    tls: tlsOptions,
     routes: {
       cors: true
     }
@@ -130,52 +132,52 @@ const manifest = {
       { plugin: '@hapi/nes' },
       { plugin: './routes/api/v1/auth', options: {},
         routes: {
-          prefix: envKey('prefix') + '/api/v1'
+          prefix: '/sealog-server/api/v1'
         }
       },
       { plugin: './routes/api/v1/cruises', options: {},
         routes: {
-          prefix: envKey('prefix') + '/api/v1'
+          prefix: '/sealog-server/api/v1'
         }
       },
       { plugin: './routes/api/v1/custom_vars', options: {},
         routes: {
-          prefix: envKey('prefix') + '/api/v1'
+          prefix: '/sealog-server/api/v1'
         }
       },
       { plugin: './routes/default', options: {},
         routes: {
-          prefix: envKey('prefix')
+          prefix: '/sealog-server'
         }
       },
       { plugin: './routes/api/v1/event_aux_data', options: {},
         routes: {
-          prefix: envKey('prefix') + '/api/v1'
+          prefix: '/sealog-server/api/v1'
         }
       },
       { plugin: './routes/api/v1/event_exports', options: {},
         routes: {
-          prefix: envKey('prefix') + '/api/v1'
+          prefix: '/sealog-server/api/v1'
         }
       },
       { plugin: './routes/api/v1/event_templates', options: {},
         routes: {
-          prefix: envKey('prefix') + '/api/v1'
+          prefix: '/sealog-server/api/v1'
         }
       },
       { plugin: './routes/api/v1/events', options: {},
         routes: {
-          prefix: envKey('prefix') + '/api/v1'
+          prefix: '/sealog-server/api/v1'
         }
       },
       { plugin: './routes/api/v1/lowerings', options: {},
         routes: {
-          prefix: envKey('prefix') + '/api/v1'
+          prefix: '/sealog-server/api/v1'
         }
       },
       { plugin: './routes/api/v1/users', options: {},
         routes: {
-          prefix: envKey('prefix') + '/api/v1'
+          prefix: '/sealog-server/api/v1'
         }
       },
       { plugin: './plugins/db_cruises', options: {} },
@@ -188,12 +190,12 @@ const manifest = {
       { plugin: 'hapi-pino',
         options: {
           logRequestComplete: env !== 'production',
-          redact: ['req.headers.Authorization']
+          redact: ['req.headers.authorization']
         }
       },
       { plugin: 'hapi-swagger', options: swagger_options,
         routes: {
-          prefix: envKey('prefix')
+          prefix: '/sealog-server'
         }
       }
     ]

@@ -1,6 +1,8 @@
-const IMAGE_PATH = '/data/sealog-files/images';
-const CRUISE_PATH = '/data/sealog-files/cruises';
-const LOWERING_PATH = '/data/sealog-files/lowerings';
+const path_root = process.env.SEALOG_SERVER_FILEPATH_ROOT || '/data/sealog-files'
+
+const IMAGE_PATH = `${path_root}/images`;
+const CRUISE_PATH = `${path_root}/cruises`;
+const LOWERING_PATH = `${path_root}/lowerings`;
 
 module.exports = {
   IMAGE_PATH,

@@ -1,5 +1,5 @@
 # Use the latest Node.js Alpine image as the base image
-FROM node:alpine
+FROM node:lts-alpine
 
 # Set the working directory in the container
 WORKDIR /usr/src/app
@@ -20,7 +20,7 @@ COPY config/manifest.js.dist config/manifest.js
 COPY config/path_constants.js.dist config/path_constants.js
 COPY config/secret.js.dist config/secret.js
 
-# Expose port 8000 (This needs to match what's in the ./config/manifest.js file)
+# Expose port 8000 (This needs to match what's in the docker-compose.yml file)
 # EXPOSE 8000
 
 # Command to run the Node.js application
