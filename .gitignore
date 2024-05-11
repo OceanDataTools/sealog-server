@@ -35,7 +35,6 @@ misc/sealog_udp2MongoDB*.py
 misc/sealog_vessel_postCruise.sh
 misc/sealog_repeater.py
 
-
 # files that need to be updated to the v2.1 standard or deleted
 misc/merge_*
 misc/sealog-auxDataInserter*
@@ -53,6 +52,10 @@ config/email_constants.js
 config/manifest.js
 config/path_constants.js
 config/secret.js
+
+# docker files
+Dockerfile
+docker-compose.yml
 
 # python generated files
 *.pyc
