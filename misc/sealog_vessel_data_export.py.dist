@@ -31,7 +31,7 @@ from misc.python_sealog.event_aux_data import get_event_aux_data_by_cruise
 from misc.python_sealog.event_exports import get_event_exports_by_cruise
 from misc.python_sealog.event_templates import get_event_templates
 
-EXPORT_ROOT_DIR = '/home/sealog/sealog-export'
+EXPORT_ROOT_DIR = '/data/sealog-export'
 VESSEL_NAME = 'Discoverer'
 
 CRUISES_FILE_PATH = os.path.join(API_SERVER_FILE_PATH, 'cruises')
