@@ -12,7 +12,7 @@ services:
       #- SEALOG_SERVER_FILEPATH_ROOT=/data/sealog-files
       #- SEALOG_SERVER_TLS_PRIVKEY=<privkey.pem>
       #- SEALOG_SERVER_TLS_FULLCHAIN=<fulchain.pem>
-      - SEALOG_SERVER_SECRET='6vM+F5By5b5UEkMAuHc2K1rq7yu1f4V/clW7eeneyRNrDcHZoFqs99GQG7njkVtnuAFUOpwtCSa0oZEtsKDD2gXAwZeYMOmIuW3+DcRaVh1oWHskzemhCV1GMdaU7DGPLqUMq0THlQng4Gurk5YbafBKLKf3HnwbGJkIyYgX34cNi5QhlSGHtqQkAt9RbUwybT54amBnQQRZpKn7Mzx/BTFQDy6SNl86hQcu/vR9dSgHT8ZKm6INTnyeO9oK1fFM5p4uN2DIJYOi2m4IFYWm8Q422SLWOVbJ4ZjhOQ9DENUSdJWkMgm/xkCcJOQ0Q1osG8edYZ3rV1fyvKpaFkUldA==' #create this with: node -e "console.log(require('crypto').randomBytes(256).toString('base64'));"
+      - SEALOG_SERVER_SECRET='' #create this with: node -e "console.log(require('crypto').randomBytes(256).toString('base64'));"
       - NODE_ENV=production # OR 'development' which preloads some events, event templates cruises and lowerings.
       - MONGO_URL=mongodb://mongo:27017/sealogDB
     image: sealog-server
