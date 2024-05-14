@@ -22,8 +22,8 @@ DATA_DIR="/data/sealog-export"
 
 # Database connection information
 DB_URI="mongodb://localhost:27017/"
-CRUISE_DATABASE="sealogDB_devel"
-LOWERING_DATABASE="sealogDB_devel"
+CRUISE_DATABASE="sealogDB"
+LOWERING_DATABASE="sealogDB"
 
 # Patterns to match for directory/file names
 CRUISE_PATTERN="FKt*"
@@ -122,6 +122,7 @@ process_cruise() {
 process_lowering() {
 
   local lowering="$1"
+  local database="$2"
   echo "Lowering: $lowering"
 
   # Lowering Record
