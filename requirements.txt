@@ -2,6 +2,6 @@ influxdb-client==1.39.0
 python-dateutil==2.8.2
 pytz==2023.3.post1
 PyYAML==6.0.1
-requests==2.31.0
+requests==2.32.0
 urllib3==2.1.0
 websockets==12.0
