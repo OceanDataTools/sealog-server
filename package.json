@@ -10,6 +10,8 @@
   "scripts": {
     "start": "NODE_ENV=production node server.js",
     "start-debug": "NODE_ENV=debug node server.js",
+    "start-demo-vehicle": "NODE_ENV=demo-vehicle node server.js",
+    "start-demo-vessel": "NODE_ENV=demo-vessel node server.js",
     "start-test": "lab -v **/*.test.js",
     "start-devel": "NODE_ENV=development npm-run-all --parallel lint start:server",
     "start:server": "nodemon server.js",

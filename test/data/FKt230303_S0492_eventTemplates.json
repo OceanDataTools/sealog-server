@@ -1,0 +1,2451 @@
+[
+  {
+    "event_name": "01. ROV Off Deck",
+    "event_value": "VEHICLE",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Milestone",
+        "event_option_type": "static text",
+        "event_option_default_value": "Off deck",
+        "event_option_required": false,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "vehicle"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5e2d2fda3785566255ab1e87"
+  },
+  {
+    "event_name": "02. In Water",
+    "event_value": "VEHICLE",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Milestone",
+        "event_option_type": "static text",
+        "event_option_default_value": "In water",
+        "event_option_required": false,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "vehicle"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5e2d30483785566255ab1e88"
+  },
+  {
+    "event_name": "03. 1st Float On",
+    "event_value": "VEHICLE",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Milestone",
+        "event_option_type": "static text",
+        "event_option_default_value": "First float on",
+        "event_option_required": false,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "vehicle"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5e2d309d3785566255ab1e8f"
+  },
+  {
+    "event_name": "04. Last Float On",
+    "event_value": "VEHICLE",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Milestone",
+        "event_option_type": "static text",
+        "event_option_default_value": "Last float on",
+        "event_option_required": false,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Number of floats?",
+        "event_option_type": "text",
+        "event_option_required": true,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "vehicle"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5e2d30d93785566255ab1e90"
+  },
+  {
+    "event_name": "05. On Bottom",
+    "event_value": "VEHICLE",
+    "event_free_text_required": true,
+    "event_options": [
+      {
+        "event_option_name": "Milestone",
+        "event_option_type": "static text",
+        "event_option_default_value": "On bottom",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "vehicle"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5e2d310e3785566255ab1e91"
+  },
+  {
+    "event_name": "06. Off Bottom",
+    "event_value": "VEHICLE",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Milestone",
+        "event_option_type": "static text",
+        "event_option_default_value": "Off bottom",
+        "event_option_required": false,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "vehicle"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5e2d316b3785566255ab1e92"
+  },
+  {
+    "event_name": "07. Floats On Surface",
+    "event_value": "VEHICLE",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Milestone",
+        "event_option_type": "static text",
+        "event_option_default_value": "On surface",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "vehicle"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5e302dda316611ad01f4b563"
+  },
+  {
+    "event_name": "08. 1st Float Off",
+    "event_value": "VEHICLE",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Milestone",
+        "event_option_type": "static text",
+        "event_option_default_value": "First float off",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "vehicle"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5e2d33c83785566255ab1ed5"
+  },
+  {
+    "event_name": "09. Last Float Off",
+    "event_value": "VEHICLE",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Milestone",
+        "event_option_type": "static text",
+        "event_option_default_value": "Last float off",
+        "event_option_required": false,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "vehicle"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5e2d34263785566255ab1ef1"
+  },
+  {
+    "event_name": "10. Out of Water",
+    "event_value": "VEHICLE",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Milestone",
+        "event_option_type": "static text",
+        "event_option_default_value": "Out of water",
+        "event_option_required": false,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "vehicle"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5e2d34673785566255ab1f04"
+  },
+  {
+    "event_name": "11. ROV On Deck",
+    "event_value": "VEHICLE",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Milestone",
+        "event_option_type": "static text",
+        "event_option_default_value": "On deck",
+        "event_option_required": false,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "vehicle"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5e2d34a73785566255ab1f1a"
+  },
+  {
+    "event_name": "Beacon Tracking",
+    "event_value": "VEHICLE",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Status",
+        "event_option_type": "static text",
+        "event_option_default_value": "Beacon Tracking",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Beacon",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Primary Beacon",
+          "Secondary Beacon"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "vehicle"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5e420334a0a3e9079deb9afa"
+  },
+  {
+    "event_name": "Dive Aborted",
+    "event_value": "VEHICLE",
+    "event_free_text_required": true,
+    "event_options": [
+      {
+        "event_option_name": "Milestone",
+        "event_option_type": "static text",
+        "event_option_default_value": "Dive aborted",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "vehicle"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5e49e37370863776a524b2ed"
+  },
+  {
+    "event_name": "Float Off",
+    "event_value": "VEHICLE",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Status",
+        "event_option_type": "static text",
+        "event_option_default_value": "float off",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "vehicle"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5e75ea43c80151b9a16951a2"
+  },
+  {
+    "event_name": "Float On",
+    "event_value": "VEHICLE",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Status",
+        "event_option_type": "static text",
+        "event_option_default_value": "float on",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "vehicle"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5e75ea53c80151b9a16951b8"
+  },
+  {
+    "event_name": "INS Reset",
+    "event_value": "VEHICLE",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Status",
+        "event_option_type": "static text",
+        "event_option_default_value": "INS Reset",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "vehicle"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5e420398a0a3e9079deb9b3d"
+  },
+  {
+    "event_name": "Problem",
+    "event_value": "PROBLEM",
+    "event_free_text_required": true,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Vehicle",
+          "Sensor",
+          "Science Equipment",
+          "Ship",
+          "Data",
+          "Video",
+          "Navigation",
+          "Other"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "vehicle",
+      "video"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5d949e8f2afbd9049e0efd46"
+  },
+  {
+    "event_name": "Sample Storage - General",
+    "event_value": "SAMPLE",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Sample ID",
+        "event_option_required": true,
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_values": [],
+        "event_option_default_value": ""
+      },
+      {
+        "event_option_name": "Type",
+        "event_option_type": "radio buttons",
+        "event_option_values": [
+          "Heat Flow Probe Measurement",
+          "High Temp Measurement",
+          "Fluid Collection",
+          "Push Core",
+          "Water Sample",
+          "Rock Sample (Igneous)",
+          "Rock Sample (Sulfide-Sulfate)",
+          "Rock Sample (Carbonate)",
+          "Biology Sample",
+          "Colonization Array"
+        ],
+        "event_option_required": true,
+        "event_option_allow_freeform": false
+      },
+      {
+        "event_option_name": "Storage Location",
+        "event_option_type": "dropdown",
+        "event_option_values": [
+          "Niskin Bottle",
+          "Gas Tight",
+          "Major",
+          "Coral Quiver 1",
+          "Coral Quiver 2",
+          "Coral Quiver 3",
+          "Coral Quiver 4",
+          "Coral Quiver 5",
+          "Coral Quiver 6",
+          "Coral Quiver 7",
+          "Coral Quiver 8",
+          "Suction Sampler 1",
+          "Suction Sampler 2",
+          "Suction Sampler 3",
+          "Suction Sampler 4",
+          "Suction Sampler 5",
+          "Suction Sampler 6",
+          "Suction Sampler 7",
+          "Suction Sampler 8",
+          "Bio Box 3",
+          "Bio Box 4",
+          "Deployed"
+        ],
+        "event_option_required": true,
+        "event_option_allow_freeform": false
+      },
+      {
+        "event_option_name": "Sample Description",
+        "event_option_type": "text",
+        "event_option_required": true,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "science"
+    ],
+    "disabled": true,
+    "admin_only": false,
+    "id": "5d949dc82afbd9049e0efd44"
+  },
+  {
+    "event_name": "SSP to Ranger",
+    "event_value": "VEHICLE",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Status",
+        "event_option_type": "static text",
+        "event_option_default_value": "SSP to Ranger",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "vehicle"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "60ccb0d7cd0c5b05515466e8"
+  },
+  {
+    "event_name": "ASNAP 1sec/10sec",
+    "event_value": "ASNAP",
+    "system_template": true,
+    "disabled": false,
+    "admin_only": false,
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Status",
+        "event_option_type": "static text",
+        "event_option_default_value": "Interval Change",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Timing",
+        "event_option_type": "radio buttons",
+        "event_option_values": [
+          "1 Sec",
+          "10 Sec"
+        ],
+        "event_option_required": true,
+        "event_option_allow_freeform": false
+      }
+    ],
+    "template_categories": [
+      "video"
+    ],
+    "id": "6429825a6594c997767aa5f8"
+  },
+{
+    "event_name": "Photo - General",
+    "event_value": "IMAGERY",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "General",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Sub Type",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Biology",
+          "Geology",
+          "Venting",
+          "Sampling",
+          "Other"
+        ],
+        "event_option_required": true,
+        "event_option_allow_freeform": false
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "science",
+      "biology",
+      "geology",
+      "sample"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5e2bd3ee0ec0952ba7d997e4"
+  },
+  {
+    "event_name": "Video 3D Mosaic Start/End",
+    "event_value": "MOSAIC",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Milestone",
+        "event_option_type": "radio buttons",
+        "event_option_values": [
+          "Start",
+          "End"
+        ],
+        "event_option_required": true,
+        "event_option_allow_freeform": false
+      },
+      {
+        "event_option_name": "Site Name",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "video",
+      "biology",
+      "science"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "617b5fc30d010f51d7db02fa"
+  },
+  {
+    "event_name": "Beauty Shot",
+    "event_value": "IMAGERY",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Media Type",
+        "event_option_type": "radio buttons",
+        "event_option_values": [
+          "Photo",
+          "Video"
+        ],
+        "event_option_required": true,
+        "event_option_allow_freeform": false
+      },
+      {
+        "event_option_name": "Site Name",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "Beauty Shot",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "science",
+      "video"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "617b55330d010f51d7daffa9"
+  },
+  {
+    "event_name": "Geology Observation",
+    "event_value": "OBSERVATION",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_required": false,
+        "event_option_type": "static text",
+        "event_option_default_value": "Geology",
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Site Name",
+        "event_option_type": "text",
+        "event_option_required": false,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Structures",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Scarp",
+          "Fissure",
+          "Dyke",
+          "Collapse Pit",
+          "Crater wall",
+          "Pockmark",
+          "Corrugation;Ridge"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Structure Trend",
+        "event_option_type": "checkboxes",
+        "event_option_default_value": "",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": [
+          "N",
+          "NNE",
+          "NE",
+          "ENE",
+          "E",
+          "ESE",
+          "SE",
+          "SSE",
+          "S",
+          "SSW",
+          "SW",
+          "WSW",
+          "W",
+          "WNW",
+          "NW",
+          "NNW"
+        ]
+      },
+      {
+        "event_option_name": "Flow Morphology",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Pillow mound",
+          "Pillow flow",
+          "Lobate flow",
+          "Sheet flow"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Igneous Rock Type",
+        "event_option_type": "checkboxes",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": [
+          "Igneous (undifferentiated)",
+          "Mafic volcanic",
+          "Mafic plutonic",
+          "Ultramafic plutonic",
+          "Volcaniclastic"
+        ]
+      },
+      {
+        "event_option_name": "Igneous Rock Deformation",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Undeformed",
+          "Deformed rock(undifferentiated)",
+          "Blocky deformation",
+          "Sheared rock",
+          "Breccia"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Venting",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Inactive",
+          "Focused",
+          "Diffuse"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Hydrothermal Fluid Type",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Cloudy water",
+          "Shimmering water",
+          "Black smoke",
+          "White smoke",
+          "Phase separation"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Hydrothermal Precipitate",
+        "event_option_type": "checkboxes",
+        "event_option_default_value": "",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": [
+          "Indurated sediment",
+          "Sulfide chimney",
+          "Sulfide chimney talus",
+          "Hydrothermal mound",
+          "Carbonate cap rock",
+          "Carbonate chimney",
+          "Carbonate chimney talus",
+          "Vein"
+        ]
+      },
+      {
+        "event_option_name": "Hydrothermal Chimney Morphology",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Single spire",
+          "Multi-spired",
+          "Beehive",
+          "Chimlet",
+          "Knobby",
+          "Bulbous"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Chimney Height",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Alteration",
+        "event_option_type": "checkboxes",
+        "event_option_default_value": "",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": [
+          "Weathered",
+          "Hydrothermally altered",
+          "Serpentinite",
+          "Fe-Ox",
+          "Mn-Ox",
+          "Other"
+        ]
+      },
+      {
+        "event_option_name": "Outcrop Coherence",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Talus",
+          "Coherent"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Sediment Cover",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Heavy",
+          "Moderate",
+          "Light",
+          "None"
+        ],
+        "event_option_required": false,
+        "event_option_allow_freeform": false
+      },
+      {
+        "event_option_name": "Contacts",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Intrusive",
+          "Structural",
+          "Onlapping",
+          "Stratigraphic",
+          "Inferred"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Slope",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Flat",
+          "Gentle slope",
+          "Steep slope",
+          "Sub-vertical"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "science",
+      "geology"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "60bf93da3a5055682e737b4f"
+  },
+  {
+    "event_name": "Microbiology Observation",
+    "event_value": "OBSERVATION",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "Microbiology",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Mat on sediment",
+          "Mat on rock",
+          "Halo",
+          "Filament",
+          "Other"
+        ],
+        "event_option_name": "Microbiology Type",
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Color",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "science",
+      "biology"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "60fec2490d2f0b059e73ab61"
+  },
+  {
+    "event_name": "Video Highlight",
+    "event_value": "VIDEO",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "Highlight",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Status",
+        "event_option_type": "radio buttons",
+        "event_option_values": [
+          "Start of highlight",
+          "End of highlight"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "video"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5e2dc7a33785566255ab3683"
+  },
+  {
+    "event_name": "Video Logging",
+    "event_value": "VIDEO",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "Logging",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Status",
+        "event_option_type": "dropdown",
+        "event_option_values": [
+          "Started Logging",
+          "Stopped Logging"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_default_value": "Started Logging"
+      },
+      {
+        "event_option_name": "Camera",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "ALL",
+          "SCICAM",
+          "SITCAM",
+          "HDQUAD",
+          "SDQUAD",
+          "SCITOO",
+          "SITTOO"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_default_value": "ALL"
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "video",
+      "vehicle"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5e372e6fb9e33d8c6c60fad4"
+  },
+  {
+    "event_name": "Video Transect",
+    "event_value": "VIDEO",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "Transect",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Status",
+        "event_option_type": "radio buttons",
+        "event_option_values": [
+          "Start of transect",
+          "End of transect"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Transect Number",
+        "event_option_type": "text",
+        "event_option_values": [],
+        "event_option_allow_freeform": false,
+        "event_option_required": true
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "video"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5e2dbf2c3785566255ab366d"
+  },
+  {
+    "event_name": "GTB Gas Sample",
+    "event_value": "SAMPLE",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "science",
+      "sample"
+    ],
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Sample ID",
+        "event_option_type": "text",
+        "event_option_required": true,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "GTB",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Bottle ID",
+        "event_option_type": "radio buttons",
+        "event_option_values": [
+          "GT2 white-blue",
+          "GT5 black",
+          "GT6 red-black",
+          "GT9 red",
+          "GT10 blue-orange",
+          "GT11 purple",
+          "GT12 yellow-red",
+          "GT16 green-red",
+          "GT17 white",
+          "GT18 orange-white-black"
+        ],
+        "event_option_required": true,
+        "event_option_allow_freeform": false
+      },
+      {
+        "event_option_name": "Fluid Type",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Black",
+          "White",
+          "Clear",
+          "Diffuse",
+          "Focused",
+          "Seawater"
+        ],
+        "event_option_required": true,
+        "event_option_allow_freeform": false
+      },
+      {
+        "event_option_name": "Temp Max",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Site Name",
+        "event_option_type": "text",
+        "event_option_required": false,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      }
+    ],
+    "id": "6407d5179c0ebf012084162c"
+  },
+  {
+    "event_name": "GTHFS Gas Sample",
+    "event_value": "SAMPLE",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Sample ID",
+        "event_option_type": "text",
+        "event_option_required": true,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "GTHFS",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Bottle ID",
+        "event_option_type": "radio buttons",
+        "event_option_values": [
+          "GT2 white-blue",
+          "GT5 black",
+          "GT6 red-black",
+          "GT9 red",
+          "GT10 blue-orange",
+          "GT11 purple",
+          "GT12 yellow-red",
+          "GT16 green-red",
+          "GT17 white",
+          "GT18 orange-white-black"
+        ],
+        "event_option_required": true,
+        "event_option_allow_freeform": false
+      },
+      {
+        "event_option_name": "Fluid Type",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Black",
+          "White",
+          "Clear",
+          "Diffuse",
+          "Focused",
+          "Seawater"
+        ],
+        "event_option_required": true,
+        "event_option_allow_freeform": false
+      },
+      {
+        "event_option_name": "Temp Max",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Site Name",
+        "event_option_type": "text",
+        "event_option_required": true,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Storage Location",
+        "event_option_type": "radio buttons",
+        "event_option_values": [
+          "Starboard Valve 2",
+          "Port Valve 5",
+          "Port Valve 6"
+        ],
+        "event_option_required": true,
+        "event_option_allow_freeform": false
+      }
+    ],
+    "template_categories": [
+      "science",
+      "sample"
+    ],
+    "id": "6407d77d9c0ebf0120841633"
+  },
+  {
+    "event_name": "HFS Fluid Sample",
+    "event_value": "SAMPLE",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "science",
+      "sample",
+      "biology"
+    ],
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Sample ID",
+        "event_option_type": "text",
+        "event_option_required": true,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "HFS",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "HFS Type",
+        "event_option_type": "radio buttons",
+        "event_option_required": true,
+        "event_option_values": [
+          "Filtered Piston",
+          "Unfiltered Piston",
+          "Filtered Bag",
+          "Unfiltered Bag",
+          "4 L Cylinder",
+          "RNA Filter 1",
+          "RNA Filter 2"
+        ],
+        "event_option_allow_freeform": false
+      },
+      {
+        "event_option_name": "Piston/Bag Number",
+        "event_option_type": "text",
+        "event_option_required": false,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Fluid Type",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Black",
+          "White",
+          "Clear",
+          "Diffuse",
+          "Focused",
+          "Seawater"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Site Name",
+        "event_option_type": "text",
+        "event_option_required": false,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Temp Max",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Pump Volume",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "id": "6407d9799c0ebf0120841637"
+  },
+  {
+    "event_name": "NISKIN Fluid Sample",
+    "event_value": "SAMPLE",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "science",
+      "sample"
+    ],
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Sample ID",
+        "event_option_type": "text",
+        "event_option_required": true,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "Niskin",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Bottle Number",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "1 (5 L)",
+          "2 (5 L)",
+          "3 (5 L)",
+          "4 (5 L)",
+          "5 (2.5 L)",
+          "6 (2.5L)"
+        ],
+        "event_option_required": true,
+        "event_option_allow_freeform": false
+      },
+      {
+        "event_option_name": "Fluid type",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Focused flow",
+          "Diffuse flow",
+          "Black Fluid",
+          "White fluid",
+          "Clear Fluid",
+          "Seawater"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Altitude above bottom",
+        "event_option_type": "text",
+        "event_option_required": false,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Site Name",
+        "event_option_type": "text",
+        "event_option_required": true,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      }
+    ],
+    "id": "6407dc6d9c0ebf012084164a"
+  },
+  {
+    "event_name": "Photo - Fluid",
+    "event_value": "IMAGERY",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "science"
+    ],
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "Fluid",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Site Name",
+        "event_option_type": "text",
+        "event_option_required": false,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      }
+    ],
+    "id": "6407de1c9c0ebf0120841651"
+  },
+  {
+    "event_name": "Photo - Intended Geo Sample",
+    "event_value": "IMAGERY",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "science",
+      "geology"
+    ],
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "Rock Sample",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Sample ID",
+        "event_option_type": "text",
+        "event_option_required": true,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      }
+    ],
+    "id": "6407dec89c0ebf0120841653"
+  },
+  {
+    "event_name": "Venting Area Start/End",
+    "event_value": "OBSERVATION",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "science",
+      "geology",
+      "sample"
+    ],
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "Venting Area",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Status",
+        "event_option_type": "radio buttons",
+        "event_option_values": [
+          "Venting Area Start",
+          "Venting Area End"
+        ],
+        "event_option_required": true,
+        "event_option_allow_freeform": false
+      }
+    ],
+    "id": "6407e0159c0ebf012084165a"
+  },
+  {
+    "event_name": "Observation - Anthropogenic",
+    "event_value": "OBSERVATION",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "biology",
+      "science"
+    ],
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Anthropogenic Type",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Barrel",
+          "Fishing",
+          "Metal",
+          "Plastic",
+          "Scientific trash",
+          "Scientific equipment/marker",
+          "Trash",
+          "Other"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "Anthropogenic",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "id": "64089fea9c0ebf0120842482"
+  },
+  {
+    "event_name": "Geology Sample",
+    "event_value": "SAMPLE",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "science",
+      "geology",
+      "sample"
+    ],
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Sample ID",
+        "event_option_type": "text",
+        "event_option_required": true,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "Geology",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Storage Location",
+        "event_option_type": "checkboxes",
+        "event_option_required": true,
+        "event_option_allow_freeform": false,
+        "event_option_values": [
+          "Rock-Box 1A (RB1-A)",
+          "Rock-Box 1B (RB1-B)",
+          "Rock-Box 1C (RB1-C)",
+          "Rock-Box 1D (RB1-D)",
+          "Rock-Box 2A (RB2-A)",
+          "Rock-Box 2B (RB2-B)",
+          "Rock-Box 2C (RB2-C)",
+          "Rock-Box 2D (RB2-D)",
+          "Port Quiver 1 (PQ1)",
+          "Port Quiver 2(PQ2)",
+          "Port Quiver 3 (PQ3)",
+          "Port Quiver 4 (PQ4)",
+          "Port Quiver 5 (PQ5)",
+          "Port Quiver 6 (PQ6)",
+          "STBD Quiver 1 (SQ1)",
+          "STBD Quiver 2 (SQ2)",
+          "STBD Quiver 3 (SQ3)",
+          "STBD Quiver 4 (SQ4)",
+          "STBD Quiver 5 (SQ5)",
+          "STBD Quiver 6 (SQ6)",
+          "Bio Box1-A (BB1-A)",
+          "Bio Box 1-B (BB1-B)",
+          "Bio Box-2 (BB2)",
+          "Bio-Box-3 (BB3)"
+        ]
+      },
+      {
+        "event_option_name": "Sample Type",
+        "event_option_type": "radio buttons",
+        "event_option_values": [
+          "In Situ",
+          "Talus",
+          "Other"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": true
+      },
+      {
+        "event_option_name": "Site Name",
+        "event_option_type": "text",
+        "event_option_required": false,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Igneous Rock Sample Type",
+        "event_option_type": "checkboxes",
+        "event_option_required": false,
+        "event_option_allow_freeform": false,
+        "event_option_values": [
+          "Igneous (undifferentiated)",
+          "Mafic volcanic",
+          "Mafic plutonic",
+          "Diabase",
+          "Ultramafic plutonic",
+          "Volcaniclastic"
+        ]
+      },
+      {
+        "event_option_name": "Igneous Rock Additional Details",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Serpentinized",
+          "Fe-Ox",
+          "Mn-Ox",
+          "Hydrothermally-altered",
+          "Undeformed",
+          "Deformed (undifferentiated)",
+          "Deformed (blocky)",
+          "Deformed (sheared)",
+          "Deformed (Breccia)",
+          "Mesh Texture"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Hydrothermal Rock Sample Type",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Sulfide-Sulfate Chimney",
+          "Sulfide-Sulfate Chimney talus",
+          "Hydrothermal mound",
+          "Indurated Sediment",
+          "Fe-Ox",
+          "Mn-Ox",
+          "Carbonate cap rock",
+          "Carbonate chimney",
+          "Carbonate chimney talus",
+          "Vein"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Hydrothermal Sample Additional Details",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Inactive",
+          "Active",
+          "Black fluid",
+          "White fluid",
+          "Clear fluid",
+          "Phase separation",
+          "Single spire",
+          "Snowblower",
+          "Multi-spired",
+          "Beehive",
+          "Chimlet",
+          "Talus",
+          "Weathered"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      }
+    ],
+    "id": "6408b11b9c0ebf0120842492"
+  },
+  {
+    "event_name": "Photo - Biology",
+    "event_value": "IMAGERY",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "science"
+    ],
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "biology",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Site Name",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "id": "6408b2989c0ebf0120842494"
+  },
+  {
+    "event_name": "Photo - Intended Bio Sample",
+    "event_value": "IMAGERY",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "biology",
+      "science"
+    ],
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "biology - intended sample",
+        "event_option_required": false,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Sample ID",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "id": "640902349c0ebf0120843cd5"
+  },
+  {
+    "event_name": "Biology Sample",
+    "event_value": "SAMPLE",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "biology",
+      "science",
+      "sample"
+    ],
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Sample ID",
+        "event_option_type": "text",
+        "event_option_required": true,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "Biology",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Site Name",
+        "event_option_type": "text",
+        "event_option_required": false,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Bacterial Mat/Film",
+          "Coral",
+          "Mussels",
+          "Sponge",
+          "Shrimps",
+          "Invertebrate (general)",
+          "Other"
+        ],
+        "event_option_name": "Biology Type",
+        "event_option_required": true,
+        "event_option_allow_freeform": false
+      },
+      {
+        "event_option_name": "Storage Location",
+        "event_option_type": "checkboxes",
+        "event_option_required": true,
+        "event_option_allow_freeform": false,
+        "event_option_values": [
+          "Bio-Box 1A (BB1-A)",
+          "Bio-Box 1B (BB1-B)",
+          "Port Quiver 1 (PQ1)",
+          "Port Quiver 2(PQ2)",
+          "Port Quiver 3 (PQ3)",
+          "Port Quiver 4 (PQ4)",
+          "Port Quiver 5 (PQ5)",
+          "Port Quiver 6 (PQ6)",
+          "STBD Quiver 1 (SQ1)",
+          "STBD Quiver 2 (SQ2)",
+          "STBD Quiver 3 (SQ3)",
+          "STBD Quiver 4 (SQ4)",
+          "STBD Quiver 5 (SQ5)",
+          "STBD Quiver 6 (SQ6)",
+          "Bag 1",
+          "Bag 2",
+          "Bag 3",
+          "Bag 4",
+          "Suction 1",
+          "Suction 2",
+          "Suction 3",
+          "Suction 4",
+          "Suction 5",
+          "Suction 6",
+          "Suction 7",
+          "Suction 8"
+        ]
+      }
+    ],
+    "id": "640a16252fdd7e388976bd91"
+  },
+  {
+    "event_name": "Microbiology Rock Sample",
+    "event_value": "SAMPLE",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "science",
+      "sample",
+      "biology"
+    ],
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Sample ID",
+        "event_option_type": "text",
+        "event_option_required": true,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "Microbiology",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Site Name",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Color",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Storage Location",
+        "event_option_type": "checkboxes",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": [
+          "Bio-Box 1A (BB1-A)",
+          "Bio-Box 1B (BB1-B)",
+          "Port Quiver 1 (PQ1)",
+          "Port Quiver 2(PQ2)",
+          "Port Quiver 3 (PQ3)",
+          "Port Quiver 4 (PQ4)",
+          "Port Quiver 5 (PQ5)",
+          "Port Quiver 6 (PQ6)",
+          "STBD Quiver 1 (SQ1)",
+          "STBD Quiver 2 (SQ2)",
+          "STBD Quiver 3 (SQ3)",
+          "STBD Quiver 4 (SQ4)",
+          "STBD Quiver 5 (SQ5)",
+          "STBD Quiver 6 (SQ6)",
+          "Bag 1",
+          "Bag 2",
+          "Suction 1",
+          "Suction 2",
+          "Suction 3",
+          "Suction 4",
+          "Suction 5",
+          "Suction 6",
+          "Suction 7",
+          "Suction 8",
+          "Rock-Box 1A (RB1-A)",
+          "Rock-Box 1B (RB1-B)",
+          "Rock-Box 1C (RB1-C)",
+          "Rock-Box 1D (RB1-D)"
+        ]
+      }
+    ],
+    "id": "640a27832fdd7e388976c34a"
+  },
+  {
+    "event_name": "Methane Spec Start/End",
+    "event_value": "VIDEO",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "science",
+      "sample"
+    ],
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "Methane Spec Transect",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Status",
+        "event_option_type": "radio buttons",
+        "event_option_values": [
+          "Start",
+          "End"
+        ],
+        "event_option_required": true,
+        "event_option_allow_freeform": false
+      },
+      {
+        "event_option_name": "Site Name",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "id": "640a7a6c2fdd7e388976dad6"
+  },
+  {
+    "event_name": "Methane Spec Reading",
+    "event_value": "SAMPLE",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "science",
+      "sample"
+    ],
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "In situ Methane",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Site Name",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Methane Concentration (ppm)",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "id": "640a7afd2fdd7e388976db04"
+  },
+  {
+    "event_name": "Marker Deployed",
+    "event_value": "MARKER",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "science"
+    ],
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Marker ID",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Status",
+        "event_option_type": "static text",
+        "event_option_default_value": "deployed",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Site Name",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "id": "640b84112fdd7e3889772b5e"
+  },
+  {
+    "event_name": "Temperature Reading",
+    "event_value": "SAMPLE",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "science",
+      "sample"
+    ],
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "In situ Temperture",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Site Name",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Temperature Measurement",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "id": "640b84462fdd7e3889772b78"
+  },
+  {
+    "event_name": "Framegrab",
+    "event_value": "IMAGERY",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "science",
+      "vehicle",
+      "video"
+    ],
+    "event_free_text_required": false,
+    "event_options": [],
+    "id": "640ca5542fdd7e388977858f"
+  },
+  {
+    "event_name": "Coral Observation",
+    "event_value": "OBSERVATION",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "biology",
+      "science"
+    ],
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": " Coral",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Group",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Hexacorallia",
+          "Octocorallia",
+          "Other",
+          "Unknown Coral Group"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Speculated ID",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Bamboo",
+          "Black",
+          "Chrysogorgia",
+          "Cup",
+          "Metallogorgia",
+          "Mushroom",
+          "Primnoid",
+          "Seapen",
+          "Stony",
+          "Other Coral"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Associates",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Anemone",
+          "Barnacle",
+          "Basket star",
+          "Brittle star",
+          "Crab/Squat lobster",
+          "Crinoid",
+          "Ctenophore",
+          "Fish",
+          "Octopus",
+          "Seastar",
+          "Stoloniferous coral",
+          "Tunicate",
+          "Other Coral Associate"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Additional Details",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Broken",
+          "Dead",
+          "Skeleton",
+          "Fallen",
+          "Shells/Empty tubes",
+          "Sediment accumulation"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Quantity",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Single",
+          "Few (<10)",
+          "Many (<100)",
+          "Abundant (100+)"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      }
+    ],
+    "id": "640f0c526594c9977675e3fa"
+  },
+  {
+    "event_name": "Fish Observation",
+    "event_value": "OBSERVATION",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "biology",
+      "science"
+    ],
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "Fish",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Group",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Anglerfish",
+          "Bony-eared",
+          "Chimaera",
+          "Codling",
+          "Cusk eel",
+          "Deep sea spiny eel",
+          "Eelpout",
+          "Flatfish",
+          "Grenadier",
+          "Gulper eel",
+          "Orange roughy",
+          "Oreo",
+          "Other eel-like",
+          "Rockfish",
+          "Shark",
+          "Skate",
+          "Other Fish Type"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Additional Details",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Broken",
+          "Dead",
+          "Skeleton",
+          "Fallen",
+          "Shells/Empty tubes",
+          "Sediment accumulation"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Quantity",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Single",
+          "Few (<10)",
+          "Many (<100)",
+          "Abundant (100+)"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      }
+    ],
+    "id": "640f0c526594c9977675e3fb"
+  },
+  {
+    "event_name": "Sponge Observation",
+    "event_value": "OBSERVATION",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "biology",
+      "science"
+    ],
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "Sponge",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Group",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Asbestopluma",
+          "Branched",
+          "Encrusting",
+          "Stalked",
+          "Upright (Ampitheatre/Bugal/Vase)",
+          "Other Sponge Type"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Associates",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Brittle Star",
+          "Barnacles",
+          "Crab/Squat lobster",
+          "Crinoid",
+          "Fish",
+          "Hydrocoral/hydroid",
+          "Polychaete",
+          "Scale worm",
+          "Seastar",
+          "Shrimp"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Additional Details",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Broken",
+          "Dead",
+          "Skeleton",
+          "Fallen",
+          "Shells/Empty tubes",
+          "Sediment accumulation"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Quantity",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Single",
+          "Few (<10)",
+          "Many (<100)",
+          "Abundant (100+)"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      }
+    ],
+    "id": "640f0c526594c9977675e3fc"
+  },
+  {
+    "event_name": "Invertebrate Observation",
+    "event_value": "OBSERVATION",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "biology",
+      "science"
+    ],
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "Invertebrate",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Echinoderm",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Brittle star",
+          "Crinoid",
+          "Nudibranch",
+          "Sea cucumber",
+          "Seastar",
+          "Urchin"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Cnidaria",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Anemone",
+          "Hydroid",
+          "Hydrocoral"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Arthropod",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Barnacle",
+          "Crab/Squat lobster",
+          "Isopod",
+          "Sea spider",
+          "Shrimp"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Annelid",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Chaetopterid",
+          "Polychaete",
+          "Scale worm",
+          "Tubeworms"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Mollusc",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Limpets",
+          "Mussels",
+          "Octopus",
+          "Snails",
+          "Squid"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Jelly",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Ctenophore",
+          "Jellyfish",
+          "Pyrosome",
+          "Siphonophore",
+          "Other Jelly"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Other",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Bryozoan",
+          "Xenophyophore"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Additional Details",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Broken",
+          "Dead",
+          "Skeleton",
+          "Fallen",
+          "Shells/Empty tubes",
+          "Sediment accumulation"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Quantity",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Single",
+          "Few (<10)",
+          "Many (<100)",
+          "Abundant (100+)"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      }
+    ],
+    "id": "640f0c526594c9977675e3fd"
+  },
+  {
+    "event_name": "Flag Outreach",
+    "event_value": "VIDEO",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "template_categories": [
+      "video"
+    ],
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "Outreach",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "id": "6418568e6594c99776773c07"
+  }
+]

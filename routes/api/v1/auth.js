@@ -60,7 +60,7 @@ const _rolesToScope = (roles) => {
       return scope_accumulator.concat(['read_events', 'write_events', 'read_event_templates', 'write_event_templates', 'read_cruises', 'read_lowerings']);
     }
     else if (role === 'cruise_manager') {
-      return scope_accumulator.concat(['read_events', 'write_events', 'read_event_templates', 'read_cruises', 'write_cruises', 'read_lowerings', 'write_lowerings', 'read_users', 'write_users']);
+      return scope_accumulator.concat(['read_events', 'write_events', 'read_event_templates', 'write_event_templates', 'read_cruises', 'write_cruises', 'read_lowerings', 'write_lowerings', 'read_users', 'write_users']);
     }
 
     return scope_accumulator;
