@@ -15,6 +15,7 @@
           "Leaving working site",
           "Transiting to Port",
           "Arrived at Dock/Port",
+          "End of Cruise",
           "Entering EEZ",
           "Leaving EEZ",
           "Other"
