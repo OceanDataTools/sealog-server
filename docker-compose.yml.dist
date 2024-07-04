@@ -12,8 +12,17 @@ services:
       #- SEALOG_SERVER_FILEPATH_ROOT=/data/sealog-files
       #- SEALOG_SERVER_TLS_PRIVKEY=<privkey.pem>
       #- SEALOG_SERVER_TLS_FULLCHAIN=<fulchain.pem>
-      - SEALOG_SERVER_SECRET='' #create this with: node -e "console.log(require('crypto').randomBytes(256).toString('base64'));"
-      - NODE_ENV=production # OR 'development' which preloads some events, event templates cruises and lowerings.
+      
+      # Create SEALOG_SERVER_SECRET with:
+      # node -e "console.log(require('crypto').randomBytes(256).toString('base64'));"
+      - SEALOG_SERVER_SECRET=''
+      
+      # NODE_ENV Options are:
+      # - production: what to use for realz
+      # - development: preloads some events, event templates cruises and lowerings
+      # - demo-vessel: preloads some event templates, cruises, and events... good for evaluating Sealog for vessels
+      # - demo-vehicle: preloads some event templates, cruises, lowerings and events... good for evaluating Sealog for vehicles
+      - NODE_ENV=demo-vessel
       - MONGO_URL=mongodb://mongo:27017/sealogDB
     image: sealog-server
     ports:
