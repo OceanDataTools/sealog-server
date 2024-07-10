@@ -41,6 +41,21 @@ ASNAP_EVENT = {
     "event_free_text": ""
 }
 
+def iso8601_to_datetime(timestamp):
+    try:
+        return datetime.fromisoformat(timestamp)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"Invalid ISO8601 timestamp format: {timestamp}")
+
+def submit_asnap_event(event):
+    try:
+        logging.info("Submitting ASNAP Event")
+        requests.post(API_SERVER_URL + EVENTS_API_PATH, headers=HEADERS, data = json.dumps(event))
+
+    except Exception as error:
+        logging.error("Error submitting new ASNAP event: %s", json.dumps(event))
+        logging.debug(str(error))
+
 
 def asnap_service(interval, timeout=0):
     """
@@ -83,16 +98,25 @@ def asnap_service(interval, timeout=0):
             break
 
         if run_flag:
-            try:
-                logging.info("Submitting ASNAP Event")
-                requests.post(API_SERVER_URL + EVENTS_API_PATH, headers=HEADERS, data = json.dumps(ASNAP_EVENT))
-
-            except Exception as error:
-                logging.error("Error submitting new ASNAP event: %s", json.dumps(ASNAP_EVENT))
-                logging.debug(str(error))
+            submit_asnap_event(ASNAP_EVENT)
 
         wait_time = 1 - (time.time() % 1)
         time.sleep(interval - 1 + wait_time)
+
+def add_asnap_events(interval, start_ts, stop_ts):
+    # Define interval (5 minutes)
+    interval = timedelta(seconds=interval)
+
+    # Initialize current time as start time
+    current_ts = start_ts
+
+    # Loop through the time intervals
+    while current_ts <= stop_ts:
+        event = ASNAP_EVENT
+        event['ts'] = current_ts.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        submit_asnap_event(event)
+
+        current_ts += interval
 
 # -------------------------------------------------------------------------------------
 # Required python code for running the script as a stand-alone utility
@@ -108,6 +132,9 @@ if __name__ == '__main__':
                         help='Increase output verbosity')
     parser.add_argument('-i', '--interval', default=DEFAULT_INTERVAL, type=int, help='ASNAP interval in seconds.')
     parser.add_argument('-t', '--timeout', dest='timeout', default=0, type=int, help="set a timeout (in minutes) to stop submitting ASNAP events")
+    parser.add_argument('--start_ts', type=iso8601_to_datetime, help="Add ASNAP events at the specified interval start at this specified start time (UTC)")
+    parser.add_argument('--stop_ts', type=iso8601_to_datetime, default=datetime.utcnow(), help="Add ASNAP events until the specified stop time (UTC)")
+    
 
     parsed_args = parser.parse_args()
 
@@ -126,6 +153,13 @@ if __name__ == '__main__':
 
     if parsed_args.timeout != 0:
         logging.info("Timeout set to %s minutes.", parsed_args.timeout)
+
+    if parsed_args.start_ts:
+        if parsed_args.start_ts > parsed_args.stop_ts:
+            raise argparse.ArgumentTypeError(f"Start date/time cannot be newer than stop date/time.")
+
+        add_asnap_events(parsed_args.interval, parsed_args.start_ts, parsed_args.stop_ts)
+        sys.exit(0)
 
 
     try:
