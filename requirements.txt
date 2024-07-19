@@ -5,5 +5,5 @@ python-dateutil==2.8.2
 pytz==2023.3.post1
 PyYAML==6.0.1
 requests==2.31.0
-urllib3==2.1.0
+urllib3==2.2.2
 websockets==12.0
