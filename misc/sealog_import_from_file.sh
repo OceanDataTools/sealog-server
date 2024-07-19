@@ -18,7 +18,7 @@ PYTHON_BIN="${SCRIPT_DIR}/../venv/bin/python"
 # source ${SCRIPT_DIR}/preferences.sh
 
 # Parent Directory of sealog database backups
-DATA_DIR="/data/sealog-export"
+DATA_DIR="/Users/webbpinner/Desktop/Sealog-Related/SOI_Subastian"
 
 # Database connection information
 DB_URI="mongodb://localhost:27017/"

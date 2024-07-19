@@ -9,22 +9,17 @@ BUGS:
 NOTES:
 AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
-VERSION:    1.0
+VERSION:    2.0
 CREATED:    2021-01-01
-REVISION:	2022-02-13
+REVISION:	2024-07-14
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2024
 '''
 
-# URL to influx server
-INFLUX_SERVER_URL = "http://localhost:8086"
-
-# Influx server authorization token
-INFLUX_TOKEN = ""
-
-# Influx server org containing sensor data
-INFLUX_ORG = ""
-
-# Influx server bucket containing sensor data
-INFLUX_BUCKET = ""
+# InfluxDB settings
+INFLUXDB_URL = 'http://localhost:8086'
+INFLUXDB_ORG = 'openrvdas'
+INFLUXDB_BUCKET = 'openrvdas'
+INFLUXDB_AUTH_TOKEN = 'DEFAULT_INFLUXDB_AUTH_TOKEN'
+INFLUXDB_VERIFY_SSL = False

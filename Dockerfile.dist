@@ -15,13 +15,13 @@ COPY . .
 
 # Copy configuration files
 COPY config/db_constants.js.dist config/db_constants.js
-COPY config/email_constants.js.dist config/email_constants.js
+COPY config/email_settings.js.dist config/email_settings.js
 COPY config/manifest.js.dist config/manifest.js
-COPY config/path_constants.js.dist config/path_constants.js
+COPY config/server_settings.js.dist config/server_settings.js
 COPY config/secret.js.dist config/secret.js
 
 # Expose port 8000 (This needs to match what's in the docker-compose.yml file)
-# EXPOSE 8000
+EXPOSE 8000
 
 # Command to run the Node.js application
 CMD [ "node", "server.js" ]

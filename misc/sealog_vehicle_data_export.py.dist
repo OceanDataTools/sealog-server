@@ -8,9 +8,9 @@ BUGS:
 NOTES:
 AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
-VERSION:    1.0
+VERSION:    2.0
 CREATED:    2018-11-07
-REVISION:   2022-02-13
+REVISION:   2024-07-15
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2024
@@ -35,27 +35,82 @@ from misc.python_sealog.event_aux_data import get_event_aux_data_by_lowering
 from misc.python_sealog.event_exports import get_event_exports_by_lowering
 from misc.python_sealog.event_templates import get_event_templates
 
-EXPORT_ROOT_DIR = '/data/sealog-export'
-VEHICLE_NAME = 'Explorer'
+# Location of exported files.
+EXPORT_ROOT_DIR = '/data/sealog-exports'
 
+# Name of the vehicle. This is used in filenames and shouldn't include spaces or special characters.
+VEHICLE_NAME = 'Deep_Discoverer'
+
+# Location of sealog-managed files
 CRUISES_FILE_PATH = os.path.join(API_SERVER_FILE_PATH, 'cruises')
 IMAGES_FILE_PATH = os.path.join(API_SERVER_FILE_PATH, 'images')
 LOWERINGS_FILE_PATH = os.path.join(API_SERVER_FILE_PATH, 'lowerings')
 
+# Sub-directory names for storing exported images and uploaded files.
 IMAGES_DIRNAME = 'Images'
 FILES_DIRNAME = 'Files'
 
-def _export_dir_name(cruise_id, lowering_id):
-    if lowering_id[1:].isnumeric():
-        return cruise_id + '_' + lowering_id
+# Enable/Disable copying image files to export directory
+IMAGE_EXPORT = True
+IMAGE_DATASOURCES = ['framegrabber']
 
-    return lowering_id
+def _cruise_file_prefix(cruise):
+    """
+    helper function used to build the filename prefix for all cruise-related
+    data files.
+    """
+
+    # Prepend the with the cruise and lowering id
+    # ------------------------------------------
+    return f"{cruise['cruise_id']}_{VEHICLE_NAME}"
 
 
-def _verify_source_directories():
+def _lowering_file_prefix(cruise, lowering):
+    """
+    helper function used to build the filename prefix for all lowering-related
+    data files.
+    """
+
+    # Prepend the with the cruise id, vehicle name and lowering id
+    # ------------------------------------------
+    return f"{_cruise_file_prefix(cruise)}_{lowering['lowering_id']}"
+
+
+def _build_lowering_name(cruise, lowering):
+    """
+    helper function used to translate how the lowering id is recorded in Sealog
+    to how the lowering id should be exported.  Some operators require the
+    cruise id to be combined with the cruise id for export. i.e. Sealog
+    lowering id: S####, exported lowering id: <cruiseID>_S####
+    """
+
+    # Prepend the lowering id with the cruise id
+    # ------------------------------------------
+    # return cruise['cruise_id'] + '_' + lowering['lowering_id']
+
+    # Just pass through the lowering id
+    # ------------------------------------------
+    return lowering['lowering_id']
+
+
+def verify_source_directories(cruise, lowerings=None):
+    """
+    Verify the source directories exists.
+    """
+
+    lowerings = lowerings or []
+
+    logging.info("Verifying source directories")
 
     if not os.path.isdir(CRUISES_FILE_PATH):
         return False, "cannot find cruises file path"
+
+    cruise_source_dir = os.path.join(CRUISES_FILE_PATH, cruise['id'])
+    if not os.path.isdir(cruise_source_dir):
+        return False, (
+            f"Cannot find source directory for cruise: {cruise['cruise_id']} "
+            f"({cruise_source_dir})"
+        )
 
     if not os.path.isdir(IMAGES_FILE_PATH):
         return False, "cannot find images file path"
@@ -63,175 +118,253 @@ def _verify_source_directories():
     if not os.path.isdir(LOWERINGS_FILE_PATH):
         return False, "cannot find lowerings file path"
 
-    return True, ''
+    for lowering in lowerings:
+        lowering_source_dir = os.path.join(LOWERINGS_FILE_PATH, lowering['id'])
+        if not os.path.isdir(lowering_source_dir):
+            return False, (f"Cannot find source directory for lowering: {lowering['lowering_id']} "
+                           f"({lowering_source_dir})")
+
+    return True, 'success'
 
 
-def _build_cruise_export_dirs(cruise):
+def _build_export_directories(cruise, lowering=None):
+    """
+    Build the export directory structure
+    """
 
-    logging.info("Building cruise-level export directories")
+    cruise_dir = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'])
+    if not os.path.isdir(cruise_dir):
+        logging.info("Building cruise-level export directories")
+
+        try:
+            os.mkdir(cruise_dir)
+        except FileExistsError:
+            logging.debug("cruise export directory already exists")
+        except Exception as err:
+            logging.error("Could not create cruise export directory")
+            logging.debug(str(err))
+            sys.exit(1)
+
+    if lowering is None:
+        return
+
+    lowering_dir = os.path.join(cruise_dir, _build_lowering_name(cruise, lowering))
+    if not os.path.isdir(lowering_dir):
+        logging.info("Building lowering-level export directories")
+
+        try:
+            os.mkdir(lowering_dir)
+        except FileExistsError:
+            logging.debug("lowering export directory already exists")
+        except Exception as err:
+            logging.error("Could not create lowering export directory")
+            logging.debug(str(err))
+            sys.exit(1)
+
+    if IMAGE_EXPORT:
+        try:
+            os.mkdir(os.path.join(lowering_dir, IMAGES_DIRNAME))
+        except FileExistsError:
+            logging.debug("lowering export images directory already exists")
+        except Exception as err:
+            logging.error("Could not create lowering images export directory")
+            logging.debug(str(err))
+            sys.exit(1)
 
     try:
-        os.mkdir(os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id']))
+        os.mkdir(os.path.join(lowering_dir, FILES_DIRNAME))
     except FileExistsError:
-        logging.debug("cruise export directory already exists")
+        logging.debug("lowering export files directory already exists")
     except Exception as err:
-        logging.error("Could not create cruise export directory")
+        logging.error("Could not create lowering files export directory")
         logging.debug(str(err))
         sys.exit(1)
 
 
-def _build_lowering_export_dirs(cruise, lowering): #pylint: disable=redefined-outer-name
+def export_lowering(cruise, lowering): # pylint: disable=too-many-statements, redefined-outer-name
+    """
+    export the data for the given cruise and lowering
+    """
 
-    logging.info("Building lowering-level export directories")
+    logging.info("Exporting data for lowering %s", lowering['lowering_id'])
+
+    _build_export_directories(cruise, lowering)
+
+    cruise_dir = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'])
+    lowering_dir = os.path.join(cruise_dir, _build_lowering_name(cruise, lowering))
 
     try:
-        os.mkdir(os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id'])))
-    except FileExistsError:
-        logging.debug("lowering export directory already exists")
-    except Exception as err:
-        logging.error("Could not create lowering export directory")
-        logging.debug(str(err))
-        sys.exit(1)
+        filename = _lowering_file_prefix(cruise, lowering) + '_loweringRecord.json'
+        dest_filepath = os.path.join(lowering_dir, filename)
+        logging.info("Export Lowering Record: %s", filename)
 
-    try:
-        os.mkdir(os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), IMAGES_DIRNAME))
-    except FileExistsError:
-        logging.debug("lowering export images directory already exists")
-    except Exception as err:
-        logging.error("Could not create lowering images export directory")
-        logging.debug(str(err))
-        sys.exit(1)
-
-
-def _export_lowering_sealog_data_files(cruise, lowering): # pylint: disable=too-many-statements, redefined-outer-name
-
-    logging.info("Exporting lowering-level data files")
-
-    filename = VEHICLE_NAME + '_' + lowering['lowering_id'] + '_loweringRecord.json'
-    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), filename)
-
-    logging.info("Export Lowering Record: %s", filename)
-    try:
-        with open(dest_filepath, 'w') as file:
+        with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(lowering))
+
     except Exception as err:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(err))
 
-    filename = VEHICLE_NAME + '_' + lowering['lowering_id'] + '_eventOnlyExport.json'
-    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), filename)
-
-    logging.info("Export Events (json-format): %s", filename)
     try:
-        with open(dest_filepath, 'w') as file:
+        filename = _lowering_file_prefix(cruise, lowering) + '_eventOnlyExport.json'
+        dest_filepath = os.path.join(lowering_dir, filename)
+        logging.info("Export Events (json-format): %s", filename)
+
+        with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(get_events_by_lowering(lowering['id'])))
+
     except Exception as err:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(err))
 
-    filename = VEHICLE_NAME + '_' + lowering['lowering_id'] + '_eventOnlyExport.csv'
-    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), filename)
-
-    logging.info("Export Events (csv-format): %s", filename)
     try:
-        with open(dest_filepath, 'w') as file:
+        filename = _lowering_file_prefix(cruise, lowering) + '_eventOnlyExport.csv'
+        dest_filepath = os.path.join(lowering_dir, filename)
+        logging.info("Export Events (csv-format): %s", filename)
+
+        with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(get_events_by_lowering(lowering['id'], 'csv'))
+
     except Exception as err:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(err))
 
-    filename = VEHICLE_NAME + '_' + lowering['lowering_id'] + '_auxDataExport.json'
-    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), filename)
 
-    logging.info("Export Aux Data: %s", filename)
     try:
-        with open(dest_filepath, 'w') as file:
+        filename = _lowering_file_prefix(cruise, lowering) + '_auxDataExport.json'
+        dest_filepath = os.path.join(lowering_dir, filename)
+        logging.info("Export Aux Data: %s", filename)
+
+        with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(get_event_aux_data_by_lowering(lowering['id'])))
+
     except Exception as err:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(err))
 
-    filename = VEHICLE_NAME + '_' + lowering['lowering_id'] + '_sealogExport.json'
-    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), filename)
-
-    logging.info("Export Events with Aux Data (json-format): %s", filename)
     try:
-        with open(dest_filepath, 'w') as file:
+        filename = _lowering_file_prefix(cruise, lowering) + '_sealogExport.json'
+        dest_filepath = os.path.join(lowering_dir, filename)
+        logging.info("Export Events with Aux Data (json-format): %s", filename)
+
+        with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(get_event_exports_by_lowering(lowering['id'])))
+
     except Exception as err:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(err))
 
-    filename = VEHICLE_NAME + '_' + lowering['lowering_id'] + '_sealogExport.csv'
-    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), filename)
-
-    logging.info("Export Events with Aux Data (csv-format): %s", filename)
     try:
-        with open(dest_filepath, 'w') as file:
+        filename = _lowering_file_prefix(cruise, lowering) + '_sealogExport.csv'
+        dest_filepath = os.path.join(lowering_dir, filename)
+        logging.info("Export Events with Aux Data (csv-format): %s", filename)
+
+        with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(get_event_exports_by_lowering(lowering['id'], 'csv'))
+
     except Exception as err:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(err))
 
-    filename = VEHICLE_NAME + '_' + lowering['lowering_id'] + '_eventTemplates.json'
-    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), filename)
-
-    logging.info("Export Event Templates: %s", filename)
     try:
-        with open(dest_filepath, 'w') as file:
-            file.write(json.dumps(get_event_templates()))
+        filename = _lowering_file_prefix(cruise, lowering) + '_eventTemplates.json'
+        dest_filepath = os.path.join(lowering_dir, filename)
+
+        # Do not overwrite template export if export exists
+        if not os.path.isfile(dest_filepath):
+            logging.info("Export Event Templates: %s", filename)
+
+            with open(dest_filepath, 'w', encoding="utf-8") as file:
+                file.write(json.dumps(get_event_templates()))
+
     except Exception as err:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(err))
 
-    logging.info("Export Images")
-    framegrab_list = get_framegrab_list_by_lowering(lowering['id'])
+    if IMAGE_EXPORT:
+        logging.info("Exporting Images")
+        framegrab_list = get_framegrab_list_by_lowering(lowering['id'], IMAGE_DATASOURCES)
 
-    # Removing files in export directory that are no longer part of the export.
-    existing_framegrab_list = os.listdir(os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), IMAGES_DIRNAME))
-    delete_framegrab_list = list(set(existing_framegrab_list) - set([os.path.basename(filepath) for filepath in framegrab_list]))
-    if delete_framegrab_list:
+        # Removing files in export directory that are no longer part of the export.
+        existing_framegrab_list = os.listdir(os.path.join(lowering_dir, IMAGES_DIRNAME))
+        delete_framegrab_list = list(
+            set(existing_framegrab_list) - set([os.path.basename(filepath) for filepath in framegrab_list])
+        )
         for filename in delete_framegrab_list:
             try:
                 logging.info('Deleting: %s', filename)
-                os.remove(os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), IMAGES_DIRNAME, filename))
+                os.remove(os.path.join(lowering_dir, IMAGES_DIRNAME, filename))
             except:
                 pass
 
-    with tempfile.NamedTemporaryFile(mode='w+b', delete=False) as file:
-        for framegrab in framegrab_list:
+        # Building include files from list of image files to pass to rsync
+        with tempfile.NamedTemporaryFile(mode='w+b', delete=False) as file:
+            for framegrab in framegrab_list:
 
-            framegrab = os.path.basename(framegrab)
-            file.write(str.encode(framegrab + '\n'))
+                framegrab = os.path.basename(framegrab)
+                file.write(str.encode(framegrab + '\n'))
 
-        subprocess.call(['rsync','-avi','--progress', '--files-from=' + file.name , os.path.join(API_SERVER_FILE_PATH, 'images', ''), os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], _export_dir_name(cruise['cruise_id'], lowering['lowering_id']), IMAGES_DIRNAME)])
+            # rsync files
+            subprocess.call([
+                'rsync',
+                '-avi',
+                '--progress',
+                '--files-from=' + file.name , os.path.join(IMAGES_FILE_PATH, ''),
+                os.path.join(lowering_dir, IMAGES_DIRNAME)
+            ])
+
+    # rsync files
+    subprocess.call([
+        'rsync',
+        '-avi',
+        '--progress',
+        '--delete',
+        os.path.join(LOWERINGS_FILE_PATH, lowering['id'], ''),
+        os.path.join(lowering_dir, FILES_DIRNAME)
+    ])
 
 
-def _export_cruise_sealog_data_files(cruise):
+def export_cruise(cruise):
+    """
+    export the data for the given cruise
+    """
 
-    logging.info("Exporting cruise-level data files")
+    logging.info("Exporting data for cruise %s", cruise['cruise_id'])
 
-    filename = VEHICLE_NAME + '_' + cruise['cruise_id'] + '_cruiseRecord.json'
-    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], filename)
+    _build_export_directories(cruise)
 
-    logging.info("Export Cruise Record: %s", filename)
+    cruise_dir = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'])
+
     try:
-        with open(dest_filepath, 'w') as file:
+        filename = _cruise_file_prefix(cruise) + '_cruiseRecord.json'
+        dest_filepath = os.path.join(cruise_dir, filename)
+        logging.info("Export Cruise Record: %s", filename)
+        with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(cruise))
     except Exception as err:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(err))
 
-    filename = VEHICLE_NAME + '_' + cruise['cruise_id'] + '_eventTemplates.json'
-    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], filename)
+    # Uncomment to add event templates to cruise export folder
+    # try:
+    #     filename = _cruise_file_prefix(cruise) + '_eventTemplates.json'
+    #     dest_filepath = os.path.join(cruise_dir, filename)
+    #     logging.info("Export Event Templates: %s", filename)
+    #     with open(dest_filepath, 'w', encoding="utf-8") as file:
+    #         file.write(json.dumps(get_event_templates()))
+    # except Exception as err:
+    #     logging.error('could not create data file: %s', dest_filepath)
+    #     logging.debug(str(err))
 
-    logging.info("Export Event Templates: %s", filename)
-    try:
-        with open(dest_filepath, 'w') as file:
-            file.write(json.dumps(get_event_templates()))
-    except Exception as err:
-        logging.error('could not create data file: %s', dest_filepath)
-        logging.debug(str(err))
+    # rsync files
+    subprocess.call([
+        'rsync',
+        '-avi',
+        '--progress',
+        '--delete',
+        os.path.join(CRUISES_FILE_PATH, cruise['id'], ''),
+        os.path.join(cruise_dir, FILES_DIRNAME)
+    ])
 
 
 if __name__ == '__main__':
@@ -242,9 +375,12 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbosity', dest='verbosity',
                         default=0, action='count',
                         help='Increase output verbosity')
-    parser.add_argument('-c', '--current_cruise', action='store_true', default=False, help=' export the data for the most recent cruise')
-    parser.add_argument('-L', '--lowering_id', help='export data for the specified lowering (i.e. S0314)')
-    parser.add_argument('-C', '--cruise_id', help='export all cruise and lowering data for the specified cruise (i.e. FK200126)')
+    parser.add_argument('-c', '--current_cruise', action='store_true', default=False,
+                        help=' export the data for the most recent cruise')
+    parser.add_argument('-C', '--cruise_id',
+                        help='export all cruise and lowering data for the specified cruise (i.e. FK200126)')
+    parser.add_argument('-L', '--lowering_id',
+                        help='export data for the specified lowering (i.e. S0314)')
 
     parsed_args = parser.parse_args()
 
@@ -270,6 +406,8 @@ if __name__ == '__main__':
     selected_cruise = None # pylint: disable=invalid-name
     selected_lowerings = []
 
+    # TODO: These cla checks shoud raise ArgParse ValueErrors
+
     # if exporting all lowerings for the current cruise
     if parsed_args.current_cruise:
         selected_cruise = next(iter(get_cruises()), None)
@@ -294,7 +432,7 @@ if __name__ == '__main__':
     elif parsed_args.lowering_id:
         selected_lowerings = [get_lowering_by_id(parsed_args.lowering_id)]
 
-        if selected_lowerings[0] is None:
+        if len(selected_lowerings) == 0:
             logging.error("Lowering %s not found", parsed_args.lowering_id)
             sys.exit(0)
 
@@ -310,15 +448,21 @@ if __name__ == '__main__':
 
         selected_cruise = get_cruise_by_lowering(selected_lowerings[0]['id'])
 
+    if selected_cruise is None:
+        logging.error("There is no cruise for the specified lowering")
+        sys.exit(0)
+
     if len(selected_lowerings) == 0:
-        logging.warning("There are no lowerings for the specified cruise")
+        logging.error("There are no lowerings for the specified cruise")
+        sys.exit(0)
 
     logging.info("Exporting the follow data:")
     logging.info("\tCruise: %s", selected_cruise['cruise_id'])
-    logging.info("\tLowering(s): %s", ', '.join([lowering['lowering_id'] for lowering in selected_lowerings]) if len(selected_lowerings) > 0 else "\t NONE")
+    logging.info("\tLowering(s): %s",
+                    ', '.join([lowering['lowering_id'] for lowering in selected_lowerings])
+                )
 
-    # Verify source directories
-    success, msg = _verify_source_directories()
+    success, msg = verify_source_directories(selected_cruise, selected_lowerings)
     if not success:
         logging.error(msg)
         sys.exit(0)
@@ -328,38 +472,10 @@ if __name__ == '__main__':
         logging.error("Cannot find export directory: %s", EXPORT_ROOT_DIR)
         sys.exit(1)
 
-    # current_cruise source dir
-    cruise_source_dir = os.path.join(CRUISES_FILE_PATH, selected_cruise['id'])
+    export_cruise(selected_cruise)
 
-    #verify cruise source directory exists
-    try:
-        os.path.isdir(cruise_source_dir)
-    except Exception as err:
-        logging.error('Cannot find source directory for cruise: %s', cruise_source_dir)
-        sys.exit(1)
-
-    # build cruise export dirs
-    _build_cruise_export_dirs(selected_cruise)
-
-    # export cruise data files
-    _export_cruise_sealog_data_files(selected_cruise)
-
-    # for each lowering in cruise
     for selected_lowering in selected_lowerings:
-        logging.info("Exporting data for lowering: %s", selected_lowering['lowering_id'])
 
-        # lowering source dir
-        lowering_source_dir = os.path.join(LOWERINGS_FILE_PATH, selected_lowering['id'])
+        export_lowering(selected_cruise, selected_lowering)
 
-        #verify cruise source directory exists
-        if not os.path.isdir(lowering_source_dir):
-            logging.error('Cannot find source directory for lowering: %s', lowering_source_dir)
-            sys.exit(1)
-
-        # build lowering export dirs
-        _build_lowering_export_dirs(selected_cruise, selected_lowering)
-
-        # export lowering data files
-        _export_lowering_sealog_data_files(selected_cruise, selected_lowering)
-
-    logging.debug("Done")
+    logging.info("Done")

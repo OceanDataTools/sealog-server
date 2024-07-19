@@ -5,10 +5,10 @@ const Path = require('path');
 const Tmp = require('tmp');
 
 const {
-  IMAGE_PATH,
-  CRUISE_PATH,
-  LOWERING_PATH
-} = require('../config/path_constants');
+  imagePath,
+  cruisePath,
+  loweringPath
+} = require('../config/server_settings');
 
 const {
   authorizationHeader
@@ -140,7 +140,7 @@ exports.plugin = {
       path: CRUISE_ROUTE + '/{param*}',
       handler: {
         directory: {
-          path: CRUISE_PATH
+          path: cruisePath
         }
       },
       config: {
@@ -183,7 +183,7 @@ exports.plugin = {
       path: CRUISE_ROUTE + '/{file*}',
       async handler(request, h) {
 
-        const filePath = Path.join(CRUISE_PATH, request.params.file);
+        const filePath = Path.join(cruisePath, request.params.file);
         await handleFileDelete(filePath);
         return h.response().code(204);
       },
@@ -251,7 +251,7 @@ exports.plugin = {
       async handler(request, h) {
 
         const { payload } = request;
-        const upload = await handleFileUpload(CRUISE_PATH + '/' + request.params.id, payload.file);
+        const upload = await handleFileUpload(cruisePath + '/' + request.params.id, payload.file);
         return h.response({ message: upload.message }).code(201);
       },
       config: {
@@ -282,7 +282,7 @@ exports.plugin = {
       path: LOWERING_ROUTE + '/{param*}',
       handler: {
         directory: {
-          path: LOWERING_PATH
+          path: loweringPath
         }
       },
       config: {
@@ -325,7 +325,7 @@ exports.plugin = {
       path: LOWERING_ROUTE + '/{file*}',
       async handler(request, h) {
 
-        const filePath = Path.join(LOWERING_PATH, request.params.file);
+        const filePath = Path.join(loweringPath, request.params.file);
         await handleFileDelete(filePath);
         return h.response().code(204);
       },
@@ -393,7 +393,7 @@ exports.plugin = {
       async handler(request, h) {
 
         const { payload } = request;
-        const upload = await handleFileUpload(LOWERING_PATH + '/' + request.params.id, payload.file);
+        const upload = await handleFileUpload(loweringPath + '/' + request.params.id, payload.file);
         return h.response({ message: upload.message }).code(201);
       },
       config: {
@@ -424,7 +424,7 @@ exports.plugin = {
       path: IMAGE_ROUTE + '/{param*}',
       handler: {
         directory: {
-          path: IMAGE_PATH
+          path: imagePath
         }
       },
       config: {

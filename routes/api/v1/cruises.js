@@ -6,12 +6,12 @@ const { AsyncParser } = require('@json2csv/node');
 const Deepcopy = require('deepcopy');
 
 const {
-  CRUISE_PATH
-} = require('../../../config/path_constants');
+  cruisePath
+} = require('../../../config/server_settings');
 
 const {
   useAccessControl
-} = require('../../../config/email_constants');
+} = require('../../../config/server_settings');
 
 const {
   cruisesTable,
@@ -204,7 +204,7 @@ exports.plugin = {
             const mod_cruises = cruises.map((cruise) => {
 
               try {
-                cruise.cruise_additional_meta.cruise_files = Fs.readdirSync(CRUISE_PATH + '/' + cruise._id);
+                cruise.cruise_additional_meta.cruise_files = Fs.readdirSync(cruisePath + '/' + cruise._id);
               }
               catch (error) {
                 cruise.cruise_additional_meta.cruise_files = [];
@@ -309,7 +309,7 @@ exports.plugin = {
           if (cruise) {
 
             try {
-              cruise.cruise_additional_meta.cruise_files = Fs.readdirSync(CRUISE_PATH + '/' + cruise._id);
+              cruise.cruise_additional_meta.cruise_files = Fs.readdirSync(cruisePath + '/' + cruise._id);
             }
 
             catch (error) {
@@ -403,7 +403,7 @@ exports.plugin = {
           if (cruise) {
 
             try {
-              cruise.cruise_additional_meta.cruise_files = Fs.readdirSync(CRUISE_PATH + '/' + cruise._id);
+              cruise.cruise_additional_meta.cruise_files = Fs.readdirSync(cruisePath + '/' + cruise._id);
             }
 
             catch (error) {
@@ -491,7 +491,7 @@ exports.plugin = {
         }
 
         try {
-          cruise.cruise_additional_meta.cruise_files = Fs.readdirSync(CRUISE_PATH + '/' + request.params.id);
+          cruise.cruise_additional_meta.cruise_files = Fs.readdirSync(cruisePath + '/' + request.params.id);
         }
         catch (error) {
           cruise.cruise_additional_meta.cruise_files = [];
@@ -665,7 +665,7 @@ exports.plugin = {
         }
 
         try {
-          Fs.mkdirSync(CRUISE_PATH + '/' + result.insertedId);
+          Fs.mkdirSync(cruisePath + '/' + result.insertedId);
         }
         catch (err) {
           console.log('ERROR:', err);
@@ -803,13 +803,13 @@ exports.plugin = {
         if (request.payload.cruise_additional_meta && request.payload.cruise_additional_meta.cruise_files) {
           try {
             request.payload.cruise_additional_meta.cruise_files.map((file) => {
-              // console.log("move files from", Path.join(Tmp.tmpdir,file), "to", Path.join(CRUISE_PATH, request.params.id));
-              mvFilesToDir(Path.join(Tmp.tmpdir,file), Path.join(CRUISE_PATH, request.params.id), true);
+              // console.log("move files from", Path.join(Tmp.tmpdir,file), "to", Path.join(cruisePath, request.params.id));
+              mvFilesToDir(Path.join(Tmp.tmpdir,file), Path.join(cruisePath, request.params.id), true);
             });
 
           }
           catch (err) {
-            return Boom.serverUnavailable('unabled to upload files. Verify directory ' + Path.join(CRUISE_PATH, request.params.id) + ' exists', err);
+            return Boom.serverUnavailable('unabled to upload files. Verify directory ' + Path.join(cruisePath, request.params.id) + ' exists', err);
           }
 
           delete cruise.cruise_additional_meta.cruise_files;
@@ -1072,8 +1072,8 @@ exports.plugin = {
         try {
           const deleteCruise = await db.collection(cruisesTable).deleteOne(query);
 
-          if (Fs.existsSync(CRUISE_PATH + '/' + request.params.id)) {
-            rmPath(CRUISE_PATH + '/' + request.params.id);
+          if (Fs.existsSync(cruisePath + '/' + request.params.id)) {
+            rmPath(cruisePath + '/' + request.params.id);
           }
 
           return h.response(deleteCruise).code(204);
@@ -1119,9 +1119,9 @@ exports.plugin = {
         }
 
         try {
-          rmPath(CRUISE_PATH);
-          if (!Fs.existsSync(CRUISE_PATH)) {
-            Fs.mkdirSync(CRUISE_PATH);
+          rmPath(cruisePath);
+          if (!Fs.existsSync(cruisePath)) {
+            Fs.mkdirSync(cruisePath);
           }
         }
         catch (err) {

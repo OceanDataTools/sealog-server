@@ -1,6 +1,6 @@
 const checkDiskSpace = require('check-disk-space').default;
 const Boom = require('@hapi/boom');
-const { IMAGE_PATH } = require('../config/path_constants');
+const { imagePath } = require('../config/server_settings');
 
 const {
   customVarsTable
@@ -15,7 +15,7 @@ exports.plugin = {
 
     const check_disk_space = async () => {
 
-      await checkDiskSpace(IMAGE_PATH).then(async (diskSpace) => {
+      await checkDiskSpace(imagePath).then(async (diskSpace) => {
 
         try {
           let query = { custom_var_name: 'freeSpaceInBytes' };

@@ -16,11 +16,14 @@ const {
 const {
   senderAddress,
   emailTransporter,
+  notificationEmailAddresses
+} = require('../../../config/email_settings');
+
+const {
   reCaptchaSecret,
   registeringUserRoles,
-  disableRegisteringUsers,
-  notificationEmailAddresses
-} = require('../../../config/email_constants');
+  disableRegisteringUsers
+} = require('../../../config/server_settings');
 
 const {
   authorizationHeader,
@@ -122,7 +125,7 @@ exports.plugin = {
           return Boom.serverUnavailable('database error', err);
         }
 
-        if (reCaptchaSecret !== '') {
+        if (reCaptchaSecret) {
           try {
             const reCaptchaVerify = await Axios.get('https://www.google.com/recaptcha/api/siteverify?secret=' + reCaptchaSecret + '&response=' + request.payload.reCaptcha + '&remoteip=' + request.info.remoteAddress
             );
@@ -238,7 +241,7 @@ exports.plugin = {
           return Boom.serverUnavailable('database error', err);
         }
 
-        if (reCaptchaSecret !== '') {
+        if (reCaptchaSecret) {
           try {
             const reCaptchaVerify = await Axios.get('https://www.google.com/recaptcha/api/siteverify?secret=' + reCaptchaSecret + '&response=' + request.payload.reCaptcha + '&remoteip=' + request.info.remoteAddress);
 
@@ -319,7 +322,7 @@ exports.plugin = {
           return Boom.serverUnavailable('database error');
         }
 
-        if (reCaptchaSecret !== '') {
+        if (reCaptchaSecret) {
           try {
             const reCaptchaVerify = await Axios.get('https://www.google.com/recaptcha/api/siteverify?secret=' + reCaptchaSecret + '&response=' + request.payload.reCaptcha + '&remoteip=' + request.info.remoteAddress);
 
@@ -414,7 +417,7 @@ exports.plugin = {
           return Boom.serverUnavailable('database error', err);
         }
 
-        if (reCaptchaSecret !== '') {
+        if (reCaptchaSecret) {
           try {
             const reCaptchaVerify = await Axios.get('https://www.google.com/recaptcha/api/siteverify?secret=' + reCaptchaSecret + '&response=' + request.payload.reCaptcha + '&remoteip=' + request.info.remoteAddress);
 

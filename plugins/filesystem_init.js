@@ -2,10 +2,10 @@ const Fs = require('fs');
 const { mkdirp } = require('mkdirp');
 
 const {
-  IMAGE_PATH,
-  CRUISE_PATH,
-  LOWERING_PATH
-} = require('../config/path_constants');
+  imagePath,
+  cruisePath,
+  loweringPath
+} = require('../config/server_settings');
 
 exports.plugin = {
   name: 'filesystem_init',
@@ -13,9 +13,9 @@ exports.plugin = {
   register: async (options) => {
 
     console.log('Searching for Image Directory');
-    if (!Fs.existsSync(IMAGE_PATH)) {
+    if (!Fs.existsSync(imagePath)) {
       console.log('Image Directory not found... trying to create.');
-      await mkdirp(IMAGE_PATH).then(() =>
+      await mkdirp(imagePath).then(() =>
 
         console.log('Image Directory created')
       ).catch((err) =>
@@ -28,9 +28,9 @@ exports.plugin = {
     }
 
     console.log('Searching for Cruise Directory');
-    if (!Fs.existsSync(CRUISE_PATH)) {
+    if (!Fs.existsSync(cruisePath)) {
       console.log('Cruise Directory not found... trying to create.');
-      await mkdirp(CRUISE_PATH).then(() =>
+      await mkdirp(cruisePath).then(() =>
 
         console.log('Cruise Directory created')
       ).catch((err) =>
@@ -43,9 +43,9 @@ exports.plugin = {
     }
 
     console.log('Searching for Lowering Directory');
-    if (!Fs.existsSync(LOWERING_PATH)) {
+    if (!Fs.existsSync(loweringPath)) {
       console.log('Lowering Directory not found... trying to create.');
-      await mkdirp(LOWERING_PATH).then(() =>
+      await mkdirp(loweringPath).then(() =>
 
         console.log('Lowering Directory created')
       ).catch((err) =>

@@ -10,7 +10,7 @@ const resetPasswordTokenExpires = 24; //hours
 
 const {
   useAccessControl
-} = require('../../../config/email_constants');
+} = require('../../../config/server_settings');
 
 const {
   cruisesTable,
@@ -21,7 +21,7 @@ const {
 const {
   senderAddress,
   emailTransporter
-} = require('../../../config/email_constants');
+} = require('../../../config/email_settings');
 
 const {
   authorizationHeader,

@@ -4,18 +4,6 @@ const senderAddress = '<SENDER_ADDRESS>';
 // Additional receipents for and sent emails.
 const notificationEmailAddresses = ['<BCC_ADDRESS>'];
 
-// Server-side reCaptcha key, set to '' if not using reCaptcha bot protection
-const reCaptchaSecret = '';
-
-// Disable registering users, requires Sealog admin user to enable the accounts prior to use
-const disableRegisteringUsers = false;
-
-// Default roles of self-registering users
-const registeringUserRoles = ['event_watcher', 'event_logger'];
-
-// Activate per-cruise/per-lowering access permissions
-const useAccessControl = false;
-
 // Needed for email integration
 let emailTransporter = null; //eslint-disable-line prefer-const
 const Nodemailer = require('nodemailer'); // eslint-disable-line no-unused-vars
@@ -37,7 +25,7 @@ const Nodemailer = require('nodemailer'); // eslint-disable-line no-unused-vars
 
 
 // ------------------------------------------------------------------------- //
-// MailGun integration
+// Mailgun integration
 // ------------------------------------------------------------------------- //
 // const Mg = require('nodemailer-mailgun-transport'); // eslint-disable-line no-unused-vars
 // emailTransporter = Nodemailer.createTransport(Mg({
@@ -49,10 +37,9 @@ const Nodemailer = require('nodemailer'); // eslint-disable-line no-unused-vars
 
 
 // ------------------------------------------------------------------------- //
-// MailJet integration
+// Mailjet integration
 // ------------------------------------------------------------------------- //
 // const Mj = require('../lib/nodemailer-mailjet-transport'); // eslint-disable-line no-unused-vars
-
 // emailTransporter = Nodemailer.createTransport(Mj({
 //   auth: {
 //     apiKey: process.env.MJ_APIKEY_PUBLIC || '<API_KEY>',
@@ -64,8 +51,4 @@ module.exports = {
   senderAddress,
   emailTransporter,
   notificationEmailAddresses,
-  reCaptchaSecret,
-  disableRegisteringUsers,
-  registeringUserRoles,
-  useAccessControl
 };

@@ -36,7 +36,7 @@ exports.plugin = {
     console.log('Creating Cruises Collection');
     try {
       const collection = await db.createCollection(cruisesTable);
-      const init_data = filePreProcessor('./test/data/FKt230303_cruiseRecord.json', 'cruises');
+      const init_data = filePreProcessor('./demo/FKt230303_cruiseRecord.json', 'cruises');
       await collection.insertMany(init_data);
     }
     catch (err) {
@@ -63,7 +63,7 @@ exports.plugin = {
     try {
       const collection = await db.createCollection(eventsTable);
 
-      const init_data = filePreProcessor('./test/data/FKt230303_eventOnlyExport.json', 'events');
+      const init_data = filePreProcessor('./demo/FKt230303_eventOnlyExport.json', 'events');
       await collection.insertMany(init_data);
     }
     catch (err) {
@@ -93,7 +93,7 @@ exports.plugin = {
       console.log('Creating index based on event_id field');
       await collection.createIndex({ event_id: 1 });
 
-      const init_data = filePreProcessor('./test/data/FKt230303_auxDataExport.json', 'event_aux_data');
+      const init_data = filePreProcessor('./demo/FKt230303_auxDataExport.json', 'event_aux_data');
       await collection.insertMany(init_data);
     }
     catch (err) {
@@ -119,7 +119,7 @@ exports.plugin = {
     console.log('Creating Event Templates Collection');
     try {
       const collection = await db.createCollection(eventTemplatesTable);
-      const init_data = filePreProcessor('./test/data/FKt230303_eventTemplates.json', 'event_templates');
+      const init_data = filePreProcessor('./demo/FKt230303_eventTemplates.json', 'event_templates');
       await collection.insertMany(init_data);
     }
     catch (err) {
@@ -145,7 +145,7 @@ exports.plugin = {
     console.log('Creating Users Collection');
     try {
       const collection = await db.createCollection(usersTable);
-      const init_data = filePreProcessor('./test/data/demo_users.json', 'users');
+      const init_data = filePreProcessor('./demo/demo_users.json', 'users');
       await collection.insertMany(init_data);
     }
     catch (err) {

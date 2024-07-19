@@ -48,9 +48,9 @@ misc/assets
 
 # customized versions of the dist configuration files
 config/db_constants.js
-config/email_constants.js
+config/email_settings.js
 config/manifest.js
-config/path_constants.js
+config/server_settings.js
 config/secret.js
 
 # docker files

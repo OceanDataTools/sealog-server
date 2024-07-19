@@ -8,18 +8,19 @@ BUGS:
 NOTES:
 AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
-VERSION:    1.0
+VERSION:    2.0
 CREATED:    2018-11-07
-REVISION:   2022-02-13
+REVISION:   2024-07-15
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2024
 '''
 
-import os
 import sys
+import os
 import json
 import logging
+import subprocess
 
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
@@ -31,113 +32,187 @@ from misc.python_sealog.event_aux_data import get_event_aux_data_by_cruise
 from misc.python_sealog.event_exports import get_event_exports_by_cruise
 from misc.python_sealog.event_templates import get_event_templates
 
-EXPORT_ROOT_DIR = '/data/sealog-export'
+# Location of exported files.
+EXPORT_ROOT_DIR = '/data/sealog-exports'
+
+# Name of the vessel. This is used in filenames and shouldn't include spaces or special characters.
 VESSEL_NAME = 'Discoverer'
 
+# Location of sealog-managed files
 CRUISES_FILE_PATH = os.path.join(API_SERVER_FILE_PATH, 'cruises')
 
-def _verify_source_directories():
+# Sub-directory names for storing exported uploaded files.
+FILES_DIRNAME = 'Files'
+
+
+def _cruise_file_prefix(cruise):
+    """
+    helper function used to build the filename prefix for all cruise-related
+    data files.
+    """
+
+    # Prepend the with the cruise and vessel name
+    # --------------------------------------------
+    return f"{cruise['cruise_id']}_{VESSEL_NAME}"
+
+    # Prepend the with just the cruise id
+    # --------------------------------------------
+    #return f"{cruise['cruise_id']}_"
+
+
+def verify_source_directories(cruise):
+    """
+    Verify the source directories exists.
+    """
+
+    logging.info("Verifying source directories")
 
     if not os.path.isdir(CRUISES_FILE_PATH):
         return False, "cannot find cruises file path"
 
-    return True, ''
+    #verify cruise source directory exists
+    cruise_source_dir = os.path.join(CRUISES_FILE_PATH, cruise['id'])
+    if not os.path.isdir(cruise_source_dir):
+        return False, (
+            f"Cannot find source directory for cruise: {cruise['cruise_id']} "
+            f"({cruise_source_dir})"
+        )
+
+    return True, 'success'
 
 
-def _build_cruise_export_dirs(cruise):
+def _build_export_directories(cruise):
+    """
+    Build the export directory structure
+    """
 
-    logging.info("Building cruise-level export directories")
+    cruise_dir = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'])
+    if not os.path.isdir(cruise_dir):
+        logging.info("Building cruise-level export directories")
+
+        try:
+            os.mkdir(cruise_dir)
+        except FileExistsError:
+            logging.debug("cruise export directory already exists")
+        except Exception as err:
+            logging.error("Could not create cruise export directory")
+            logging.debug(str(err))
+            sys.exit(1)
 
     try:
-        os.mkdir(os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id']))
+        os.mkdir(os.path.join(cruise_dir, FILES_DIRNAME))
     except FileExistsError:
-        logging.debug("cruise export directory already exists")
+        logging.debug("cruise export files directory already exists")
     except Exception as err:
-        logging.error("Could not create cruise export directory")
+        logging.error("Could not create cruise files export directory")
         logging.debug(str(err))
         sys.exit(1)
 
 
-def _export_cruise_sealog_data_files(cruise): #pylint: disable=too-many-statements
+def export_cruise(cruise): # pylint: disable=too-many-statements, redefined-outer-name
+    """
+    export the data for the given cruise
+    """
 
-    logging.info("Exporting cruise-level data files")
+    logging.info("Exporting data for cruise %s", cruise['cruise_id'])
 
-    filename = VESSEL_NAME + '_' + cruise['cruise_id'] + '_cruiseRecord.json'
-    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], filename)
+    _build_export_directories(cruise)
 
-    logging.info("Export Cruise Record: %s", filename)
+    cruise_dir = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'])
+
     try:
-        with open(dest_filepath, 'w') as file:
+        filename = _cruise_file_prefix(cruise) + '_cruiseRecord.json'
+        dest_filepath = os.path.join(cruise_dir, filename)
+        logging.info("Export cruise Record: %s", filename)
+
+        with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(cruise))
+
     except Exception as err:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(err))
 
-    filename = VESSEL_NAME + '_' + cruise['cruise_id'] + '_eventOnlyExport.json'
-    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], filename)
-
-    logging.info("Export Events (json-format): %s", filename)
     try:
-        with open(dest_filepath, 'w') as file:
+        filename = _cruise_file_prefix(cruise) + '_eventOnlyExport.json'
+        dest_filepath = os.path.join(cruise_dir, filename)
+        logging.info("Export Events (json-format): %s", filename)
+
+        with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(get_events_by_cruise(cruise['id'])))
+
     except Exception as err:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(err))
 
-    filename = VESSEL_NAME + '_' + cruise['cruise_id'] + '_eventOnlyExport.csv'
-    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], filename)
-
-    logging.info("Export Events (csv-format): %s", filename)
     try:
-        with open(dest_filepath, 'w') as file:
+        filename = _cruise_file_prefix(cruise) + '_eventOnlyExport.csv'
+        dest_filepath = os.path.join(cruise_dir, filename)
+        logging.info("Export Events (csv-format): %s", filename)
+
+        with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(get_events_by_cruise(cruise['id'], 'csv'))
+
     except Exception as err:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(err))
 
-    filename = VESSEL_NAME + '_' + cruise['cruise_id'] + '_auxDataExport.json'
-    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], filename)
-
-    logging.info("Export Aux Data: %s", filename)
     try:
-        with open(dest_filepath, 'w') as file:
+        filename = _cruise_file_prefix(cruise) + '_auxDataExport.json'
+        dest_filepath = os.path.join(cruise_dir, filename)
+        logging.info("Export Aux Data: %s", filename)
+
+        with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(get_event_aux_data_by_cruise(cruise['id'])))
+
     except Exception as err:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(err))
 
-    filename = VESSEL_NAME + '_' + cruise['cruise_id'] + '_sealogExport.json'
-    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], filename)
-
-    logging.info("Export Events with Aux Data (json-format): %s", filename)
     try:
-        with open(dest_filepath, 'w') as file:
+        filename = _cruise_file_prefix(cruise) + '_sealogExport.json'
+        dest_filepath = os.path.join(cruise_dir, filename)
+        logging.info("Export Events with Aux Data (json-format): %s", filename)
+
+        with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(get_event_exports_by_cruise(cruise['id'])))
+
     except Exception as err:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(err))
 
-    filename = VESSEL_NAME + '_' + cruise['cruise_id'] + '_sealogExport.csv'
-    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], filename)
-
-    logging.info("Export Events with Aux Data (csv-format): %s", filename)
     try:
-        with open(dest_filepath, 'w') as file:
+        filename = _cruise_file_prefix(cruise) + '_sealogExport.csv'
+        dest_filepath = os.path.join(cruise_dir, filename)
+        logging.info("Export Events with Aux Data (csv-format): %s", filename)
+
+        with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(get_event_exports_by_cruise(cruise['id'], 'csv'))
+
     except Exception as err:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(err))
 
-    filename = VESSEL_NAME + '_' + cruise['cruise_id'] + '_eventTemplates.json'
-    dest_filepath = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'], filename)
-
-    logging.info("Export Event Templates: %s", filename)
     try:
-        with open(dest_filepath, 'w') as file:
+        filename = _cruise_file_prefix(cruise) + '_eventTemplates.json'
+        dest_filepath = os.path.join(cruise_dir, filename)
+        logging.info("Export Event Templates: %s", filename)
+
+        with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(get_event_templates()))
+
     except Exception as err:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(err))
+
+    # rsync files
+    subprocess.call([
+        'rsync',
+        '-avi',
+        '--progress',
+        '--delete',
+        os.path.join(CRUISES_FILE_PATH, cruise['id'], ''),
+        os.path.join(cruise_dir, FILES_DIRNAME)
+    ])
 
 
 if __name__ == '__main__':
@@ -148,7 +223,8 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbosity', dest='verbosity',
                         default=0, action='count',
                         help='Increase output verbosity')
-    parser.add_argument('-C', '--cruise_id', help='export data for the specified cruise (i.e. SL200329)')
+    parser.add_argument('-C', '--cruise_id',
+                        help='export the specified cruise (i.e. FK200126)')
 
     parsed_args = parser.parse_args()
 
@@ -163,51 +239,35 @@ if __name__ == '__main__':
     parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
     logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
 
-    selected_cruise = None # pylint: disable=invalid-name
-
-    # if exporting a specific current cruise
+    # if exporting a specific cruise
     if parsed_args.cruise_id:
         selected_cruise = get_cruise_by_id(parsed_args.cruise_id)
 
-    # if exporting the current cruise
+        if selected_cruise is None:
+            logging.error("Cruise %s not found", parsed_args.cruise_id)
+            sys.exit(0)
+
+    # if exporting for the most recent cruise
     else:
         selected_cruise = next(iter(get_cruises()), None)
 
-    # if no cruise found, exit
-    if selected_cruise is None:
-        logging.error("Cruise %s not found", parsed_args.cruise_id)
-        sys.exit(0)
+        if selected_cruise is None:
+            logging.error("There are no cruises available for export")
+            sys.exit(0)
 
-    # Verify source directories
-    success, msg = _verify_source_directories()
+    logging.info("Exporting the follow data:")
+    logging.info("\tCruise: %s", selected_cruise['cruise_id'])
+
+    success, msg = verify_source_directories(selected_cruise)
     if not success:
         logging.error(msg)
         sys.exit(0)
 
     # Verify export root directory
     if not os.path.isdir(EXPORT_ROOT_DIR):
-        logging.error("cannot find export directory: %s", EXPORT_ROOT_DIR)
+        logging.error("Cannot find export directory: %s", EXPORT_ROOT_DIR)
         sys.exit(1)
 
-    logging.info("Cruise ID: %s", selected_cruise['cruise_id'])
-    if 'cruise_name' in selected_cruise['cruise_additional_meta']:
-        logging.info("Cruise Name: %s", selected_cruise['cruise_additional_meta']['cruise_name'])
+    export_cruise(selected_cruise)
 
-    # cruise source dir
-    cruise_source_dir = os.path.join(CRUISES_FILE_PATH, selected_cruise['id'])
-
-    #verify cruise source directory exists
-    try:
-        os.path.isdir(cruise_source_dir)
-    except Exception as err:
-        logging.error('cannot find source directory for cruise: %s', cruise_source_dir)
-        logging.debug(str(err))
-        sys.exit(1)
-
-    # build cruise export dirs
-    _build_cruise_export_dirs(selected_cruise)
-
-    # export cruise data files
-    _export_cruise_sealog_data_files(selected_cruise)
-
-    logging.debug("Done")
+    logging.info("Done")
