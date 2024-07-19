@@ -22,5 +22,6 @@ module.exports = {
   disableRegisteringUsers,
   loweringPath,
   reCaptchaSecret,
-  registeringUserRoles
+  registeringUserRoles,
+  useAccessControl
 };
