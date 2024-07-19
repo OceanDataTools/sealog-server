@@ -43,56 +43,60 @@ from influxdb_client import InfluxDBClient
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
-from misc.python_sealog.events import get_events_by_cruise, get_events_by_lowering
+from misc.python_sealog.events import get_event, get_events_by_cruise, get_events_by_lowering
 from misc.python_sealog.lowerings import get_lowering_uid_by_id
 from misc.python_sealog.cruises import get_cruise_uid_by_id
 
 from misc.python_sealog.settings import API_SERVER_URL, WS_SERVER_URL, LOWERINGS_API_PATH, EVENTS_API_PATH, EVENT_AUX_DATA_API_PATH, HEADERS
-from misc.influx_sealog.settings import INFLUX_SERVER_URL, INFLUX_TOKEN, INFLUX_ORG
+from misc.influx_sealog.settings import INFLUXDB_URL, INFLUXDB_AUTH_TOKEN, INFLUXDB_ORG, INFLUXDB_VERIFY_SSL
 from misc.influx_sealog.aux_data_record_builder import SealogInfluxAuxDataRecordBuilder
 
 #-----------------------------------------------------------------------------#
 
 INLINE_CONFIG = '''
--
-    data_source: realtimeVesselPosition
-    query_measurements:
-        - seapath1
-    aux_record_lookup:
-        S1HeadingTrue:
-            name: heading
-            uom: deg
-            round: 3
-        S1Latitude:
-            name: latitude
-            uom: ddeg
-            round: 6
-            modify:
-                -
-                    test:
-                        -
-                            field: S1NorS
-                            eq: "S"
-                    operation:
-                        -
-                            multiply: -1
-        S1Longitude:
-            name: longitude
-            uom: deg
-            round: 6
-            modify:
-                -
-                    test:
-                        -
-                            field: S1EorW
-                            eq: "W"
-                    operation:
-                        -
-                            multiply: -1
-        S1NorS:
-            no_output: true
-        S1EorW:
-            no_output: true
+- data_source: realtimeVesselPosition
+  # alarm:
+  #   active: true
+  #   interval: 300
+  #   event:
+  #     event_value: PROBLEM
+  #     event_free_text: >-
+  #       No vessel position data available from InfluxDB. Verify OpenRVDAS is
+  #       sending Seapath data to InfluxDB
+  #     event_options:
+  #       - event_option_name: System
+  #         event_option_value: Data
+  query_measurements:
+    - seapath1
+  aux_record_lookup:
+    S1HeadingTrue:
+      name: heading
+      uom: deg
+      round: 3
+    S1Latitude:
+      name: latitude
+      uom: ddeg
+      round: 6
+      modify:
+        - test:
+            - field: S1NorS
+              eq: S
+          operation:
+            - multiply: -1
+    S1Longitude:
+      name: longitude
+      uom: ddeg
+      round: 6
+      modify:
+        - test:
+            - field: S1EorW
+              eq: W
+          operation:
+            - multiply: -1
+    S1NorS:
+      no_output: true
+    S1EorW:
+      no_output: true
 '''
 
 # set of events to ignore
@@ -159,10 +163,7 @@ def insert_aux_data_from_list(aux_data_builders, event_ids):
     for event_id in event_ids:
         try:
             logging.debug("Retrieving event record from Sealog Server")
-            url = API_SERVER_URL + EVENTS_API_PATH + '/' + event_id
-            logging.debug("URL: \"%s\"", url)
-            req = requests.get(url, headers=HEADERS)
-            event = json.loads(req.text)
+            event = get_event(event_id)
             logging.debug("Event: %s", event)
 
         except Exception as err:
@@ -260,7 +261,7 @@ if __name__ == '__main__':
                         default=0, action='count',
                         help='Increase output verbosity')
     parser.add_argument('-f', '--config_file', help='use the specifed configuration file')
-    parser.add_argument('-n', '--dry_run', action='store_true', help='compile the data but do not push to server')
+    parser.add_argument('-n', '--dry_run', action='store_true', help='compile the aux_data records but do not submit to server API')
     parser.add_argument('-e', '--events', help='list of event_ids to apply the influx data')
     parser.add_argument('-c', '--cruise_id', help='cruise_id to fix aux_data for')
     parser.add_argument('-l', '--lowering_id', help='lowering_id to fix aux_data for')
@@ -304,7 +305,12 @@ if __name__ == '__main__':
     logging.debug(json.dumps(aux_data_configs, indent=2))
 
     # create an influxDB Client
-    client = InfluxDBClient(url=INFLUX_SERVER_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
+    use_ssl = INFLUXDB_URL.find('https:') == 0
+    client = InfluxDBClient(url=INFLUXDB_URL,
+                            token=INFLUXDB_AUTH_TOKEN,
+                            org=INFLUXDB_ORG,
+                            ssl=use_ssl,
+                            verify_ssl=INFLUXDB_VERIFY_SSL)
 
     # Create the Aux Data Record Builders
     aux_data_builder_list = list(map(lambda config: SealogInfluxAuxDataRecordBuilder(client, config), aux_data_configs))

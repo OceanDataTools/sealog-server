@@ -6,12 +6,12 @@ const { AsyncParser } = require('@json2csv/node');
 const Deepcopy = require('deepcopy');
 
 const {
-  CRUISE_PATH
-} = require('../../../config/path_constants');
+  cruisePath
+} = require('../../../config/server_settings');
 
 const {
   useAccessControl
-} = require('../../../config/email_constants');
+} = require('../../../config/server_settings');
 
 const {
   cruisesTable,
@@ -35,7 +35,7 @@ const {
 } = require('../../../lib/validations');
 
 const {
-  rmDir,
+  rmPath,
   mvFilesToDir
 } = require('../../../lib/utils');
 
@@ -204,7 +204,7 @@ exports.plugin = {
             const mod_cruises = cruises.map((cruise) => {
 
               try {
-                cruise.cruise_additional_meta.cruise_files = Fs.readdirSync(CRUISE_PATH + '/' + cruise._id);
+                cruise.cruise_additional_meta.cruise_files = Fs.readdirSync(cruisePath + '/' + cruise._id);
               }
               catch (error) {
                 cruise.cruise_additional_meta.cruise_files = [];
@@ -309,7 +309,7 @@ exports.plugin = {
           if (cruise) {
 
             try {
-              cruise.cruise_additional_meta.cruise_files = Fs.readdirSync(CRUISE_PATH + '/' + cruise._id);
+              cruise.cruise_additional_meta.cruise_files = Fs.readdirSync(cruisePath + '/' + cruise._id);
             }
 
             catch (error) {
@@ -403,7 +403,7 @@ exports.plugin = {
           if (cruise) {
 
             try {
-              cruise.cruise_additional_meta.cruise_files = Fs.readdirSync(CRUISE_PATH + '/' + cruise._id);
+              cruise.cruise_additional_meta.cruise_files = Fs.readdirSync(cruisePath + '/' + cruise._id);
             }
 
             catch (error) {
@@ -491,7 +491,7 @@ exports.plugin = {
         }
 
         try {
-          cruise.cruise_additional_meta.cruise_files = Fs.readdirSync(CRUISE_PATH + '/' + request.params.id);
+          cruise.cruise_additional_meta.cruise_files = Fs.readdirSync(cruisePath + '/' + request.params.id);
         }
         catch (error) {
           cruise.cruise_additional_meta.cruise_files = [];
@@ -642,19 +642,11 @@ exports.plugin = {
         }
         else if ( cruise.cruise_access_list && cruise.cruise_access_list.length > 0 ) {
           try {
-            const users = db.collection(usersTable).toArray();
+            const users = await db.collection(usersTable).find().toArray();
             const user_ids = users.map((user) => user._id);
-            const user_are_valid = cruise.cruise_access_list.reduce((result, user_id) => {
+            const users_are_valid = cruise.cruise_access_list.every((value) => user_ids.includes(value));
 
-              if (!user_ids.includes(user_id)) {
-                result = false;
-              }
-
-              return result;
-
-            }, true);
-
-            if (!user_are_valid) {
+            if (!users_are_valid) {
               return Boom.badRequest('cruise_access_list includes invalid user IDs');
             }
           }
@@ -673,7 +665,7 @@ exports.plugin = {
         }
 
         try {
-          Fs.mkdirSync(CRUISE_PATH + '/' + result.insertedId);
+          Fs.mkdirSync(cruisePath + '/' + result.insertedId);
         }
         catch (err) {
           console.log('ERROR:', err);
@@ -788,21 +780,17 @@ exports.plugin = {
         }
 
         // Validate user ids in access list
+
+        // list1.every(value => list2.includes(value));
+
+
         if ( cruise.cruise_access_list && cruise.cruise_access_list.length > 0 ) {
           try {
-            const users = db.collection(usersTable).toArray();
-            const user_ids = users.map((user) => user._id);
+            const users = await db.collection(usersTable).find().toArray();
+            const user_ids = users.map((user) => user._id.toString());
+            const users_are_valid = cruise.cruise_access_list.every((value) => user_ids.includes(value));
 
-            const user_are_valid = cruise.cruise_access_list.reduce((result, user_id) => {
-
-              if (!user_ids.includes(user_id)) {
-                result = false;
-              }
-
-              return result;
-            }, true);
-
-            if (!user_are_valid) {
+            if (!users_are_valid) {
               return Boom.badRequest('cruise_access_list include invalid user IDs');
             }
           }
@@ -815,13 +803,13 @@ exports.plugin = {
         if (request.payload.cruise_additional_meta && request.payload.cruise_additional_meta.cruise_files) {
           try {
             request.payload.cruise_additional_meta.cruise_files.map((file) => {
-              // console.log("move files from", Path.join(Tmp.tmpdir,file), "to", Path.join(CRUISE_PATH, request.params.id));
-              mvFilesToDir(Path.join(Tmp.tmpdir,file), Path.join(CRUISE_PATH, request.params.id));
+              // console.log("move files from", Path.join(Tmp.tmpdir,file), "to", Path.join(cruisePath, request.params.id));
+              mvFilesToDir(Path.join(Tmp.tmpdir,file), Path.join(cruisePath, request.params.id), true);
             });
 
           }
           catch (err) {
-            return Boom.serverUnavailable('unabled to upload files. Verify directory ' + Path.join(CRUISE_PATH, request.params.id) + ' exists', err);
+            return Boom.serverUnavailable('unabled to upload files. Verify directory ' + Path.join(cruisePath, request.params.id) + ' exists', err);
           }
 
           delete cruise.cruise_additional_meta.cruise_files;
@@ -888,6 +876,7 @@ exports.plugin = {
         const loweringQuery = { start_ts: { '$gte': updatedCruise.start_ts }, stop_ts: { '$lt': updatedCruise.stop_ts } };
 
         try {
+          console.error('here 2');
           const cruiseLowerings = await db.collection(loweringsTable).find(loweringQuery).toArray();
           // console.log(cruiseLowerings);
           cruiseLowerings.forEach((lowering) => {
@@ -969,31 +958,14 @@ exports.plugin = {
           const user_ids = users.map((user) => user._id.toString());
 
           if (request.payload.add) {
-            const users_are_valid = request.payload.add.reduce((result, user_id) => {
-
-              if (!user_ids.includes(user_id)) {
-                result = false;
-              }
-
-              return result;
-
-            }, true);
-
+            const users_are_valid = request.payload.add.every((value) => user_ids.includes(value));
             if (!users_are_valid) {
               return Boom.badRequest('cruise_access_list include invalid user IDs');
             }
           }
 
           if (request.payload.remove) {
-            const users_are_valid = request.payload.remove.reduce((result, user_id) => {
-
-              if (!user_ids.includes(user_id)) {
-                result = false;
-              }
-
-              return result;
-
-            }, true);
+            const users_are_valid = request.payload.remove.every((value) => user_ids.includes(value));
 
             if (!users_are_valid) {
               return Boom.badRequest('cruise_access_list include invalid user IDs');
@@ -1100,8 +1072,8 @@ exports.plugin = {
         try {
           const deleteCruise = await db.collection(cruisesTable).deleteOne(query);
 
-          if (Fs.existsSync(CRUISE_PATH + '/' + request.params.id)) {
-            rmDir(CRUISE_PATH + '/' + request.params.id);
+          if (Fs.existsSync(cruisePath + '/' + request.params.id)) {
+            rmPath(cruisePath + '/' + request.params.id);
           }
 
           return h.response(deleteCruise).code(204);
@@ -1147,9 +1119,9 @@ exports.plugin = {
         }
 
         try {
-          rmDir(CRUISE_PATH);
-          if (!Fs.existsSync(CRUISE_PATH)) {
-            Fs.mkdirSync(CRUISE_PATH);
+          rmPath(cruisePath);
+          if (!Fs.existsSync(cruisePath)) {
+            Fs.mkdirSync(cruisePath);
           }
         }
         catch (err) {

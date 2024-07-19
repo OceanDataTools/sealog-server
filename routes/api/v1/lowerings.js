@@ -6,12 +6,9 @@ const { AsyncParser } = require('@json2csv/node');
 const Deepcopy = require('deepcopy');
 
 const {
-  LOWERING_PATH
-} = require('../../../config/path_constants');
-
-const {
+  loweringPath,
   useAccessControl
-} = require('../../../config/email_constants');
+} = require('../../../config/server_settings');
 
 const {
   cruisesTable,
@@ -21,7 +18,7 @@ const {
 } = require('../../../config/db_constants');
 
 const {
-  rmDir,
+  rmPath,
   mvFilesToDir
 } = require('../../../lib/utils');
 
@@ -195,7 +192,7 @@ exports.plugin = {
             const mod_lowerings = lowerings.map((lowering) => {
 
               try {
-                lowering.lowering_additional_meta.lowering_files = Fs.readdirSync(LOWERING_PATH + '/' + lowering._id);
+                lowering.lowering_additional_meta.lowering_files = Fs.readdirSync(loweringPath + '/' + lowering._id);
               }
               catch (error) {
                 lowering.lowering_additional_meta.lowering_files = [];
@@ -342,7 +339,7 @@ exports.plugin = {
             const mod_lowerings = lowerings.map((result) => {
 
               try {
-                result.lowering_additional_meta.lowering_files = Fs.readdirSync(LOWERING_PATH + '/' + result._id);
+                result.lowering_additional_meta.lowering_files = Fs.readdirSync(loweringPath + '/' + result._id);
               }
               catch (error) {
                 result.lowering_additional_meta.lowering_files = [];
@@ -438,7 +435,7 @@ exports.plugin = {
           if (lowering) {
 
             try {
-              lowering.lowering_additional_meta.lowering_files = Fs.readdirSync(LOWERING_PATH + '/' + lowering._id);
+              lowering.lowering_additional_meta.lowering_files = Fs.readdirSync(loweringPath + '/' + lowering._id);
             }
 
             catch (error) {
@@ -526,7 +523,7 @@ exports.plugin = {
         }
 
         try {
-          lowering.lowering_additional_meta.lowering_files = Fs.readdirSync(LOWERING_PATH + '/' + request.params.id);
+          lowering.lowering_additional_meta.lowering_files = Fs.readdirSync(loweringPath + '/' + request.params.id);
         }
         catch (error) {
           lowering.lowering_additional_meta.lowering_files = [];
@@ -698,7 +695,7 @@ exports.plugin = {
         }
 
         try {
-          Fs.mkdirSync(LOWERING_PATH + '/' + result.insertedId);
+          Fs.mkdirSync(loweringPath + '/' + result.insertedId);
         }
         catch (err) {
           console.log('ERROR:', err);
@@ -840,12 +837,12 @@ exports.plugin = {
           try {
             request.payload.lowering_additional_meta.lowering_files.map((file) => {
 
-              mvFilesToDir(Path.join(Tmp.tmpdir,file), Path.join(LOWERING_PATH, request.params.id));
+              mvFilesToDir(Path.join(Tmp.tmpdir,file), Path.join(loweringPath, request.params.id), true);
             });
           }
           catch (err) {
             console.log('ERROR:', err);
-            return Boom.serverUnavailable('unabled to upload files. Verify directory ' + Path.join(LOWERING_PATH, request.params.id) + ' exists');
+            return Boom.serverUnavailable('unabled to upload files. Verify directory ' + Path.join(loweringPath, request.params.id) + ' exists');
           }
 
           delete request.payload.lowering_files;
@@ -1102,9 +1099,9 @@ exports.plugin = {
         }
 
         try {
-          rmDir(LOWERING_PATH);
-          if (!Fs.existsSync(LOWERING_PATH)) {
-            Fs.mkdirSync(LOWERING_PATH);
+          rmPath(loweringPath);
+          if (!Fs.existsSync(loweringPath)) {
+            Fs.mkdirSync(loweringPath);
           }
         }
         catch (err) {

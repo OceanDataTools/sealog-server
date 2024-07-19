@@ -15,7 +15,7 @@ PWD=pwd
 APP_NAME="sealog-vehicle"
 DATABASE_NAME="sealogDB"
 
-BACKUP_DIR="/home/sealog/sealog-DB-backups"
+BACKUP_DIR="/data/sealog-DB-backups"
 BACKUP_NAME="${APP_NAME}-${TIMESTAMP}.bkp"
 BACKUP_LOG="${BACKUP_DIR}/${APP_NAME}-backup.log"
 

@@ -200,6 +200,9 @@ exports.plugin = {
     try {
       const collection = await db.createCollection(eventAuxDataTable);
 
+      console.log('Creating index based on event_id field');
+      await collection.createIndex({ event_id: 1 });
+
       if (process.env.NODE_ENV === 'development') {
         console.log('Populating Event Aux Data Collection');
         await collection.insertMany(init_data);

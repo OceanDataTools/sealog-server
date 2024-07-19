@@ -1,0 +1,40 @@
+[
+    {
+        "lowering_id": "S0492",
+        "start_ts": "2023-03-14T22:15:39.479Z",
+        "stop_ts": "2023-03-15T08:32:32.654Z",
+        "lowering_location": "Kane FZ",
+        "lowering_tags":
+        [],
+        "lowering_hidden": false,
+        "lowering_additional_meta":
+        {
+            "lowering_description": "Launch target location: 23°32.9558’, -45° 08.9613’ Depth 2000m at the western base of steep scarp below summit\n\nWP2. 23° 33.0955’ -45° 08.0883 Summit peak ~1010m depth\nWP3. 23° 32.8641’ -45° 08.0302 Top edge of scarp south of summit\nWP4. 23° 32.7728’ -45 08.1092’ Base of scarp\n\nMain dive objectives:\n1. Geological transect up the steep N-S trending scarp west of the summit peak, then south from the summit to the edge of a E-W scarp and down to the base of that, covering as much ground as possible while maintaining good visual contact and noting fauna along the route. Goal is to avoid long stops and keep sampling time to a minimum. Total distance from start to WP4 is 2.6km.\n2. Collect HFS and Niskin samples for CH4/H2 analysis while moving (or very brief stop for Niskins)\n3. Rock sampling at start/end, when good exposures are seen, and when hydrothermal alteration is seen. If rocks are dominantly basalt/volcanic, then collect less frequently. Prioritize ultramafics, if seen, and altered rocks.\n4. Collect background DNA filter with HFS\n5. If we happen to find visible hydrothermal flow, we will sample.\n\nEquipment:\n1. HFS\n2. Methane spectrometer\n3. Niskins\n4. 3 GTs on HFS\n5. 2 quad rock boxes\n6. 1 bio box with 2 compartments\n7. High-T probe and suction sampler",
+            "milestones":
+            {
+                "lowering_descending": "2023-03-14T22:29:58.755Z",
+                "lowering_on_bottom": "2023-03-14T23:45:16.031Z",
+                "lowering_off_bottom": "2023-03-15T01:39:44.340Z",
+                "lowering_on_surface": "2023-03-15T08:11:12.549Z",
+                "lowering_aborted": null
+            },
+            "lowering_files":
+            [
+                "FKt230303_S0492_Summary_Report.pdf",
+                "FKt230303_S0492_Vehicle_Report.pdf"
+            ],
+            "stats":
+            {
+                "max_depth": 2011.54,
+                "bounding_box":
+                [
+                    23.551409,
+                    -45.133938,
+                    23.547893,
+                    -45.150482
+                ]
+            }
+        },
+        "id": "6410e4e06594c9977675e47a"
+    }
+]

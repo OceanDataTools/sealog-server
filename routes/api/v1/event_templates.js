@@ -50,7 +50,7 @@ exports.plugin = {
         const offset = (request.query.offset) ? request.query.offset : 0;
         const sort = (request.query.sort) ? { [request.query.sort]: 1 } : {};
 
-        const query = (request.auth.credentials.scope.includes('admin')) ? {} : { disabled: { $eq: false } };
+        const query = (request.auth.credentials.scope.includes('admin')) ? {} : { disabled: { $eq: false }, admin_only: { $eq: false } };
 
         if (typeof request.query.system_template !== 'undefined') {
           query.system_template = request.query.system_template;
@@ -121,6 +121,10 @@ exports.plugin = {
             return Boom.notFound('No record found for id: ' + request.params.id);
           }
 
+          if (!request.auth.credentials.scope.includes('admin') && result.admin_only) {
+            return Boom.notFound('template only available to admin users');
+          }
+
           return h.response(_renameAndClearFields(result, request.auth.credentials.scope.includes('admin'))).code(200);
         }
         catch (err) {
@@ -186,6 +190,10 @@ exports.plugin = {
           event_template.disabled = false;
         }
 
+        if (typeof event_template.admin_only === 'undefined') {
+          event_template.admin_only = false;
+        }
+
         try {
           const result = await db.collection(eventTemplatesTable).insertOne(event_template);
 
@@ -244,19 +252,24 @@ exports.plugin = {
           return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
+        let event_template = {};
         try {
           const result = await db.collection(eventTemplatesTable).findOne(query);
 
           if (!result) {
             return Boom.badRequest('No record found for id: ' + request.params.id );
           }
+
+          event_template = { ...result, ...request.payload };
         }
         catch (err) {
           console.log(err);
           return Boom.serverUnavailable('database error');
         }
 
-        const event_template = request.payload;
+        if (!event_template.system_template) {
+          event_template.admin_only = false;
+        }
 
         try {
           const result = await db.collection(eventTemplatesTable).findOneAndUpdate(query, { $set: event_template },{ returnDocument: 'after' });

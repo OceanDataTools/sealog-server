@@ -1,0 +1,54 @@
+// The sender address for all emails
+const senderAddress = '<SENDER_ADDRESS>';
+
+// Additional receipents for and sent emails.
+const notificationEmailAddresses = ['<BCC_ADDRESS>'];
+
+// Needed for email integration
+let emailTransporter = null; //eslint-disable-line prefer-const
+const Nodemailer = require('nodemailer'); // eslint-disable-line no-unused-vars
+
+// ========================================================================= //
+// Uncomment ONE of the following sections for email integration
+// ========================================================================= //
+
+// ------------------------------------------------------------------------- //
+// GMail integration
+// ------------------------------------------------------------------------- //
+// emailTransporter = Nodemailer.createTransport({
+//   service: 'gmail',
+//   auth: {
+//     user: process.env.GMAIL_ADDRESS || '<GMAIL_ADDRESS>',
+//     pass: process.env.GMAIL_PASSWD || '<GMAIL_PASSWD>'
+//   }
+// }); // eslint-disable-line no-dupe-keys
+
+
+// ------------------------------------------------------------------------- //
+// Mailgun integration
+// ------------------------------------------------------------------------- //
+// const Mg = require('nodemailer-mailgun-transport'); // eslint-disable-line no-unused-vars
+// emailTransporter = Nodemailer.createTransport(Mg({
+//   auth: {
+//     api_key: process.env.MG_APIKEY || '<MG_API_KEY>',
+//     domain: process.env.MG_DOMAIN || '<ONE OF THE DOMAIN NAMES LISTED AT https://app.mailgun.com/app/sending/domains>'
+//   }
+// })); // eslint-disable-line no-dupe-keys
+
+
+// ------------------------------------------------------------------------- //
+// Mailjet integration
+// ------------------------------------------------------------------------- //
+// const Mj = require('../lib/nodemailer-mailjet-transport'); // eslint-disable-line no-unused-vars
+// emailTransporter = Nodemailer.createTransport(Mj({
+//   auth: {
+//     apiKey: process.env.MJ_APIKEY_PUBLIC || '<API_KEY>',
+//     apiSecret: process.env.MJ_APIKEY_PRIVATE || '<API_SECRET>'
+//   }
+// })); // eslint-disable-line no-dupe-keys
+
+module.exports = {
+  senderAddress,
+  emailTransporter,
+  notificationEmailAddresses,
+};

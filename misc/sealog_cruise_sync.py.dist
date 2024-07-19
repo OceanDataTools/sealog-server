@@ -65,7 +65,7 @@ def update_cruise_record(cruise_record):
         # check to see if a cruise record with the cruiseID in cruise_record already exists
 
         instance_headers = {
-            "authorization": instance['token']
+            'Authorization': 'Bearer ' + instance['token']
         }
 
         cruise_found = None

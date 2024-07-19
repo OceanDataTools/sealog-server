@@ -34,7 +34,6 @@ exports.plugin = {
       async handler(request, h) {
 
         const db = request.mongo.db;
-        // const ObjectID = request.mongo.ObjectID;
 
         const query = {};
 
@@ -47,12 +46,9 @@ exports.plugin = {
           }
         }
 
-        // console.log('query:', query);
-
         try {
           const results = await db.collection(customVarsTable).find(query).toArray();
 
-          // console.log("results:", results);
           if (results.length > 0) {
 
             results.forEach(_renameAndClearFields);

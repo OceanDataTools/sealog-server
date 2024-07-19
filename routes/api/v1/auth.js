@@ -16,12 +16,14 @@ const {
 const {
   senderAddress,
   emailTransporter,
-  reCaptchaSecret,
-  resetPasswordURL,
-  registeringUserRoles,
-  disableRegisteringUsers,
   notificationEmailAddresses
-} = require('../../../config/email_constants');
+} = require('../../../config/email_settings');
+
+const {
+  reCaptchaSecret,
+  registeringUserRoles,
+  disableRegisteringUsers
+} = require('../../../config/server_settings');
 
 const {
   authorizationHeader,
@@ -61,7 +63,7 @@ const _rolesToScope = (roles) => {
       return scope_accumulator.concat(['read_events', 'write_events', 'read_event_templates', 'write_event_templates', 'read_cruises', 'read_lowerings']);
     }
     else if (role === 'cruise_manager') {
-      return scope_accumulator.concat(['read_events', 'write_events', 'read_event_templates', 'read_cruises', 'write_cruises', 'read_lowerings', 'write_lowerings', 'read_users', 'write_users']);
+      return scope_accumulator.concat(['read_events', 'write_events', 'read_event_templates', 'write_event_templates', 'read_cruises', 'write_cruises', 'read_lowerings', 'write_lowerings', 'read_users', 'write_users']);
     }
 
     return scope_accumulator;
@@ -123,7 +125,7 @@ exports.plugin = {
           return Boom.serverUnavailable('database error', err);
         }
 
-        if (reCaptchaSecret !== '') {
+        if (reCaptchaSecret) {
           try {
             const reCaptchaVerify = await Axios.get('https://www.google.com/recaptcha/api/siteverify?secret=' + reCaptchaSecret + '&response=' + request.payload.reCaptcha + '&remoteip=' + request.info.remoteAddress
             );
@@ -158,37 +160,30 @@ exports.plugin = {
 
           const disabledAccountTxt = (disableRegisteringUsers) ? '<p>For security reasons, accounts created via self-registration are disabled by default.  The system adminstrator has been notified of your account request and will enable the account shortly.</p>' : '';
 
-          let mailOptions = {
-            from: senderAddress,
-            to: request.payload.email,
-            subject: 'Welcome to Sealog',
-            html: `<p>Welcome to Sealog. If you are receiving this email you have just created an account on Sealog (${request.info.hostname}).</p>
-            ${disabledAccountTxt}
-            <p>If you have any questions please reply to this email address</p><p>Thanks!</p>`
-          };
-
           if (emailTransporter !== null) {
+            let mailOptions = {
+              from: senderAddress,
+              to: request.payload.email,
+              subject: 'Welcome to Sealog',
+              html: `<p>Welcome to Sealog. If you are receiving this email you have just created an account on Sealog (${request.info.hostname}).</p>
+              ${disabledAccountTxt}
+              <p>If you have any questions please reply to this email address</p><p>Thanks!</p>`
+            };
+
             emailTransporter.sendMail(mailOptions, (err) => {
 
               if (err) {
                 console.error('ERROR: ', err);
               }
             });
-          }
 
-          mailOptions = {
-            from: senderAddress,
-            to: notificationEmailAddresses.join(','),
-            subject: 'New Sealog User Registration',
-            html: `<p>New user: ${user.username}  ( ${user.fullname} ) has just registered an account with Sealog (${request.info.hostname}). Please ensure this user's access permissions have been configured correctly.</p>`
-          };
+            mailOptions = {
+              from: senderAddress,
+              to: notificationEmailAddresses,
+              subject: 'New Sealog User Registration',
+              html: `<p>New user: ${user.username}  ( ${user.fullname} ) has just registered an account with Sealog (${request.info.hostname}). Please ensure this user's access permissions have been configured correctly.</p>`
+            };
 
-          if (notificationEmailAddresses.length > 0) {
-            mailOptions.bcc = notificationEmailAddresses.join(',');
-          }
-
-
-          if (emailTransporter !== null) {
             emailTransporter.sendMail(mailOptions, (err) => {
 
               if (err) {
@@ -246,7 +241,7 @@ exports.plugin = {
           return Boom.serverUnavailable('database error', err);
         }
 
-        if (reCaptchaSecret !== '') {
+        if (reCaptchaSecret) {
           try {
             const reCaptchaVerify = await Axios.get('https://www.google.com/recaptcha/api/siteverify?secret=' + reCaptchaSecret + '&response=' + request.payload.reCaptcha + '&remoteip=' + request.info.remoteAddress);
 
@@ -327,7 +322,7 @@ exports.plugin = {
           return Boom.serverUnavailable('database error');
         }
 
-        if (reCaptchaSecret !== '') {
+        if (reCaptchaSecret) {
           try {
             const reCaptchaVerify = await Axios.get('https://www.google.com/recaptcha/api/siteverify?secret=' + reCaptchaSecret + '&response=' + request.payload.reCaptcha + '&remoteip=' + request.info.remoteAddress);
 
@@ -422,7 +417,7 @@ exports.plugin = {
           return Boom.serverUnavailable('database error', err);
         }
 
-        if (reCaptchaSecret !== '') {
+        if (reCaptchaSecret) {
           try {
             const reCaptchaVerify = await Axios.get('https://www.google.com/recaptcha/api/siteverify?secret=' + reCaptchaSecret + '&response=' + request.payload.reCaptcha + '&remoteip=' + request.info.remoteAddress);
 
@@ -435,8 +430,7 @@ exports.plugin = {
           }
         }
 
-        const resetLink = resetPasswordURL + token;
-        // const resetLink = request.connection.info.protocol + '://' + request.info.host + '/resetPassword/' + token;
+        const resetLink = `${request.payload.resetURL}${token}`;
         const mailOptions = {
           from: senderAddress,
           to: request.payload.email,

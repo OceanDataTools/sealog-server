@@ -1,0 +1,27 @@
+const FILEPATH_ROOT = process.env.SEALOG_SERVER_FILEPATH_ROOT || '/opt/sealog-server/sealog-files';
+
+const imagePath = `${FILEPATH_ROOT}/images`;
+const cruisePath = `${FILEPATH_ROOT}/cruises`;
+const loweringPath = `${FILEPATH_ROOT}/lowerings`;
+
+// Server-side reCaptcha key, set to null if not using reCaptcha bot protection
+const reCaptchaSecret = null;
+
+// Disable registering users, requires Sealog admin user to enable the accounts prior to use
+const disableRegisteringUsers = false;
+
+// Default roles of self-registering users
+const registeringUserRoles = ['event_watcher', 'event_logger'];
+
+// Activate per-cruise/per-lowering access permissions
+const useAccessControl = false;
+
+module.exports = {
+  imagePath,
+  cruisePath,
+  disableRegisteringUsers,
+  loweringPath,
+  reCaptchaSecret,
+  registeringUserRoles,
+  useAccessControl
+};

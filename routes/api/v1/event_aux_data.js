@@ -4,7 +4,7 @@ const THRESHOLD = 120; //seconds
 
 const {
   useAccessControl
-} = require('../../../config/email_constants');
+} = require('../../../config/server_settings');
 
 const {
   eventAuxDataTable,

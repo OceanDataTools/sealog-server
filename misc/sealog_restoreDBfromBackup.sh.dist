@@ -11,7 +11,7 @@
 # Updated: 2022-02-13
 
 # Parent Directory of sealog database backups
-BACKUP_DIR="/home/sealog/sealog-DB-backups"
+BACKUP_DIR="/data/sealog-DB-backups"
 
 # Sealog DB HOST
 HOST="localhost:27017"

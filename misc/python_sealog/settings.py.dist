@@ -34,10 +34,10 @@ EVENT_TEMPLATES_API_PATH = '/api/v1/event_templates'
 
 LOWERINGS_API_PATH = '/api/v1/lowerings'
 
-API_SERVER_FILE_PATH = '/home/sealog/sealog-files'
+API_SERVER_FILE_PATH = '/data/sealog-files'
 
 TOKEN = ''
 
 HEADERS = {
-  "authorization": TOKEN
+  'Authorization': 'Bearer ' + TOKEN
 }

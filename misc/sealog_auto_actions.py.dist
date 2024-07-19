@@ -45,24 +45,10 @@ from misc.python_sealog.settings import API_SERVER_URL, WS_SERVER_URL, HEADERS, 
 
 ASNAP_STATUS_VAR_NAME = 'asnapStatus'
 
+# ---------------------------------------------------------
+# For vehicle-focused sealog instances
+# ---------------------------------------------------------
 INCLUDE_SET = ('VEHICLE')
-
-CLIENT_WSID = 'autoActions'
-
-HELLO = {
-    'type': 'hello',
-    'id': CLIENT_WSID,
-    'auth': {
-        'headers': HEADERS
-    },
-    'version': '2',
-    'subs': ['/ws/status/newEvents', '/ws/status/updateEvents']
-}
-
-PING = {
-    'type':'ping',
-    'id':CLIENT_WSID
-}
 
 ASNAP_LOOKUP = {
     'Off deck': 'On',
@@ -81,6 +67,38 @@ MILESTONE_LOOKUP = {
     'On surface': ['lowering_on_surface'],
     'Aborted': ['lowering_aborted']
 }
+# ---------------------------------------------------------
+
+
+# ---------------------------------------------------------
+# For vessel-focused sealog instances
+# ---------------------------------------------------------
+# INCLUDE_SET = ('CRUISE')
+#
+# ASNAP_LOOKUP = {
+#     'Start of Cruise': 'On',
+#     'End of Cruise': 'Off'
+# }
+# ---------------------------------------------------------
+
+
+CLIENT_WSID = 'autoActions'
+
+HELLO = {
+    'type': 'hello',
+    'id': CLIENT_WSID,
+    'auth': {
+        'headers': HEADERS
+    },
+    'version': '2',
+    'subs': ['/ws/status/newEvents', '/ws/status/updateEvents']
+}
+
+PING = {
+    'type':'ping',
+    'id':CLIENT_WSID
+}
+
 
 def _handle_vehicle_event(event):
     '''
@@ -104,6 +122,25 @@ def _handle_vehicle_event(event):
         _set_asnap(milestone)
         _set_milestones(event, milestone)
 
+def _handle_cruise_event(event):
+    '''
+    The function handle auto actions for the CRUISE event_value.  It uses the
+    included event_options to set the ASNAP status.
+    '''
+
+    if event['event_value'] != 'CRUISE':
+        return
+
+    milestone = None
+
+    # if event has milestone event_option, pass milestone to _set_asnap and _set_milestones
+    for option in event['event_options']:
+        if option['event_option_name'] == "status":
+            milestone = option['event_option_value']
+            break
+
+    if milestone is not None:
+        _set_asnap(milestone)
 
 def _set_asnap(evt_milestone):
     '''
@@ -218,6 +255,7 @@ async def auto_actions(): #pylint: disable=too-many-branches, too-many-statement
                         continue
 
                     _handle_vehicle_event(event)
+                    _handle_cruise_event(event)
 
     except Exception as error:
         logging.error(str(error))

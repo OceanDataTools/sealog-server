@@ -4,14 +4,14 @@ const Mj = require('../lib/nodemailer-mailjet-transport'); // eslint-disable-lin
 const {
   senderAddress,
   notificationEmailAddresses
-} = require('../config/email_constants');
+} = require('../config/email_settings');
 
 // ========================================================================= //
 // Pick ONE:
-// If you use the one from email_constants you may want to add
+// If you use the one from email_settings you may want to add
 // sandboxMode: true to the options list.
 // ========================================================================= //
-const { emailTransporter } = require('../config/email_constants');
+const { emailTransporter } = require('../config/email_settings');
 // ------------------------------------------------------------------------- //
 // const emailTransporter = Nodemailer.createTransport(Mj({
 //   sandboxMode: true,
@@ -24,7 +24,7 @@ const { emailTransporter } = require('../config/email_constants');
 
 let mailOptions = {
 	from: senderAddress,
-	to: 'oceandatarat@gmail.com',
+	to: '<RECIPIENT_ADDR>',
 	bcc: notificationEmailAddresses,
 	subject: 'Welcome to Sealog',
 	html: `<p>Welcome to Sealog. If you are receiving this email you have just created an account on Sealog (...).</p>

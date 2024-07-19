@@ -1,0 +1,953 @@
+[
+  {
+    "event_name": "Cruise Status",
+    "event_value": "CRUISE",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Status",
+        "event_option_type": "dropdown",
+        "event_option_values": [
+          "Start of Cruise",
+          "Departed Port/Dock",
+          "Transiting",
+          "Arrived at working site",
+          "Leaving working site",
+          "Transiting to Port",
+          "Arrived at Dock/Port",
+          "End of Cruise",
+          "Entering EEZ",
+          "Leaving EEZ",
+          "Other"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": true
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "cruise"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5dac67d6a78d2f4ec028551e"
+  },
+  {
+    "event_name": "Data Logging",
+    "event_value": "CRUISE",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "System",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "OpenRVDAS",
+          "OpenVDM",
+          "Sealog ASNAP",
+          "POSMV Logging",
+          "Underway Sensors",
+          "MET Sensors",
+          "PAR Sensors",
+          "NAV Sensors",
+          "UHDAS"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": true
+      },
+      {
+        "event_option_name": "Status",
+        "event_option_type": "radio buttons",
+        "event_option_values": [
+          "Started logging",
+          "Stopped logging"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": true
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "cruise"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5fb99470e81ec104f9d62eab"
+  },
+  {
+    "event_name": "Problem",
+    "event_value": "PROBLEM",
+    "event_free_text_required": true,
+    "event_options": [
+      {
+        "event_option_name": "System",
+        "event_option_type": "radio buttons",
+        "event_option_values": [
+          "ADCP-OS75",
+          "ADCP-WH300",
+          "CTD",
+          "CTD Winch",
+          "EK80",
+          "EM124",
+          "EM712",
+          "Gravimeter",
+          "Magnetometer",
+          "Met Sensors",
+          "Other",
+          "POSMV",
+          "ROV",
+          "ROV Winch",
+          "SBP29",
+          "Seawater Sensors",
+          "GP Winch",
+          "Seapath380",
+          "Ship",
+          "USBL",
+          "XBT"
+        ],
+        "event_option_required": true,
+        "event_option_allow_freeform": false
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "cruise",
+      "equipment"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5dac69f7a78d2f4ec0285521"
+  },
+  {
+    "event_name": "CTD Operation",
+    "event_value": "CTD",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Status",
+        "event_option_type": "checkboxes",
+        "event_option_default_value": "",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": [
+          "CTD Started Logging",
+          "CTD Stopped Logging",
+          "CTD Deployed",
+          "CTD Beacon Tracking",
+          "CTD on Deck"
+        ]
+      },
+      {
+        "event_option_name": "Filename",
+        "event_option_type": "text",
+        "event_option_required": true,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "System",
+        "event_option_type": "static text",
+        "event_option_default_value": "CTD",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "ctd"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5efdf5e54928d32b2a4fd40a"
+  },
+  {
+    "event_name": "General Status",
+    "event_value": "EQUIPMENT",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "System",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "SSP",
+          "USBL",
+          "CTD",
+          "Buoy",
+          "AUV",
+          "UAV",
+          "Sediment Grab",
+          "Drifter",
+          "Float",
+          "Lander",
+          "Magnetometer"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Status",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "Deployed",
+          "Recovered",
+          "Problem",
+          "On Seafloor",
+          "Data Logging Started",
+          "Data Logging Stopped"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "equipment"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5f9f5e69e81ec104f9d62d83"
+  },
+  {
+    "event_name": "Maintenance",
+    "event_value": "MAINTENANCE",
+    "event_free_text_required": true,
+    "event_options": [
+      {
+        "event_option_name": "System",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "ADCP-OS75",
+          "ADCP-WH300",
+          "Computers",
+          "CTD",
+          "CTD Winch",
+          "EK80",
+          "EM124",
+          "EM712",
+          "Magnetometer",
+          "MET Sensors",
+          "Other",
+          "SBP29",
+          "GP Winch",
+          "Seawater Sensors",
+          "Underway Sensors",
+          "USBL",
+          "XBT"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "equipment"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5ffe86d544f457051022eb40"
+  },
+  {
+    "event_name": "ROV",
+    "event_value": "ROV",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Status",
+        "event_option_type": "radio buttons",
+        "event_option_values": [
+          "Deployed",
+          "Recovered",
+          "Problem",
+          "Other"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": true
+      },
+      {
+        "event_option_name": "Dive Number",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": true,
+        "event_option_values": []
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "rov"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5f9f612be81ec104f9d62d8a"
+  },
+  {
+    "event_name": "Seawater",
+    "event_value": "EQUIPMENT",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "System",
+        "event_option_type": "static text",
+        "event_option_default_value": "Seawater",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Status",
+        "event_option_type": "checkboxes",
+        "event_option_default_value": "",
+        "event_option_allow_freeform": false,
+        "event_option_required": true,
+        "event_option_values": [
+          "Cleaned Strainers",
+          "Problem",
+          "Started",
+          "Secured"
+        ]
+      },
+      {
+        "event_option_name": "Sensors",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "SBE45",
+          "SBE38",
+          "FLUOR",
+          "PH",
+          "XMISS"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "equipment"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5efdfcbf4928d32b2a4fd424"
+  },
+  {
+    "event_name": "USBL",
+    "event_value": "EQUIPMENT",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "System",
+        "event_option_type": "static text",
+        "event_option_default_value": "USBL",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Status",
+        "event_option_type": "radio buttons",
+        "event_option_values": [
+          "Spar Deployed",
+          "Spar Recovered",
+          "Beacons Tracking",
+          "Problem",
+          "Other"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": true
+      }
+    ],
+    "system_template": true,
+    "template_categories": [
+      "rov",
+      "ctd",
+      "equipment"
+    ],
+    "disabled": false,
+    "admin_only": true,
+    "id": "5f9f6160e81ec104f9d62d8b"
+  },
+  {
+    "event_name": "Bird",
+    "event_value": "OBSERVATION",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Observation",
+        "event_option_type": "static text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": [],
+        "event_option_default_value": "Bird"
+      },
+      {
+        "event_option_name": "Count",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "observation",
+      "science"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5fe8319f2362012269576fb5"
+  },
+  {
+    "event_name": "CTD Problem",
+    "event_value": "PROBLEM",
+    "event_free_text_required": true,
+    "event_options": [
+      {
+        "event_option_name": "System",
+        "event_option_type": "static text",
+        "event_option_default_value": "CTD",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "ctd"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5efdf7524928d32b2a4fd411"
+  },
+  {
+    "event_name": "CTD Winch Problem",
+    "event_value": "PROBLEM",
+    "event_free_text_required": true,
+    "event_options": [
+      {
+        "event_option_name": "System",
+        "event_option_type": "static text",
+        "event_option_default_value": "CTD Winch",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "ctd"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5efdf89e4928d32b2a4fd41b"
+  },
+  {
+    "event_name": "Debris",
+    "event_value": "OBSERVATION",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Observation",
+        "event_option_type": "static text",
+        "event_option_default_value": "Debris",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Count",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "observation",
+      "science"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5febb9db44f457051020aabe"
+  },
+  {
+    "event_name": "Mammal",
+    "event_value": "OBSERVATION",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Observation",
+        "event_option_type": "static text",
+        "event_option_default_value": "Mammal",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Count",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "observation",
+      "science"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5febb89c44f457051020aaa9"
+  },
+  {
+    "event_name": "Other Obs",
+    "event_value": "OBSERVATION",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Observation",
+        "event_option_type": "static text",
+        "event_option_default_value": "Other",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Count",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "observation",
+      "science"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5febba3144f457051020aac7"
+  },
+  {
+    "event_name": "SIS Restart",
+    "event_value": "SONAR",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "System",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "EM124",
+          "EM712"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Status",
+        "event_option_type": "static text",
+        "event_option_default_value": "SIS RESTART",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "sonar"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5fac6388e81ec104f9d62e21"
+  },
+  {
+    "event_name": "Sonar",
+    "event_value": "SONAR",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "ADCP-OS75",
+          "ADCP-WH300",
+          "EK80",
+          "EM124",
+          "EM712",
+          "SBP29"
+        ],
+        "event_option_name": "System",
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Status",
+        "event_option_type": "dropdown",
+        "event_option_default_value": "",
+        "event_option_allow_freeform": false,
+        "event_option_required": true,
+        "event_option_values": [
+          "Sonar Started",
+          "Sonar Secured",
+          "Logging Started",
+          "Logging Stopped",
+          "Survey Start",
+          "Survey Complete"
+        ]
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "sonar"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5efe05244928d32b2a4fd428"
+  },
+  {
+    "event_name": "Sonar Problem",
+    "event_value": "PROBLEM",
+    "event_free_text_required": true,
+    "event_options": [
+      {
+        "event_option_name": "System",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "ADCP-OS75",
+          "ADCP-WH300",
+          "EK80",
+          "EM124",
+          "EM712",
+          "SBP29"
+        ],
+        "event_option_required": true,
+        "event_option_allow_freeform": false
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "sonar"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5efe06da4928d32b2a4fd42b"
+  },
+  {
+    "event_name": "Sonar Settings",
+    "event_value": "SONAR",
+    "event_free_text_required": true,
+    "event_options": [
+      {
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "ADCP-OS38",
+          "ADCP-OS75",
+          "ADCP-WH300",
+          "EA440",
+          "EA640",
+          "EC150",
+          "EK80",
+          "EM124",
+          "EM2040",
+          "EM712",
+          "SBP29"
+        ],
+        "event_option_name": "System",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_default_value": ""
+      },
+      {
+        "event_option_name": "Status",
+        "event_option_type": "static text",
+        "event_option_default_value": "Setting Change",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "sonar"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5f9f1ea3e81ec104f9d62d75"
+  },
+  {
+    "event_name": "SSM Server Started",
+    "event_value": "SSP",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "System",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "EM124",
+          "EM712"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Status",
+        "event_option_type": "static text",
+        "event_option_default_value": "SSP Server Started",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "sound speed"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5fa84b48e81ec104f9d62df2"
+  },
+  {
+    "event_name": "SSM Server Stopped",
+    "event_value": "SSP",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "System",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "EM124",
+          "EM712"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
+      },
+      {
+        "event_option_name": "Status",
+        "event_option_type": "static text",
+        "event_option_default_value": "SSP Server Stopped",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "sound speed"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5fe9b8462362012269577243"
+  },
+  {
+    "event_name": "SVP Sent to Sonar",
+    "event_value": "SVP",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "System",
+        "event_option_type": "checkboxes",
+        "event_option_values": [
+          "EM124",
+          "EM712"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": true,
+        "event_option_default_value": "EM124,EM712"
+      },
+      {
+        "event_option_name": "Status",
+        "event_option_type": "text",
+        "event_option_default_value": "SVP Sent to Sonars",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "sound speed",
+      "sonar"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5f9f62bde81ec104f9d62d92"
+  },
+  {
+    "event_name": "Sediment Sample",
+    "event_value": "SAMPLE",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_type": "static text",
+        "event_option_values": [],
+        "event_option_required": true,
+        "event_option_default_value": "Sediment",
+        "event_option_name": "Type",
+        "event_option_allow_freeform": false
+      },
+      {
+        "event_option_name": "Sample ID",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "science",
+      "equipment"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5fc856cee81ec104f9d6ad3a"
+  },
+  {
+    "event_name": "Sound Speed Profile",
+    "event_value": "SSP",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_type": "radio buttons",
+        "event_option_name": "Status",
+        "event_option_values": [
+          "SSP Completed",
+          "SSP Aborted/Failed",
+          "Other"
+        ],
+        "event_option_allow_freeform": false,
+        "event_option_required": true
+      },
+      {
+        "event_option_name": "Filename",
+        "event_option_type": "text",
+        "event_option_required": true,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "sound speed"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5f9f5dece81ec104f9d62d82"
+  },
+  {
+    "event_name": "Water Sample",
+    "event_value": "SAMPLE",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "water",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      },
+      {
+        "event_option_name": "Sample ID",
+        "event_option_type": "text",
+        "event_option_required": true,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "science"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "60fde6ce65ec0c0590c5a53f"
+  },
+  {
+    "event_name": "Weather Note",
+    "event_value": "OBSERVATION",
+    "event_free_text_required": true,
+    "event_options": [
+      {
+        "event_option_name": "Type",
+        "event_option_type": "static text",
+        "event_option_default_value": "weather",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "observation",
+      "science"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "60e3a2f365ec0c0590c3eef6"
+  },
+  {
+    "event_name": "XBT",
+    "event_value": "XBT",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Status",
+        "event_option_type": "dropdown",
+        "event_option_values": [
+          "XBT Success",
+          "XBT Failed",
+          "Deck Test - Failed",
+          "Deck Test - Passed"
+        ],
+        "event_option_required": true,
+        "event_option_allow_freeform": false
+      },
+      {
+        "event_option_name": "Filename",
+        "event_option_type": "text",
+        "event_option_required": true,
+        "event_option_allow_freeform": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "sound speed"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "5dac68afa78d2f4ec028551f"
+  },
+  {
+    "event_name": "CTD Tow-Yo",
+    "event_value": "CTD Tow-Yo",
+    "system_template": false,
+    "disabled": false,
+    "admin_only": false,
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Status",
+        "event_option_type": "dropdown",
+        "event_option_values": [
+          "At top",
+          "At bottom",
+          "Bottle fired"
+        ],
+        "event_option_required": true,
+        "event_option_allow_freeform": false
+      },
+      {
+        "event_option_name": "Bottle #",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "template_categories": [
+      "ctd"
+    ],
+    "id": "640b412b9fdf3e2dbea2cf24"
+  }
+]

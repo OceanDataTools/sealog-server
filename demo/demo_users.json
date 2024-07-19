@@ -1,0 +1,55 @@
+[
+  {
+    "id": "5981f167212b348aed7fa9f5",
+    "username": "admin",
+    "fullname": "Admin",
+    "email": "admin@notarealserver.com",
+    "password": "demo",
+    "roles": [
+      "admin"
+    ],
+    "system_user": true,
+    "disabled": false
+  },
+  {
+    "id": "5981f167212b348aed7fb9f5",
+    "username": "guest",
+    "fullname": "Guest",
+    "email": "guest@notarealserver.com",
+    "password": "",
+    "roles": [
+      "event_logger",
+      "event_watcher"
+    ],
+    "system_user": true,
+    "disabled": false
+  },
+  {
+    "id": "5981f167212b348aed7fc9f5",
+    "username": "pi",
+    "fullname": "Primary Investigator",
+    "email": "pi@notarealserver.com",
+    "password": "demo",
+    "roles": [
+      "cruise_manager",
+      "event_logger",
+      "event_watcher"
+    ],
+    "system_user": true,
+    "disabled": false
+  },
+  {
+    "id": "667d44a536139e84fe945c20",
+    "username": "science",
+    "fullname": "Scientist",
+    "email": "science@notaserver.com",
+    "password": "demo",
+    "roles": [
+      "event_logger",
+      "event_watcher",
+      "template_manager"
+    ],
+    "system_user": false,
+    "disabled": false
+  }
+]

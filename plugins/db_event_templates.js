@@ -19,6 +19,7 @@ exports.plugin = {
         system_template: false,
         template_categories: ['biology'],
         disabled: false,
+        admin_only: false,
         event_options: [{
           event_option_name: 'Status',
           event_option_type: 'dropdown',
@@ -36,6 +37,7 @@ exports.plugin = {
         system_template: false,
         template_categories: ['geology'],
         disabled: false,
+        admin_only: false,
         event_options: [{
           event_option_name: 'Color',
           event_option_type: 'dropdown',
@@ -53,6 +55,7 @@ exports.plugin = {
         system_template: false,
         template_categories: ['biology'],
         disabled: false,
+        admin_only: false,
         event_options: [{
           event_option_name: 'Color',
           event_option_type: 'dropdown',
@@ -70,6 +73,7 @@ exports.plugin = {
         system_template: false,
         template_categories: ['biology'],
         disabled: false,
+        admin_only: false,
         event_options: [{
           event_option_name: 'Color',
           event_option_type: 'dropdown',
@@ -87,6 +91,7 @@ exports.plugin = {
         system_template: false,
         template_categories: ['biology'],
         disabled: false,
+        admin_only: false,
         event_options: [{
           event_option_name: 'Color',
           event_option_type: 'dropdown',
@@ -104,6 +109,7 @@ exports.plugin = {
         system_template: true,
         template_categories: ['operations'],
         disabled: false,
+        admin_only: false,
         event_options: [
           {
             event_option_allow_freeform: false,

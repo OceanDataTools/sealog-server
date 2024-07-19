@@ -27,18 +27,15 @@ sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
 
 from misc.python_sealog.settings import API_SERVER_URL, API_SERVER_FILE_PATH, HEADERS, EVENT_AUX_DATA_API_PATH
 
-DATA_SOURCE_FILTER = ['vehicleRealtimeFramegrabberData']
-IMAGE_PATH = API_SERVER_FILE_PATH + "/images"
-
-def get_framegrab_list_by_lowering(lowering_uid, api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_framegrab_list_by_lowering(lowering_uid, datasources, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Get the list of framegrabs for the given lowering_uid
     '''
 
-    logging.debug("Exporting event data")
+    logging.info("Building framegrab file list")
 
     params = {
-        'datasource': DATA_SOURCE_FILTER
+        'datasource': datasources
     }
 
     framegrab_filenames = []
@@ -59,7 +56,7 @@ def get_framegrab_list_by_lowering(lowering_uid, api_server_url=API_SERVER_URL, 
 
     return framegrab_filenames
 
-def get_framegrab_list_by_cruise(cruise_uid, api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_framegrab_list_by_cruise(cruise_uid, datasources, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Get the list of framegrabs for the given cruise_uid
     '''
@@ -67,7 +64,7 @@ def get_framegrab_list_by_cruise(cruise_uid, api_server_url=API_SERVER_URL, head
     logging.debug("Exporting event data")
 
     params = {
-        'datasource': DATA_SOURCE_FILTER
+        'datasource': datasources
     }
 
     framegrab_filenames = []
@@ -88,7 +85,7 @@ def get_framegrab_list_by_cruise(cruise_uid, api_server_url=API_SERVER_URL, head
 
     return framegrab_filenames
 
-def get_framegrab_list_by_file(filename):
+def get_framegrab_list_by_file(filename, datasources):
     '''
     Get the list of framegrabs based on the contents of the given file
     '''
@@ -101,7 +98,7 @@ def get_framegrab_list_by_file(filename):
             framegrab_list = json.loads(file.read())
 
             for data in framegrab_list:
-                if data['data_source'] in DATA_SOURCE_FILTER:
+                if data['data_source'] in datasources:
                     for framegrab in data['data_array']:
                         if framegrab['data_name'] == 'filename':
                             framegrab_filenames.append(framegrab['data_value'])

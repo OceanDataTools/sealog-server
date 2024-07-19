@@ -12,7 +12,7 @@ const {
 
 const {
   useAccessControl
-} = require('../../../config/email_constants');
+} = require('../../../config/server_settings');
 
 const {
   authorizationHeader,

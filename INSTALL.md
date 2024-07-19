@@ -46,9 +46,13 @@ wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 ```
 Install the LTS version of NodeJS using `nvm`
 ```
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 nvm install --lts
-sudo ln -s $HOME/.nvm/versions/node/v20.11.0/bin/npm /usr/local/bin/
-sudo ln -s $HOME/.nvm/versions/node/v20.11.0/bin/node /usr/local/bin/
+NODE_VERSION=node -v
+sudo ln -s $HOME/.nvm/versions/node/${NODE_VERSION}/bin/npm /usr/local/bin/
+sudo ln -s $HOME/.nvm/versions/node/${NODE_VERSION}/bin/node /usr/local/bin/
 ```
 
 ### Clone the repository
@@ -64,9 +68,9 @@ This should clone the repo to a directory called `sealog-server`
 ```
 cd ./sealog-server
 cp ./config/db_constants.js.dist ./config/db_constants.js
-cp ./config/email_constants.js.dist ./config/email_constants.js
+cp ./config/email_settings.js.dist ./config/email_settings.js
 cp ./config/manifest.js.dist ./config/manifest.js
-cp ./config/path_constants.js.dist ./config/path_constants.js
+cp ./config/server_settings.js.dist ./config/server_settings.js
 cp ./config/secret.js.dist ./config/secret.js
 ```
 
@@ -74,13 +78,13 @@ cp ./config/secret.js.dist ./config/secret.js
 
 Set the `sealogDB` and `sealogDB_devel` names in the `./config/db_constants.js` file to meet your specific installation requirements.  If you are only running one instance of Sealog Server on the server then the defaults are sufficient
 
-Set the `senderAddress`, `notificationEmailAddresses` and `resetPasswordURL` locations in the `./config/email_constants.js` file to meet your specific installation requirements.  The `resetPasswordURL` most likely only needs to have 'localhost' replaced with the servers hostname/IP unless running a higly customized version of Sealog.
+Set the `senderAddress` and `notificationEmailAddresses` locations in the `./config/email_settings.js` file to meet your specific installation requirements.
 
-You will also need to uncomment the type of email integration used.  By default email is disabled but the distribution file includes commented code blocks for gmail and mailgun integration.
+You will also need to uncomment the type of email integration used.  By default email is disabled but the distribution file includes commented code blocks for gmail, mailgun and mailjet integration.
 
 Set the `host`, `port`, `wsPort`, and `prefix` values in the `./config/manifest.js` file to meet your specific installation requirements.  There are 3 sets of these variables for the various ways sealog-server can be run.  If you are only running one instance of Sealog Server on the server then the defaults are sufficient
 
-Set the `IMAGE_PATH`, `CRUISE_PATH` and `LOWERING_PATH` locations in the `./config/path_constants.js` file to meet your specific installation requirements.  These paths are where the framegrabber image files, cruise files and lowering files are located on the server.
+Set the `imagePath`, `cruisePath` and `loweringPath` locations in the `./config/server_settings.js` file to meet your specific installation requirements.  These paths are where the framegrabber image files, cruise files and lowering files are located on the server.
 
 Create a secret JWT encryption key and save it to the `./config/secret.js` file.  Create the key by running the following command:
 ```
@@ -92,7 +96,7 @@ i.e. `module.exports = '<replace with secret key>'`
 ### Move installation to production location
 
 ```
-sudo mv $opt-server /opt/
+sudo mv sealog-server /opt/
 cd /opt/sealog-server`
 ```
 
@@ -106,7 +110,7 @@ npm install
 
 From a terminal run:
 ```
-cd ./sealog-server
+cd /opt/sealog-server
 npm run start-devel
 ```
 
@@ -119,7 +123,7 @@ Running in development mode will create an admin account (testadmin:password) an
 From a terminal run:
 
 ```
-cd ./sealog-server
+cd /opt/sealog-server
 npm start
 ```
 
@@ -228,7 +232,7 @@ python3 -m venv ./venv
 Activate the python virtual environment and install the requried python libraries
 ```
 source ./venv/bin/activate
-pip install pymongo websockets requests
+pip install -r requirements.txt
 ```
 
 ## Automatic Snapshot (ASNAP)

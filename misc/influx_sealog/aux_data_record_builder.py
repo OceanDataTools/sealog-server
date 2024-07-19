@@ -26,7 +26,7 @@ from influxdb_client.rest import ApiException
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
 
-from misc.influx_sealog.settings import INFLUX_SERVER_URL, INFLUX_TOKEN, INFLUX_ORG, INFLUX_BUCKET
+from misc.influx_sealog.settings import INFLUXDB_URL, INFLUXDB_AUTH_TOKEN, INFLUXDB_ORG, INFLUXDB_BUCKET
 
 class SealogInfluxAuxDataRecordBuilder():
     '''
@@ -64,7 +64,7 @@ class SealogInfluxAuxDataRecordBuilder():
         query_range = self._build_query_range(ts)
 
         try:
-            query = 'from(bucket: "{}")\n'.format(INFLUX_BUCKET)
+            query = 'from(bucket: "{}")\n'.format(INFLUXDB_BUCKET)
             query += '|> range({})\n'.format(query_range)
             query += '|> filter(fn: (r) => {})\n'.format(' or '.join([ 'r["_measurement"] == "{}"'.format(q_measurement) for q_measurement in self._query_measurements]))
             query += '|> filter(fn: (r) => {})\n'.format(' or '.join([ 'r["_field"] == "{}"'.format(q_field) for q_field in self._query_fields]))
@@ -199,17 +199,17 @@ class SealogInfluxAuxDataRecordBuilder():
             query_result = self._influxdb_client.query(query=query)
 
         except NewConnectionError:
-            logging.error("InfluxDB connection error, verify URL: %s", INFLUX_SERVER_URL)
+            logging.error("InfluxDB connection error, verify URL: %s", INFLUXDB_URL)
 
         except ApiException as err:
             _, value, _ = sys.exc_info()
 
             if str(value).startswith("(400)"):
-                logging.error("InfluxDB API error, verify org: %s", INFLUX_ORG)
+                logging.error("InfluxDB API error, verify org: %s", INFLUXDB_ORG)
             elif str(value).startswith("(401)"):
-                logging.error("InfluxDB API error, verify token: %s", INFLUX_TOKEN)
+                logging.error("InfluxDB API error, verify token: %s", INFLUXDB_AUTH_TOKEN)
             elif str(value).startswith("(404)"):
-                logging.error("InfluxDB API error, verify bucket: %s", INFLUX_BUCKET)
+                logging.error("InfluxDB API error, verify bucket: %s", INFLUXDB_BUCKET)
             else:
                 raise err
 
