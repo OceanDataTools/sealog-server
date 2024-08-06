@@ -1,6 +1,6 @@
 {
   "name": "sealog-server",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "license": "MIT",
   "description": "Sealog event-logging server",
   "bugs": {
@@ -36,7 +36,7 @@
     "@hapi/nes": "^13.0.1",
     "@hapi/vision": "^7.0.3",
     "@json2csv/node": "^7.0.6",
-    "axios": "^1.7.2",
+    "axios": "^1.7.3",
     "bcryptjs": "^2.4.3",
     "check-disk-space": "^3.4.0",
     "deepcopy": "^2.1.0",
@@ -58,7 +58,7 @@
   "devDependencies": {
     "@hapi/code": "^9.0.3",
     "@hapi/eslint-plugin": "^6.0.0",
-    "@hapi/lab": "^25.2.0",
+    "@hapi/lab": "^25.3.1",
     "blipp": "^4.0.2",
     "eslint": "^8.57.0",
     "eslint-plugin-import": "^2.29.1",
