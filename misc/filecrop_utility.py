@@ -43,8 +43,12 @@ class FileCropUtility():
         if not isinstance(data_files, list):
             data_files = [data_files]
 
-        logging.info("Culling file list")
         culled_files = []
+        
+        logging.info("Culling file list")
+        if len(data_files) == 0:
+            logging.info("    No files found.")
+            return culled_files
 
         for data_file in data_files:
             logging.debug("File: %s", data_file)
