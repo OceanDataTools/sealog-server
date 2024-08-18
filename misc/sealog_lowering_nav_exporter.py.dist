@@ -9,9 +9,9 @@ BUGS:
 NOTES:
 AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
-VERSION:    1.0
+VERSION:    1.1
 CREATED:    2021-04-21
-REVISION:   2022-02-13
+REVISION:   2024-08-17
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2024
@@ -24,15 +24,31 @@ from io import StringIO
 from datetime import datetime
 import pandas as pd
 
+try:
+    from fastkml import kml
+    from shapely.geometry import LineString, Point
+    KML_REQS = True
+except (ModuleNotFoundError, ImportError):
+    KML_REQS = False
+
+try:
+    import geojson
+    GEOJSON_REQS = True
+except (ModuleNotFoundError, ImportError):
+    GEOJSON_REQS = False
+
+
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
 from misc.python_sealog.lowerings import get_lowerings, get_lowering_by_id
 from misc.python_sealog.event_exports import get_event_exports_by_lowering
 
-DESIRED_RAW_COLS = ['ts','vehicleRealtimeNavData.longitude_value','vehicleRealtimeNavData.latitude_value', 'vehicleRealtimeNavData.depth_value']
-ALT_DESIRED_RAW_COLS = ['ts','vehicleRealtimeHipapData.longitude_value','vehicleRealtimeHipapData.latitude_value', 'vehicleRealtimeHipapData.depth_value']
+DESIRED_RAW_COLS = ['ts','realtimeVehicleUSBLPosition.longitude_value','realtimeVehicleUSBLPosition.latitude_value', 'realtimeVehicleUSBLPosition.depth_value']
+ALT_DESIRED_RAW_COLS = ['ts','realtimeVehiclePosition.longitude_value','realtimeVehiclePosition.latitude_value', 'realtimeVehiclePosition.depth_value']
 DESIRED_PROC_COLS = ['datetime','longitude_ddeg','latitude_ddeg', 'depth_m']
+
+SUB_SAMPLING_INTERVAL = '1T' # 1 minute
 
 ROUNDING = {
     'longitude_ddeg': 8,
@@ -40,7 +56,7 @@ ROUNDING = {
     'depth_m': 2
 }
 
-class ExportLoweringNav2CSV():
+class ExportLoweringNav():
     '''
     Class that exports lowering navigation data and converts it to csv format
     '''
@@ -51,7 +67,7 @@ class ExportLoweringNav2CSV():
         self.proc_columns = proc_columns or DESIRED_PROC_COLS
         self.precision = precision or ROUNDING
         self.data = None
-        self.logger = logging.getLogger('ExportLoweringNav2CSV')
+        self.logger = logging.getLogger('ExportLoweringNav')
 
         self.export_lowering()
 
@@ -123,15 +139,19 @@ class ExportLoweringNav2CSV():
         logging.debug("Data:\n%s", self.data.head())
 
         # crop the events
-        logging.info("Cropping lowering events to \"lowering_descending\" and \"lowering_on_surface\" timestamps")
+        logging.info('Cropping lowering events to "lowering_descending" and "lowering_on_surface" timestamps')
         self.data = self.data[(self.data['ts'] >= start_ts)]
         self.data = self.data[(self.data['ts'] <= end_ts)]
 
         # resample at 1min
-        logging.info('Subsampling data to 1-minute')
+        logging.info(f'Subsampling data to {SUB_SAMPLING_INTERVAL}')
         self.data.set_index('ts',inplace=True)
-        self.data = self.data.resample('1T', label='left', closed='left').first()
+        self.data = self.data.resample(SUB_SAMPLING_INTERVAL, label='left', closed='left').first()
         self.data.reset_index(inplace=True)
+
+        # cleanup
+        logging.debug("removing NaNs")
+        self.data = self.data.dropna()
 
         # rename columns
         self.data = self.data[self.raw_columns]
@@ -152,6 +172,85 @@ class ExportLoweringNav2CSV():
         return self.data.to_csv(index=False, na_rep='', date_format='%Y-%m-%dT%H:%M:%SZ')
 
 
+    def to_csv(self, file=None):
+        '''
+        Export to stdout or file as csv
+        '''
+
+        if file is None:
+            print(self.data)
+            return
+
+        with open(file, 'w') as f:
+                f.write(str(self.data))
+
+
+    def to_kml(self, file=None):
+        '''
+        Export to stdout or file as kml
+        '''
+
+        if not KML_REQS:
+            raise RuntimeError('Python module fastkml and/or shapely not found. Please '
+                               'install using "pip install fastkml shapely" prior to '
+                               'using KML output option.')
+    
+        # Initialize the KML document
+        k = kml.KML()
+        document = kml.Document()
+        k.append(document)
+    
+        # Create a LineString from the points
+        coordinates = [(row['longitude_ddeg'], row['latitude_ddeg']) for _, row in self.data.iterrows()]
+        line = LineString(coordinates)
+    
+        # Create a Placemark for the route
+        route_placemark = kml.Placemark()
+        route_placemark.name = "Route"
+        route_placemark.geometry = line
+    
+        # Add Placemark to Document
+        document.append(route_placemark)
+    
+        if file is None:
+            print(k.to_string(prettyprint=True))
+            return
+
+        # Write KML to file
+        with open(file, 'w') as f:
+           f.write(k.to_string(prettyprint=True))
+
+    def to_geojson(self, file=None):
+        '''
+        Export to stdout or file as geojson
+        '''
+
+        if not GEOJSON_REQS:
+            raise RuntimeError('Python module geojson not found. Please install '
+                               'using "pip install geojson" prior to using geoJSON '
+                               'output option.')
+
+        # Create a list of coordinates from the DataFrame
+        coordinates = [(row['longitude_ddeg'], row['latitude_ddeg'], row['depth_m'] * -1) for _, row in self.data.iterrows()]
+
+        # Create a LineString geometry for the route
+        route = geojson.LineString(coordinates)
+
+        # Create a Feature for the route
+        route_feature = geojson.Feature(geometry=route, properties={"name": "Route"})
+
+        # Create a FeatureCollection
+        feature_collection = geojson.FeatureCollection([route_feature])
+
+        if file is None:
+            print(geojson.dumps(feature_collection))
+            return
+
+        # Write GeoJSON to file
+        with open(file, 'w') as f:
+            geojson.dump(feature_collection, f)
+
+
 # -------------------------------------------------------------------------------------
 # Main function
 # -------------------------------------------------------------------------------------
@@ -163,7 +262,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Export lowering navigation data to csv')
     parser.add_argument('-v', '--verbosity', dest='verbosity', default=0, action='count', help='Increase output verbosity, default level: warning')
     parser.add_argument('-o', '--outfile', type=str, metavar='outfile', help='Write output to specified outfile')
-    parser.add_argument('-l','--lowering_id', type=str, help='The lowering_id to export')
+    parser.add_argument('-L','--lowering_id', type=str, help='The lowering_id to export')
+
+    group1 = parser.add_mutually_exclusive_group()
+    group1.add_argument('-k', '--kml', action='store_true', help='output as KML')
+    group1.add_argument('-g', '--geojson', action='store_true', help='output as geoJSON')
 
     parsed_args = parser.parse_args()
 
@@ -181,28 +284,20 @@ if __name__ == "__main__":
     try:
 
         try:
-            lowering_export = ExportLoweringNav2CSV(parsed_args.lowering_id)
+            lowering_export = ExportLoweringNav(parsed_args.lowering_id)
 
         except:
             logging.warning("There was a problem with the preference nav reference, trying again with alternative nav reference.")
-            lowering_export = ExportLoweringNav2CSV(parsed_args.lowering_id, raw_columns=ALT_DESIRED_RAW_COLS)
+            lowering_export = ExportLoweringNav(parsed_args.lowering_id, raw_columns=ALT_DESIRED_RAW_COLS)
 
-        if parsed_args.outfile:
-            logging.info("Saving nav export to %s", parsed_args.outfile)
+        if parsed_args.kml:
+            lowering_export.to_kml(parsed_args.outfile)
 
-            try:
-                with open(parsed_args.outfile, 'w') as out_file:
-
-                    out_file.write(str(lowering_export))
-
-            except IOError:
-                logging.error("Error saving nav export file: %s", parsed_args.outfile)
+        elif parsed_args.geojson:
+            lowering_export.to_geojson(parsed_args.outfile)
 
         else:
-            logging.info("Sending nav export to stdout")
-
-            print(lowering_export)
-
+            lowering_export.to_csv(parsed_args.outfile)
 
 
     except KeyboardInterrupt:
