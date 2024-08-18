@@ -48,7 +48,8 @@ DESIRED_RAW_COLS = ['ts','realtimeVehicleUSBLPosition.longitude_value','realtime
 ALT_DESIRED_RAW_COLS = ['ts','realtimeVehiclePosition.longitude_value','realtimeVehiclePosition.latitude_value', 'realtimeVehiclePosition.depth_value']
 DESIRED_PROC_COLS = ['datetime','longitude_ddeg','latitude_ddeg', 'depth_m']
 
-SUB_SAMPLING_INTERVAL = '1T' # 1 minute
+# Optional subsampling step.  Set to None to disable.
+SUB_SAMPLING_INTERVAL = '10sec' # 10 seconds
 
 ROUNDING = {
     'longitude_ddeg': 8,
@@ -61,7 +62,7 @@ class ExportLoweringNav():
     Class that exports lowering navigation data and converts it to csv format
     '''
 
-    def __init__(self, lowering_id=None, raw_columns=None, proc_columns=None, precision=None):
+    def __init__(self, lowering_id, raw_columns=None, proc_columns=None, precision=None):
         self.lowering_id = lowering_id
         self.raw_columns = raw_columns or DESIRED_RAW_COLS
         self.proc_columns = proc_columns or DESIRED_PROC_COLS
@@ -143,10 +144,13 @@ class ExportLoweringNav():
         self.data = self.data[(self.data['ts'] >= start_ts)]
         self.data = self.data[(self.data['ts'] <= end_ts)]
 
-        # resample at 1min
-        logging.info(f'Subsampling data to {SUB_SAMPLING_INTERVAL}')
         self.data.set_index('ts',inplace=True)
-        self.data = self.data.resample(SUB_SAMPLING_INTERVAL, label='left', closed='left').first()
+        
+        # resample at 1min
+        if SUB_SAMPLING_INTERVAL is not None:
+            logging.info(f'Subsampling data to {SUB_SAMPLING_INTERVAL}')
+            self.data = self.data.resample(SUB_SAMPLING_INTERVAL, label='left', closed='left').first()
+        
         self.data.reset_index(inplace=True)
 
         # cleanup
@@ -178,11 +182,11 @@ class ExportLoweringNav():
         '''
 
         if file is None:
-            print(self.data)
+            print(str(self))
             return
 
         with open(file, 'w') as f:
-                f.write(str(self.data))
+                f.write(str(self))
 
 
     def to_kml(self, file=None):
