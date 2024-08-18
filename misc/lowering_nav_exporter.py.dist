@@ -44,12 +44,9 @@ sys.path.append(dirname(dirname(realpath(__file__))))
 from misc.python_sealog.lowerings import get_lowerings, get_lowering_by_id
 from misc.python_sealog.event_exports import get_event_exports_by_lowering
 
-DESIRED_RAW_COLS = ['ts','realtimeVehicleUSBLPosition.longitude_value','realtimeVehicleUSBLPosition.latitude_value', 'realtimeVehicleUSBLPosition.depth_value']
-ALT_DESIRED_RAW_COLS = ['ts','realtimeVehiclePosition.longitude_value','realtimeVehiclePosition.latitude_value', 'realtimeVehiclePosition.depth_value']
-DESIRED_PROC_COLS = ['datetime','longitude_ddeg','latitude_ddeg', 'depth_m']
-
-# Optional subsampling step.  Set to None to disable.
-SUB_SAMPLING_INTERVAL = '10sec' # 10 seconds
+DESIRED_RAW_COLS = ['ts', 'realtimeVehicleUSBLPosition.longitude_value', 'realtimeVehicleUSBLPosition.latitude_value', 'realtimeVehicleUSBLPosition.depth_value']
+ALT_DESIRED_RAW_COLS = ['ts', 'realtimeVehiclePosition.longitude_value', 'realtimeVehiclePosition.latitude_value', 'realtimeVehiclePosition.depth_value']
+DESIRED_PROC_COLS = ['datetime', 'longitude_ddeg', 'latitude_ddeg', 'depth_m']
 
 ROUNDING = {
     'longitude_ddeg': 8,
@@ -62,15 +59,17 @@ class ExportLoweringNav():
     Class that exports lowering navigation data and converts it to csv format
     '''
 
-    def __init__(self, lowering_id, raw_columns=None, proc_columns=None, precision=None):
+    def __init__(self, lowering_id, raw_columns=None, proc_columns=None, precision=None, resample=None):
         self.lowering_id = lowering_id
         self.raw_columns = raw_columns or DESIRED_RAW_COLS
         self.proc_columns = proc_columns or DESIRED_PROC_COLS
         self.precision = precision or ROUNDING
+        self.resample = resample
         self.data = None
         self.logger = logging.getLogger('ExportLoweringNav')
 
         self.export_lowering()
+
 
     def round_data(self):
         '''
@@ -147,9 +146,9 @@ class ExportLoweringNav():
         self.data.set_index('ts',inplace=True)
         
         # resample at 1min
-        if SUB_SAMPLING_INTERVAL is not None:
-            logging.info(f'Subsampling data to {SUB_SAMPLING_INTERVAL}')
-            self.data = self.data.resample(SUB_SAMPLING_INTERVAL, label='left', closed='left').first()
+        if self.resample is not None:
+            logging.info(f'Subsampling data to {self.resample}')
+            self.data = self.data.resample(self.resample, label='left', closed='left').first()
         
         self.data.reset_index(inplace=True)
 
@@ -223,6 +222,7 @@ class ExportLoweringNav():
         # Write KML to file
         with open(file, 'w') as f:
            f.write(k.to_string(prettyprint=True))
+
 
     def to_geojson(self, file=None):
         '''
