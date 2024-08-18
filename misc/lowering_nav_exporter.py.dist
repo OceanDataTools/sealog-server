@@ -303,7 +303,6 @@ if __name__ == "__main__":
         else:
             lowering_export.to_csv(parsed_args.outfile)
 
-
     except KeyboardInterrupt:
         logging.warning('Interrupted')
         try:
