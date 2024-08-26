@@ -54,6 +54,7 @@ FILES_DIRNAME = 'Files'
 IMAGE_EXPORT = True
 IMAGE_DATASOURCES = ['framegrabber']
 
+
 def _cruise_file_prefix(cruise):
     """
     helper function used to build the filename prefix for all cruise-related
@@ -181,7 +182,7 @@ def _build_export_directories(cruise, lowering=None):
         sys.exit(1)
 
 
-def export_lowering(cruise, lowering): # pylint: disable=too-many-statements, redefined-outer-name
+def export_lowering(cruise, lowering):  # pylint: disable=too-many-statements, redefined-outer-name
     """
     export the data for the given cruise and lowering
     """
@@ -309,7 +310,7 @@ def export_lowering(cruise, lowering): # pylint: disable=too-many-statements, re
                 'rsync',
                 '-avi',
                 '--progress',
-                '--files-from=' + file.name , os.path.join(IMAGES_FILE_PATH, ''),
+                '--files-from=' + file.name, os.path.join(IMAGES_FILE_PATH, ''),
                 os.path.join(lowering_dir, IMAGES_DIRNAME)
             ])
 
@@ -345,7 +346,7 @@ def export_cruise(cruise):
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(exc))
 
-    # Uncomment to add event templates to cruise export folder
+    # Uncomment to add event templates to cruise export directory
     # try:
     #     filename = _cruise_file_prefix(cruise) + '_eventTemplates.json'
     #     dest_filepath = os.path.join(cruise_dir, filename)
@@ -372,14 +373,15 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='Sealog ' + VEHICLE_NAME + ' Data export')
-    parser.add_argument('-v', '--verbosity', dest='verbosity',
-                        default=0, action='count',
+    parser.add_argument('-v', '--verbosity', dest='verbosity', default=0, action='count',
                         help='Increase output verbosity')
-    parser.add_argument('-c', '--current_cruise', action='store_true', default=False,
+
+    group1 = parser.add_mutually_exclusive_group()
+    group1.add_argument('-c', '--current_cruise', action='store_true', default=False,
                         help=' export the data for the most recent cruise')
-    parser.add_argument('-C', '--cruise_id',
+    group1.add_argument('-C', '--cruise_id',
                         help='export all cruise and lowering data for the specified cruise (i.e. FK200126)')
-    parser.add_argument('-L', '--lowering_id',
+    group1.add_argument('-L', '--lowering_id',
                         help='export data for the specified lowering (i.e. S0314)')
 
     parsed_args = parser.parse_args()
@@ -395,15 +397,7 @@ if __name__ == '__main__':
     parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
     logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
 
-    if parsed_args.current_cruise and ( parsed_args.lowering_id or parsed_args.cruise_id ):
-        logging.error("Can not specify current_cruise and also a lowering {(}-l{)} or cruise {(}-c{)}")
-        sys.exit(0)
-
-    if parsed_args.lowering_id and parsed_args.cruise_id:
-        logging.error("Can not specify a lowering {(}-l{)} and cruise {(}-c{)}")
-        sys.exit(0)
-
-    selected_cruise = None # pylint: disable=invalid-name
+    selected_cruise = None  # pylint: disable=invalid-name
     selected_lowerings = []
 
     # if exporting all lowerings for the current cruise
@@ -456,9 +450,7 @@ if __name__ == '__main__':
 
     logging.info("Exporting the follow data:")
     logging.info("\tCruise: %s", selected_cruise['cruise_id'])
-    logging.info("\tLowering(s): %s",
-                    ', '.join([lowering['lowering_id'] for lowering in selected_lowerings])
-                )
+    logging.info("\tLowering(s): %s", ', '.join([lowering['lowering_id'] for lowering in selected_lowerings]))
 
     success, msg = verify_source_directories(selected_cruise, selected_lowerings)
     if not success:
