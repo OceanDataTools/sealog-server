@@ -44,7 +44,7 @@ def get_framegrab_list_by_lowering(lowering_uid, datasources, api_server_url=API
 
     try:
         url = api_server_url + EVENT_AUX_DATA_API_PATH + '/bylowering/' + lowering_uid
-        req = requests.get(url, headers=headers, params=params, timeout=0.750)
+        req = requests.get(url, headers=headers, params=params)
 
         if req.status_code != 404:
             framegrabs = json.loads(req.text)
@@ -80,7 +80,7 @@ def get_framegrab_list_by_cruise(cruise_uid, datasources, api_server_url=API_SER
 
     try:
         url = api_server_url + EVENT_AUX_DATA_API_PATH + '/bycruise/' + cruise_uid
-        req = requests.get(url, headers=headers, params=params, timeout=0.750)
+        req = requests.get(url, headers=headers, params=params)
 
         if req.status_code != 404:
             framegrabs = json.loads(req.text)

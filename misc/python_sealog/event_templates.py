@@ -40,7 +40,7 @@ def get_event_templates(system=True, non_system=True, api_server_url=API_SERVER_
 
     try:
         url = api_server_url + EVENT_TEMPLATES_API_PATH
-        req = requests.get(url, headers=headers, timeout=0.750)
+        req = requests.get(url, headers=headers)
 
         if req.status_code != 404:
             event_templates = json.loads(req.text)

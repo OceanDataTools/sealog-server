@@ -41,7 +41,7 @@ def get_cruise(cruise_uid, export_format='json', api_server_url=API_SERVER_URL, 
 
     try:
         url = api_server_url + CRUISES_API_PATH + '/' + cruise_uid
-        req = requests.get(url, headers=headers, params=params, timeout=0.750)
+        req = requests.get(url, headers=headers, params=params)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -75,7 +75,7 @@ def get_cruises(export_format='json', api_server_url=API_SERVER_URL, headers=HEA
 
     try:
         url = api_server_url + CRUISES_API_PATH
-        req = requests.get(url, headers=headers, params=params, timeout=0.750)
+        req = requests.get(url, headers=headers, params=params)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -113,7 +113,7 @@ def get_cruise_uid_by_id(cruise_id, api_server_url=API_SERVER_URL, headers=HEADE
 
     try:
         url = api_server_url + CRUISES_API_PATH
-        req = requests.get(url, headers=headers, params=params, timeout=0.750)
+        req = requests.get(url, headers=headers, params=params)
 
         if req.status_code == 200:
             cruise = json.loads(req.text)[0]
@@ -146,7 +146,7 @@ def get_cruise_by_id(cruise_id, export_format='json', api_server_url=API_SERVER_
 
     try:
         url = api_server_url + CRUISES_API_PATH
-        req = requests.get(url, headers=headers, params=params, timeout=0.750)
+        req = requests.get(url, headers=headers, params=params)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -182,7 +182,7 @@ def get_cruise_by_lowering(lowering_uid, export_format='json',
 
     try:
         url = api_server_url + CRUISES_API_PATH + '/bylowering/' + lowering_uid
-        req = requests.get(url, headers=headers, params=params, timeout=0.750)
+        req = requests.get(url, headers=headers, params=params)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -218,7 +218,7 @@ def get_cruise_by_event(event_uid, export_format='json', api_server_url=API_SERV
 
     try:
         url = api_server_url + CRUISES_API_PATH + '/byevent/' + event_uid
-        req = requests.get(url, headers=headers, params=params, timeout=0.750)
+        req = requests.get(url, headers=headers, params=params)
 
         if req.status_code == 200:
             if export_format == 'json':

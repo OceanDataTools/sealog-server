@@ -72,7 +72,7 @@ def update_cruise_record(cruise_record):
 
         try:
             url = instance['apiServerURL'] + CRUISES_API_PATH + '/' + cruise_record['id']
-            req = requests.get(url, headers=instance_headers, timeout=0.750)
+            req = requests.get(url, headers=instance_headers)
 
             if req.status_code != 404:
                 logging.debug("Cruise found for Cruise UID: %s", cruise_record['id'])
@@ -95,7 +95,7 @@ def update_cruise_record(cruise_record):
                 logging.debug(json.dumps(cruise_record))
                 updated_cruise_record = deepcopy(cruise_record)
                 del updated_cruise_record['id']
-                req = requests.patch(url, headers=instance_headers, data=json.dumps(updated_cruise_record), timeout=0.750)
+                req = requests.patch(url, headers=instance_headers, data=json.dumps(updated_cruise_record))
                 logging.debug(req.text)
 
             except Exception as exc:
@@ -109,7 +109,7 @@ def update_cruise_record(cruise_record):
                 url = instance['apiServerURL'] + CRUISES_API_PATH
                 logging.debug(url)
                 logging.debug(json.dumps(cruise_record))
-                req = requests.post(url, headers=instance_headers, data=json.dumps(cruise_record), timeout=0.750)
+                req = requests.post(url, headers=instance_headers, data=json.dumps(cruise_record))
                 logging.debug(req.text)
 
             except Exception as exc:

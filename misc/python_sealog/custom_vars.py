@@ -35,7 +35,7 @@ def get_custom_var(var_uid, api_server_url=API_SERVER_URL, headers=HEADERS):
 
     try:
         url = api_server_url + CUSTOM_VAR_API_PATH + '/' + var_uid
-        req = requests.get(url, headers=headers, timeout=0.750)
+        req = requests.get(url, headers=headers)
         logging.debug(req.text)
 
         if req.status_code != 404:
@@ -65,7 +65,7 @@ def get_custom_var_uid_by_name(var_name, api_server_url=API_SERVER_URL, headers=
 
     try:
         url = api_server_url + CUSTOM_VAR_API_PATH
-        req = requests.get(url, headers=headers, params=params, timeout=0.750)
+        req = requests.get(url, headers=headers, params=params)
         logging.debug(req.text)
 
         if req.status_code != 404:
@@ -94,7 +94,7 @@ def get_custom_var_by_name(var_name, api_server_url=API_SERVER_URL, headers=HEAD
 
     try:
         url = api_server_url + CUSTOM_VAR_API_PATH
-        req = requests.get(url, headers=headers, params=params, timeout=0.750)
+        req = requests.get(url, headers=headers, params=params)
         logging.debug(req.text)
 
         if req.status_code != 404:
@@ -119,7 +119,7 @@ def set_custom_var(var_uid, value, api_server_url=API_SERVER_URL, headers=HEADER
     try:
         payload = {"custom_var_value": value}
         url = api_server_url + CUSTOM_VAR_API_PATH + '/' + var_uid
-        req = requests.patch(url, headers=headers, data=json.dumps(payload), timeout=0.750)
+        req = requests.patch(url, headers=headers, data=json.dumps(payload))
         logging.debug(req.text)
 
     except requests.exceptions.RequestException as exc:

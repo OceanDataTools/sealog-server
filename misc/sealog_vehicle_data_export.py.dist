@@ -271,7 +271,7 @@ def export_lowering(cruise, lowering):  # pylint: disable=too-many-statements, r
         dest_filepath = os.path.join(lowering_dir, filename)
 
         # Do not overwrite template export if export exists
-        if not os.path.isfile(dest_filepath):
+        if not os.path.isfile(dest_filepath) or os.stat(dest_filepath).st_size == 0:
             logging.info("Export Event Templates: %s", filename)
 
             with open(dest_filepath, 'w', encoding="utf-8") as file:

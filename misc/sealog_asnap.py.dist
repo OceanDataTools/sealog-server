@@ -58,7 +58,7 @@ def submit_asnap_event(event):
     '''
     try:
         logging.info("Submitting ASNAP Event")
-        requests.post(API_SERVER_URL + EVENTS_API_PATH, headers=HEADERS, data=json.dumps(event), timeout=0.750)
+        requests.post(API_SERVER_URL + EVENTS_API_PATH, headers=HEADERS, data=json.dumps(event))
 
     except requests.exceptions.RequestException as exc:
         logging.error("Error submitting new ASNAP event: %s", json.dumps(event))

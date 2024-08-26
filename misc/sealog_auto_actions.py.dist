@@ -47,7 +47,7 @@ ASNAP_STATUS_VAR_NAME = 'asnapStatus'
 # ---------------------------------------------------------
 # For vehicle-focused sealog instances
 # ---------------------------------------------------------
-INCLUDE_SET = set('VEHICLE')
+INCLUDE_SET = ('VEHICLE')
 
 ASNAP_LOOKUP = {
     'Off deck': 'On',

@@ -46,7 +46,7 @@ def get_event(event_uid,
 
     try:
         url = api_server_url + EVENTS_API_PATH + '/' + event_uid
-        req = requests.get(url, headers=headers, params=params, timeout=0.750)
+        req = requests.get(url, headers=headers, params=params)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -104,7 +104,7 @@ def get_events(export_format='json',
 
     try:
         url = api_server_url + EVENTS_API_PATH
-        req = requests.get(url, headers=headers, params=params, timeout=0.750)
+        req = requests.get(url, headers=headers, params=params)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -159,7 +159,7 @@ def get_events_by_cruise(cruise_uid,
 
     try:
         url = api_server_url + EVENTS_API_PATH + '/bycruise/' + cruise_uid
-        req = requests.get(url, headers=headers, params=params, timeout=0.750)
+        req = requests.get(url, headers=headers, params=params)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -215,7 +215,7 @@ def get_events_by_lowering(lowering_uid,
 
     try:
         url = api_server_url + EVENTS_API_PATH + '/bylowering/' + lowering_uid
-        req = requests.get(url, headers=headers, params=params, timeout=0.750)
+        req = requests.get(url, headers=headers, params=params)
 
         if req.status_code == 200:
 

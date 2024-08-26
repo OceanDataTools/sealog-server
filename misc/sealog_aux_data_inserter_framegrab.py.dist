@@ -156,7 +156,7 @@ async def aux_data_inserter():
                             # sftp.close()
 
                             # ------------ only needed for http transfers -------------
-                            res = requests.get(source['source_url'] + source['source_filename'], stream=True, timeout=0.750)
+                            res = requests.get(source['source_url'] + source['source_filename'], stream=True)
 
                             if res.status_code != 200:
                                 logging.error("Unable to retrieve image from: %s", source['source_url'] + source['source_filename'])
