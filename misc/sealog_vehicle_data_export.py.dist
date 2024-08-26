@@ -230,7 +230,6 @@ def export_lowering(cruise, lowering):  # pylint: disable=too-many-statements, r
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(exc))
 
-
     try:
         filename = _lowering_file_prefix(cruise, lowering) + '_auxDataExport.json'
         dest_filepath = os.path.join(lowering_dir, filename)
