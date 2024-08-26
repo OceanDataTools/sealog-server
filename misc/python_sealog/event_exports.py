@@ -27,10 +27,17 @@ sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
 
 from misc.python_sealog.settings import API_SERVER_URL, HEADERS, EVENT_EXPORTS_API_PATH
 
-def get_event_export(event_uid, export_format='json', event_filter=[], add_record_ids=False, api_server_url=API_SERVER_URL, headers=HEADERS):
+
+def get_event_export(event_uid,
+                     export_format='json',
+                     event_filter=None,
+                     add_record_ids=False,
+                     api_server_url=API_SERVER_URL,
+                     headers=HEADERS):
     '''
     Return the event_export for the event with the given event_uid.
     '''
+    event_filter = event_filter or []
 
     if not isinstance(event_filter, list):
         logging.warning("DEPRECIATED: event_filter should be an array of strings")
@@ -43,21 +50,31 @@ def get_event_export(event_uid, export_format='json', event_filter=[], add_recor
 
     try:
         url = api_server_url + EVENT_EXPORTS_API_PATH + '/' + event_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=0.750)
 
         if req.status_code != 404:
             event = json.loads(req.text)
             logging.debug(json.dumps(event))
             return event
 
-    except Exception as error:
-        logging.debug(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
 
 
-def get_event_exports(export_format='json', event_filter=[], startTS=None, stopTS=None, add_record_ids=False, api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_event_exports(export_format='json',
+                      event_filter=None,
+                      start_ts=None,
+                      stop_ts=None,
+                      add_record_ids=False,
+                      api_server_url=API_SERVER_URL,
+                      headers=HEADERS):
     '''
     Return the event_exports for the lowering with the given lowering_uid.
     Returns the records as an array of json objects by default.  Set
@@ -65,6 +82,8 @@ def get_event_exports(export_format='json', event_filter=[], startTS=None, stopT
     a event_filter that will limit the returns to on the events that match the
     event_filter.
     '''
+
+    event_filter = event_filter or []
 
     if not isinstance(event_filter, list):
         logging.warning("DEPRECIATED: event_filter should be an array of strings")
@@ -78,15 +97,15 @@ def get_event_exports(export_format='json', event_filter=[], startTS=None, stopT
     if event_filter:
         params['value'] = event_filter
 
-    if startTS is not None:
-        params['startTS'] = startTS
+    if start_ts is not None:
+        params['startTS'] = start_ts
 
-    if stopTS is not None:
-        params['stopTS'] = stopTS
+    if stop_ts is not None:
+        params['stopTS'] = stop_ts
 
     try:
         url = api_server_url + EVENT_EXPORTS_API_PATH
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=0.750)
 
         if req.status_code != 404:
 
@@ -96,20 +115,31 @@ def get_event_exports(export_format='json', event_filter=[], startTS=None, stopT
 
             return req.text
 
-    except Exception as error:
-        logging.debug(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
 
 
-def get_event_exports_by_cruise(cruise_uid, export_format='json', event_filter=[], add_record_ids=False, api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_event_exports_by_cruise(cruise_uid,
+                                export_format='json',
+                                event_filter=None,
+                                add_record_ids=False,
+                                api_server_url=API_SERVER_URL,
+                                headers=HEADERS):
     '''
     Return the event_exports for the cruise with the given cruise_uid.  Returns
     the records as an array of json objects by default.  Set export_format to
     'csv' to return the records in csv format.  Optionally set a event_filter
     that will limit the returns to on the events that match the event_filter.
     '''
+
+    event_filter = event_filter or []
 
     if not isinstance(event_filter, list):
         logging.warning("DEPRECIATED: event_filter should be an array of strings")
@@ -125,7 +155,7 @@ def get_event_exports_by_cruise(cruise_uid, export_format='json', event_filter=[
 
     try:
         url = api_server_url + EVENT_EXPORTS_API_PATH + '/bycruise/' + cruise_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=0.750)
 
         if req.status_code != 404:
 
@@ -135,14 +165,23 @@ def get_event_exports_by_cruise(cruise_uid, export_format='json', event_filter=[
 
             return req.text
 
-    except Exception as error:
-        logging.debug(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
 
 
-def get_event_exports_by_lowering(lowering_uid, export_format='json', event_filter=[], add_record_ids=False, api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_event_exports_by_lowering(lowering_uid,
+                                  export_format='json',
+                                  event_filter=None,
+                                  add_record_ids=False,
+                                  api_server_url=API_SERVER_URL,
+                                  headers=HEADERS):
     '''
     Return the event_exports for the lowering with the given lowering_uid.
     Returns the records as an array of json objects by default.  Set
@@ -150,6 +189,8 @@ def get_event_exports_by_lowering(lowering_uid, export_format='json', event_filt
     a event_filter that will limit the returns to on the events that match the
     event_filter.
     '''
+
+    event_filter = event_filter or []
 
     if not isinstance(event_filter, list):
         logging.warning("DEPRECIATED: event_filter should be an array of strings")
@@ -165,7 +206,7 @@ def get_event_exports_by_lowering(lowering_uid, export_format='json', event_filt
 
     try:
         url = api_server_url + EVENT_EXPORTS_API_PATH + '/bylowering/' + lowering_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=0.750)
 
         if req.status_code != 404:
 
@@ -175,8 +216,12 @@ def get_event_exports_by_lowering(lowering_uid, export_format='json', event_filt
 
             return req.text
 
-    except Exception as error:
-        logging.debug(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None

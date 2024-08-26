@@ -74,8 +74,8 @@ async def lowering_response():
                 else:
                     logging.debug("Skipping because lowering value is in the exclude set")
 
-    except Exception as err:
-        logging.error(str(err))
+    except Exception as exc:
+        logging.error(str(exc))
 
 
 # -------------------------------------------------------------------------------------

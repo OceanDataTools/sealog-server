@@ -27,7 +27,12 @@ sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
 
 from misc.python_sealog.settings import API_SERVER_URL, HEADERS, EVENTS_API_PATH
 
-def get_event(event_uid, export_format='json', add_record_ids=False, api_server_url=API_SERVER_URL, headers=HEADERS):
+
+def get_event(event_uid,
+              export_format='json',
+              add_record_ids=False,
+              api_server_url=API_SERVER_URL,
+              headers=HEADERS):
     '''
     Return an event record based on the event_uid.  Returns the record as a json
     object by default.  Set export_format to 'csv' to return the record in csv
@@ -38,11 +43,10 @@ def get_event(event_uid, export_format='json', add_record_ids=False, api_server_
         'format': export_format,
         'add_record_ids': add_record_ids
     }
-    
+
     try:
-        # url = api_server_url + EVENTS_API_PATH + '/' + event_uid + '?format=' + export_format + '&add_record_ids=' + _add_record_ids
-        url = api_server_url + EVENTS_API_PATH
-        req = requests.get(url, headers=headers, params=params)
+        url = api_server_url + EVENTS_API_PATH + '/' + event_uid
+        req = requests.get(url, headers=headers, params=params, timeout=0.750)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -53,20 +57,32 @@ def get_event(event_uid, export_format='json', add_record_ids=False, api_server_
 
             return None
 
-    except Exception as error:
-        logging.error(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
 
 
-def get_events(export_format='json', add_record_ids=False, event_filter=[], startTS=None, stopTS=None, api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_events(export_format='json',
+               add_record_ids=False,
+               event_filter=None,
+               start_ts=None,
+               stop_ts=None,
+               api_server_url=API_SERVER_URL,
+               headers=HEADERS):
     '''
     Return event records based on the cruise_uid.  Returns the records as json
     objects by default.  Set export_format to 'csv' to return the records in
     csv format.  Optionally define an event_filter to filter the returned
     events.
     '''
+
+    event_filter = event_filter or []
 
     if not isinstance(event_filter, list):
         logging.warning("DEPRECIATED: event_filter should be an array of strings")
@@ -80,15 +96,15 @@ def get_events(export_format='json', add_record_ids=False, event_filter=[], star
     if event_filter:
         params['value'] = event_filter
 
-    if startTS is not None:
-        params['startTS'] = startTS
+    if start_ts is not None:
+        params['startTS'] = start_ts
 
-    if stopTS is not None:
-        params['stopTS'] = stopTS
+    if stop_ts is not None:
+        params['stopTS'] = stop_ts
 
     try:
         url = api_server_url + EVENTS_API_PATH
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=0.750)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -104,20 +120,30 @@ def get_events(export_format='json', add_record_ids=False, event_filter=[], star
             if export_format == 'csv':
                 return ""
 
-    except Exception as error:
-        logging.error(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
 
 
-def get_events_by_cruise(cruise_uid, export_format='json', add_record_ids=False, event_filter=[], api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_events_by_cruise(cruise_uid,
+                         export_format='json',
+                         add_record_ids=False,
+                         event_filter=None,
+                         api_server_url=API_SERVER_URL,
+                         headers=HEADERS):
     '''
     Return event records based on the cruise_uid.  Returns the records as json
     objects by default.  Set export_format to 'csv' to return the records in
     csv format.  Optionally define an event_filter to filter the returned
     events.
     '''
+    event_filter = event_filter or []
 
     if not isinstance(event_filter, list):
         logging.warning("DEPRECIATED: event_filter should be an array of strings")
@@ -133,7 +159,7 @@ def get_events_by_cruise(cruise_uid, export_format='json', add_record_ids=False,
 
     try:
         url = api_server_url + EVENTS_API_PATH + '/bycruise/' + cruise_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=0.750)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -149,20 +175,31 @@ def get_events_by_cruise(cruise_uid, export_format='json', add_record_ids=False,
             if export_format == 'csv':
                 return ""
 
-    except Exception as error:
-        logging.error(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
 
 
-def get_events_by_lowering(lowering_uid, export_format='json', add_record_ids=False, event_filter=[], api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_events_by_lowering(lowering_uid,
+                           export_format='json',
+                           add_record_ids=False,
+                           event_filter=None,
+                           api_server_url=API_SERVER_URL,
+                           headers=HEADERS):
     '''
     Return event records based on the lowering_uid.  Returns the records as
     json objects by default.  Set export_format to 'csv' to return the records
     in csv format.  Optionally define an event_filter to filter the returned
     events.
     '''
+
+    event_filter = event_filter or []
 
     if not isinstance(event_filter, list):
         logging.warning("DEPRECIATED: event_filter should be an array of strings")
@@ -178,7 +215,7 @@ def get_events_by_lowering(lowering_uid, export_format='json', add_record_ids=Fa
 
     try:
         url = api_server_url + EVENTS_API_PATH + '/bylowering/' + lowering_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=0.750)
 
         if req.status_code == 200:
 
@@ -195,8 +232,12 @@ def get_events_by_lowering(lowering_uid, export_format='json', add_record_ids=Fa
             if export_format == 'csv':
                 return ""
 
-    except Exception as error:
-        logging.error(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None

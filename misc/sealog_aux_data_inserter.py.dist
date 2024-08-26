@@ -27,14 +27,14 @@ import json
 import time
 import logging
 from datetime import datetime, timedelta
-import requests
 import websockets
 from pymongo import MongoClient
 
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
-from misc.python_sealog.settings import API_SERVER_URL, WS_SERVER_URL, EVENT_AUX_DATA_API_PATH, HEADERS
+from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
+from misc.python_sealog.event_aux_data import create_event_aux_data
 
 # Names of the appropriate mongoDB database and collection containing the desired real-time data.
 DATABASE = 'sealog_udp_cache'
@@ -47,13 +47,13 @@ RECORD_LABEL = "testData"
 AUX_DATA_DATASOURCE = 'realtimeTestData'
 
 # time afterwhich realtime data is considered stale
-THRESHOLD = 20 # seconds
+THRESHOLD = 20  # seconds
 
 # set of events to ignore
-EXCLUDE_SET = ()
+EXCLUDE_SET = set()
 
-
-CLIENT_WSID = 'aux_data_inserter_' + AUX_DATA_DATASOURCE # needs to be unique for all currently active dataInserter scripts.
+# needs to be unique for all currently active dataInserter scripts.
+CLIENT_WSID = 'aux_data_inserter_' + AUX_DATA_DATASOURCE
 
 HELLO = {
     'type': 'hello',
@@ -66,8 +66,8 @@ HELLO = {
 }
 
 PING = {
-    'type':'ping',
-    'id':CLIENT_WSID
+    'type': 'ping',
+    'id': CLIENT_WSID
 }
 
 
@@ -86,7 +86,7 @@ def aux_data_record_builder(event, record):
     }
 
     for key, value in record['data'].items():
-        aux_data_record['data_array'].append({ 'data_name': key,'data_value': value, 'data_uom': '??' })
+        aux_data_record['data_array'].append({'data_name': key, 'data_value': value, 'data_uom': '??'})
 
     logging.debug("Aux Data Record:\n%s", json.dumps(aux_data_record, indent=2))
 
@@ -136,10 +136,10 @@ async def aux_data_inserter():
                         logging.debug("Record from database:\n%s", json.dumps(record['data'], indent=2))
 
                         if not record:
-                            logging.error("No data record found in %s.%s with a label of %s", DATABASE, COLLECTION, RECORD_LABEL )
+                            logging.error("No data record found in %s.%s with a label of %s", DATABASE, COLLECTION, RECORD_LABEL)
                             continue
 
-                        if not 'updated' in record:
+                        if 'updated' not in record:
                             logging.error("Data record must contain and 'updated' field containing a datetime object of when the data was last updated")
                             continue
 
@@ -147,9 +147,9 @@ async def aux_data_inserter():
                             logging.debug("Data record is considered stale, skipping")
                             continue
 
-                    except Exception as error:
+                    except Exception as exc:
                         logging.error("Error retrieving auxData record")
-                        logging.debug(str(error))
+                        logging.debug(str(exc))
                         continue
 
                     aux_data_record = aux_data_record_builder(event_obj['message'], record)
@@ -160,17 +160,16 @@ async def aux_data_inserter():
 
                     try:
                         logging.debug("Submitting AuxData record to Sealog Server")
-                        req = requests.post(API_SERVER_URL + EVENT_AUX_DATA_API_PATH, headers=HEADERS, data = json.dumps(aux_data_record))
-                        logging.debug("Response: %s", req.text)
+                        create_event_aux_data(aux_data_record)
 
-                    except Exception as error:
+                    except Exception as exc:
                         logging.error("Error submitting auxData record")
-                        logging.debug(str(error))
-                        raise error
+                        logging.debug(str(exc))
+                        raise exc
 
-    except Exception as error:
-        logging.error(str(error))
-        raise error
+    except Exception as exc:
+        logging.error(str(exc))
+        raise exc
 
 # -------------------------------------------------------------------------------------
 # Required python code for running the script as a stand-alone utility
@@ -212,7 +211,7 @@ if __name__ == '__main__':
             try:
                 sys.exit(0)
             except SystemExit:
-                os._exit(0) # pylint: disable=protected-access
-        except Exception as error:
+                os._exit(0)  # pylint: disable=protected-access
+        except Exception as exc:
             logging.error("Lost connection to server, trying again in 5 seconds")
-            logging.debug(str(error))
+            logging.debug(str(exc))

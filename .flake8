@@ -1,0 +1,5 @@
+[flake8]
+extend-ignore = E402
+exclude = .git,__pycache__,config,demo,docs,lib,node_modules,plugins,routes,sealog-files,test,venv
+max-line-length=100
+# max-complexity = 10

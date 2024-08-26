@@ -74,8 +74,8 @@ async def cruise_response():
                 else:
                     logging.debug("Skipping because cruise value is in the exclude set")
 
-    except Exception as err:
-        logging.error(str(err))
+    except Exception as exc:
+        logging.error(str(exc))
 
 
 # -------------------------------------------------------------------------------------

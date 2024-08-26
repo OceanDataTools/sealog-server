@@ -27,6 +27,7 @@ sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
 
 from misc.python_sealog.settings import API_SERVER_URL, HEADERS, LOWERINGS_API_PATH
 
+
 def get_lowering_uid_by_id(lowering_id, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the UID for a lowering record based on the lowering_id.
@@ -38,15 +39,19 @@ def get_lowering_uid_by_id(lowering_id, api_server_url=API_SERVER_URL, headers=H
 
     try:
         url = api_server_url + LOWERINGS_API_PATH
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=0.750)
 
         if req.status_code == 200:
             lowering = json.loads(req.text)[0]
             return lowering['id']
 
-    except Exception as error:
-        logging.error(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
 
@@ -63,7 +68,7 @@ def get_lowerings(export_format='json', api_server_url=API_SERVER_URL, headers=H
 
     try:
         url = api_server_url + LOWERINGS_API_PATH
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=0.750)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -79,9 +84,13 @@ def get_lowerings(export_format='json', api_server_url=API_SERVER_URL, headers=H
             if export_format == 'csv':
                 return ""
 
-    except Exception as error:
-        logging.error(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
 
@@ -93,7 +102,7 @@ def get_lowering_uids_by_cruise(cruise_uid, api_server_url=API_SERVER_URL, heade
 
     try:
         url = api_server_url + LOWERINGS_API_PATH + '/bycruise/' + cruise_uid
-        req = requests.get(url, headers=headers)
+        req = requests.get(url, headers=headers, timeout=0.750)
 
         if req.status_code == 200:
             lowerings = json.loads(req.text)
@@ -102,9 +111,13 @@ def get_lowering_uids_by_cruise(cruise_uid, api_server_url=API_SERVER_URL, heade
         if req.status_code == 404:
             return []
 
-    except Exception as error:
-        logging.error(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
 
@@ -116,7 +129,7 @@ def get_lowering_ids_by_cruise(cruise_uid, api_server_url=API_SERVER_URL, header
 
     try:
         url = api_server_url + LOWERINGS_API_PATH + '/bycruise/' + cruise_uid
-        req = requests.get(url, headers=headers)
+        req = requests.get(url, headers=headers, timeout=0.750)
 
         if req.status_code == 200:
             lowerings = json.loads(req.text)
@@ -125,23 +138,32 @@ def get_lowering_ids_by_cruise(cruise_uid, api_server_url=API_SERVER_URL, header
         if req.status_code == 404:
             return []
 
-    except Exception as error:
-        logging.error(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
 
 
-def get_lowering(lowering_uid, export_format='json', api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_lowering(lowering_uid, export_format='json', api_server_url=API_SERVER_URL,
+                 headers=HEADERS):
     '''
     Return a lowering record based on the lowering_id.  Returns the record as a
     json object by default.  Set export_format to 'csv' to return the record in
     csv format.
     '''
 
+    params = {
+        'format': export_format
+    }
+
     try:
-        url = api_server_url + LOWERINGS_API_PATH + '/' + lowering_uid + '?format=' + export_format
-        req = requests.get(url, headers=headers)
+        url = api_server_url + LOWERINGS_API_PATH + '/' + lowering_uid
+        req = requests.get(url, headers=headers, params=params, timeout=0.750)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -150,14 +172,19 @@ def get_lowering(lowering_uid, export_format='json', api_server_url=API_SERVER_U
             if export_format == 'csv':
                 return req.text
 
-    except Exception as error:
-        logging.error(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
 
 
-def get_lowering_by_id(lowering_id, export_format='json', api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_lowering_by_id(lowering_id, export_format='json', api_server_url=API_SERVER_URL,
+                       headers=HEADERS):
     '''
     Return the lowering record based on the lowering_id.  Returns the records
     as json object by default.  Set export_format to 'csv' to return the record
@@ -165,12 +192,13 @@ def get_lowering_by_id(lowering_id, export_format='json', api_server_url=API_SER
     '''
 
     params = {
+        'lowering_id': lowering_id,
         'format': export_format
     }
 
     try:
-        url = api_server_url + LOWERINGS_API_PATH + '?lowering_id=' + lowering_id
-        req = requests.get(url, headers=headers, params=params)
+        url = api_server_url + LOWERINGS_API_PATH
+        req = requests.get(url, headers=headers, params=params, timeout=0.750)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -179,14 +207,19 @@ def get_lowering_by_id(lowering_id, export_format='json', api_server_url=API_SER
             if export_format == 'csv':
                 return req.text
 
-    except Exception as error:
-        logging.error(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
 
 
-def get_lowerings_by_cruise(cruise_uid, export_format='json', api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_lowerings_by_cruise(cruise_uid, export_format='json', api_server_url=API_SERVER_URL,
+                            headers=HEADERS):
     '''
     Return the lowering records contained within the cruise whose uid is
     cruise_uid.  Returns the record as a json object by default.  Set
@@ -197,10 +230,9 @@ def get_lowerings_by_cruise(cruise_uid, export_format='json', api_server_url=API
         'format': export_format
     }
 
-
     try:
         url = api_server_url + LOWERINGS_API_PATH + '/bycruise/' + cruise_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=0.750)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -216,14 +248,19 @@ def get_lowerings_by_cruise(cruise_uid, export_format='json', api_server_url=API
             if export_format == 'csv':
                 return ""
 
-    except Exception as error:
-        logging.error(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
 
 
-def get_lowering_by_event(event_uid, export_format='json', api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_lowering_by_event(event_uid, export_format='json', api_server_url=API_SERVER_URL,
+                          headers=HEADERS):
     '''
     Return the lowering record containing the event whose uid is event_uid.
     Returns the record as a json object by default.  Set export_format to 'csv'
@@ -235,8 +272,8 @@ def get_lowering_by_event(event_uid, export_format='json', api_server_url=API_SE
     }
 
     try:
-        url = api_server_url + LOWERINGS_API_PATH + '/byevent/' + event_uid
-        req = requests.get(url, headers=headers, params=params)
+        url = f'{api_server_url}{LOWERINGS_API_PATH}/byevent/{event_uid}'
+        req = requests.get(url, headers=headers, params=params, timeout=0.750)
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -245,8 +282,25 @@ def get_lowering_by_event(event_uid, export_format='json', api_server_url=API_SE
             if export_format == 'csv':
                 return req.text
 
-    except Exception as error:
-        logging.error(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
+
+def update_lowering(lowering_uid, payload, api_server_url=API_SERVER_URL,
+                    headers=HEADERS):
+    '''
+    Update the lowering record
+    '''
+
+    try:
+        url = f'{api_server_url}{LOWERINGS_API_PATH}/{lowering_uid}'
+        requests.patch(url, headers=headers, data=json.dumps(payload), timeout=0.750)
+
+    except requests.exceptions.RequestException as exc:
+        raise exc

@@ -76,7 +76,7 @@ def _lowering_file_prefix(cruise, lowering):
     return f"{_cruise_file_prefix(cruise)}_{lowering['lowering_id']}"
 
 
-def _build_lowering_name(cruise, lowering):
+def _build_lowering_name(cruise, lowering):  # pylint: disable=unused-argument
     """
     helper function used to translate how the lowering id is recorded in Sealog
     to how the lowering id should be exported.  Some operators require the
@@ -140,9 +140,9 @@ def _build_export_directories(cruise, lowering=None):
             os.mkdir(cruise_dir)
         except FileExistsError:
             logging.debug("cruise export directory already exists")
-        except Exception as err:
+        except Exception as exc:
             logging.error("Could not create cruise export directory")
-            logging.debug(str(err))
+            logging.debug(str(exc))
             sys.exit(1)
 
     if lowering is None:
@@ -156,9 +156,9 @@ def _build_export_directories(cruise, lowering=None):
             os.mkdir(lowering_dir)
         except FileExistsError:
             logging.debug("lowering export directory already exists")
-        except Exception as err:
+        except Exception as exc:
             logging.error("Could not create lowering export directory")
-            logging.debug(str(err))
+            logging.debug(str(exc))
             sys.exit(1)
 
     if IMAGE_EXPORT:
@@ -166,18 +166,18 @@ def _build_export_directories(cruise, lowering=None):
             os.mkdir(os.path.join(lowering_dir, IMAGES_DIRNAME))
         except FileExistsError:
             logging.debug("lowering export images directory already exists")
-        except Exception as err:
+        except Exception as exc:
             logging.error("Could not create lowering images export directory")
-            logging.debug(str(err))
+            logging.debug(str(exc))
             sys.exit(1)
 
     try:
         os.mkdir(os.path.join(lowering_dir, FILES_DIRNAME))
     except FileExistsError:
         logging.debug("lowering export files directory already exists")
-    except Exception as err:
+    except Exception as exc:
         logging.error("Could not create lowering files export directory")
-        logging.debug(str(err))
+        logging.debug(str(exc))
         sys.exit(1)
 
 
@@ -201,9 +201,9 @@ def export_lowering(cruise, lowering): # pylint: disable=too-many-statements, re
         with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(lowering))
 
-    except Exception as err:
+    except Exception as exc:
         logging.error('could not create data file: %s', dest_filepath)
-        logging.debug(str(err))
+        logging.debug(str(exc))
 
     try:
         filename = _lowering_file_prefix(cruise, lowering) + '_eventOnlyExport.json'
@@ -213,9 +213,9 @@ def export_lowering(cruise, lowering): # pylint: disable=too-many-statements, re
         with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(get_events_by_lowering(lowering['id'])))
 
-    except Exception as err:
+    except Exception as exc:
         logging.error('could not create data file: %s', dest_filepath)
-        logging.debug(str(err))
+        logging.debug(str(exc))
 
     try:
         filename = _lowering_file_prefix(cruise, lowering) + '_eventOnlyExport.csv'
@@ -225,9 +225,9 @@ def export_lowering(cruise, lowering): # pylint: disable=too-many-statements, re
         with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(get_events_by_lowering(lowering['id'], 'csv'))
 
-    except Exception as err:
+    except Exception as exc:
         logging.error('could not create data file: %s', dest_filepath)
-        logging.debug(str(err))
+        logging.debug(str(exc))
 
 
     try:
@@ -238,9 +238,9 @@ def export_lowering(cruise, lowering): # pylint: disable=too-many-statements, re
         with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(get_event_aux_data_by_lowering(lowering['id'])))
 
-    except Exception as err:
+    except Exception as exc:
         logging.error('could not create data file: %s', dest_filepath)
-        logging.debug(str(err))
+        logging.debug(str(exc))
 
     try:
         filename = _lowering_file_prefix(cruise, lowering) + '_sealogExport.json'
@@ -250,9 +250,9 @@ def export_lowering(cruise, lowering): # pylint: disable=too-many-statements, re
         with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(get_event_exports_by_lowering(lowering['id'])))
 
-    except Exception as err:
+    except Exception as exc:
         logging.error('could not create data file: %s', dest_filepath)
-        logging.debug(str(err))
+        logging.debug(str(exc))
 
     try:
         filename = _lowering_file_prefix(cruise, lowering) + '_sealogExport.csv'
@@ -262,9 +262,9 @@ def export_lowering(cruise, lowering): # pylint: disable=too-many-statements, re
         with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(get_event_exports_by_lowering(lowering['id'], 'csv'))
 
-    except Exception as err:
+    except Exception as exc:
         logging.error('could not create data file: %s', dest_filepath)
-        logging.debug(str(err))
+        logging.debug(str(exc))
 
     try:
         filename = _lowering_file_prefix(cruise, lowering) + '_eventTemplates.json'
@@ -277,9 +277,9 @@ def export_lowering(cruise, lowering): # pylint: disable=too-many-statements, re
             with open(dest_filepath, 'w', encoding="utf-8") as file:
                 file.write(json.dumps(get_event_templates()))
 
-    except Exception as err:
+    except Exception as exc:
         logging.error('could not create data file: %s', dest_filepath)
-        logging.debug(str(err))
+        logging.debug(str(exc))
 
     if IMAGE_EXPORT:
         logging.info("Exporting Images")
@@ -294,8 +294,8 @@ def export_lowering(cruise, lowering): # pylint: disable=too-many-statements, re
             try:
                 logging.info('Deleting: %s', filename)
                 os.remove(os.path.join(lowering_dir, IMAGES_DIRNAME, filename))
-            except:
-                pass
+            except Exception as exc:
+                logging.debug(str(exc))
 
         # Building include files from list of image files to pass to rsync
         with tempfile.NamedTemporaryFile(mode='w+b', delete=False) as file:
@@ -341,9 +341,9 @@ def export_cruise(cruise):
         logging.info("Export Cruise Record: %s", filename)
         with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(cruise))
-    except Exception as err:
+    except Exception as exc:
         logging.error('could not create data file: %s', dest_filepath)
-        logging.debug(str(err))
+        logging.debug(str(exc))
 
     # Uncomment to add event templates to cruise export folder
     # try:
@@ -352,9 +352,9 @@ def export_cruise(cruise):
     #     logging.info("Export Event Templates: %s", filename)
     #     with open(dest_filepath, 'w', encoding="utf-8") as file:
     #         file.write(json.dumps(get_event_templates()))
-    # except Exception as err:
+    # except Exception as exc:
     #     logging.error('could not create data file: %s', dest_filepath)
-    #     logging.debug(str(err))
+    #     logging.debug(str(exc))
 
     # rsync files
     subprocess.call([
@@ -405,8 +405,6 @@ if __name__ == '__main__':
 
     selected_cruise = None # pylint: disable=invalid-name
     selected_lowerings = []
-
-    # TODO: These cla checks shoud raise ArgParse ValueErrors
 
     # if exporting all lowerings for the current cruise
     if parsed_args.current_cruise:

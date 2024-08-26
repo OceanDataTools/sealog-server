@@ -26,7 +26,7 @@ import pandas as pd
 
 try:
     from fastkml import kml
-    from shapely.geometry import LineString, Point
+    from shapely.geometry import LineString
     KML_REQS = True
 except (ModuleNotFoundError, ImportError):
     KML_REQS = False
@@ -44,9 +44,24 @@ sys.path.append(dirname(dirname(realpath(__file__))))
 from misc.python_sealog.lowerings import get_lowerings, get_lowering_by_id
 from misc.python_sealog.event_exports import get_event_exports_by_lowering
 
-DESIRED_RAW_COLS = ['ts', 'realtimeVehicleUSBLPosition.longitude_value', 'realtimeVehicleUSBLPosition.latitude_value', 'realtimeVehicleUSBLPosition.depth_value']
-ALT_DESIRED_RAW_COLS = ['ts', 'realtimeVehiclePosition.longitude_value', 'realtimeVehiclePosition.latitude_value', 'realtimeVehiclePosition.depth_value']
-DESIRED_PROC_COLS = ['datetime', 'longitude_ddeg', 'latitude_ddeg', 'depth_m']
+DESIRED_RAW_COLS = [
+    'ts',
+    'realtimeVehicleUSBLPosition.longitude_value',
+    'realtimeVehicleUSBLPosition.latitude_value',
+    'realtimeVehicleUSBLPosition.depth_value'
+]
+ALT_DESIRED_RAW_COLS = [
+    'ts',
+    'realtimeVehiclePosition.longitude_value',
+    'realtimeVehiclePosition.latitude_value',
+    'realtimeVehiclePosition.depth_value'
+]
+DESIRED_PROC_COLS = [
+    'datetime',
+    'longitude_ddeg',
+    'latitude_ddeg',
+    'depth_m'
+]
 
 ROUNDING = {
     'longitude_ddeg': 8,
@@ -54,12 +69,15 @@ ROUNDING = {
     'depth_m': 2
 }
 
+
 class ExportLoweringNav():
     '''
     Class that exports lowering navigation data and converts it to csv format
     '''
 
-    def __init__(self, lowering_id, raw_columns=None, proc_columns=None, precision=None, resample=None):
+    def __init__(self, lowering_id, raw_columns=None,
+                 proc_columns=None, precision=None,
+                 resample=None):
         self.lowering_id = lowering_id
         self.raw_columns = raw_columns or DESIRED_RAW_COLS
         self.proc_columns = proc_columns or DESIRED_PROC_COLS
@@ -70,7 +88,6 @@ class ExportLoweringNav():
 
         self.export_lowering()
 
-
     def round_data(self):
         '''
         Round the data to the specified precision
@@ -79,11 +96,10 @@ class ExportLoweringNav():
         try:
             decimals = pd.Series(self.precision.values(), index=self.precision.keys())
             self.data = self.data.round(decimals)
-        except Exception as err:
+        except Exception as exc:
             logging.error("Could not round data")
-            logging.error(str(err))
-            raise err
-
+            logging.error(str(exc))
+            raise exc
 
     def export_lowering(self):
         '''
@@ -110,9 +126,9 @@ class ExportLoweringNav():
         try:
             start_ts = datetime.strptime(lowering['lowering_additional_meta']['milestones']['lowering_descending'], '%Y-%m-%dT%H:%M:%S.%fZ')
             end_ts = datetime.strptime(lowering['lowering_additional_meta']['milestones']['lowering_on_surface'], '%Y-%m-%dT%H:%M:%S.%fZ')
-        except Exception as err:
+        except ValueError as exc:
             logging.error("Problem extracting \"lowering_descending\" and \"lowering_on_surface\" timestamps")
-            logging.debug(str(err))
+            logging.debug(str(exc))
             return None
 
         # get the events for the lowering
@@ -131,9 +147,9 @@ class ExportLoweringNav():
             self.data = pd.read_csv(file, usecols=self.raw_columns)
             self.data['ts'] = pd.to_datetime(self.data['ts'], format='%Y-%m-%dT%H:%M:%S.%fZ')
 
-        except Exception as err:
+        except Exception as exc:
             logging.error("Error importing events data into dataframe")
-            logging.error(str(err))
+            logging.error(str(exc))
             return None
 
         logging.debug("Data:\n%s", self.data.head())
@@ -143,13 +159,12 @@ class ExportLoweringNav():
         self.data = self.data[(self.data['ts'] >= start_ts)]
         self.data = self.data[(self.data['ts'] <= end_ts)]
 
-        self.data.set_index('ts',inplace=True)
-        
+        self.data.set_index('ts', inplace=True)
+
         # resample at 1min
         if self.resample is not None:
-            logging.info(f'Subsampling data to {self.resample}')
+            logging.info('Subsampling data to %s', self.resample)
             self.data = self.data.resample(self.resample, label='left', closed='left').first()
-        
         self.data.reset_index(inplace=True)
 
         # cleanup
@@ -166,14 +181,12 @@ class ExportLoweringNav():
 
         return None
 
-
     def __str__(self):
         '''
         Return the navigation data in csv format
         '''
 
         return self.data.to_csv(index=False, na_rep='', date_format='%Y-%m-%dT%H:%M:%SZ')
-
 
     def to_csv(self, file=None):
         '''
@@ -184,9 +197,8 @@ class ExportLoweringNav():
             print(str(self))
             return
 
-        with open(file, 'w') as f:
-                f.write(str(self))
-
+        with open(file, 'w', encoding='utf-8') as f:
+            f.write(str(self))
 
     def to_kml(self, file=None):
         '''
@@ -197,32 +209,31 @@ class ExportLoweringNav():
             raise RuntimeError('Python module fastkml and/or shapely not found. Please '
                                'install using "pip install fastkml shapely" prior to '
                                'using KML output option.')
-    
+
         # Initialize the KML document
         k = kml.KML()
         document = kml.Document()
         k.append(document)
-    
+
         # Create a LineString from the points
         coordinates = [(row['longitude_ddeg'], row['latitude_ddeg']) for _, row in self.data.iterrows()]
         line = LineString(coordinates)
-    
+
         # Create a Placemark for the route
         route_placemark = kml.Placemark()
         route_placemark.name = "Route"
         route_placemark.geometry = line
-    
+
         # Add Placemark to Document
         document.append(route_placemark)
-    
+
         if file is None:
             print(k.to_string(prettyprint=True))
             return
 
         # Write KML to file
-        with open(file, 'w') as f:
-           f.write(k.to_string(prettyprint=True))
-
+        with open(file, 'w', encoding='utf-8') as f:
+            f.write(k.to_string(prettyprint=True))
 
     def to_geojson(self, file=None):
         '''
@@ -251,7 +262,7 @@ class ExportLoweringNav():
             return
 
         # Write GeoJSON to file
-        with open(file, 'w') as f:
+        with open(file, 'w', encoding='utf-8') as f:
             geojson.dump(feature_collection, f)
 
 
@@ -264,9 +275,11 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Export lowering navigation data to csv')
-    parser.add_argument('-v', '--verbosity', dest='verbosity', default=0, action='count', help='Increase output verbosity, default level: warning')
-    parser.add_argument('-o', '--outfile', type=str, metavar='outfile', help='Write output to specified outfile')
-    parser.add_argument('-L','--lowering_id', type=str, help='The lowering_id to export')
+    parser.add_argument('-v', '--verbosity', dest='verbosity', default=0, action='count',
+                        help='Increase output verbosity, default level: warning')
+    parser.add_argument('-o', '--outfile', type=str, metavar='outfile',
+                        help='Write output to specified outfile')
+    parser.add_argument('-L', '--lowering_id', type=str, help='The lowering_id to export')
 
     group1 = parser.add_mutually_exclusive_group()
     group1.add_argument('-k', '--kml', action='store_true', help='output as KML')
@@ -290,8 +303,9 @@ if __name__ == "__main__":
         try:
             lowering_export = ExportLoweringNav(parsed_args.lowering_id)
 
-        except:
-            logging.warning("There was a problem with the preference nav reference, trying again with alternative nav reference.")
+        except Exception:
+            logging.warning("There was a problem with the preference nav reference, "
+                            "trying again with alternative nav reference.")
             lowering_export = ExportLoweringNav(parsed_args.lowering_id, raw_columns=ALT_DESIRED_RAW_COLS)
 
         if parsed_args.kml:
@@ -308,4 +322,4 @@ if __name__ == "__main__":
         try:
             sys.exit(0)
         except SystemExit:
-            os._exit(0) # pylint: disable=protected-access
+            os._exit(0)  # pylint: disable=protected-access

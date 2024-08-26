@@ -10,45 +10,41 @@ AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
 VERSION:    0.1
 CREATED:    2022-06-01
-REVISION:   
+REVISION:
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2022
 '''
-
+import sys
 import json
 import logging
-import requests
 
-API_SERVER_URL = 'http://localhost:8000/sealog-server'
+from os.path import dirname, realpath
+sys.path.append(dirname(dirname(realpath(__file__))))
 
-EVENT_AUX_DATA_API_PATH = '/api/v1/events'
+from misc.python_sealog.event_aux_data import delete_event_aux_data
 
-TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5ODFmMTY3MjEyYjM0OGFlZDdmYTlmNSIsInNjb3BlIjpbImFkbWluIl0sInJvbGVzIjpbImFkbWluIiwiZXZlbnRfd2F0Y2hlciIsImV2ZW50X2xvZ2dlciIsImV2ZW50X21hbmFnZXIiLCJjcnVpc2VfbWFuYWdlciIsInRlbXBsYXRlX21hbmFnZXIiXSwiaWF0IjoxNjUzOTkxOTgzfQ.THGhGqv4ydJa2jCyZCuJkC83OLDE6wNoxwxUPhaQzCk'
-
-HEADERS = {
-  "authorization": TOKEN
-}
 
 def main(uid_file, dry_run):
+    '''
+    Main function of script, read the file containing aux_data record ids and delete them.
+    '''
     logging.info("Starting main function.")
     logging.info(dry_run)
 
     uids = []
 
-    with open(uid_file) as file:
+    with open(uid_file, 'r', encoding='uft-b') as file:
         try:
             uids = json.load(file)
-        except Exception as err:
+        except Exception as exc:
             logging.error("Unable to import ids from file")
-            raise err
+            raise exc
 
     for uid in uids:
         logging.info("Removing aux_data record: %s", uid)
-        url = API_SERVER_URL + EVENT_AUX_DATA_API_PATH + '/' + uid
-        logging.debug("URL: %s", url)
-        # if not dry_run:
-        #     req = requests.delete(url, headers=HEADERS)
+        if not dry_run:
+            delete_event_aux_data(uid)
 
 
 # -------------------------------------------------------------------------------------
@@ -58,7 +54,6 @@ if __name__ == "__main__":
 
     import argparse
     import os
-    import sys
 
     parser = argparse.ArgumentParser(description='Aux Data Deleter')
     parser.add_argument('-v', '--verbosity', dest='verbosity',
@@ -79,7 +74,7 @@ if __name__ == "__main__":
     LOG_LEVELS = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
     parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
     logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
-  
+
     # Run the main function
     try:
         main(parsed_args.id_file, parsed_args.dry_run)
@@ -88,4 +83,4 @@ if __name__ == "__main__":
         try:
             sys.exit(0)
         except SystemExit:
-            os._exit(0) # pylint: disable=protected-access
+            os._exit(0)  # pylint: disable=protected-access

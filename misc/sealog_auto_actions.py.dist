@@ -33,22 +33,21 @@ import asyncio
 import json
 import logging
 import time
-import requests
 import websockets
 
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
 from misc.python_sealog.custom_vars import get_custom_var_uid_by_name, set_custom_var
-from misc.python_sealog.lowerings import get_lowering_by_event
-from misc.python_sealog.settings import API_SERVER_URL, WS_SERVER_URL, HEADERS, LOWERINGS_API_PATH
+from misc.python_sealog.lowerings import get_lowering_by_event, update_lowering
+from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
 
 ASNAP_STATUS_VAR_NAME = 'asnapStatus'
 
 # ---------------------------------------------------------
 # For vehicle-focused sealog instances
 # ---------------------------------------------------------
-INCLUDE_SET = ('VEHICLE')
+INCLUDE_SET = set('VEHICLE')
 
 ASNAP_LOOKUP = {
     'Off deck': 'On',
@@ -95,8 +94,8 @@ HELLO = {
 }
 
 PING = {
-    'type':'ping',
-    'id':CLIENT_WSID
+    'type': 'ping',
+    'id': CLIENT_WSID
 }
 
 
@@ -122,6 +121,7 @@ def _handle_vehicle_event(event):
         _set_asnap(milestone)
         _set_milestones(event, milestone)
 
+
 def _handle_cruise_event(event):
     '''
     The function handle auto actions for the CRUISE event_value.  It uses the
@@ -142,6 +142,7 @@ def _handle_cruise_event(event):
     if milestone is not None:
         _set_asnap(milestone)
 
+
 def _set_asnap(evt_milestone):
     '''
     Sets the ASNAP status variable based on the evt_milestone
@@ -158,7 +159,7 @@ def _set_asnap(evt_milestone):
     set_custom_var(asnap_status_var_uid, ASNAP_LOOKUP[evt_milestone])
 
 
-def _set_milestones(event, evt_milestone): # pylint: disable=too-many-branches,too-many-statements
+def _set_milestones(event, evt_milestone):  # pylint: disable=too-many-branches,too-many-statements
     '''
     Sets the lowering start/stop timestamp to the timestamp of the event if the
     evt_milestone corresponds to the appropriate milestone.
@@ -194,8 +195,6 @@ def _set_milestones(event, evt_milestone): # pylint: disable=too-many-branches,t
 
         payload['lowering_additional_meta'] = lowering['lowering_additional_meta']
 
-
-
         if 'milestones' not in payload['lowering_additional_meta']:
             payload['lowering_additional_meta']['milestones'] = {}
 
@@ -207,9 +206,7 @@ def _set_milestones(event, evt_milestone): # pylint: disable=too-many-branches,t
             if ('milestones' not in lowering['lowering_additional_meta'] or
                 milestone_name not in lowering['lowering_additional_meta']['milestones'] or
                 lowering['lowering_additional_meta']['milestones'][milestone_name] is None or
-                lowering['lowering_additional_meta']['milestones'][milestone_name] == '' or
-                milestone_reset):
-
+                lowering['lowering_additional_meta']['milestones'][milestone_name] == '' or milestone_reset):
                 logging.info("Setting milestone: %s to %s", milestone_name, event['ts'])
                 payload['lowering_additional_meta']['milestones'][milestone_name] = event['ts']
 
@@ -217,15 +214,15 @@ def _set_milestones(event, evt_milestone): # pylint: disable=too-many-branches,t
         logging.warning("Nothing to update in the lowering record")
         return
 
-    logging.debug("Payload: \n%s",json.dumps(payload, indent=2))
+    logging.debug("Payload: \n%s", json.dumps(payload, indent=2))
     try:
-        requests.patch(API_SERVER_URL + LOWERINGS_API_PATH + '/' + lowering['id'], headers=HEADERS, data = json.dumps(payload))
-    except Exception as err:
+        update_lowering(lowering['id'], payload)
+    except Exception as exc:
         logging.error("Could not update lowering record")
-        logging.debug(str(err))
+        logging.debug(str(exc))
 
 
-async def auto_actions(): #pylint: disable=too-many-branches, too-many-statements
+async def auto_actions():  # pylint: disable=too-many-branches, too-many-statements
     '''
     Listen to the new and updated events and respond as instructed based on the
     event and it's options
@@ -257,8 +254,8 @@ async def auto_actions(): #pylint: disable=too-many-branches, too-many-statement
                     _handle_vehicle_event(event)
                     _handle_cruise_event(event)
 
-    except Exception as error:
-        logging.error(str(error))
+    except Exception as exc:
+        logging.error(str(exc))
 
 
 # -------------------------------------------------------------------------------------
@@ -301,7 +298,7 @@ if __name__ == '__main__':
             try:
                 sys.exit(0)
             except SystemExit:
-                os._exit(0) # pylint: disable=protected-access
-        except Exception as error:
+                os._exit(0)  # pylint: disable=protected-access
+        except Exception as exc:
             logging.error("Lost connection to server, trying again in 5 seconds")
-            logging.debug(str(error))
+            logging.debug(str(exc))

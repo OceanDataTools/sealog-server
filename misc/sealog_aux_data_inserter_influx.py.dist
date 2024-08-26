@@ -37,21 +37,21 @@ import logging
 import asyncio
 import websockets
 import yaml
-import requests
 from influxdb_client import InfluxDBClient
 
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
 from misc.python_sealog.events import get_event, get_events_by_cruise, get_events_by_lowering
+from misc.python_sealog.events_aux_data import create_event_aux_data
 from misc.python_sealog.lowerings import get_lowering_uid_by_id
 from misc.python_sealog.cruises import get_cruise_uid_by_id
 
-from misc.python_sealog.settings import API_SERVER_URL, WS_SERVER_URL, LOWERINGS_API_PATH, EVENTS_API_PATH, EVENT_AUX_DATA_API_PATH, HEADERS
+from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
 from misc.influx_sealog.settings import INFLUXDB_URL, INFLUXDB_AUTH_TOKEN, INFLUXDB_ORG, INFLUXDB_VERIFY_SSL
 from misc.influx_sealog.aux_data_record_builder import SealogInfluxAuxDataRecordBuilder
 
-#-----------------------------------------------------------------------------#
+# ----------------------------------------------------------------------------- #
 
 INLINE_CONFIG = '''
 - data_source: realtimeVesselPosition
@@ -100,7 +100,7 @@ INLINE_CONFIG = '''
 '''
 
 # set of events to ignore
-EXCLUDE_SET = ()
+EXCLUDE_SET = set()
 
 # needs to be unique for all currently active dataInserter scripts.
 CLIENT_WSID = 'auxData-dataInserter-influx'
@@ -116,32 +116,36 @@ HELLO = {
 }
 
 PING = {
-    'type':'ping',
-    'id':CLIENT_WSID
+    'type': 'ping',
+    'id': CLIENT_WSID
 }
 
 
 def parse_event_ids(event_id_file):
-    event_ids = list()
-    with open(event_id_file) as file:
-        lines = list()
-
-        for line in file:
+    '''
+    Builds list of event uid from csv-formatted file.
+    '''
+    event_ids_from_file = []
+    with open(event_id_file, 'r', encoding='utf-8') as event_id_fp:
+        for line in event_id_fp:
             line = line.rstrip('\n')
             logging.debug(line)
-            event_ids += line.split(',')
+            event_ids_from_file += line.split(',')
 
-        event_ids = [event_id.strip() for event_id in event_ids]
+        event_ids_from_file = [event_id.strip() for event_id in event_ids_from_file]
 
-        for event_id in event_ids:
+        for event_id in event_ids_from_file:
             if re.match(r"^[a-f\d]{24}$", event_id) is None:
                 logging.error("\"%s\" is an invalid event_id... quiting", event_id)
-                raise ValueError("\"%s\" is an invalid event_id... quiting", event_id)
+                raise ValueError(f'"{event_id}" is an invalid event_id... quiting')
 
-    return event_ids
+    return event_ids_from_file
 
 
-def insert_aux_data(aux_data_builders, event):
+def insert_aux_data(aux_data_builders, event, dry_run=False):
+    '''
+    Add aux_data records for only the specified event
+    '''
     for builder in aux_data_builders:
         logging.debug("Building aux data record")
         record = builder.build_aux_data_record(event)
@@ -149,38 +153,44 @@ def insert_aux_data(aux_data_builders, event):
             try:
                 logging.debug("Submitting aux data record to Sealog Server")
                 logging.debug(json.dumps(record))
-                req = requests.post(API_SERVER_URL + EVENT_AUX_DATA_API_PATH, headers=HEADERS, data = json.dumps(record))
-                logging.debug("Response: %s", req.text)
+                if not dry_run:
+                    create_event_aux_data(record)
 
-            except Exception as err:
+            except Exception as exc:
                 logging.warning("Error submitting aux data record")
-                logging.debug(str(err))
+                logging.debug(str(exc))
         else:
             logging.debug("No aux data for data_source: %s", builder.data_source)
 
 
-def insert_aux_data_from_list(aux_data_builders, event_ids):
-    for event_id in event_ids:
+def insert_aux_data_from_list(aux_data_builders, event_ids_from_list, dry_run=False):
+    '''
+    Add aux_data records for only the events in the specified list
+    '''
+    for event_id in event_ids_from_list:
         try:
             logging.debug("Retrieving event record from Sealog Server")
             event = get_event(event_id)
             logging.debug("Event: %s", event)
 
-        except Exception as err:
+        except Exception as exc:
             logging.warning("Error submitting aux data record")
-            logging.debug(str(err))
-            raise(err)
+            logging.debug(str(exc))
+            raise exc
 
-        insert_aux_data(aux_data_builders, event)
+        insert_aux_data(aux_data_builders, event, dry_run)
 
 
 def insert_aux_data_for_cruise(aux_data_builders, cruise_id, dry_run=False):
+    '''
+    Add aux_data records for only the events in the specified cruise
+    '''
     cruise_uid = get_cruise_uid_by_id(cruise_id)
 
     # exit if no cruise found
     if not cruise_uid:
         logging.error("cruise not found")
-        return None
+        return
 
     # retrieve events for cruise
     cruise_events = get_events_by_cruise(cruise_uid)
@@ -188,19 +198,22 @@ def insert_aux_data_for_cruise(aux_data_builders, cruise_id, dry_run=False):
     # exit if no cruise found
     if not cruise_events:
         logging.error("no events found for cruise")
-        return None
+        return
 
     for event in cruise_events:
-        insert_aux_data(aux_data_builders, event)
+        insert_aux_data(aux_data_builders, event, dry_run)
 
 
 def insert_aux_data_for_lowering(aux_data_builders, lowering_id, dry_run=False):
+    '''
+    Add aux_data records for only the events in the specified lowering
+    '''
     lowering_uid = get_lowering_uid_by_id(lowering_id)
 
     # exit if no lowering found
     if not lowering_uid:
         logging.error("lowering not found")
-        return None
+        return
 
     # retrieve events for lowering
     lowering_events = get_events_by_lowering(lowering_uid)
@@ -208,18 +221,17 @@ def insert_aux_data_for_lowering(aux_data_builders, lowering_id, dry_run=False):
     # exit if no lowering found
     if not lowering_events:
         logging.error("no events found for lowering")
-        return None
+        return
 
     for event in lowering_events:
-        insert_aux_data(aux_data_builders, event)
+        insert_aux_data(aux_data_builders, event, dry_run)
 
 
-async def insert_aux_data_from_ws(aux_data_builders):
+async def insert_aux_data_from_ws(aux_data_builders, dry_run=False):
     '''
     Use the aux_data_builder and the influx_sealog wrapper to submit aux_data
     records built from influxDB data to the sealog-server API
     '''
-
     try:
         async with websockets.connect(WS_SERVER_URL) as websocket:
 
@@ -240,13 +252,11 @@ async def insert_aux_data_from_ws(aux_data_builders):
 
                     logging.debug("Event: %s", event_obj['message'])
 
-                    insert_aux_data(aux_data_builders, event_obj['message'])
+                    insert_aux_data(aux_data_builders, event_obj['message'], dry_run)
 
-
-
-    except Exception as err:
-        logging.error(str(err))
-        raise err
+    except Exception as exc:
+        logging.error(str(exc))
+        raise exc
 
 # -------------------------------------------------------------------------------------
 # The main loop of the utility
@@ -279,16 +289,16 @@ if __name__ == '__main__':
     parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
     logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
 
-    aux_data_configs = None # pylint: disable=invalid-name
+    aux_data_configs = None  # pylint: disable=invalid-name
 
     if parsed_args.config_file:
 
-        config_file, data_source = parsed_args.config_file.split(":") if ":" in parsed_args.config_file else [ parsed_args.config_file, None ]
-        
+        config_file, data_source = parsed_args.config_file.split(":") if ":" in parsed_args.config_file else [parsed_args.config_file, None]
+
         try:
-            with open(config_file) as file:
-                aux_data_configs = yaml.safe_load(file)
-    
+            with open(config_file, 'r', encoding='utf-8') as config_fp:
+                aux_data_configs = yaml.safe_load(config_fp)
+
             if data_source:
                 aux_data_configs = [config for config in aux_data_configs if config['data_source'] == data_source]
 
@@ -319,9 +329,9 @@ if __name__ == '__main__':
         logging.debug("Processing list of event ids")
 
         event_ids = parse_event_ids(parsed_args.events)
-        logging.info("Event IDs:\n%s",json.dumps(event_ids, indent=2))
+        logging.info("Event IDs:\n%s", json.dumps(event_ids, indent=2))
 
-        insert_aux_data_from_list(aux_data_builder_list, event_ids)
+        insert_aux_data_from_list(aux_data_builder_list, event_ids, parsed_args.dry_run)
 
         sys.exit(0)
 
@@ -347,13 +357,13 @@ if __name__ == '__main__':
 
         try:
             logging.debug("Connecting to event websocket feed...")
-            asyncio.get_event_loop().run_until_complete(insert_aux_data_from_ws(aux_data_builder_list))
+            asyncio.get_event_loop().run_until_complete(insert_aux_data_from_ws(aux_data_builder_list, parsed_args.dry_run))
         except KeyboardInterrupt:
             logging.error('Keyboard Interrupted')
             try:
                 sys.exit(0)
             except SystemExit:
-                os._exit(0) # pylint: disable=protected-access
+                os._exit(0)  # pylint: disable=protected-access
         except Exception as err:
             logging.debug(str(err))
             logging.error("Lost connection to server, trying again in 5 seconds")

@@ -57,7 +57,7 @@ def _cruise_file_prefix(cruise):
 
     # Prepend the with just the cruise id
     # --------------------------------------------
-    #return f"{cruise['cruise_id']}_"
+    # return f"{cruise['cruise_id']}_"
 
 
 def verify_source_directories(cruise):
@@ -70,7 +70,7 @@ def verify_source_directories(cruise):
     if not os.path.isdir(CRUISES_FILE_PATH):
         return False, "cannot find cruises file path"
 
-    #verify cruise source directory exists
+    # verify cruise source directory exists
     cruise_source_dir = os.path.join(CRUISES_FILE_PATH, cruise['id'])
     if not os.path.isdir(cruise_source_dir):
         return False, (
@@ -94,22 +94,22 @@ def _build_export_directories(cruise):
             os.mkdir(cruise_dir)
         except FileExistsError:
             logging.debug("cruise export directory already exists")
-        except Exception as err:
+        except Exception as exc:
             logging.error("Could not create cruise export directory")
-            logging.debug(str(err))
+            logging.debug(str(exc))
             sys.exit(1)
 
     try:
         os.mkdir(os.path.join(cruise_dir, FILES_DIRNAME))
     except FileExistsError:
         logging.debug("cruise export files directory already exists")
-    except Exception as err:
+    except Exception as exc:
         logging.error("Could not create cruise files export directory")
-        logging.debug(str(err))
+        logging.debug(str(exc))
         sys.exit(1)
 
 
-def export_cruise(cruise): # pylint: disable=too-many-statements, redefined-outer-name
+def export_cruise(cruise):  # pylint: disable=too-many-statements, redefined-outer-name
     """
     export the data for the given cruise
     """
@@ -128,9 +128,9 @@ def export_cruise(cruise): # pylint: disable=too-many-statements, redefined-oute
         with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(cruise))
 
-    except Exception as err:
+    except Exception as exc:
         logging.error('could not create data file: %s', dest_filepath)
-        logging.debug(str(err))
+        logging.debug(str(exc))
 
     try:
         filename = _cruise_file_prefix(cruise) + '_eventOnlyExport.json'
@@ -140,9 +140,9 @@ def export_cruise(cruise): # pylint: disable=too-many-statements, redefined-oute
         with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(get_events_by_cruise(cruise['id'])))
 
-    except Exception as err:
+    except Exception as exc:
         logging.error('could not create data file: %s', dest_filepath)
-        logging.debug(str(err))
+        logging.debug(str(exc))
 
     try:
         filename = _cruise_file_prefix(cruise) + '_eventOnlyExport.csv'
@@ -152,9 +152,9 @@ def export_cruise(cruise): # pylint: disable=too-many-statements, redefined-oute
         with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(get_events_by_cruise(cruise['id'], 'csv'))
 
-    except Exception as err:
+    except Exception as exc:
         logging.error('could not create data file: %s', dest_filepath)
-        logging.debug(str(err))
+        logging.debug(str(exc))
 
     try:
         filename = _cruise_file_prefix(cruise) + '_auxDataExport.json'
@@ -164,9 +164,9 @@ def export_cruise(cruise): # pylint: disable=too-many-statements, redefined-oute
         with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(get_event_aux_data_by_cruise(cruise['id'])))
 
-    except Exception as err:
+    except Exception as exc:
         logging.error('could not create data file: %s', dest_filepath)
-        logging.debug(str(err))
+        logging.debug(str(exc))
 
     try:
         filename = _cruise_file_prefix(cruise) + '_sealogExport.json'
@@ -176,9 +176,9 @@ def export_cruise(cruise): # pylint: disable=too-many-statements, redefined-oute
         with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(get_event_exports_by_cruise(cruise['id'])))
 
-    except Exception as err:
+    except Exception as exc:
         logging.error('could not create data file: %s', dest_filepath)
-        logging.debug(str(err))
+        logging.debug(str(exc))
 
     try:
         filename = _cruise_file_prefix(cruise) + '_sealogExport.csv'
@@ -188,9 +188,9 @@ def export_cruise(cruise): # pylint: disable=too-many-statements, redefined-oute
         with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(get_event_exports_by_cruise(cruise['id'], 'csv'))
 
-    except Exception as err:
+    except Exception as exc:
         logging.error('could not create data file: %s', dest_filepath)
-        logging.debug(str(err))
+        logging.debug(str(exc))
 
     try:
         filename = _cruise_file_prefix(cruise) + '_eventTemplates.json'
@@ -200,9 +200,9 @@ def export_cruise(cruise): # pylint: disable=too-many-statements, redefined-oute
         with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(get_event_templates()))
 
-    except Exception as err:
+    except Exception as exc:
         logging.error('could not create data file: %s', dest_filepath)
-        logging.debug(str(err))
+        logging.debug(str(exc))
 
     # rsync files
     subprocess.call([

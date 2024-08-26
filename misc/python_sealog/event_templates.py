@@ -27,7 +27,9 @@ sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
 
 from misc.python_sealog.settings import API_SERVER_URL, HEADERS, EVENT_TEMPLATES_API_PATH
 
-def get_event_templates(system=True, non_system=True, api_server_url=API_SERVER_URL, headers=HEADERS):
+
+def get_event_templates(system=True, non_system=True, api_server_url=API_SERVER_URL,
+                        headers=HEADERS):
     '''
     Return the event_export for the event with the given event_uid.
     '''
@@ -38,7 +40,7 @@ def get_event_templates(system=True, non_system=True, api_server_url=API_SERVER_
 
     try:
         url = api_server_url + EVENT_TEMPLATES_API_PATH
-        req = requests.get(url, headers=headers)
+        req = requests.get(url, headers=headers, timeout=0.750)
 
         if req.status_code != 404:
             event_templates = json.loads(req.text)
@@ -54,9 +56,12 @@ def get_event_templates(system=True, non_system=True, api_server_url=API_SERVER_
 
         return []
 
-    except Exception as error:
-        logging.debug(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return []
-    

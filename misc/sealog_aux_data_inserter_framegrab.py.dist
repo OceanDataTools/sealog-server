@@ -23,11 +23,11 @@ LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for det
                 Copyright (C) OceanDataTools.org 2024
 '''
 
+import os
 import sys
 import asyncio
 import json
 import time
-import glob
 import shutil
 import logging
 from datetime import datetime, timedelta
@@ -40,10 +40,11 @@ sys.path.append(dirname(dirname(realpath(__file__))))
 try:
     from paramiko import RSAKey, SSHClient, SFTPClient, Transport
     PARAMIKO_ENABLED = True
-except:
+except ImportError:
     PARAMIKO_ENABLED = False
 
-from misc.python_sealog.settings import API_SERVER_URL, WS_SERVER_URL, EVENT_AUX_DATA_API_PATH, HEADERS
+from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
+from misc.python_sealog.event_aux_data import create_event_aux_data
 
 # The data_source to use for the auxData records
 AUX_DATA_DATASOURCE = 'vehicleRealtimeFramegrabberData'
@@ -51,9 +52,9 @@ AUX_DATA_DATASOURCE = 'vehicleRealtimeFramegrabberData'
 # set of events to ignore
 EXCLUDE_SET = ()
 
-CLIENT_WSID = 'aux_data_inserter_' + AUX_DATA_DATASOURCE # needs to be unique for all currently active dataInserter scripts.
+CLIENT_WSID = f'aux_data_inserter_{AUX_DATA_DATASOURCE}'  # needs to be unique for all currently active dataInserter scripts.
 
-THRESHOLD = 20 #seconds
+THRESHOLD = 20  # seconds
 
 # ------------ only needed for scp transfers --------------
 # if not PARAMIKO_ENABLED:
@@ -67,15 +68,15 @@ THRESHOLD = 20 #seconds
 # t = Transport(host, port)
 
 # ------------ only needed for local transfers ------------
-source_dir = '/mnt/ramdisk'
+SOURCE_DIR = '/mnt/ramdisk'
 
 # ---------------------------------------------------------
 
-dest_dir = '/data/sealog-files/images'
+DEST_DIR = '/data/sealog-files/images'
 
 sources = [
     {
-        'source_url': 'http://192.168.1.42/images/'
+        'source_url': 'http://192.168.1.42/images/',
         'source_filename': 'camera1.jpg',
         'source_name': 'CAMERA_1',
         'filename_prefix': '',
@@ -94,8 +95,8 @@ HELLO = {
 }
 
 PING = {
-    'type':'ping',
-    'id':CLIENT_WSID
+    'type': 'ping',
+    'id': CLIENT_WSID
 }
 
 
@@ -129,7 +130,7 @@ async def aux_data_inserter():
                         logging.debug("Skipping because event ts is older than thresold")
                         continue
 
-                    aux_data_record = {         
+                    aux_data_record = {
                         'event_id': event_obj['message']['id'],
                         'data_source': AUX_DATA_DATASOURCE,
                         'data_array': []
@@ -141,22 +142,21 @@ async def aux_data_inserter():
                         filename_time = datetime.time(datetime.strptime(event_obj['message']['ts'], '%Y-%m-%dT%H:%M:%S.%fZ'))
                         filename_middle = datetime.combine(filename_date, filename_time).strftime("%Y%m%d_%H%M%S%f")[:-3]
 
-                        dst = os.path.join(dest_dir, source['filename_prefix'] + filename_middle + source['filename_suffix'])
+                        dst = os.path.join(DEST_DIR, source['filename_prefix'] + filename_middle + source['filename_suffix'])
 
                         logging.debug("dst: %s", dst)
 
                         try:
 
                             # ------------ only needed for scp transfers -------------
-                            # latest_file = os.path.join(source_dir, source['source_filename'])
-                            # src = os.path.join(source_dir, latest_file)
+                            # latest_file = os.path.join(SOURCE_DIR, source['source_filename'])
+                            # src = os.path.join(SOURCE_DIR, latest_file)
                             # sftp = SFTPClient.from_transport(t)
                             # sftp.put(src, dst)
                             # sftp.close()
 
-
                             # ------------ only needed for http transfers -------------
-                            res = requests.get(source['source_url'] + source['source_filename'], stream=True)
+                            res = requests.get(source['source_url'] + source['source_filename'], stream=True, timeout=0.750)
 
                             if res.status_code != 200:
                                 logging.error("Unable to retrieve image from: %s", source['source_url'] + source['source_filename'])
@@ -166,24 +166,23 @@ async def aux_data_inserter():
                                 shutil.copyfileobj(res.raw, f)
 
                             # ----------- only needed for local transfers ------------
-                            # latest_file = os.path.join(source_dir, source['source_filename'])
-                            # src = os.path.join(source_dir, latest_file)
+                            # latest_file = os.path.join(SOURCE_DIR, source['source_filename'])
+                            # src = os.path.join(SOURCE_DIR, latest_file)
                             # shutil.copyfile(src,dst)
 
-                            aux_data_record['data_array'].append({ 'data_name': "camera_name",'data_value': source['source_name'] })
-                            aux_data_record['data_array'].append({ 'data_name': "filename",'data_value': dst })
+                            aux_data_record['data_array'].append({'data_name': "camera_name", 'data_value': source['source_name']})
+                            aux_data_record['data_array'].append({'data_name': "filename", 'data_value': dst})
 
-                        except Exception as error:
+                        except Exception as exc:
                             logging.error("Unable to copy image to server")
-                            logging.error(error)
-        
-                    if len(aux_data_record['data_array']) > 0:
-                        req = requests.post(API_SERVER_URL + EVENT_AUX_DATA_API_PATH, headers=HEADERS, data = json.dumps(aux_data_record))
-                        logging.debug(req.text)
+                            logging.error(exc)
 
-    except Exception as error:
-        logging.error(str(error))
-        raise error
+                    if len(aux_data_record['data_array']) > 0:
+                        create_event_aux_data(aux_data_record)
+
+    except Exception as exc:
+        logging.error(str(exc))
+        raise exc
 
 # -------------------------------------------------------------------------------------
 # Required python code for running the script as a stand-alone utility
@@ -191,7 +190,6 @@ async def aux_data_inserter():
 if __name__ == '__main__':
 
     import argparse
-    import os
 
     parser = argparse.ArgumentParser(description='Aux Data Inserter Service - ' + AUX_DATA_DATASOURCE)
     parser.add_argument('-v', '--verbosity', dest='verbosity',
@@ -225,7 +223,7 @@ if __name__ == '__main__':
             try:
                 sys.exit(0)
             except SystemExit:
-                os._exit(0) # pylint: disable=protected-access
-        except Exception as error:
+                os._exit(0)  # pylint: disable=protected-access
+        except Exception as exc:
             logging.error("Lost connection to server, trying again in 5 seconds")
-            logging.debug(str(error))
+            logging.debug(str(exc))

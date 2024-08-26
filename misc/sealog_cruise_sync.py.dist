@@ -72,7 +72,7 @@ def update_cruise_record(cruise_record):
 
         try:
             url = instance['apiServerURL'] + CRUISES_API_PATH + '/' + cruise_record['id']
-            req = requests.get(url, headers=instance_headers)
+            req = requests.get(url, headers=instance_headers, timeout=0.750)
 
             if req.status_code != 404:
                 logging.debug("Cruise found for Cruise UID: %s", cruise_record['id'])
@@ -83,9 +83,9 @@ def update_cruise_record(cruise_record):
             else:
                 logging.debug("Cruise NOT found for Cruise UID: %s", cruise_record['id'])
 
-        except Exception as error:
-            logging.error(str(error))
-            raise error
+        except Exception as exc:
+            logging.error(str(exc))
+            raise exc
 
         # if a cruise record with the cruiseID does exist, perform an update
         if cruise_found is not None:
@@ -93,15 +93,15 @@ def update_cruise_record(cruise_record):
                 url = instance['apiServerURL'] + CRUISES_API_PATH + '/' + cruise_found['id']
                 logging.debug(url)
                 logging.debug(json.dumps(cruise_record))
-                update_cruise_record = deepcopy(cruise_record)
-                del update_cruise_record['id']
-                req = requests.patch(url, headers=instance_headers, data = json.dumps(update_cruise_record))
+                updated_cruise_record = deepcopy(cruise_record)
+                del updated_cruise_record['id']
+                req = requests.patch(url, headers=instance_headers, data=json.dumps(updated_cruise_record), timeout=0.750)
                 logging.debug(req.text)
 
-            except Exception as error:
+            except Exception as exc:
                 logging.error('Error updating existing cruise record')
-                logging.debug(str(error))
-                raise error
+                logging.debug(str(exc))
+                raise exc
 
         # if a cruise record with the cruiseID does NOT exist, perform an insert
         else:
@@ -109,13 +109,13 @@ def update_cruise_record(cruise_record):
                 url = instance['apiServerURL'] + CRUISES_API_PATH
                 logging.debug(url)
                 logging.debug(json.dumps(cruise_record))
-                req = requests.post(url, headers=instance_headers, data = json.dumps(cruise_record))
+                req = requests.post(url, headers=instance_headers, data=json.dumps(cruise_record), timeout=0.750)
                 logging.debug(req.text)
 
-            except Exception as error:
+            except Exception as exc:
                 logging.error('Error inserting new cruise record')
-                logging.debug(str(error))
-                raise error
+                logging.debug(str(exc))
+                raise exc
 
 
 # -------------------------------------------------------------------------------------
@@ -150,8 +150,8 @@ async def cruise_sync():
                 else:
                     logging.debug("Skipping because cruise value is in the exclude set")
 
-    except Exception as error:
-        logging.error(str(error))
+    except Exception as exc:
+        logging.error(str(exc))
 
 # -------------------------------------------------------------------------------------
 # Required python code for running the script as a stand-alone utility
@@ -187,4 +187,4 @@ if __name__ == '__main__':
         try:
             sys.exit(0)
         except SystemExit:
-            os._exit(0) # pylint: disable=protected-access
+            os._exit(0)  # pylint: disable=protected-access
