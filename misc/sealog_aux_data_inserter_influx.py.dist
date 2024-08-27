@@ -43,7 +43,7 @@ from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
 from misc.python_sealog.events import get_event, get_events_by_cruise, get_events_by_lowering
-from misc.python_sealog.events_aux_data import create_event_aux_data
+from misc.python_sealog.event_aux_data import create_event_aux_data
 from misc.python_sealog.lowerings import get_lowering_uid_by_id
 from misc.python_sealog.cruises import get_cruise_uid_by_id
 
