@@ -25,9 +25,11 @@ import requests
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
 
-from misc.python_sealog.settings import API_SERVER_URL, API_SERVER_FILE_PATH, HEADERS, EVENT_AUX_DATA_API_PATH
+from misc.python_sealog.settings import API_SERVER_URL, HEADERS, EVENT_AUX_DATA_API_PATH
 
-def get_framegrab_list_by_lowering(lowering_uid, datasources, api_server_url=API_SERVER_URL, headers=HEADERS):
+
+def get_framegrab_list_by_lowering(lowering_uid, datasources, api_server_url=API_SERVER_URL,
+                                   headers=HEADERS):
     '''
     Get the list of framegrabs for the given lowering_uid
     '''
@@ -51,12 +53,19 @@ def get_framegrab_list_by_lowering(lowering_uid, datasources, api_server_url=API
                     if framegrab['data_name'] == 'filename':
                         framegrab_filenames.append(framegrab['data_value'])
 
-    except Exception as error:
-        logging.error(str(error))
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return framegrab_filenames
 
-def get_framegrab_list_by_cruise(cruise_uid, datasources, api_server_url=API_SERVER_URL, headers=HEADERS):
+
+def get_framegrab_list_by_cruise(cruise_uid, datasources, api_server_url=API_SERVER_URL,
+                                 headers=HEADERS):
     '''
     Get the list of framegrabs for the given cruise_uid
     '''
@@ -80,10 +89,16 @@ def get_framegrab_list_by_cruise(cruise_uid, datasources, api_server_url=API_SER
                     if framegrab['data_name'] == 'filename':
                         framegrab_filenames.append(framegrab['data_value'])
 
-    except Exception as error:
-        logging.error(str(error))
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return framegrab_filenames
+
 
 def get_framegrab_list_by_file(filename, datasources):
     '''
@@ -94,7 +109,7 @@ def get_framegrab_list_by_file(filename, datasources):
     framegrab_filenames = []
 
     try:
-        with open(filename, 'r') as file:
+        with open(filename, 'r', encoding='utf-8') as file:
             framegrab_list = json.loads(file.read())
 
             for data in framegrab_list:
@@ -103,7 +118,8 @@ def get_framegrab_list_by_file(filename, datasources):
                         if framegrab['data_name'] == 'filename':
                             framegrab_filenames.append(framegrab['data_value'])
 
-    except Exception as error:
-        logging.error(str(error))
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return framegrab_filenames

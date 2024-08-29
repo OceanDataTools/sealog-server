@@ -27,6 +27,7 @@ sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
 
 from misc.python_sealog.settings import API_SERVER_URL, HEADERS, CUSTOM_VAR_API_PATH
 
+
 def get_custom_var(var_uid, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return a custom_var record based on the var_uid.
@@ -42,10 +43,13 @@ def get_custom_var(var_uid, api_server_url=API_SERVER_URL, headers=HEADERS):
             logging.debug(json.dumps(custom_var))
             return custom_var
 
-    except Exception as error:
-        logging.error('Error retrieving custom variable')
-        logging.debug(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
 
@@ -68,10 +72,13 @@ def get_custom_var_uid_by_name(var_name, api_server_url=API_SERVER_URL, headers=
             custom_var = json.loads(req.text)[0]
             return custom_var['id']
 
-    except Exception as error:
-        logging.error('Error retrieving custom variable UID')
-        logging.debug(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
 
@@ -93,10 +100,13 @@ def get_custom_var_by_name(var_name, api_server_url=API_SERVER_URL, headers=HEAD
         if req.status_code != 404:
             return json.loads(req.text)[0]
 
-    except Exception as error:
-        logging.error('Error retrieving custom variable')
-        logging.debug(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
 
@@ -107,12 +117,11 @@ def set_custom_var(var_uid, value, api_server_url=API_SERVER_URL, headers=HEADER
     '''
 
     try:
-        payload = { "custom_var_value": value}
+        payload = {"custom_var_value": value}
         url = api_server_url + CUSTOM_VAR_API_PATH + '/' + var_uid
-        req = requests.patch(url, headers=headers, data = json.dumps(payload))
+        req = requests.patch(url, headers=headers, data=json.dumps(payload))
         logging.debug(req.text)
 
-    except Exception as error:
-        logging.error('Error setting custom variable')
-        logging.debug(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc

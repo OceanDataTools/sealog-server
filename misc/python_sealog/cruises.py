@@ -27,6 +27,7 @@ sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
 
 from misc.python_sealog.settings import API_SERVER_URL, HEADERS, CRUISES_API_PATH
 
+
 def get_cruise(cruise_uid, export_format='json', api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return a cruise record based on the cruise_id.  Returns the record as a json
@@ -51,9 +52,13 @@ def get_cruise(cruise_uid, export_format='json', api_server_url=API_SERVER_URL, 
         else:
             return None
 
-    except Exception as error:
-        logging.error(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
 
@@ -86,9 +91,13 @@ def get_cruises(export_format='json', api_server_url=API_SERVER_URL, headers=HEA
             if export_format == 'csv':
                 return ""
 
-    except Exception as error:
-        logging.error(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
 
@@ -111,14 +120,19 @@ def get_cruise_uid_by_id(cruise_id, api_server_url=API_SERVER_URL, headers=HEADE
 
             return cruise['id']
 
-    except Exception as error:
-        logging.error(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
 
 
-def get_cruise_by_id(cruise_id, export_format='json', api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_cruise_by_id(cruise_id, export_format='json', api_server_url=API_SERVER_URL,
+                     headers=HEADERS):
     '''
     Return the cruise record based on the cruise_id.  Returns the records as json
     object by default.  Set export_format to 'csv' to return the record in csv
@@ -143,14 +157,19 @@ def get_cruise_by_id(cruise_id, export_format='json', api_server_url=API_SERVER_
         else:
             return None
 
-    except Exception as error:
-        logging.error(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
 
 
-def get_cruise_by_lowering(lowering_uid, export_format='json', api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_cruise_by_lowering(lowering_uid, export_format='json',
+                           api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the cruise record that contains the lowering whose uid is
     lowering_uid.  Returns the record as a json object by default.  Set
@@ -174,14 +193,19 @@ def get_cruise_by_lowering(lowering_uid, export_format='json', api_server_url=AP
         else:
             return None
 
-    except Exception as error:
-        logging.error(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None
 
 
-def get_cruise_by_event(event_uid, export_format='json', api_server_url=API_SERVER_URL, headers=HEADERS):
+def get_cruise_by_event(event_uid, export_format='json', api_server_url=API_SERVER_URL,
+                        headers=HEADERS):
     '''
     Return the cruise record that contains the event whose uid is
     event_uid.  Returns the record as a json object by default.  Set
@@ -205,8 +229,12 @@ def get_cruise_by_event(event_uid, export_format='json', api_server_url=API_SERV
         else:
             return None
 
-    except Exception as error:
-        logging.error(str(error))
-        raise error
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
 
     return None

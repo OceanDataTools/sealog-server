@@ -1,3 +1,22 @@
+#!/usr/bin/env python3
+'''
+FILE:           db_import_utils.py
+
+DESCRIPTION:    Library of utility functions used for importing data directly
+                into the database
+
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    1.0
+CREATED:    2024-07-01
+REVISION:   2024-08-25
+
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2024
+'''
+
 import json
 import copy
 import logging
@@ -16,7 +35,7 @@ cruise_schema = {
         "cruise_additional_meta": {
             "type": "object",
             "properties": {
-                "cruise_participants": { "type": "array" },
+                "cruise_participants": {"type": "array"},
                 "cruise_name": {"type": "string"},
                 "cruise_vessel": {"type": "string"},
                 "cruise_pi": {"type": "string"},
@@ -101,87 +120,87 @@ auxData_schema = {
 }
 
 
-def _convertRecord(record):
+def _convert_record(record):
 
     try:
         new_record = copy.deepcopy(record)
-        new_record['_id'] = { "$oid": record['id'] }
+        new_record['_id'] = {"$oid": record['id']}
         del new_record['id']
         return new_record
 
-    except Exception as error:
-        logging.debug(str(error))
-        raise ValueError(f"(_convertRecord) Could not convert record {record['id']}")
+    except Exception as exc:
+        logging.debug(str(exc))
+        raise ValueError(f"(_convert_record) Could not convert record {record['id']}") from exc
 
 
-def _validateRecord(record, record_schema):
+def _validate_record(record, record_schema):
 
     try:
         validate(instance=record, schema=record_schema)
 
-    except Exception as error:
-        logging.debug(str(error))
-        raise ValueError(f"(_validateRecord) Could not validate record {record['id']}")
+    except Exception as exc:
+        logging.debug(str(exc))
+        raise ValueError(f"(_validate_record) Could not validate record {record['id']}") from exc
 
 
-def _convertCruiseRecord(record):
-
-    try:
-        new_record = _convertRecord(record)
-        new_record['start_ts'] = { "$date": new_record['start_ts']}
-        new_record['stop_ts'] = { "$date": new_record['stop_ts']}
-
-        return new_record    
-
-    except Exception as error:
-        logging.debug(str(error))
-        raise ValueError(f"(_convertCruiseRecord) Could not convert record {record['id']}")
-
-
-def _convertLoweringRecord(record):
+def _convert_cruise_record(record):
 
     try:
-        new_record = _convertRecord(record)
-        new_record['start_ts'] = { "$date": new_record['start_ts']}
-        new_record['stop_ts'] = { "$date": new_record['stop_ts']}
+        new_record = _convert_record(record)
+        new_record['start_ts'] = {"$date": new_record['start_ts']}
+        new_record['stop_ts'] = {"$date": new_record['stop_ts']}
 
-        return new_record    
+        return new_record
 
-    except Exception as error:
-        logging.debug(str(error))
-        raise ValueError(f"(_convertLoweringRecord) Could not convert record {record['id']}")
+    except Exception as exc:
+        logging.debug(str(exc))
+        raise ValueError(f"(_convert_cruise_record) Could not convert record {record['id']}") from exc
 
 
-def _convertEventRecord(record):
+def _convert_lowering_record(record):
 
     try:
-        new_record = _convertRecord(record)
+        new_record = _convert_record(record)
+        new_record['start_ts'] = {"$date": new_record['start_ts']}
+        new_record['stop_ts'] = {"$date": new_record['stop_ts']}
+
+        return new_record
+
+    except Exception as exc:
+        logging.debug(str(exc))
+        raise ValueError(f"(_convert_lowering_record) Could not convert record {record['id']}") from exc
+
+
+def _convert_event_record(record):
+
+    try:
+        new_record = _convert_record(record)
         new_record['ts'] = {"$date": new_record['ts']}
 
-        return new_record    
+        return new_record
 
-    except Exception as error:
-        logging.debug(str(error))
-        raise ValueError(f"(_convertEventRecord) Could not convert record {record['id']}")
-
-
-def _convertAuxDataRecord(record):
-
-    try:
-        new_record = _convertRecord(record)
-        new_record['event_id'] = { "$oid": new_record['event_id'] }
-
-        return new_record    
-
-    except Exception as error:
-        logging.debug(str(error))
-        raise ValueError(f"(_convertAuxDataRecord) Could not convert record {record['id']}")
+    except Exception as exc:
+        logging.debug(str(exc))
+        raise ValueError(f"(_convert_event_record) Could not convert record {record['id']}") from exc
 
 
-def _convertRecordFN(record_fn, conv_func, validate_func):
+def _convert_aux_data_record(record):
 
     try:
-        with open(record_fn) as record_fp:
+        new_record = _convert_record(record)
+        new_record['event_id'] = {"$oid": new_record['event_id']}
+
+        return new_record
+
+    except Exception as exc:
+        logging.debug(str(exc))
+        raise ValueError(f"(_convert_aux_data_record) Could not convert record {record['id']}") from exc
+
+
+def _convert_record_fn(record_fn, conv_func, validate_func):
+
+    try:
+        with open(record_fn, 'r', encoding='utf-8') as record_fp:
             record = json.load(record_fp)
 
             if isinstance(record, dict):
@@ -193,57 +212,74 @@ def _convertRecordFN(record_fn, conv_func, validate_func):
             logging.info("Converting record(s)")
             return list(map(conv_func, record))
 
-    except Exception as error:
-        logging.debug(str(error))
-        raise ValueError(f"(_convertRecordFN) Could not convert record {record['id']}")
+    except Exception as exc:
+        logging.debug(str(exc))
+        raise ValueError(f"(_convert_record_fn) Could not convert record {record['id']}") from exc
+
 
 # --------------------------------------------------------------------------- #
-def convertCruiseRecordFN(record_fn):
+def convert_cruise_record_fn(record_fn):
+    '''
+    Process the cruise records in the given file ahead of import into the
+    database.
+    '''
 
-    def _validateCruiseRecord(record):
-        _validateRecord(record, cruise_schema) 
-
-    try:
-        return _convertRecordFN(record_fn, _convertCruiseRecord, _validateCruiseRecord )
-    except Exception as error:
-        logging.debug(str(error))
-        raise ValueError(f"(convertCruiseRecordFN) Could not convert record file {record_fn}")
-
-
-def convertLoweringRecordFN(record_fn):
-
-    def _validateLoweringRecord(record):
-        _validateRecord(record, lowering_schema) 
+    def _validate_cruise_record(record):
+        _validate_record(record, cruise_schema)
 
     try:
-        return _convertRecordFN(record_fn, _convertLoweringRecord, _validateLoweringRecord )
-    except Exception as error:
-        logging.debug(str(error))
-        raise ValueError(f"(convertLoweringRecordFN) Could not convert record file {record_fn}")
+        return _convert_record_fn(record_fn, _convert_cruise_record, _validate_cruise_record)
+    except Exception as exc:
+        logging.debug(str(exc))
+        raise ValueError(f"(convert_cruise_record_fn) Could not convert record file {record_fn}") from exc
 
 
-def convertEventRecordFN(record_fn):
+def convert_lowering_record_fn(record_fn):
+    '''
+    Process the lowering records in the given file ahead of import into the
+    database.
+    '''
 
-    def _validateEventRecord(record):
-        _validateRecord(record, event_schema) 
-
-    try:
-        return _convertRecordFN(record_fn, _convertEventRecord, _validateEventRecord )
-    except Exception as error:
-        logging.debug(str(error))
-        raise ValueError(f"(convertEventRecordFN) Could not convert record file {record_fn}")
-
-
-def convertAuxDataRecordFN(record_fn):
-
-    def _validateAuxDataRecord(record):
-        _validateRecord(record, auxData_schema) 
+    def _validate_lowering_record(record):
+        _validate_record(record, lowering_schema)
 
     try:
-        return _convertRecordFN(record_fn, _convertAuxDataRecord, _validateAuxDataRecord )
-    except Exception as error:
-        logging.debug(str(error))
-        raise ValueError(f"(convertAuxDataRecordFN) Could not convert record file {record_fn}")
+        return _convert_record_fn(record_fn, _convert_lowering_record, _validate_lowering_record)
+    except Exception as exc:
+        logging.debug(str(exc))
+        raise ValueError(f"(convert_lowering_record_fn) Could not convert record file {record_fn}") from exc
+
+
+def convert_event_record_rn(record_fn):
+    '''
+    Process the event records in the given file ahead of import into the
+    database.
+    '''
+
+    def _validate_event_record(record):
+        _validate_record(record, event_schema)
+
+    try:
+        return _convert_record_fn(record_fn, _convert_event_record, _validate_event_record)
+    except Exception as exc:
+        logging.debug(str(exc))
+        raise ValueError(f"(convert_event_record_rn) Could not convert record file {record_fn}") from exc
+
+
+def convert_aux_data_record_fn(record_fn):
+    '''
+    Process the aux_data records in the given file ahead of import into the
+    database.
+    '''
+
+    def _validate_aux_data_record(record):
+        _validate_record(record, auxData_schema)
+
+    try:
+        return _convert_record_fn(record_fn, _convert_aux_data_record, _validate_aux_data_record)
+    except Exception as exc:
+        logging.debug(str(exc))
+        raise ValueError(f"(convert_aux_data_record_fn) Could not convert record file {record_fn}") from exc
 
 
 if __name__ == '__main__':
@@ -256,7 +292,9 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbosity', dest='verbosity',
                         default=0, action='count',
                         help='Increase output verbosity')
-    parser.add_argument('type', metavar='type', choices=['cruise', 'lowering', 'event', 'aux_data'], help='type of records contained in file (cruise, lowering, event, aux_data)')
+    parser.add_argument('type', metavar='type',
+                        choices=['cruise', 'lowering', 'event', 'aux_data'],
+                        help='type of records contained in file (cruise, lowering, event, aux_data)')
     parser.add_argument('record_file', help=' records file to import')
 
     parsed_args = parser.parse_args()
@@ -273,22 +311,24 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
 
     if not os.path.isfile(parsed_args.record_file):
-        logging.error(parsed_args.record_file + " does not exist.")
+        logging.error("%s does not exist.", parsed_args.record_file)
         sys.exit(os.EX_DATAERR)
 
     try:
         if parsed_args.type == "cruise":
-            print(json.dumps(convertCruiseRecordFN(parsed_args.record_file)))
+            print(json.dumps(convert_cruise_record_fn(parsed_args.record_file)))
 
         elif parsed_args.type == "lowering":
-            print(json.dumps(convertLoweringRecordFN(parsed_args.record_file)))
+            print(json.dumps(convert_lowering_record_fn(parsed_args.record_file)))
 
         elif parsed_args.type == "event":
-            print(json.dumps(convertEventRecordFN(parsed_args.record_file)))
+            print(json.dumps(convert_event_record_rn(parsed_args.record_file)))
 
         elif parsed_args.type == "aux_data":
-            print(json.dumps(convertAuxDataRecordFN(parsed_args.record_file)))
+            print(json.dumps(convert_aux_data_record_fn(parsed_args.record_file)))
+
         else:
             print("invalid type option")
-    except:
+    except ValueError as exc:
+        logging.error(str(exc))
         sys.exit(1)

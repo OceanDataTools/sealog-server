@@ -36,10 +36,12 @@ COLLECTION = 'udpData'
 # Valid line headers to process
 validLineLabels = ['GGA']
 
+
 def _convert_gga_ll(value, hemisphere):
     '''
     Convert the gga-style coordinate and hemisphere to ddeg
     '''
+    deg = None
 
     try:
         if hemisphere in ('E', 'e'):
@@ -54,19 +56,19 @@ def _convert_gga_ll(value, hemisphere):
         elif hemisphere in ('S', 's'):
             deg = round((int(value[:2]) + float(value[2:])/60) * -1, 6)
 
-        return deg
-
-    except Exception as err:
+    except ValueError as exc:
         logging.error("Unable to convert position: %s %s", value, hemisphere)
-        logging.debug(str(err))
+        logging.debug(str(exc))
 
-    return None
+    return deg
 
 
 def parse_gga(message, label=None):
     '''
     Parse the GGA message
     '''
+
+    record = None
 
     try:
         msg_array = message.split(",")
@@ -77,19 +79,17 @@ def parse_gga(message, label=None):
             "label": label,
             "updated": datetime.datetime.utcnow(),
             "data": {
-                "latitude": _convert_gga_ll(msg_array[2],msg_array[3]),
-                "longitude": _convert_gga_ll(msg_array[4],msg_array[5]),
+                "latitude": _convert_gga_ll(msg_array[2], msg_array[3]),
+                "longitude": _convert_gga_ll(msg_array[4], msg_array[5]),
                 "depth": float(msg_array[9]) * -1
             }
         }
 
-        return record
-
-    except Exception as err:
+    except ValueError as exc:
         logging.warning("Error parsing message: %s", message)
-        logging.debug(str(err))
+        logging.debug(str(exc))
 
-    return None
+    return record
 
 
 def insert_udp_data(ignore_stale=False):
@@ -100,7 +100,7 @@ def insert_udp_data(ignore_stale=False):
     client = MongoClient()
     collection = client[DATABASE][COLLECTION]
 
-    previous_data = dict()
+    previous_data = {}
 
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server_sock.bind((UDP_IP_ADDRESS, UDP_PORT_NO))
@@ -110,9 +110,9 @@ def insert_udp_data(ignore_stale=False):
         data = None
         try:
             data = raw_bytes.decode('utf-8')
-        except Exception as error:
+        except UnicodeDecodeError as exc:
             logging.error("Unable to parse message")
-            logging.error(error)
+            logging.error(exc)
             continue
 
         logging.debug(data.rstrip())
@@ -149,6 +149,7 @@ def insert_udp_data(ignore_stale=False):
                 for_debug['updated'] = for_debug['updated'].strftime("%Y-%m-%dT%H:%M:%SZ")
                 logging.debug("Record: \n%s", json.dumps(for_debug, indent=2))
 
+
 if __name__ == '__main__':
 
     import argparse
@@ -183,11 +184,11 @@ if __name__ == '__main__':
         try:
             insert_udp_data(parsed_args.ignore_stale)
         except KeyboardInterrupt:
-            print('Interrupted')
+            logging.debug('Interrupted')
             try:
                 sys.exit(0)
             except SystemExit:
-                os._exit(0) # pylint: disable=protected-access
+                os._exit(0)  # pylint: disable=protected-access
 
         # Wait 5 seconds for the server to complete startup
         time.sleep(5)

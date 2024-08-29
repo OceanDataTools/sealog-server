@@ -21,13 +21,19 @@ import os
 import logging
 from datetime import datetime
 
+
 class FileCropUtility():
     '''
     This class handles culling subsets of data from files based on start/stop
     times.
     '''
 
-    def __init__(self, start_dt=datetime(1970, 1, 1, 0, 0, 0, tzinfo=None), stop_dt=datetime.utcnow(), delimiter=',', dt_format='%Y-%m-%dT%H:%M:%S.%fZ', header=False):
+    def __init__(self,
+                 start_dt=datetime(1970, 1, 1, 0, 0, 0, tzinfo=None),
+                 stop_dt=datetime.utcnow(),
+                 delimiter=',',
+                 dt_format='%Y-%m-%dT%H:%M:%S.%fZ',
+                 header=False):
         self.start_dt = start_dt
         self.stop_dt = stop_dt
         self.delimiter = delimiter
@@ -44,7 +50,7 @@ class FileCropUtility():
             data_files = [data_files]
 
         culled_files = []
-        
+
         logging.info("Culling file list")
         if len(data_files) == 0:
             logging.info("    No files found.")
@@ -52,18 +58,18 @@ class FileCropUtility():
 
         for data_file in data_files:
             logging.debug("File: %s", data_file)
-            with open( data_file, 'rb' ) as file :
+            with open(data_file, 'rb') as file:
 
                 if self.header:
                     _ = file.readline()
 
                 first_line = file.readline().decode().rstrip('\n')
                 try:
-                    first_ts = datetime.strptime(first_line.split(self.delimiter)[0],self.dt_format)
+                    first_ts = datetime.strptime(first_line.split(self.delimiter)[0], self.dt_format)
 
-                except Exception as err:
+                except ValueError as exc:
                     logging.warning("Could not process first line in %s: %s", data_file, first_line)
-                    logging.debug(str(err))
+                    logging.debug(str(exc))
                     continue
 
                 logging.debug("    First line: %s", first_line)
@@ -76,10 +82,10 @@ class FileCropUtility():
                 last_line = file.readline().decode().rstrip('\n')
 
                 try:
-                    last_ts = datetime.strptime(last_line.split(self.delimiter)[0],self.dt_format)
-                except Exception as err:
+                    last_ts = datetime.strptime(last_line.split(self.delimiter)[0], self.dt_format)
+                except ValueError as exc:
                     logging.warning("Could not process last line in %s: %s", data_file, last_line)
-                    logging.debug(str(err))
+                    logging.debug(str(exc))
                     continue
 
                 logging.debug("    Last line: %s", last_line)
@@ -105,7 +111,7 @@ class FileCropUtility():
 
         for data_file in data_files:
             logging.debug("File: %s", data_file)
-            with open( data_file, 'r' ) as file :
+            with open(data_file, 'r', encoding='utf-8') as file:
                 while True:
                     line_str = file.readline()
 
@@ -113,14 +119,12 @@ class FileCropUtility():
                         break
 
                     try:
-                        line_ts = datetime.strptime(line_str.split(self.delimiter)[0],self.dt_format)
+                        line_ts = datetime.strptime(line_str.split(self.delimiter)[0], self.dt_format)
 
-                    except Exception as err:
+                    except ValueError as exc:
                         logging.warning("Could not process line: %s", line_str)
-                        logging.debug(str(err))
+                        logging.debug(str(exc))
 
                     else:
-
                         if (line_ts - self.start_dt).total_seconds() >= 0 and (self.stop_dt - line_ts).total_seconds() >= 0:
                             yield line_str
-

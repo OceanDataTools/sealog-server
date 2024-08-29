@@ -66,8 +66,8 @@ async def websocket_test():
                 elif event_obj['type'] and event_obj['type'] == 'pub':
                     logging.info("New Event: %s", json.dumps(event_obj['message']))
 
-    except Exception as error:
-        logging.error(str(error))
+    except Exception as exc:
+        logging.error(str(exc))
 
 # -------------------------------------------------------------------------------------
 # Required python code for running the script as a stand-alone utility

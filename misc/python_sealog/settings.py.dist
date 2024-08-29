@@ -3,7 +3,7 @@
 FILE:           settings.py
 
 DESCRIPTION:    This file contains the settings used by the wrapper functions
-				to communicate with the sealog-server API
+                to communicate with the sealog-server API
 
 BUGS:
 NOTES:

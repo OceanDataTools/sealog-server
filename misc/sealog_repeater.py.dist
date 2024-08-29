@@ -84,10 +84,10 @@ async def transmit_event(server, event, path):
         else:
             req = requests.post(url, headers=headers, data=json.dumps(event))
 
-    except Exception as error:
+    except Exception as exc:
         logging.error('Error adding/modifying event to server')
-        logging.debug(str(error))
-        raise error
+        logging.debug(str(exc))
+        raise exc
 
 
 async def transmit_event_auxdata(server, event_auxdata, path):
@@ -118,10 +118,10 @@ async def transmit_event_auxdata(server, event_auxdata, path):
         else:
             req = requests.post(url, headers=headers, data=json.dumps(event_auxdata))
 
-    except Exception as error:
+    except Exception as exc:
         logging.error('Error adding/modifying event_auxdata to server')
-        logging.debug(str(error))
-        raise error
+        logging.debug(str(exc))
+        raise exc
 
 
 async def transmitter(servers):
@@ -178,8 +178,8 @@ async def transmitter(servers):
                     else:
                         logging.debug("Skipping because event value is in the exclude set")
 
-        except Exception as err:
-            logging.error(str(err))
+        except Exception as exc:
+            logging.error(str(exc))
 
 async def receiver(server):
     '''
@@ -223,8 +223,8 @@ async def receiver(server):
                     else:
                         logging.debug("Skipping because event value is in the exclude set")
 
-        except Exception as err:
-            logging.error(str(err))
+        except Exception as exc:
+            logging.error(str(exc))
 
 # -------------------------------------------------------------------------------------
 # The main loop of the utility
@@ -270,6 +270,6 @@ if __name__ == '__main__':
                 sys.exit(0)
             except SystemExit:
                 os._exit(0) # pylint: disable=protected-access
-        except Exception as err:
-            logging.debug(str(err))
+        except Exception as exc:
+            logging.debug(str(exc))
             logging.error("Lost connection to server, trying again in 5 seconds")
