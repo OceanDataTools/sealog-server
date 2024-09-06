@@ -14,14 +14,63 @@ const Nodemailer = require('nodemailer'); // eslint-disable-line no-unused-vars
 
 // ------------------------------------------------------------------------- //
 // GMail integration
+// To setup OAuth2 access for nodemailer please refer to:
+// https://rupali.hashnode.dev/send-emails-in-nodejs-using-nodemailer-gmail-oauth2
 // ------------------------------------------------------------------------- //
-// emailTransporter = Nodemailer.createTransport({
-//   service: 'gmail',
-//   auth: {
-//     user: process.env.GMAIL_ADDRESS || '<GMAIL_ADDRESS>',
-//     pass: process.env.GMAIL_PASSWD || '<GMAIL_PASSWD>'
+// const { google } = require('googleapis'); // eslint-disable-line no-unused-vars
+
+// const OAuth2 = google.auth.OAuth2; // eslint-disable-line no-unused-vars
+
+// const client_id = process.env.GMAIL_CLIENT_ID || '<GMAIL_CLIENT_ID>';
+// const client_secret = process.env.GMAIL_CLIENT_SECRET || '<GMAIL_CLIENT_SECRET>';
+// const server_url = process.env.GMAIL_SERVER_URL || '<GMAIL_SERVER_URL>';
+// const refresh_token = process.env.GMAIL_REFRESH_TOKEN || '<GMAIL_REFRESH_TOKEN>';
+
+// const createTransporter = async (clientId, clientSecret, serverUrl, refreshToken) => {
+
+//   try {
+//     const oauth2Client = new OAuth2(
+//       clientId,
+//       clientSecret,
+//       serverUrl
+//     );
+
+//     oauth2Client.setCredentials({
+//       refresh_token: refreshToken
+//     });
+
+//     const accessToken = await new Promise((resolve, reject) => {
+
+//       oauth2Client.getAccessToken((err, token) => {
+
+//         if (err) {
+//           console.log('*ERR: ', err);
+//           reject();
+//         }
+
+//         resolve(token);
+//       });
+//     });
+
+//     const transporter = Nodemailer.createTransport({
+//       service: 'gmail',
+//       auth: {
+//         type: 'OAuth2',
+//         user: senderAddress,
+//         accessToken,
+//         clientId,
+//         clientSecret,
+//         refreshToken
+//       }
+//     });
+//     return transporter;
 //   }
-// }); // eslint-disable-line no-dupe-keys
+//   catch (err) {
+//     return err;
+//   }
+// };
+
+// emailTransporter = createTransporter(client_id, client_secret, server_url, refresh_token); // eslint-disable-line no-dupe-keys
 
 
 // ------------------------------------------------------------------------- //
@@ -42,13 +91,13 @@ const Nodemailer = require('nodemailer'); // eslint-disable-line no-unused-vars
 // const Mj = require('../lib/nodemailer-mailjet-transport'); // eslint-disable-line no-unused-vars
 // emailTransporter = Nodemailer.createTransport(Mj({
 //   auth: {
-//     apiKey: process.env.MJ_APIKEY_PUBLIC || '<API_KEY>',
-//     apiSecret: process.env.MJ_APIKEY_PRIVATE || '<API_SECRET>'
+//     apiKey: process.env.MJ_APIKEY_PUBLIC || '<MJ_APIKEY>',
+//     apiSecret: process.env.MJ_APIKEY_PRIVATE || '<MJ_API_SECRET>'
 //   }
 // })); // eslint-disable-line no-dupe-keys
 
 module.exports = {
   senderAddress,
   emailTransporter,
-  notificationEmailAddresses,
+  notificationEmailAddresses
 };
