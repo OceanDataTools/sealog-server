@@ -111,6 +111,9 @@ class SealogInfluxAuxDataRecordBuilder():
                 if "no_output" in value and value['no_output'] is True:
                     continue
 
+                if key not in influx_data:
+                    continue
+
                 output_value = influx_data[key]
 
                 if "modify" in value:

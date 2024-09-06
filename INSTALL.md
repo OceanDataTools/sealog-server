@@ -50,7 +50,7 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 nvm install --lts
-NODE_VERSION=node -v
+NODE_VERSION=`node -v`
 sudo ln -s $HOME/.nvm/versions/node/${NODE_VERSION}/bin/npm /usr/local/bin/
 sudo ln -s $HOME/.nvm/versions/node/${NODE_VERSION}/bin/node /usr/local/bin/
 ```
@@ -241,7 +241,7 @@ Automatic snapshots or ASNAP is a service that when enabled will submit an ASNAP
 
 ### Configuring the ASNAP service:
 ```
-cp /opt/sealog-server/misc/sealog_asnap.py.dist ~/sealog-server/misc/sealog_asnap.py
+cp /opt/sealog-server/misc/sealog_asnap.py.dist /opt/sealog-server/misc/sealog_asnap.py
 ```
 
 Edit the supervisor configuration file:
