@@ -107,6 +107,9 @@ const envKey = (key) => {
 
 const mongodb_URL = process.env.MONGO_URL || 'mongodb://localhost:27017/' + envKey('db');
 
+// Store active WebSocket connections and child process
+const clients = new Set();
+
 const manifest = {
   server: {
     host: envKey('host'),
@@ -187,6 +190,16 @@ const manifest = {
           prefix: '/sealog-server/api/v1'
         }
       },
+      { plugin: './routes/api/v1/external_calls', options: { clients },
+        routes: {
+          prefix: '/sealog-server/api/v1'
+        }
+      },
+      { plugin: './routes/ws/external_calls', options: { clients },
+        routes: {
+          prefix: '/ws'
+        }
+      },
       { plugin: './plugins/db_cruises', options: {} },
       { plugin: './plugins/db_custom_vars', options: {} },
       { plugin: './plugins/db_event_aux_data', options: {} },
@@ -219,11 +232,11 @@ if (env === 'development') {
 
 // Additional Plugins for demo
 else if (env === 'demo' && process.env.NODE_ENV === 'demo-vehicle') {
-  manifest.register.plugins.push({ 'plugin': './plugins/db_init_demo_vehicle' });  
+  manifest.register.plugins.push({ 'plugin': './plugins/db_init_demo_vehicle' });
 }
 
 else if (env === 'demo' && process.env.NODE_ENV === 'demo-vessel') {
-  manifest.register.plugins.push({ 'plugin': './plugins/db_init_demo_vessel' });  
+  manifest.register.plugins.push({ 'plugin': './plugins/db_init_demo_vessel' });
 }
 
 // Additional Plugins for debug

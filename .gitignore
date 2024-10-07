@@ -41,7 +41,7 @@ misc/sealog-auxDataInserter*
 misc/sealog-udp2MongoDB*
 
 # files related to reporting
-misc/reporting
+misc/reporting*
 
 # files (i.e. images) specific to a single deployment
 misc/assets
