@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 '''
-FILE:           delete_event_records.py
+FILE:           delete_aux_data_records.py
 
-DESCRIPTION:    Deletes event records based on array of ids
+DESCRIPTION:    Deletes aux_data records based on array of ids
 
 BUGS:
 NOTES:
@@ -22,12 +22,12 @@ import logging
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
-from misc.python_sealog.events import delete_events
+from misc.python_sealog.event_aux_data import delete_event_aux_data
 
 
 def main(uid_file, dry_run):
     '''
-    Main function of script, read the file containing event record ids and delete them.
+    Main function of script, read the file containing aux_data record ids and delete them.
     '''
     logging.info("Starting main function.")
     logging.info(dry_run)
@@ -42,9 +42,9 @@ def main(uid_file, dry_run):
             raise exc
 
     for uid in uids:
-        logging.info("Removing event record: %s", uid)
+        logging.info("Removing aux_data record: %s", uid)
         if not dry_run:
-            delete_events(uid)
+            delete_event_aux_data(uid)
 
 
 # -------------------------------------------------------------------------------------
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     import argparse
     import os
 
-    parser = argparse.ArgumentParser(description='Event Deleter')
+    parser = argparse.ArgumentParser(description='Aux Data Deleter')
     parser.add_argument('-v', '--verbosity', dest='verbosity',
                         default=0, action='count',
                         help='Increase output verbosity')
