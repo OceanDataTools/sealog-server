@@ -6,7 +6,9 @@ const {
 } = require('../../../config/server_settings');
 
 const {
-  authorizationHeader
+  authorizationHeader,
+  cruiseParam,
+  loweringParam
 } = require('../../../lib/validations');
 
 const {
@@ -148,7 +150,8 @@ exports.plugin = {
           scope: ['admin']
         },
         validate: {
-          headers: authorizationHeader
+          headers: authorizationHeader,
+          params: loweringParam
         },
         response: {
           status: {}
@@ -195,7 +198,8 @@ exports.plugin = {
           scope: ['admin']
         },
         validate: {
-          headers: authorizationHeader
+          headers: authorizationHeader,
+          params: cruiseParam
         },
         response: {
           status: {}
