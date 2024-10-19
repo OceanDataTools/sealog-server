@@ -118,7 +118,7 @@ exports.plugin = {
 
     server.route({
       method: 'GET',
-      path: '/external_calls/execute_export_lowering/{id}',
+      path: '/external_calls/export_lowering/{id}',
       async handler(request, h) {
 
         const db = request.mongo.db;
@@ -166,7 +166,7 @@ exports.plugin = {
 
     server.route({
       method: 'GET',
-      path: '/external_calls/execute_export_cruise/{id}',
+      path: '/external_calls/export_cruise/{id}',
       async handler(request, h) {
 
         const db = request.mongo.db;
