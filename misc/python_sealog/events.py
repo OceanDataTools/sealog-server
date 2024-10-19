@@ -241,3 +241,24 @@ def get_events_by_lowering(lowering_uid,
         raise exc
 
     return None
+
+
+def delete_event(event_uid, api_server_url=API_SERVER_URL,
+                          headers=HEADERS):
+    '''
+    Delete the event record.
+    '''
+
+    params = {}
+
+    try:
+        url = api_server_url + EVENTS_API_PATH + '/' + event_uid
+        requests.delete(url, headers=headers, params=params)
+
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+    except json.JSONDecodeError as exc:
+        logging.error(str(exc))
+        raise exc
