@@ -12,7 +12,7 @@ DESCRIPTION:    This service listens for new events submitted to Sealog, create
                 the data is not available the script will NOT add the
                 corresponding aux_data records.
 
-                This script can also add influx data to a list of event ids
+                This script can also add CORIOLIX data to a list of event ids
                 (comma-separated) using the -e flag, or all the events for a given
                 lowering using the -l flag, or all the events for a given
                 cruise using the -c flag
@@ -47,7 +47,7 @@ from misc.python_sealog.lowerings import get_lowering_uid_by_id
 from misc.python_sealog.cruises import get_cruise_uid_by_id
 
 from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
-from misc.coriolix.aux_data_record_builder import SealogCORIOLIXAuxDataRecordBuilder
+from misc.coriolix_sealog.aux_data_record_builder import SealogCORIOLIXAuxDataRecordBuilder
 
 # ----------------------------------------------------------------------------- #
 
@@ -75,7 +75,7 @@ INLINE_CONFIG = '''
 EXCLUDE_SET = set()
 
 # needs to be unique for all currently active dataInserter scripts.
-CLIENT_WSID = 'auxData-dataInserter-influx'
+CLIENT_WSID = 'auxData-dataInserter-coriolix'
 
 HELLO = {
     'type': 'hello',
@@ -201,8 +201,8 @@ def insert_aux_data_for_lowering(aux_data_builders, lowering_id, dry_run=False):
 
 async def insert_aux_data_from_ws(aux_data_builders, dry_run=False):
     '''
-    Use the aux_data_builder and the influx_sealog wrapper to submit aux_data
-    records built from influxDB data to the sealog-server API
+    Use the aux_data_builder and the coriolix_sealog wrapper to submit aux_data
+    records built from CORIOLIX data to the sealog-server API
     '''
     try:
         async with websockets.connect(WS_SERVER_URL) as websocket:
@@ -244,7 +244,7 @@ if __name__ == '__main__':
                         help='Increase output verbosity')
     parser.add_argument('-f', '--config_file', help='use the specifed configuration file')
     parser.add_argument('-n', '--dry_run', action='store_true', help='compile the aux_data records but do not submit to server API')
-    parser.add_argument('-e', '--events', help='list of event_ids to apply the influx data')
+    parser.add_argument('-e', '--events', help='list of event_ids to apply the CORIOLIX data')
     parser.add_argument('-c', '--cruise_id', help='cruise_id to fix aux_data for')
     parser.add_argument('-l', '--lowering_id', help='lowering_id to fix aux_data for')
 
@@ -286,11 +286,8 @@ if __name__ == '__main__':
 
     logging.debug(json.dumps(aux_data_configs, indent=2))
 
-    # create an influxDB Client
-    use_ssl = INFLUXDB_URL.find('https:') == 0
-
     # Create the Aux Data Record Builders
-    aux_data_builder_list = list(map(lambda config: SealogCORIOLIXAuxDataRecordBuilder(CORIOLIX_API_URL, config), aux_data_configs))
+    aux_data_builder_list = list(map(lambda config: SealogCORIOLIXAuxDataRecordBuilder(config), aux_data_configs))
 
     if parsed_args.events:
         logging.debug("Processing list of event ids")
