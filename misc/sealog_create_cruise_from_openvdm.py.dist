@@ -27,7 +27,7 @@ AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
 VERSION:    1.0
 CREATED:    2024-10-21
-REVISION:
+REVISION:   2025-02-09
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2024
@@ -59,16 +59,17 @@ def main(force=False):
     '''
 
     cruise = {
-      "cruise_id": None,
-      "start_ts": None,
-      "stop_ts": None,
-      "cruise_additional_meta": {
-        "cruise_departure_location": None,
-        "cruise_arrival_location": None
+      'cruise_id': None,
+      'start_ts': None,
+      'stop_ts': None,
+      'cruise_additional_meta': {
+        'cruise_departure_location': None,
+        'cruise_arrival_location': None
       }
     }
 
     url = OPENVDM_SERVER_URL + '/api/warehouse/getCruiseConfig'
+
     try:
         req = requests.get(url, headers=HEADERS, timeout=2)
 
@@ -111,8 +112,8 @@ def main(force=False):
             **cruise
         }
 
-        cruise['cruise_additional_meta']['cruise_name'] = "FIX ME"
-        cruise['cruise_additional_meta']['cruise_pi'] = "FIX ME"
+        cruise['cruise_additional_meta']['cruise_name'] = 'FIX ME'
+        cruise['cruise_additional_meta']['cruise_pi'] = 'FIX ME'
         cruise['cruise_additional_meta']['cruise_vessel'] = VESSEL_NAME
 
         try:
