@@ -2,8 +2,24 @@
 '''
 FILE:           sealog_create_cruise_from_openvdm.py
 
-DESCRIPTION:    This script creates a sealog cruise record using the CRUISE_ID,
+DESCRIPTION:    This script creates a sealog cruise record using the cruise id,
                 dates and port information from OpenVDM.
+
+                To complete the integration with OpenVDM, add the following to
+                the postSetupNewCruise section of the ./server/etc/openvdm.yaml
+                file:
+
+                - name: "Setup new Cruise in Sealog"
+                  command:
+                  - ssh
+                  - sealog_user@sealog-srvr.shipname.edu
+                  - "/opt/sealog-server/venv/bin/python /opt/sealog-server/misc/sealog_create_cruise_from_openvdm.py"
+
+                Update the "server_user", "sealog-srvr.shipname.edu" to match
+                installation.
+
+                Setup public/private ssh key authentication from the OpenVDM
+                server to the Sealog server for the Sealog user.
 
 BUGS:
 NOTES:
