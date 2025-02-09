@@ -14,7 +14,7 @@ CREATED:    2024-07-01
 REVISION:   2024-08-25
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2024
+                Copyright (C) OceanDataTools.org 2025
 '''
 
 import json
