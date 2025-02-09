@@ -35,8 +35,9 @@ class SealogInfluxAuxDataRecordBuilder():
     resulting data to build a sealog aux_data record.
     '''
 
-    def __init__(self, influxdb_client, aux_data_config):
+    def __init__(self, influxdb_client, aux_data_config, influxdb_bucket=INFLUXDB_BUCKET):
         self._influxdb_client = influxdb_client.query_api()
+        self._influxdb_bucket = aux_data_config['query_bucket'] if 'query_bucket' in aux_data_config else influxdb_bucket
         self._query_measurements = aux_data_config['query_measurements']
         self._query_fields = list(aux_data_config['aux_record_lookup'].keys())
         self._aux_record_lookup = aux_data_config['aux_record_lookup']
@@ -65,7 +66,7 @@ class SealogInfluxAuxDataRecordBuilder():
         query_range = self._build_query_range(ts)
 
         try:
-            query = 'from(bucket: "{}")\n'.format(INFLUXDB_BUCKET)
+            query = 'from(bucket: "{}")\n'.format(self._influxdb_bucket)
             query += '|> range({})\n'.format(query_range)
             query += '|> filter(fn: (r) => {})\n'.format(' or '.join(['r["_measurement"] == "{}"'.format(q_measurement) for q_measurement in self._query_measurements]))
             query += '|> filter(fn: (r) => {})\n'.format(' or '.join(['r["_field"] == "{}"'.format(q_field) for q_field in self._query_fields]))
@@ -213,7 +214,7 @@ class SealogInfluxAuxDataRecordBuilder():
             elif str(value).startswith("(401)"):
                 logging.error("InfluxDB API error, verify token: %s", INFLUXDB_AUTH_TOKEN)
             elif str(value).startswith("(404)"):
-                logging.error("InfluxDB API error, verify bucket: %s", INFLUXDB_BUCKET)
+                logging.error("InfluxDB API error, verify bucket: %s", self._influxdb_bucket)
             else:
                 raise exc
 

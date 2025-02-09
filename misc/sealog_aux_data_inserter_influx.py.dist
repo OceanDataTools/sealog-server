@@ -55,17 +55,7 @@ from misc.influx_sealog.aux_data_record_builder import SealogInfluxAuxDataRecord
 
 INLINE_CONFIG = '''
 - data_source: realtimeVesselPosition
-  # alarm:
-  #   active: true
-  #   interval: 300
-  #   event:
-  #     event_value: PROBLEM
-  #     event_free_text: >-
-  #       No vessel position data available from InfluxDB. Verify OpenRVDAS is
-  #       sending Seapath data to InfluxDB
-  #     event_options:
-  #       - event_option_name: System
-  #         event_option_value: Data
+  # query_bucket: openrvdas
   query_measurements:
     - seapath1
   aux_record_lookup:
