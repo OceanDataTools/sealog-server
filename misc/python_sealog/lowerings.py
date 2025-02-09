@@ -95,6 +95,21 @@ def get_lowerings(export_format='json', api_server_url=API_SERVER_URL, headers=H
     return None
 
 
+def create_lowering(payload, api_server_url=API_SERVER_URL, headers=HEADERS):
+    '''
+    Add a lowering record.
+    '''
+
+    try:
+        url = f'{api_server_url}{LOWERINGS_API_PATH}'
+        req = requests.post(url, headers=headers, data=json.dumps(payload))
+        logging.debug(req.text)
+
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+
 def get_lowering_uids_by_cruise(cruise_uid, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the lowering UIDs for the given cruise_uid

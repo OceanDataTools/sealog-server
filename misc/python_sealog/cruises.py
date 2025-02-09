@@ -102,6 +102,21 @@ def get_cruises(export_format='json', api_server_url=API_SERVER_URL, headers=HEA
     return None
 
 
+def create_cruise(payload, api_server_url=API_SERVER_URL, headers=HEADERS):
+    '''
+    Add a cruise record.
+    '''
+
+    try:
+        url = f'{api_server_url}{CRUISES_API_PATH}'
+        req = requests.post(url, headers=headers, data=json.dumps(payload))
+        logging.debug(req.text)
+
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+
 def get_cruise_uid_by_id(cruise_id, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the UID for a cruise record based on the cruise_id.
@@ -238,3 +253,17 @@ def get_cruise_by_event(event_uid, export_format='json', api_server_url=API_SERV
         raise exc
 
     return None
+
+
+def update_cruise(cruise_uid, payload, api_server_url=API_SERVER_URL,
+                    headers=HEADERS):
+    '''
+    Update the cruise record
+    '''
+
+    try:
+        url = f'{api_server_url}{CRUISES_API_PATH}/{cruise_uid}'
+        requests.patch(url, headers=headers, data=json.dumps(payload))
+
+    except requests.exceptions.RequestException as exc:
+        raise exc
