@@ -8,7 +8,7 @@ DESCRIPTION:    This service listens for new events submitted to Sealog, create
 
                 This script leverages the CORILOX database/API so that
                 ancillary data can be added to events from any point in time so
-                long as the data is availble from the InfluxDB.  In the event
+                long as the data is availble from the CORIOLIX API.  In the event
                 the data is not available the script will NOT add the
                 corresponding aux_data records.
 
@@ -238,7 +238,7 @@ if __name__ == '__main__':
     import argparse
     import os
 
-    parser = argparse.ArgumentParser(description='Aux Data Inserter Service - InfluxDB')
+    parser = argparse.ArgumentParser(description='Aux Data Inserter Service - CORIOLIX')
     parser.add_argument('-v', '--verbosity', dest='verbosity',
                         default=0, action='count',
                         help='Increase output verbosity')
