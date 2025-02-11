@@ -195,7 +195,7 @@ class SealogCORIOLIXAuxDataRecordBuilder():
                 response = requests.get(url)
 
                 if response.status_code != 200:
-                    print(f"Failed to retrieve data. Status code: {response.status_code}")
+                    logging.error(f"Failed to retrieve data. Status code: {response.status_code}")
 
                 response_obj = response.json()
                 if len(response_obj):

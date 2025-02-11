@@ -55,9 +55,9 @@ INLINE_CONFIG = '''
 - data_source: realtimeVesselPosition
   query_measurements:
     - gnss_gga_bow
-    - gyro_brdg
+    - sensor_float_1
   aux_record_lookup:
-    gyro_brdg__heading:
+    sensor_float_1__p1:
       name: heading
       uom: deg
       round: 3
@@ -69,6 +69,40 @@ INLINE_CONFIG = '''
       name: longitude
       uom: ddeg
       round: 6
+- data_source: 'meteorologicalData'
+  query_measurements:
+    - sensor_mixed_5
+  aux_record_lookup:
+    sensor_mixed_5__p4:
+      name: 'air temp'
+      uom: 'C'
+      round: 2
+    sensor_mixed_5__p3:
+      name: 'air pres'
+      uom: 'mBar'
+      round: 2
+      modify:
+        - operation:
+          - multiply: 1000
+    sensor_mixed_5__p5:
+      name: 'rH'
+      uom: '%'
+      round: 1
+- data_source: 'courseAndSpeed'
+  query_measurements:
+    - gnss_vtg_bow
+  aux_record_lookup:
+    gnss_vtg_bow__cog:
+      name: course
+      uom: deg
+      round: 2
+    gnss_vtg_bow__sog:
+      name: speed
+      uom: kts
+      round: 1
+      modify:
+        - operation:
+          - multiply: 0.539957
 '''
 
 # set of events to ignore
