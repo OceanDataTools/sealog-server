@@ -52,7 +52,7 @@ from misc.coriolix_sealog.aux_data_record_builder import SealogCORIOLIXAuxDataRe
 # ----------------------------------------------------------------------------- #
 
 INLINE_CONFIG = '''
-- data_source: realtimeVesselPosition
+- data_source: 'vesselPosition'
   query_measurements:
     - gnss_gga_bow
     - sensor_float_1
@@ -85,7 +85,7 @@ INLINE_CONFIG = '''
         - operation:
           - multiply: 1000
     sensor_mixed_5__p5:
-      name: 'rH'
+      name: 'relHumidity'
       uom: '%'
       round: 1
 - data_source: 'courseAndSpeed'
