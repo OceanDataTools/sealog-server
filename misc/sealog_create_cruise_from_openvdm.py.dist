@@ -13,7 +13,8 @@ DESCRIPTION:    This script creates a sealog cruise record using the cruise id,
                   command:
                   - ssh
                   - sealog_user@sealog-srvr.shipname.edu
-                  - "/opt/sealog-server/venv/bin/python /opt/sealog-server/misc/sealog_create_cruise_from_openvdm.py"
+                  - "/opt/sealog-server/venv/bin/python \
+                     /opt/sealog-server/misc/sealog_create_cruise_from_openvdm.py"
 
                 Update the "server_user", "sealog-srvr.shipname.edu" to match
                 installation.
@@ -43,7 +44,13 @@ from datetime import datetime
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
-from misc.python_sealog.cruises import get_cruise, get_cruise_uid_by_id, create_cruise, update_cruise
+from misc.python_sealog.cruises import (
+    get_cruise,
+    get_cruise_uid_by_id,
+    create_cruise,
+    update_cruise
+)
+
 from misc.python_sealog.settings import API_SERVER_URL, HEADERS
 
 # URL to OpenVDM main page
@@ -77,18 +84,32 @@ def main(force=False):
             logging.debug(req.text)
             cruise_config = json.loads(req.text)
             cruise['cruise_id'] = cruise_config['cruiseID']
-            cruise['start_ts'] = datetime.strptime(cruise_config['cruiseStartDate'], "%Y/%m/%d %H:%M").isoformat()+'Z'
-            cruise['cruise_additional_meta']['cruise_departure_location'] = cruise_config['cruiseStartPort']
-            cruise['stop_ts'] = datetime.strptime(cruise_config['cruiseEndDate'], "%Y/%m/%d %H:%M").isoformat()+'Z'
-            cruise['cruise_additional_meta']['cruise_arrival_location'] = cruise_config['cruiseEndPort']
+            cruise['start_ts'] = datetime.strptime(
+                cruise_config['cruiseStartDate'],
+                "%Y/%m/%d %H:%M"
+            ).isoformat()+'Z'
+            cruise['cruise_additional_meta'][
+                'cruise_departure_location'] = cruise_config['cruiseStartPort']
+            cruise['stop_ts'] = datetime.strptime(
+                cruise_config['cruiseEndDate'],
+                "%Y/%m/%d %H:%M"
+            ).isoformat()+'Z'
+            cruise['cruise_additional_meta'][
+                'cruise_arrival_location'] = cruise_config['cruiseEndPort']
 
             logging.debug("Cruise data from OpenVDM:\n %s", json.dumps(cruise, indent=2))
 
         else:
-            logging.error("Unable to connect to OpenVDM Server. Please verify URL: %s", OPENVDM_SERVER_URL)
+            logging.error(
+                "Unable to connect to OpenVDM Server. Please verify URL: %s",
+                OPENVDM_SERVER_URL
+            )
 
     except Exception as exc:
-        logging.error("Unable to connect to OpenVDM Server. Please verify URL: %s", OPENVDM_SERVER_URL)
+        logging.error(
+            "Unable to connect to OpenVDM Server. Please verify URL: %s",
+            OPENVDM_SERVER_URL
+        )
         logging.debug(str(exc))
         return
 
@@ -97,7 +118,10 @@ def main(force=False):
         existing_cruise_uid = get_cruise_uid_by_id(cruise['cruise_id'])
         if existing_cruise_uid:
             existing_cruise = get_cruise(existing_cruise_uid)
-            logging.debug("Existing cruise record from Sealog:\n %s", json.dumps(existing_cruise, indent=2))
+            logging.debug(
+                "Existing cruise record from Sealog:\n %s",
+                json.dumps(existing_cruise, indent=2)
+            )
 
     except Exception as exc:
         logging.error("Unable to connect to Sealog Server. Please verify URL: %s", API_SERVER_URL)
@@ -144,7 +168,9 @@ def main(force=False):
             return
 
     else:
-        logging.info("Cruise record already exists. Use --force argument to update the existing record")
+        logging.info(
+            "Cruise record already exists. Use --force argument to update the existing record"
+        )
 
 
 # -------------------------------------------------------------------------------------

@@ -44,7 +44,12 @@ cruise_schema = {
                 "cruise_description": {"type": "string"},
                 "lowering_files": {"type": "array"}
             },
-            "required": ["cruise_vessel", "cruise_pi", "cruise_departure_location", "cruise_arrival_location"],
+            "required": [
+                "cruise_vessel",
+                "cruise_pi",
+                "cruise_departure_location",
+                "cruise_arrival_location"
+            ],
         }
     },
     "required": ["id", "cruise_id", "start_ts", "stop_ts", "cruise_tags", "cruise_additional_meta"]
@@ -71,7 +76,14 @@ lowering_schema = {
             "required": ["milestones", "stats"]
         }
     },
-    "required": ["id", "lowering_id", "start_ts", "stop_ts", "lowering_tags", "lowering_additional_meta"]
+    "required": [
+        "id",
+        "lowering_id",
+        "start_ts",
+        "stop_ts",
+        "lowering_tags",
+        "lowering_additional_meta"
+    ]
 }
 
 event_schema = {
@@ -94,7 +106,14 @@ event_schema = {
             }
         },
     },
-    "required": ["id", "ts", "event_author", "event_value", "event_free_text", "event_options"]
+    "required": [
+        "id",
+        "ts",
+        "event_author",
+        "event_value",
+        "event_free_text",
+        "event_options"
+    ]
 }
 
 auxData_schema = {
@@ -154,7 +173,9 @@ def _convert_cruise_record(record):
 
     except Exception as exc:
         logging.debug(str(exc))
-        raise ValueError(f"(_convert_cruise_record) Could not convert record {record['id']}") from exc
+        raise ValueError(
+            f"(_convert_cruise_record) Could not convert record {record['id']}"
+        ) from exc
 
 
 def _convert_lowering_record(record):
@@ -168,7 +189,9 @@ def _convert_lowering_record(record):
 
     except Exception as exc:
         logging.debug(str(exc))
-        raise ValueError(f"(_convert_lowering_record) Could not convert record {record['id']}") from exc
+        raise ValueError(
+            f"(_convert_lowering_record) Could not convert record {record['id']}"
+        ) from exc
 
 
 def _convert_event_record(record):
@@ -181,7 +204,9 @@ def _convert_event_record(record):
 
     except Exception as exc:
         logging.debug(str(exc))
-        raise ValueError(f"(_convert_event_record) Could not convert record {record['id']}") from exc
+        raise ValueError(
+            f"(_convert_event_record) Could not convert record {record['id']}"
+        ) from exc
 
 
 def _convert_aux_data_record(record):
@@ -194,7 +219,9 @@ def _convert_aux_data_record(record):
 
     except Exception as exc:
         logging.debug(str(exc))
-        raise ValueError(f"(_convert_aux_data_record) Could not convert record {record['id']}") from exc
+        raise ValueError(
+            f"(_convert_aux_data_record) Could not convert record {record['id']}"
+        ) from exc
 
 
 def _convert_record_fn(record_fn, conv_func, validate_func):
@@ -214,7 +241,9 @@ def _convert_record_fn(record_fn, conv_func, validate_func):
 
     except Exception as exc:
         logging.debug(str(exc))
-        raise ValueError(f"(_convert_record_fn) Could not convert record {record['id']}") from exc
+        raise ValueError(
+            f"(_convert_record_fn) Could not convert record {record['id']}"
+        ) from exc
 
 
 # --------------------------------------------------------------------------- #
@@ -231,7 +260,9 @@ def convert_cruise_record_fn(record_fn):
         return _convert_record_fn(record_fn, _convert_cruise_record, _validate_cruise_record)
     except Exception as exc:
         logging.debug(str(exc))
-        raise ValueError(f"(convert_cruise_record_fn) Could not convert record file {record_fn}") from exc
+        raise ValueError(
+            f"(convert_cruise_record_fn) Could not convert record file {record_fn}"
+        ) from exc
 
 
 def convert_lowering_record_fn(record_fn):
@@ -247,7 +278,9 @@ def convert_lowering_record_fn(record_fn):
         return _convert_record_fn(record_fn, _convert_lowering_record, _validate_lowering_record)
     except Exception as exc:
         logging.debug(str(exc))
-        raise ValueError(f"(convert_lowering_record_fn) Could not convert record file {record_fn}") from exc
+        raise ValueError(
+            f"(convert_lowering_record_fn) Could not convert record file {record_fn}"
+        ) from exc
 
 
 def convert_event_record_rn(record_fn):
@@ -263,7 +296,9 @@ def convert_event_record_rn(record_fn):
         return _convert_record_fn(record_fn, _convert_event_record, _validate_event_record)
     except Exception as exc:
         logging.debug(str(exc))
-        raise ValueError(f"(convert_event_record_rn) Could not convert record file {record_fn}") from exc
+        raise ValueError(
+            f"(convert_event_record_rn) Could not convert record file {record_fn}"
+        ) from exc
 
 
 def convert_aux_data_record_fn(record_fn):
@@ -279,7 +314,9 @@ def convert_aux_data_record_fn(record_fn):
         return _convert_record_fn(record_fn, _convert_aux_data_record, _validate_aux_data_record)
     except Exception as exc:
         logging.debug(str(exc))
-        raise ValueError(f"(convert_aux_data_record_fn) Could not convert record file {record_fn}") from exc
+        raise ValueError(
+            f"(convert_aux_data_record_fn) Could not convert record file {record_fn}"
+        ) from exc
 
 
 if __name__ == '__main__':
@@ -294,7 +331,8 @@ if __name__ == '__main__':
                         help='Increase output verbosity')
     parser.add_argument('type', metavar='type',
                         choices=['cruise', 'lowering', 'event', 'aux_data'],
-                        help='type of records contained in file (cruise, lowering, event, aux_data)')
+                        help='type of records contained in file (cruise, lowering, event, aux_data)'
+                        )
     parser.add_argument('record_file', help=' records file to import')
 
     parsed_args = parser.parse_args()

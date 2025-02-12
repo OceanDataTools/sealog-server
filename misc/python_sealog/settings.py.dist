@@ -36,7 +36,7 @@ LOWERINGS_API_PATH = '/api/v1/lowerings'
 
 API_SERVER_FILE_PATH = '/data/sealog-files'
 
-TOKEN = ''
+TOKEN = ''  # noqa:E501
 
 HEADERS = {
   'Authorization': 'Bearer ' + TOKEN

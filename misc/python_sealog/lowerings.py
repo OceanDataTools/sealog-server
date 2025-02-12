@@ -307,6 +307,7 @@ def get_lowering_by_event(event_uid, export_format='json', api_server_url=API_SE
 
     return None
 
+
 def update_lowering(lowering_uid, payload, api_server_url=API_SERVER_URL,
                     headers=HEADERS):
     '''

@@ -48,7 +48,12 @@ from misc.python_sealog.lowerings import get_lowering_uid_by_id
 from misc.python_sealog.cruises import get_cruise_uid_by_id
 
 from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
-from misc.influx_sealog.settings import INFLUXDB_URL, INFLUXDB_AUTH_TOKEN, INFLUXDB_ORG, INFLUXDB_VERIFY_SSL
+from misc.influx_sealog.settings import (
+    INFLUXDB_URL,
+    INFLUXDB_AUTH_TOKEN,
+    INFLUXDB_ORG,
+    INFLUXDB_VERIFY_SSL
+)
 from misc.influx_sealog.aux_data_record_builder import SealogInfluxAuxDataRecordBuilder
 
 # ----------------------------------------------------------------------------- #
@@ -257,11 +262,15 @@ if __name__ == '__main__':
     import os
 
     parser = argparse.ArgumentParser(description='Aux Data Inserter Service - InfluxDB')
-    parser.add_argument('-v', '--verbosity', dest='verbosity',
-                        default=0, action='count',
-                        help='Increase output verbosity')
+    parser.add_argument(
+        '-v', '--verbosity', dest='verbosity', default=0,
+        action='count', help='Increase output verbosity'
+    )
     parser.add_argument('-f', '--config_file', help='use the specifed configuration file')
-    parser.add_argument('-n', '--dry_run', action='store_true', help='compile the aux_data records but do not submit to server API')
+    parser.add_argument(
+        '-n', '--dry_run', action='store_true',
+        help='compile the aux_data records but do not submit to server API'
+    )
     parser.add_argument('-e', '--events', help='list of event_ids to apply the influx data')
     parser.add_argument('-c', '--cruise_id', help='cruise_id to fix aux_data for')
     parser.add_argument('-l', '--lowering_id', help='lowering_id to fix aux_data for')
@@ -279,18 +288,24 @@ if __name__ == '__main__':
     parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
     logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
 
-    aux_data_configs = None  # pylint: disable=invalid-name
+    aux_data_configs = None 
 
     if parsed_args.config_file:
 
-        config_file, data_source = parsed_args.config_file.split(":") if ":" in parsed_args.config_file else [parsed_args.config_file, None]
+        config_file, data_source = (
+            parsed_args.config_file.split(":")
+            if ":" in parsed_args.config_file
+            else [parsed_args.config_file, None]
+        )
 
         try:
             with open(config_file, 'r', encoding='utf-8') as config_fp:
                 aux_data_configs = yaml.safe_load(config_fp)
 
             if data_source:
-                aux_data_configs = [config for config in aux_data_configs if config['data_source'] == data_source]
+                aux_data_configs = [
+                    config for config in aux_data_configs if config['data_source'] == data_source
+                ]
 
         except yaml.parser.ParserError:
             logging.error("Invalid YAML syntax")
@@ -313,7 +328,12 @@ if __name__ == '__main__':
                             verify_ssl=INFLUXDB_VERIFY_SSL)
 
     # Create the Aux Data Record Builders
-    aux_data_builder_list = list(map(lambda config: SealogInfluxAuxDataRecordBuilder(client, config), aux_data_configs))
+    aux_data_builder_list = list(
+        map(
+            lambda config: SealogInfluxAuxDataRecordBuilder(client, config),
+            aux_data_configs
+        )
+    )
 
     if parsed_args.events:
         logging.debug("Processing list of event ids")
@@ -328,14 +348,22 @@ if __name__ == '__main__':
     if parsed_args.cruise_id:
         logging.debug("Processing events for an entire cruise")
 
-        insert_aux_data_for_cruise(aux_data_builder_list, parsed_args.cruise_id, parsed_args.dry_run)
+        insert_aux_data_for_cruise(
+            aux_data_builder_list,
+            parsed_args.cruise_id,
+            parsed_args.dry_run
+        )
 
         sys.exit(0)
 
     if parsed_args.lowering_id:
         logging.debug("Processing events for an entire lowering")
 
-        insert_aux_data_for_lowering(aux_data_builder_list, parsed_args.lowering_id, parsed_args.dry_run)
+        insert_aux_data_for_lowering(
+            aux_data_builder_list,
+            parsed_args.lowering_id,
+            parsed_args.dry_run
+        )
 
         sys.exit(0)
 
@@ -347,13 +375,15 @@ if __name__ == '__main__':
 
         try:
             logging.debug("Connecting to event websocket feed...")
-            asyncio.get_event_loop().run_until_complete(insert_aux_data_from_ws(aux_data_builder_list, parsed_args.dry_run))
+            asyncio.get_event_loop().run_until_complete(
+                insert_aux_data_from_ws(aux_data_builder_list, parsed_args.dry_run)
+            )
         except KeyboardInterrupt:
             logging.error('Keyboard Interrupted')
             try:
                 sys.exit(0)
             except SystemExit:
-                os._exit(0)  # pylint: disable=protected-access
+                os._exit(0)
         except Exception as err:
             logging.debug(str(err))
             logging.error("Lost connection to server, trying again in 5 seconds")

@@ -25,7 +25,7 @@ exports.plugin = {
 
     const execute_cmd = (request, h, command) => {
 
-      if(!command) {
+      if (!command) {
         return h.response({ message: 'No command specified.' }).code(409);
       }
 

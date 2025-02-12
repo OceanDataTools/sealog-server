@@ -26,7 +26,12 @@ from influxdb_client.rest import ApiException
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
 
-from misc.influx_sealog.settings import INFLUXDB_URL, INFLUXDB_AUTH_TOKEN, INFLUXDB_ORG, INFLUXDB_BUCKET
+from misc.influx_sealog.settings import (
+    INFLUXDB_URL,
+    INFLUXDB_AUTH_TOKEN,
+    INFLUXDB_ORG,
+    INFLUXDB_BUCKET
+)
 
 
 class SealogInfluxAuxDataRecordBuilder():
@@ -37,7 +42,10 @@ class SealogInfluxAuxDataRecordBuilder():
 
     def __init__(self, influxdb_client, aux_data_config, influxdb_bucket=INFLUXDB_BUCKET):
         self._influxdb_client = influxdb_client.query_api()
-        self._influxdb_bucket = aux_data_config['query_bucket'] if 'query_bucket' in aux_data_config else influxdb_bucket
+        self._influxdb_bucket = (
+            aux_data_config['query_bucket']
+            if 'query_bucket' in aux_data_config else influxdb_bucket
+        )
         self._query_measurements = aux_data_config['query_measurements']
         self._query_fields = list(aux_data_config['aux_record_lookup'].keys())
         self._aux_record_lookup = aux_data_config['aux_record_lookup']
@@ -45,7 +53,7 @@ class SealogInfluxAuxDataRecordBuilder():
         self.logger = logging.getLogger(__name__)
 
     @staticmethod
-    def _build_query_range(ts):  # pylint: disable=invalid-name
+    def _build_query_range(ts):
         '''
         Builds the temporal range for the influxDB query based on the provided
         timestamp (ts).
@@ -57,7 +65,7 @@ class SealogInfluxAuxDataRecordBuilder():
             logging.debug(str(exc))
             return None
 
-    def _build_query(self, ts):  # pylint: disable=invalid-name
+    def _build_query(self, ts):
         '''
         Builds the complete influxDB query using the provided timestamp (ts)
         and the class instance's query_measurements and query_fields values.
@@ -68,8 +76,18 @@ class SealogInfluxAuxDataRecordBuilder():
         try:
             query = 'from(bucket: "{}")\n'.format(self._influxdb_bucket)
             query += '|> range({})\n'.format(query_range)
-            query += '|> filter(fn: (r) => {})\n'.format(' or '.join(['r["_measurement"] == "{}"'.format(q_measurement) for q_measurement in self._query_measurements]))
-            query += '|> filter(fn: (r) => {})\n'.format(' or '.join(['r["_field"] == "{}"'.format(q_field) for q_field in self._query_fields]))
+            query += '|> filter(fn: (r) => {})\n'.format(
+                ' or '.join([
+                    'r["_measurement"] == "{}"'.format(q_measurement)
+                    for q_measurement in self._query_measurements
+                ])
+            )
+            query += '|> filter(fn: (r) => {})\n'.format(
+                ' or '.join([
+                    'r["_field"] == "{}"'.format(q_field)
+                    for q_field in self._query_fields
+                ])
+            )
             query += '|> sort(columns: ["_time"], desc: true)\n'
             query += '|> limit(n:1)'
         except Exception as exc:
@@ -82,7 +100,9 @@ class SealogInfluxAuxDataRecordBuilder():
         logging.debug("Query: %s", query)
         return query
 
-    def _build_aux_data_dict(self, event_id, influx_query_result):  # pylint: disable=too-many-branches
+    def _build_aux_data_dict(
+        self, event_id, influx_query_result
+    ):
         '''
         Internal method to build the sealog aux_data record using the event_id,
         influx_query_result and the class instance's datasource value.
@@ -107,7 +127,7 @@ class SealogInfluxAuxDataRecordBuilder():
         if not influx_data:
             return None
 
-        for key, value in self._aux_record_lookup.items():  # pylint: disable=too-many-nested-blocks
+        for key, value in self._aux_record_lookup.items():
             try:
                 if "no_output" in value and value['no_output'] is True:
                     continue
@@ -177,7 +197,11 @@ class SealogInfluxAuxDataRecordBuilder():
 
                 aux_data_record['data_array'].append({
                     'data_name': value['name'],
-                    'data_value': str(round(output_value, value['round'])) if 'round' in value else str(output_value),
+                    'data_value': (
+                        str(round(output_value, value['round']))
+                        if 'round' in value
+                        else str(output_value)
+                    ),
                     'data_uom': value['uom'] if 'uom' in value else ''
                 })
             except ValueError as exc:

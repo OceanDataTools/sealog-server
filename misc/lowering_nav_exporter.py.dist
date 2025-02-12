@@ -124,10 +124,15 @@ class ExportLoweringNav():
 
         logging.info("Extracting \"lowering_descending\" and \"lowering_on_surface\" timestamps")
         try:
-            start_ts = datetime.strptime(lowering['lowering_additional_meta']['milestones']['lowering_descending'], '%Y-%m-%dT%H:%M:%S.%fZ')
-            end_ts = datetime.strptime(lowering['lowering_additional_meta']['milestones']['lowering_on_surface'], '%Y-%m-%dT%H:%M:%S.%fZ')
+            start_ts = datetime.strptime(lowering['lowering_additional_meta'][
+                'milestones']['lowering_descending'], '%Y-%m-%dT%H:%M:%S.%fZ')
+            end_ts = datetime.strptime(lowering['lowering_additional_meta'][
+                'milestones']['lowering_on_surface'], '%Y-%m-%dT%H:%M:%S.%fZ')
         except ValueError as exc:
-            logging.error("Problem extracting \"lowering_descending\" and \"lowering_on_surface\" timestamps")
+            logging.error(
+                "Problem extracting \"lowering_descending\" "
+                "and \"lowering_on_surface\" timestamps"
+            )
             logging.debug(str(exc))
             return None
 
@@ -155,7 +160,9 @@ class ExportLoweringNav():
         logging.debug("Data:\n%s", self.data.head())
 
         # crop the events
-        logging.info('Cropping lowering events to "lowering_descending" and "lowering_on_surface" timestamps')
+        logging.info(
+            'Cropping lowering events to "lowering_descending" and "lowering_on_surface" timestamps'
+        )
         self.data = self.data[(self.data['ts'] >= start_ts)]
         self.data = self.data[(self.data['ts'] <= end_ts)]
 
@@ -216,7 +223,9 @@ class ExportLoweringNav():
         k.append(document)
 
         # Create a LineString from the points
-        coordinates = [(row['longitude_ddeg'], row['latitude_ddeg']) for _, row in self.data.iterrows()]
+        coordinates = [
+            (row['longitude_ddeg'], row['latitude_ddeg']) for _, row in self.data.iterrows()
+        ]
         line = LineString(coordinates)
 
         # Create a Placemark for the route
@@ -246,7 +255,13 @@ class ExportLoweringNav():
                                'output option.')
 
         # Create a list of coordinates from the DataFrame
-        coordinates = [(row['longitude_ddeg'], row['latitude_ddeg'], row['depth_m'] * -1) for _, row in self.data.iterrows()]
+        coordinates = [
+            (
+                row['longitude_ddeg'],
+                row['latitude_ddeg'],
+                row['depth_m'] * -1
+            ) for _, row in self.data.iterrows()
+        ]
 
         # Create a LineString geometry for the route
         route = geojson.LineString(coordinates)
@@ -306,7 +321,10 @@ if __name__ == "__main__":
         except Exception:
             logging.warning("There was a problem with the preference nav reference, "
                             "trying again with alternative nav reference.")
-            lowering_export = ExportLoweringNav(parsed_args.lowering_id, raw_columns=ALT_DESIRED_RAW_COLS)
+            lowering_export = ExportLoweringNav(
+                parsed_args.lowering_id,
+                raw_columns=ALT_DESIRED_RAW_COLS
+            )
 
         if parsed_args.kml:
             lowering_export.to_kml(parsed_args.outfile)
@@ -322,4 +340,4 @@ if __name__ == "__main__":
         try:
             sys.exit(0)
         except SystemExit:
-            os._exit(0)  # pylint: disable=protected-access
+            os._exit(0)

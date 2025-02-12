@@ -86,7 +86,9 @@ def aux_data_record_builder(event, record):
     }
 
     for key, value in record['data'].items():
-        aux_data_record['data_array'].append({'data_name': key, 'data_value': value, 'data_uom': '??'})
+        aux_data_record['data_array'].append(
+            {'data_name': key, 'data_value': value, 'data_uom': '??'}
+        )
 
     logging.debug("Aux Data Record:\n%s", json.dumps(aux_data_record, indent=2))
 
@@ -126,21 +128,34 @@ async def aux_data_inserter():
                         logging.debug("Skipping because event value is in the exclude set")
                         continue
 
-                    if datetime.strptime(event_obj['message']['ts'], '%Y-%m-%dT%H:%M:%S.%fZ') < datetime.utcnow()-timedelta(seconds=THRESHOLD):
+                    if datetime.strptime(
+                        event_obj['message']['ts'], '%Y-%m-%dT%H:%M:%S.%fZ'
+                    ) < datetime.utcnow()-timedelta(seconds=THRESHOLD):
                         logging.debug("Skipping because event ts is older than thresold")
                         continue
 
                     try:
                         record = collection.find_one({"label": RECORD_LABEL})
 
-                        logging.debug("Record from database:\n%s", json.dumps(record['data'], indent=2))
+                        logging.debug(
+                            "Record from database:\n%s",
+                            json.dumps(record['data'], indent=2)
+                        )
 
                         if not record:
-                            logging.error("No data record found in %s.%s with a label of %s", DATABASE, COLLECTION, RECORD_LABEL)
+                            logging.error(
+                                "No data record found in %s.%s with a label of %s",
+                                DATABASE,
+                                COLLECTION,
+                                RECORD_LABEL
+                            )
                             continue
 
                         if 'updated' not in record:
-                            logging.error("Data record must contain and 'updated' field containing a datetime object of when the data was last updated")
+                            logging.error(
+                                "Data record must contain and 'updated' field containing "
+                                "a datetime object of when the data was last updated"
+                            )
                             continue
 
                         if record['updated'] < datetime.utcnow()-timedelta(seconds=THRESHOLD):
@@ -179,10 +194,13 @@ if __name__ == '__main__':
     import argparse
     import os
 
-    parser = argparse.ArgumentParser(description='Aux Data Inserter Service - ' + AUX_DATA_DATASOURCE)
-    parser.add_argument('-v', '--verbosity', dest='verbosity',
-                        default=0, action='count',
-                        help='Increase output verbosity')
+    parser = argparse.ArgumentParser(
+        description='Aux Data Inserter Service - ' + AUX_DATA_DATASOURCE
+    )
+    parser.add_argument(
+        '-v', '--verbosity', dest='verbosity', default=0,
+        action='count', help='Increase output verbosity'
+    )
 
     parsed_args = parser.parse_args()
 
@@ -211,7 +229,7 @@ if __name__ == '__main__':
             try:
                 sys.exit(0)
             except SystemExit:
-                os._exit(0)  # pylint: disable=protected-access
+                os._exit(0)
         except Exception as exc:
             logging.error("Lost connection to server, trying again in 5 seconds")
             logging.debug(str(exc))

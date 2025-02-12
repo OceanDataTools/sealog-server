@@ -109,7 +109,7 @@ def _build_export_directories(cruise):
         sys.exit(1)
 
 
-def export_cruise(cruise):  # pylint: disable=too-many-statements, redefined-outer-name
+def export_cruise(cruise): 
     """
     export the data for the given cruise
     """

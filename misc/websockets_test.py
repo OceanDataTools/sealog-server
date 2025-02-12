@@ -41,9 +41,10 @@ HELLO = {
 }
 
 PING = {
-    'type':'ping',
-    'id':CLIENT_WS_ID
+    'type': 'ping',
+    'id': CLIENT_WS_ID
 }
+
 
 async def websocket_test():
     '''
@@ -77,7 +78,9 @@ if __name__ == '__main__':
     import argparse
     import os
 
-    parser = argparse.ArgumentParser(description='Simple script to demonstrate how to subscribe to the new event websocket feed')
+    parser = argparse.ArgumentParser(
+        description='Simple script to demonstrate how to subscribe to the new event websocket feed'
+    )
     parser.add_argument('-v', '--verbosity', dest='verbosity',
                         default=1, action='count',
                         help='Increase output verbosity')
@@ -102,4 +105,4 @@ if __name__ == '__main__':
         try:
             sys.exit(0)
         except SystemExit:
-            os._exit(0) # pylint: disable=protected-access
+            os._exit(0)

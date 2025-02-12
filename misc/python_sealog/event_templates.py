@@ -35,7 +35,10 @@ def get_event_templates(system=True, non_system=True, api_server_url=API_SERVER_
     '''
 
     if not system and not non_system:
-        logging.warning("Requesting no system templates and no non-system templates will always result in no templates")
+        logging.warning(
+            "Requesting no system templates and no non-system "
+            "templates will always result in no templates"
+        )
         return []
 
     try:
@@ -46,10 +49,14 @@ def get_event_templates(system=True, non_system=True, api_server_url=API_SERVER_
             event_templates = json.loads(req.text)
 
             if not system:
-                event_templates = [template for template in event_templates if not template['system_template']]
+                event_templates = [
+                    template for template in event_templates if not template['system_template']
+                ]
 
             if not non_system:
-                event_templates = [template for template in event_templates if template['system_template']]
+                event_templates = [
+                    template for template in event_templates if template['system_template']
+                ]
 
             logging.debug(json.dumps(event_templates))
             return event_templates

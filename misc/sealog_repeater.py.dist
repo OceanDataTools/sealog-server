@@ -29,7 +29,14 @@ import websockets
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
-from misc.python_sealog.settings import API_SERVER_URL, WS_SERVER_URL, HEADERS, EVENTS_API_PATH, EVENT_AUX_DATA_API_PATH, TOKEN
+from misc.python_sealog.settings import (
+    API_SERVER_URL,
+    WS_SERVER_URL,
+    HEADERS,
+    EVENTS_API_PATH,
+    EVENT_AUX_DATA_API_PATH,
+    TOKEN
+)
 
 CLIENT_WSID = 'eventSync'
 
@@ -40,21 +47,29 @@ HELLO = {
         'headers': HEADERS
     },
     'version': '2',
-    'subs': ['/ws/status/newEvents', '/ws/status/updateEvents', '/ws/status/deleteEvents', '/ws/status/newEventAuxData', '/ws/status/updateEventAuxData', '/ws/status/deleteEventAuxData']
+    'subs': [
+        '/ws/status/newEvents',
+        '/ws/status/updateEvents',
+        '/ws/status/deleteEvents',
+        '/ws/status/newEventAuxData',
+        '/ws/status/updateEventAuxData',
+        '/ws/status/deleteEventAuxData'
+    ]
 }
 
 PING = {
-    'type':'ping',
-    'id':CLIENT_WSID
+    'type': 'ping',
+    'id': CLIENT_WSID
 }
 
 SEALOG_SERVER_INSTANCES = [
     {
         'apiServerURL': '',
         'wsServerURL': '',
-        'token':''
+        'token': ''
     }
 ]
+
 
 async def transmit_event(server, event, path):
     '''
@@ -75,14 +90,14 @@ async def transmit_event(server, event, path):
             url += '/' + event['id']
             update_event = copy.deepcopy(event)
             del update_event['id']
-            req = requests.patch(url, headers=headers, data=json.dumps(update_event))
+            requests.patch(url, headers=headers, data=json.dumps(update_event))
 
         elif path == '/ws/status/deleteEvents':
             url += '/' + event['id']
-            req = requests.delete(url, headers=headers)
+            requests.delete(url, headers=headers)
 
         else:
-            req = requests.post(url, headers=headers, data=json.dumps(event))
+            requests.post(url, headers=headers, data=json.dumps(event))
 
     except Exception as exc:
         logging.error('Error adding/modifying event to server')
@@ -109,14 +124,14 @@ async def transmit_event_auxdata(server, event_auxdata, path):
             url += '/' + event_auxdata['id']
             update_event_auxdata = copy.deepcopy(event_auxdata)
             del update_event_auxdata['id']
-            req = requests.patch(url, headers=headers, data=json.dumps(update_event_auxdata))
+            requests.patch(url, headers=headers, data=json.dumps(update_event_auxdata))
 
         elif path == '/ws/status/deleteEventAuxData':
             url += '/' + event_auxdata['id']
-            req = requests.delete(url, headers=headers)
+            requests.delete(url, headers=headers)
 
         else:
-            req = requests.post(url, headers=headers, data=json.dumps(event_auxdata))
+            requests.post(url, headers=headers, data=json.dumps(event_auxdata))
 
     except Exception as exc:
         logging.error('Error adding/modifying event_auxdata to server')
@@ -151,7 +166,11 @@ async def transmitter(servers):
 
                     elif msg_obj['type'] and msg_obj['type'] == 'pub':
 
-                        if msg_obj['path'] in ['/ws/status/newEvents', '/ws/status/updateEvents', '/ws/status/deleteEvents']:
+                        if msg_obj['path'] in [
+                            '/ws/status/newEvents',
+                            '/ws/status/updateEvents',
+                            '/ws/status/deleteEvents'
+                        ]:
 
                             if msg_obj['message']['id'] not in seen_events:
 
@@ -159,11 +178,18 @@ async def transmitter(servers):
                                     seen_events.append(msg_obj['message']['id'])
 
                                 for server in servers:
-                                    await transmit_event(server, msg_obj['message'], msg_obj['path'] )
+                                    await transmit_event(
+                                        server, msg_obj['message'],
+                                        msg_obj['path']
+                                    )
                             else:
                                 seen_events.remove(msg_obj['message']['id'])
 
-                        if msg_obj['path'] in ['/ws/status/newEventAuxData', '/ws/status/updateEventAuxData', '/ws/status/deleteEventAuxData']:
+                        if msg_obj['path'] in [
+                            '/ws/status/newEventAuxData',
+                            '/ws/status/updateEventAuxData',
+                            '/ws/status/deleteEventAuxData'
+                        ]:
 
                             if msg_obj['message']['id'] not in seen_events:
 
@@ -171,7 +197,10 @@ async def transmitter(servers):
                                     seen_event_auxdata.append(msg_obj['message']['id'])
 
                                 for server in servers:
-                                    await transmit_event_auxdata(server, msg_obj['message'], msg_obj['path'] )
+                                    await transmit_event_auxdata(
+                                        server, msg_obj['message'],
+                                        msg_obj['path']
+                                    )
                             else:
                                 seen_event_auxdata.remove(msg_obj['message']['id'])
 
@@ -180,6 +209,7 @@ async def transmitter(servers):
 
         except Exception as exc:
             logging.error(str(exc))
+
 
 async def receiver(server):
     '''
@@ -192,7 +222,6 @@ async def receiver(server):
         'token': TOKEN
     }
 
-
     while True:
         try:
             logging.debug("Connecting to remote server %s", server['wsServerURL'])
@@ -200,7 +229,7 @@ async def receiver(server):
 
                 logging.debug("Send HELLO packet")
                 hello = HELLO
-                hello['auth']['headers'] = { 'Authorization': 'Bearer ' + server['token'] }
+                hello['auth']['headers'] = {'Authorization': 'Bearer ' + server['token']}
                 await websocket.send(json.dumps(hello))
 
                 while True:
@@ -214,11 +243,22 @@ async def receiver(server):
 
                     elif msg_obj['type'] and msg_obj['type'] == 'pub':
 
-                        if msg_obj['path'] in ['/ws/status/newEvents', '/ws/status/updateEvents', '/ws/status/deleteEvents']:
-                            await transmit_event(local_server, msg_obj['message'], msg_obj['path'] )
+                        if msg_obj['path'] in [
+                            '/ws/status/newEvents',
+                            '/ws/status/updateEvents',
+                            '/ws/status/deleteEvents'
+                        ]:
+                            await transmit_event(local_server, msg_obj['message'], msg_obj['path'])
 
-                        if msg_obj['path'] in ['/ws/status/newEventAuxData', '/ws/status/updateEventAuxData', '/ws/status/deleteEventAuxData']:
-                            await transmit_event_auxdata(local_server, msg_obj['message'], msg_obj['path'] )
+                        if msg_obj['path'] in [
+                            '/ws/status/newEventAuxData',
+                            '/ws/status/updateEventAuxData',
+                            '/ws/status/deleteEventAuxData'
+                        ]:
+                            await transmit_event_auxdata(
+                                local_server, msg_obj['message'],
+                                msg_obj['path']
+                            )
 
                     else:
                         logging.debug("Skipping because event value is in the exclude set")
@@ -269,7 +309,7 @@ if __name__ == '__main__':
             try:
                 sys.exit(0)
             except SystemExit:
-                os._exit(0) # pylint: disable=protected-access
+                os._exit(0)
         except Exception as exc:
             logging.debug(str(exc))
             logging.error("Lost connection to server, trying again in 5 seconds")

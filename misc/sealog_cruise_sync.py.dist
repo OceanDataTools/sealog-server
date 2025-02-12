@@ -44,14 +44,14 @@ HELLO = {
 }
 
 PING = {
-    'type':'ping',
-    'id':CLIENT_WSID
+    'type': 'ping',
+    'id': CLIENT_WSID
 }
 
 SEALOG_SERVER_INSTANCES = [
     {
         'apiServerURL': '',
-        'token':''
+        'token': ''  # noqa:E501
     }
 ]
 
@@ -95,7 +95,11 @@ def update_cruise_record(cruise_record):
                 logging.debug(json.dumps(cruise_record))
                 updated_cruise_record = deepcopy(cruise_record)
                 del updated_cruise_record['id']
-                req = requests.patch(url, headers=instance_headers, data=json.dumps(updated_cruise_record))
+                req = requests.patch(
+                    url,
+                    headers=instance_headers,
+                    data=json.dumps(updated_cruise_record)
+                )
                 logging.debug(req.text)
 
             except Exception as exc:
@@ -162,9 +166,10 @@ if __name__ == '__main__':
     import os
 
     parser = argparse.ArgumentParser(description='Cruise Sync Service')
-    parser.add_argument('-v', '--verbosity', dest='verbosity',
-                                            default=0, action='count',
-                                            help='Increase output verbosity')
+    parser.add_argument(
+        '-v', '--verbosity', dest='verbosity', default=0,
+        action='count', help='Increase output verbosity'
+    )
 
     parsed_args = parser.parse_args()
 
@@ -187,4 +192,4 @@ if __name__ == '__main__':
         try:
             sys.exit(0)
         except SystemExit:
-            os._exit(0)  # pylint: disable=protected-access
+            os._exit(0)

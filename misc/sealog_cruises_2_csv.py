@@ -43,9 +43,10 @@ HELLO = {
 }
 
 PING = {
-    'type':'ping',
-    'id':CLIENT_WSID
+    'type': 'ping',
+    'id': CLIENT_WSID
 }
+
 
 def update_csv_file(output_file):
     '''
@@ -59,7 +60,7 @@ def update_csv_file(output_file):
     logging.info("Updating cruise csv file")
 
     try:
-        with open( output_file, 'w', encoding='uft-8') as file :
+        with open(output_file, 'w', encoding='uft-8') as file:
             file.write(cruises)
     except Exception as exc:
         logging.error('Could not create output file: %s', output_file)
@@ -90,7 +91,9 @@ async def cruise_sync(output_file):
 
                 elif cruise_obj['type'] and cruise_obj['type'] == 'pub':
 
-                    logging.info("A cruise record has been added or an existing record has been updated")
+                    logging.info(
+                        "A cruise record has been added or an existing record has been updated"
+                    )
                     logging.debug(json.dumps(cruise_obj, indent=2))
                     update_csv_file(output_file)
 
@@ -110,10 +113,14 @@ if __name__ == "__main__":
     import os
 
     parser = argparse.ArgumentParser(description='Converts sealog cruise records to csv format.')
-    parser.add_argument('-v', '--verbosity', dest='verbosity',
-                                            default=0, action='count',
-                                            help='Increase output verbosity')
-    parser.add_argument('-s', '--service', action='store_true', help='run as service that listens to changes to sealog cruise records.')
+    parser.add_argument(
+        '-v', '--verbosity', dest='verbosity', default=0,
+        action='count', help='Increase output verbosity'
+    )
+    parser.add_argument(
+        '-s', '--service', action='store_true',
+        help='run as service that listens to changes to sealog cruise records.'
+    )
     parser.add_argument('output_file', help='The filepath to save the cruises to.')
 
     parsed_args = parser.parse_args()
@@ -143,4 +150,4 @@ if __name__ == "__main__":
         try:
             sys.exit(0)
         except SystemExit:
-            os._exit(0) # pylint: disable=protected-access
+            os._exit(0)

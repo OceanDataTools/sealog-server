@@ -77,7 +77,7 @@ def _lowering_file_prefix(cruise, lowering):
     return f"{_cruise_file_prefix(cruise)}_{lowering['lowering_id']}"
 
 
-def _build_lowering_name(cruise, lowering):  # pylint: disable=unused-argument
+def _build_lowering_name(cruise, lowering): 
     """
     helper function used to translate how the lowering id is recorded in Sealog
     to how the lowering id should be exported.  Some operators require the
@@ -182,7 +182,7 @@ def _build_export_directories(cruise, lowering=None):
         sys.exit(1)
 
 
-def export_lowering(cruise, lowering):  # pylint: disable=too-many-statements, redefined-outer-name
+def export_lowering(cruise, lowering): 
     """
     export the data for the given cruise and lowering
     """
@@ -288,7 +288,9 @@ def export_lowering(cruise, lowering):  # pylint: disable=too-many-statements, r
         # Removing files in export directory that are no longer part of the export.
         existing_framegrab_list = os.listdir(os.path.join(lowering_dir, IMAGES_DIRNAME))
         delete_framegrab_list = list(
-            set(existing_framegrab_list) - set([os.path.basename(filepath) for filepath in framegrab_list])
+            set(existing_framegrab_list) - set([
+                os.path.basename(filepath) for filepath in framegrab_list
+            ])
         )
         for filename in delete_framegrab_list:
             try:
@@ -372,16 +374,23 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='Sealog ' + VEHICLE_NAME + ' Data export')
-    parser.add_argument('-v', '--verbosity', dest='verbosity', default=0, action='count',
-                        help='Increase output verbosity')
-
+    parser.add_argument(
+        '-v', '--verbosity', dest='verbosity', default=0,
+        action='count', help='Increase output verbosity'
+    )
     group1 = parser.add_mutually_exclusive_group()
-    group1.add_argument('-c', '--current_cruise', action='store_true', default=False,
-                        help=' export the data for the most recent cruise')
-    group1.add_argument('-C', '--cruise_id',
-                        help='export all cruise and lowering data for the specified cruise (i.e. FK200126)')
-    group1.add_argument('-L', '--lowering_id',
-                        help='export data for the specified lowering (i.e. S0314)')
+    group1.add_argument(
+        '-c', '--current_cruise', action='store_true', default=False,
+        help=' export the data for the most recent cruise'
+    )
+    group1.add_argument(
+        '-C', '--cruise_id',
+        help='export all cruise and lowering data for the specified cruise (i.e. FK200126)'
+    )
+    group1.add_argument(
+        '-L', '--lowering_id',
+        help='export data for the specified lowering (i.e. S0314)'
+    )
 
     parsed_args = parser.parse_args()
 
@@ -396,7 +405,7 @@ if __name__ == '__main__':
     parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
     logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
 
-    selected_cruise = None  # pylint: disable=invalid-name
+    selected_cruise = None 
     selected_lowerings = []
 
     # if exporting all lowerings for the current cruise
@@ -449,7 +458,10 @@ if __name__ == '__main__':
 
     logging.info("Exporting the follow data:")
     logging.info("\tCruise: %s", selected_cruise['cruise_id'])
-    logging.info("\tLowering(s): %s", ', '.join([lowering['lowering_id'] for lowering in selected_lowerings]))
+    logging.info(
+        "\tLowering(s): %s",
+        ', '.join([lowering['lowering_id'] for lowering in selected_lowerings])
+    )
 
     success, msg = verify_source_directories(selected_cruise, selected_lowerings)
     if not success:

@@ -256,7 +256,7 @@ def get_cruise_by_event(event_uid, export_format='json', api_server_url=API_SERV
 
 
 def update_cruise(cruise_uid, payload, api_server_url=API_SERVER_URL,
-                    headers=HEADERS):
+                  headers=HEADERS):
     '''
     Update the cruise record
     '''

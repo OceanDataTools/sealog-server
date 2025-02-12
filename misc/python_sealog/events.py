@@ -243,8 +243,7 @@ def get_events_by_lowering(lowering_uid,
     return None
 
 
-def delete_event(event_uid, api_server_url=API_SERVER_URL,
-                          headers=HEADERS):
+def delete_event(event_uid, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Delete the event record.
     '''

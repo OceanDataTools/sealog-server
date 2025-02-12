@@ -1,3 +1,3 @@
-# npm test
-# npx lint-staged
-npm run lint-fix
+npm run lint
+
+./venv/bin/flake8 ./misc
