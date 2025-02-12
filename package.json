@@ -69,9 +69,9 @@
     "prettier": "^3.5.0"
   },
   "lint-staged": {
-    "**/*.js": "eslint --fix",
-    "**/*.ts": "eslint --fix",
-    "**/*.json": "prettier --write",
-    "**/*.css": "prettier --write"
+    "**/*.js": "eslint --fix --max-warnings 0",
+    "**/*.ts": "eslint --fix --max-warnings 0",
+    "**/*.json": "prettier --write --max-warnings 0",
+    "**/*.css": "prettier --write --max-warnings 0"
   }
 }
