@@ -16,8 +16,7 @@
     "start-devel": "NODE_ENV=development npm-run-all --parallel lint start:server",
     "start:server": "nodemon server.js",
     "lint": "eslint . --ext .js",
-    "lint-fix": "eslint . --ext .js --fix",
-    "prepare": "husky"
+    "lint-fix": "eslint . --ext .js --fix"
   },
   "author": "Webb Pinner",
   "homepage": "https://github.com/oceandatatools/sealog-server",
@@ -69,9 +68,9 @@
     "prettier": "^3.5.0"
   },
   "lint-staged": {
-    "*.js": "eslint --fix",
-    "*.ts": "eslint --fix",
-    "*.json": "prettier --write",
-    "*.css": "prettier --write"
+    "**/*.js": "eslint --fix",
+    "**/*.ts": "eslint --fix",
+    "**/*.json": "prettier --write",
+    "**/*.css": "prettier --write"
   }
 }
