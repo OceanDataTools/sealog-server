@@ -67,8 +67,15 @@ async def websocket_test():
                 elif event_obj['type'] and event_obj['type'] == 'pub':
                     logging.info("New Event: %s", json.dumps(event_obj['message']))
 
-    except Exception as exc:
-        logging.error(str(exc))
+    except websockets.exceptions.InvalidURI as exc:
+        logging.error("Invalid URI: %s", exc)
+
+    except websockets.exceptions.WebSocketException as exc:
+        logging.error("WebSocket exception occurred: %s", exc)
+
+    except ConnectionRefusedError as exc:
+        logging.error("Connection refused: %s", exc)
+
 
 # -------------------------------------------------------------------------------------
 # Required python code for running the script as a stand-alone utility

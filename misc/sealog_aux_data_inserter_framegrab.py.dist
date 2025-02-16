@@ -38,7 +38,8 @@ from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
 try:
-    from paramiko import RSAKey, SSHClient, SFTPClient, Transport  # noqa:F401
+    from paramiko import RSAKey, SSHClient, SFTPClient, Transport  # noqa:F401 pylint:disable=W0611
+    from paramiko.sftp import SFTPError  # noqa:F401 pylint:disable=W0611
     PARAMIKO_ENABLED = True
 except ImportError:
     PARAMIKO_ENABLED = False
@@ -73,7 +74,8 @@ SOURCE_DIR = '/mnt/ramdisk'
 
 # ---------------------------------------------------------
 
-DEST_DIR = '/data/sealog-files/images'
+# This needs to match the FILEPATH_ROOT variable in ../config/server_setting.js
+DEST_DIR = '/opt/sealog-server/sealog-files/images'
 
 sources = [
     {
@@ -165,18 +167,28 @@ async def aux_data_inserter():
 
                         logging.debug("dst: %s", dst)
 
+
+                        # ------------ only needed for scp transfers -------------
+                        # try:
+                        #     latest_file = os.path.join(SOURCE_DIR, source['source_filename'])
+                        #     src = os.path.join(SOURCE_DIR, latest_file)
+                        #     sftp = SFTPClient.from_transport(t)
+                        #     sftp.put(src, dst)
+                        #     sftp.close()
+
+                        # except SFTPError as exc:
+                        #     logging.error("Unable to copy image to server")
+                        #     logging.error(exc)
+
+                        # except OSError as exc:
+                        #     logging.error("Unable to copy image to server")
+                        #     logging.error(exc)
+                        # ------------ only needed for scp transfers -------------
+
+                        # ------------ only needed for http transfers -------------
                         try:
-
-                            # ------------ only needed for scp transfers -------------
-                            # latest_file = os.path.join(SOURCE_DIR, source['source_filename'])
-                            # src = os.path.join(SOURCE_DIR, latest_file)
-                            # sftp = SFTPClient.from_transport(t)
-                            # sftp.put(src, dst)
-                            # sftp.close()
-
-                            # ------------ only needed for http transfers -------------
                             res = requests.get(
-                                source['source_url'] + source['source_filename'], stream=True
+                                source['source_url'] + source['source_filename'], stream=True, timeout=(2, None)
                             )
 
                             if res.status_code != 200:
@@ -186,24 +198,36 @@ async def aux_data_inserter():
                                 )
                                 continue
 
+                        except requests.exceptions.RequestException as exc:
+                            logging.error("Unable to retrieve image from remote server")
+                            logging.error(exc)
+
+                        try:
                             with open(dst, 'wb') as f:
                                 shutil.copyfileobj(res.raw, f)
 
-                            # ----------- only needed for local transfers ------------
-                            # latest_file = os.path.join(SOURCE_DIR, source['source_filename'])
-                            # src = os.path.join(SOURCE_DIR, latest_file)
-                            # shutil.copyfile(src,dst)
-
-                            aux_data_record['data_array'].append(
-                                {'data_name': "camera_name", 'data_value': source['source_name']}
-                            )
-                            aux_data_record['data_array'].append(
-                                {'data_name': "filename", 'data_value': dst}
-                            )
-
-                        except Exception as exc:
-                            logging.error("Unable to copy image to server")
+                        except shutil.Error as exc:
+                            logging.error("Unable to save image to server")
                             logging.error(exc)
+                        # ------------ only needed for http transfers -------------
+
+                        # ----------- only needed for local transfers ------------
+                        # latest_file = os.path.join(SOURCE_DIR, source['source_filename'])
+                        # src = os.path.join(SOURCE_DIR, latest_file)
+                        # try:
+                        #     shutil.copyfile(src,dst)
+
+                        # except shutil.Error as exc:
+                        #     logging.error("Unable to save image to server")
+                        #     logging.error(exc)
+                        # ----------- only needed for local transfers ------------
+
+                        aux_data_record['data_array'].append(
+                            {'data_name': "camera_name", 'data_value': source['source_name']}
+                        )
+                        aux_data_record['data_array'].append(
+                            {'data_name': "filename", 'data_value': dst}
+                        )
 
                     if len(aux_data_record['data_array']) > 0:
                         create_event_aux_data(aux_data_record)
@@ -254,6 +278,6 @@ if __name__ == '__main__':
                 sys.exit(0)
             except SystemExit:
                 os._exit(0)
-        except Exception as exc:
+        except Exception as exc:  #pylint:disable=W0718
             logging.error("Lost connection to server, trying again in 5 seconds")
             logging.debug(str(exc))

@@ -62,9 +62,10 @@ def update_csv_file(output_file):
     try:
         with open(output_file, 'w', encoding='uft-8') as file:
             file.write(cruises)
-    except Exception as exc:
+
+    except OSError as exc:
         logging.error('Could not create output file: %s', output_file)
-        logging.error(exc)
+        logging.debug(str(exc))
 
     logging.info("Done")
 
@@ -100,8 +101,14 @@ async def cruise_sync(output_file):
                 else:
                     logging.debug("Skipping because message is not important")
 
-    except Exception as exc:
-        logging.error(str(exc))
+    except websockets.exceptions.InvalidURI as exc:
+        logging.error("Invalid URI: %s", exc)
+
+    except websockets.exceptions.WebSocketException as exc:
+        logging.error("WebSocket exception occurred: %s", exc)
+
+    except ConnectionRefusedError as exc:
+        logging.error("Connection refused: %s", exc)
 
 
 # -------------------------------------------------------------------------------------

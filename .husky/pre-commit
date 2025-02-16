@@ -1,3 +1,9 @@
+
+# Lint NodeJS code
 npm run lint
 
+# Lint python code with Flake8
 ./venv/bin/flake8 ./misc
+
+# Lint python code with PyLint
+./venv/bin/pylint ./misc

@@ -94,7 +94,7 @@ def _build_export_directories(cruise):
             os.mkdir(cruise_dir)
         except FileExistsError:
             logging.debug("cruise export directory already exists")
-        except Exception as exc:
+        except OSError as exc:
             logging.error("Could not create cruise export directory")
             logging.debug(str(exc))
             sys.exit(1)
@@ -103,13 +103,13 @@ def _build_export_directories(cruise):
         os.mkdir(os.path.join(cruise_dir, FILES_DIRNAME))
     except FileExistsError:
         logging.debug("cruise export files directory already exists")
-    except Exception as exc:
+    except OSError as exc:
         logging.error("Could not create cruise files export directory")
         logging.debug(str(exc))
         sys.exit(1)
 
 
-def export_cruise(cruise): 
+def export_cruise(cruise):  # pylint:disable=R0915
     """
     export the data for the given cruise
     """
@@ -120,87 +120,80 @@ def export_cruise(cruise):
 
     cruise_dir = os.path.join(EXPORT_ROOT_DIR, cruise['cruise_id'])
 
+    filename = _cruise_file_prefix(cruise) + '_cruiseRecord.json'
+    dest_filepath = os.path.join(cruise_dir, filename)
+    logging.info("Export cruise Record: %s", filename)
     try:
-        filename = _cruise_file_prefix(cruise) + '_cruiseRecord.json'
-        dest_filepath = os.path.join(cruise_dir, filename)
-        logging.info("Export cruise Record: %s", filename)
-
         with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(cruise))
 
-    except Exception as exc:
+    except OSError as exc:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(exc))
 
+    filename = _cruise_file_prefix(cruise) + '_eventOnlyExport.json'
+    dest_filepath = os.path.join(cruise_dir, filename)
+    logging.info("Export Events (json-format): %s", filename)
     try:
-        filename = _cruise_file_prefix(cruise) + '_eventOnlyExport.json'
-        dest_filepath = os.path.join(cruise_dir, filename)
-        logging.info("Export Events (json-format): %s", filename)
-
         with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(get_events_by_cruise(cruise['id'])))
 
-    except Exception as exc:
+    except OSError as exc:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(exc))
 
+    filename = _cruise_file_prefix(cruise) + '_eventOnlyExport.csv'
+    dest_filepath = os.path.join(cruise_dir, filename)
+    logging.info("Export Events (csv-format): %s", filename)
     try:
-        filename = _cruise_file_prefix(cruise) + '_eventOnlyExport.csv'
-        dest_filepath = os.path.join(cruise_dir, filename)
-        logging.info("Export Events (csv-format): %s", filename)
-
         with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(get_events_by_cruise(cruise['id'], 'csv'))
 
-    except Exception as exc:
+    except OSError as exc:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(exc))
 
+    filename = _cruise_file_prefix(cruise) + '_auxDataExport.json'
+    dest_filepath = os.path.join(cruise_dir, filename)
+    logging.info("Export Aux Data: %s", filename)
     try:
-        filename = _cruise_file_prefix(cruise) + '_auxDataExport.json'
-        dest_filepath = os.path.join(cruise_dir, filename)
-        logging.info("Export Aux Data: %s", filename)
-
         with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(get_event_aux_data_by_cruise(cruise['id'])))
 
-    except Exception as exc:
+    except OSError as exc:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(exc))
 
+    filename = _cruise_file_prefix(cruise) + '_sealogExport.json'
+    dest_filepath = os.path.join(cruise_dir, filename)
+    logging.info("Export Events with Aux Data (json-format): %s", filename)
     try:
-        filename = _cruise_file_prefix(cruise) + '_sealogExport.json'
-        dest_filepath = os.path.join(cruise_dir, filename)
-        logging.info("Export Events with Aux Data (json-format): %s", filename)
-
         with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(get_event_exports_by_cruise(cruise['id'])))
 
-    except Exception as exc:
+    except OSError as exc:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(exc))
 
+    filename = _cruise_file_prefix(cruise) + '_sealogExport.csv'
+    dest_filepath = os.path.join(cruise_dir, filename)
+    logging.info("Export Events with Aux Data (csv-format): %s", filename)
     try:
-        filename = _cruise_file_prefix(cruise) + '_sealogExport.csv'
-        dest_filepath = os.path.join(cruise_dir, filename)
-        logging.info("Export Events with Aux Data (csv-format): %s", filename)
-
         with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(get_event_exports_by_cruise(cruise['id'], 'csv'))
 
-    except Exception as exc:
+    except OSError as exc:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(exc))
 
+    filename = _cruise_file_prefix(cruise) + '_eventTemplates.json'
+    dest_filepath = os.path.join(cruise_dir, filename)
+    logging.info("Export Event Templates: %s", filename)
     try:
-        filename = _cruise_file_prefix(cruise) + '_eventTemplates.json'
-        dest_filepath = os.path.join(cruise_dir, filename)
-        logging.info("Export Event Templates: %s", filename)
-
         with open(dest_filepath, 'w', encoding="utf-8") as file:
             file.write(json.dumps(get_event_templates()))
 
-    except Exception as exc:
+    except OSError as exc:
         logging.error('could not create data file: %s', dest_filepath)
         logging.debug(str(exc))
 

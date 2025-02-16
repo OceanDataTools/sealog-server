@@ -53,8 +53,10 @@ class SealogCORIOLIXAuxDataRecordBuilder():
         '''
         try:
             start_ts = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ") - timedelta(minutes=1)
-            return f'date_after={quote(start_ts.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))}'
-            f'&date_before={quote(ts)}'
+
+            return (f'date_after={quote(start_ts.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))}'
+                    f'&date_before={quote(ts)}')
+
         except ValueError as exc:
             logging.debug(str(exc))
             return None
@@ -75,7 +77,7 @@ class SealogCORIOLIXAuxDataRecordBuilder():
 
         return query_urls
 
-    def _build_aux_data_dict(self, event_id, query_results):
+    def _build_aux_data_dict(self, event_id, query_results):  # pylint:disable=R0915
         '''
         Internal method to build the sealog aux_data record using the event_id,
         query_results and the class instance's datasource value.
@@ -119,7 +121,7 @@ class SealogCORIOLIXAuxDataRecordBuilder():
                                 if 'field' in test:
 
                                     if test['field'] not in coriolix_data:
-                                        logging.error("test field data not in CORIOLIX query")
+                                        logging.warning("test field data not in CORIOLIX query")
                                         return None
 
                                     if 'eq' in test and coriolix_data[test['field']] == test['eq']:
@@ -194,10 +196,10 @@ class SealogCORIOLIXAuxDataRecordBuilder():
             logging.warning(measurement)
             # run the query against the influxDB
             try:
-                response = requests.get(url)
+                response = requests.get(url, timeout=2)
 
                 if response.status_code != 200:
-                    logging.error(f"Failed to retrieve data. Status code: {response.status_code}")
+                    logging.error("Failed to retrieve data. Status code: %s", response.status_code)
 
                 response_obj = response.json()
                 if len(response_obj):
@@ -211,10 +213,9 @@ class SealogCORIOLIXAuxDataRecordBuilder():
             except NewConnectionError:
                 logging.error("CORIOLIX connection error, verify URL: %s", self.url)
 
-            except Exception as exc:
-                logging.error("Error with query:")
-                logging.error(url)
-                logging.error(str(exc))
+            except json.decoder.JSONDecodeError:
+                logging.error("Unable to decode response from URL: %s", url)
+                logging.debug(response)
 
         aux_data_record = self._build_aux_data_dict(event['id'], query_results)
         return aux_data_record

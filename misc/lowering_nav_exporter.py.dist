@@ -152,8 +152,8 @@ class ExportLoweringNav():
             self.data = pd.read_csv(file, usecols=self.raw_columns)
             self.data['ts'] = pd.to_datetime(self.data['ts'], format='%Y-%m-%dT%H:%M:%S.%fZ')
 
-        except Exception as exc:
-            logging.error("Error importing events data into dataframe")
+        except pd.errors.ParserError as exc:
+            logging.error("Error parsing events")
             logging.error(str(exc))
             return None
 
@@ -318,7 +318,7 @@ if __name__ == "__main__":
         try:
             lowering_export = ExportLoweringNav(parsed_args.lowering_id)
 
-        except Exception:
+        except Exception:  # pylint:disable=W0718
             logging.warning("There was a problem with the preference nav reference, "
                             "trying again with alternative nav reference.")
             lowering_export = ExportLoweringNav(

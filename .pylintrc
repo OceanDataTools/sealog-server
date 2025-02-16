@@ -52,7 +52,7 @@ ignore=CVS
 # ignore-list. The regex matches against paths and can be in Posix or Windows
 # format. Because '\\' represents the directory delimiter on Windows systems,
 # it can't be used as an escape character.
-ignore-paths=
+ignore-paths=.*(/reporting.*/|.*_spidertrack).*
 
 # Files or directories matching the regular expression patterns are skipped.
 # The regex matches against base names, not paths. The default value ignores
@@ -299,7 +299,7 @@ max-attributes=7
 max-bool-expr=5
 
 # Maximum number of branch for function / method body.
-max-branches=12
+max-branches=30
 
 # Maximum number of locals for function / method body.
 max-locals=15
@@ -426,21 +426,23 @@ confidence=HIGH,
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
-disable=raw-checker-failed,
-        bad-inline-option,
-        locally-disabled,
-        file-ignored,
-        suppressed-message,
-        useless-suppression,
+disable=bad-inline-option,
         deprecated-pragma,
-        use-symbolic-message-instead,
+        duplicate-code,
+        file-ignored,
+        import-error,
+        line-too-long,
+        locally-disabled,
+        raw-checker-failed,
+        suppressed-message,
+        too-many-arguments,
+        too-many-positional-arguments,
         use-implicit-booleaness-not-comparison-to-string,
         use-implicit-booleaness-not-comparison-to-zero,
-        line-too-long,
-        import-error,
+        use-symbolic-message-instead,
+        useless-suppression,
         wrong-import-order,
-        wrong-import-position,
-        duplicate-code
+        wrong-import-position
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -470,7 +472,7 @@ notes-rgx=
 [REFACTORING]
 
 # Maximum number of nested blocks for function / method body
-max-nested-blocks=5
+max-nested-blocks=10
 
 # Complete name of functions that never returns. When checking for
 # inconsistent-return-statements if a never returning function is called then

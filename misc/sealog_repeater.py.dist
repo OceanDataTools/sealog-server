@@ -90,14 +90,14 @@ async def transmit_event(server, event, path):
             url += '/' + event['id']
             update_event = copy.deepcopy(event)
             del update_event['id']
-            requests.patch(url, headers=headers, data=json.dumps(update_event))
+            requests.patch(url, headers=headers, data=json.dumps(update_event), timeout=(2, None))
 
         elif path == '/ws/status/deleteEvents':
             url += '/' + event['id']
-            requests.delete(url, headers=headers)
+            requests.delete(url, headers=headers, timeout=(2, None))
 
         else:
-            requests.post(url, headers=headers, data=json.dumps(event))
+            requests.post(url, headers=headers, data=json.dumps(event), timeout=(2, None))
 
     except Exception as exc:
         logging.error('Error adding/modifying event to server')
@@ -124,14 +124,14 @@ async def transmit_event_auxdata(server, event_auxdata, path):
             url += '/' + event_auxdata['id']
             update_event_auxdata = copy.deepcopy(event_auxdata)
             del update_event_auxdata['id']
-            requests.patch(url, headers=headers, data=json.dumps(update_event_auxdata))
+            requests.patch(url, headers=headers, data=json.dumps(update_event_auxdata), timeout=(2, None))
 
         elif path == '/ws/status/deleteEventAuxData':
             url += '/' + event_auxdata['id']
-            requests.delete(url, headers=headers)
+            requests.delete(url, headers=headers, timeout=(2, None))
 
         else:
-            requests.post(url, headers=headers, data=json.dumps(event_auxdata))
+            requests.post(url, headers=headers, data=json.dumps(event_auxdata), timeout=(2, None))
 
     except Exception as exc:
         logging.error('Error adding/modifying event_auxdata to server')
@@ -145,15 +145,13 @@ async def transmitter(servers):
     '''
 
     while True:
+        seen_events = []
+        seen_event_auxdata = []
+
         try:
-            logging.debug("Connecting to local server")
             async with websockets.connect(WS_SERVER_URL) as websocket:
 
-                logging.debug("Send HELLO packet")
                 await websocket.send(json.dumps(HELLO))
-
-                seen_events = []
-                seen_event_auxdata = []
 
                 while True:
 
@@ -207,8 +205,14 @@ async def transmitter(servers):
                     else:
                         logging.debug("Skipping because event value is in the exclude set")
 
-        except Exception as exc:
-            logging.error(str(exc))
+        except websockets.exceptions.InvalidURI as exc:
+            logging.error("Invalid URI: %s", exc)
+
+        except websockets.exceptions.WebSocketException as exc:
+            logging.error("WebSocket exception occurred: %s", exc)
+
+        except ConnectionRefusedError as exc:
+            logging.error("Connection refused: %s", exc)
 
 
 async def receiver(server):
@@ -223,11 +227,10 @@ async def receiver(server):
     }
 
     while True:
+
         try:
-            logging.debug("Connecting to remote server %s", server['wsServerURL'])
             async with websockets.connect(server['wsServerURL']) as websocket:
 
-                logging.debug("Send HELLO packet")
                 hello = HELLO
                 hello['auth']['headers'] = {'Authorization': 'Bearer ' + server['token']}
                 await websocket.send(json.dumps(hello))
@@ -263,8 +266,15 @@ async def receiver(server):
                     else:
                         logging.debug("Skipping because event value is in the exclude set")
 
-        except Exception as exc:
-            logging.error(str(exc))
+        except websockets.exceptions.InvalidURI as exc:
+            logging.error("Invalid URI: %s", exc)
+
+        except websockets.exceptions.WebSocketException as exc:
+            logging.error("WebSocket exception occurred: %s", exc)
+
+        except ConnectionRefusedError as exc:
+            logging.error("Connection refused: %s", exc)
+
 
 # -------------------------------------------------------------------------------------
 # The main loop of the utility
@@ -310,6 +320,6 @@ if __name__ == '__main__':
                 sys.exit(0)
             except SystemExit:
                 os._exit(0)
-        except Exception as exc:
+        except Exception as exc:  # pylint:disable=W0718
             logging.debug(str(exc))
             logging.error("Lost connection to server, trying again in 5 seconds")

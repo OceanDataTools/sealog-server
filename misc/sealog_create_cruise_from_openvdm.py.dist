@@ -59,53 +59,29 @@ OPENVDM_SERVER_URL = 'http://openvdm'
 # Default vessel name to use when creating cruise records
 VESSEL_NAME = 'R/V Discoverer'
 
+DEFAULT_CRUISE = {
+  'cruise_id': None,
+  'start_ts': None,
+  'stop_ts': None,
+  'cruise_additional_meta': {
+    'cruise_departure_location': None,
+    'cruise_arrival_location': None
+  }
+}
 
-def main(force=False):
+
+def main(force=False):  # pylint:disable=R0915
     '''
     Main function of script that does all the  work.
     '''
 
-    cruise = {
-      'cruise_id': None,
-      'start_ts': None,
-      'stop_ts': None,
-      'cruise_additional_meta': {
-        'cruise_departure_location': None,
-        'cruise_arrival_location': None
-      }
-    }
-
-    url = OPENVDM_SERVER_URL + '/api/warehouse/getCruiseConfig'
+    cruise = DEFAULT_CRUISE
 
     try:
-        req = requests.get(url, headers=HEADERS, timeout=2)
+        req = requests.get(f'{OPENVDM_SERVER_URL}/api/warehouse/getCruiseConfig',
+            headers=HEADERS, timeout=2)
 
-        if req.status_code == 200:
-            logging.debug(req.text)
-            cruise_config = json.loads(req.text)
-            cruise['cruise_id'] = cruise_config['cruiseID']
-            cruise['start_ts'] = datetime.strptime(
-                cruise_config['cruiseStartDate'],
-                "%Y/%m/%d %H:%M"
-            ).isoformat()+'Z'
-            cruise['cruise_additional_meta'][
-                'cruise_departure_location'] = cruise_config['cruiseStartPort']
-            cruise['stop_ts'] = datetime.strptime(
-                cruise_config['cruiseEndDate'],
-                "%Y/%m/%d %H:%M"
-            ).isoformat()+'Z'
-            cruise['cruise_additional_meta'][
-                'cruise_arrival_location'] = cruise_config['cruiseEndPort']
-
-            logging.debug("Cruise data from OpenVDM:\n %s", json.dumps(cruise, indent=2))
-
-        else:
-            logging.error(
-                "Unable to connect to OpenVDM Server. Please verify URL: %s",
-                OPENVDM_SERVER_URL
-            )
-
-    except Exception as exc:
+    except requests.exceptions.RequestException as exc:
         logging.error(
             "Unable to connect to OpenVDM Server. Please verify URL: %s",
             OPENVDM_SERVER_URL
@@ -113,20 +89,45 @@ def main(force=False):
         logging.debug(str(exc))
         return
 
+    if req.status_code == 200:
+        cruise_config = json.loads(req.text)
+        cruise['cruise_id'] = cruise_config['cruiseID']
+        cruise['start_ts'] = datetime.strptime(
+            cruise_config['cruiseStartDate'],
+            "%Y/%m/%d %H:%M"
+        ).isoformat()+'Z'
+        cruise['cruise_additional_meta'][
+            'cruise_departure_location'] = cruise_config['cruiseStartPort']
+        cruise['stop_ts'] = datetime.strptime(
+            cruise_config['cruiseEndDate'],
+            "%Y/%m/%d %H:%M"
+        ).isoformat()+'Z'
+        cruise['cruise_additional_meta'][
+            'cruise_arrival_location'] = cruise_config['cruiseEndPort']
+
+        logging.debug("Cruise data from OpenVDM:\n %s", json.dumps(cruise, indent=2))
+
+    else:
+        logging.error(
+            "Unable to connect to OpenVDM Server. Please verify URL: %s",
+            OPENVDM_SERVER_URL
+        )
+
     existing_cruise = None
     try:
         existing_cruise_uid = get_cruise_uid_by_id(cruise['cruise_id'])
-        if existing_cruise_uid:
-            existing_cruise = get_cruise(existing_cruise_uid)
-            logging.debug(
-                "Existing cruise record from Sealog:\n %s",
-                json.dumps(existing_cruise, indent=2)
-            )
 
-    except Exception as exc:
+    except Exception as exc:  # pylint:disable=W0718
         logging.error("Unable to connect to Sealog Server. Please verify URL: %s", API_SERVER_URL)
         logging.debug(str(exc))
         return
+
+    if existing_cruise_uid:
+        existing_cruise = get_cruise(existing_cruise_uid)
+        logging.debug(
+            "Existing cruise record from Sealog:\n %s",
+            json.dumps(existing_cruise, indent=2)
+        )
 
     if not existing_cruise:  # create
         cruise = {
@@ -144,25 +145,28 @@ def main(force=False):
             logging.debug("New cruise payload:\n %s", json.dumps(cruise, indent=2))
             logging.info("Creating cruise record")
             create_cruise(cruise)
-        except Exception as exc:
+
+        except Exception as exc:  # pylint:disable=W0718
             logging.error("Unable to create cruise record")
             logging.debug(str(exc))
             return
 
     elif force:  # update
+        updated_cruise = {**existing_cruise, **cruise}
+        updated_cruise['cruise_additional_meta'] = {
+            **existing_cruise['cruise_additional_meta'],
+            **cruise['cruise_additional_meta']
+        }
+        cruise_uid = updated_cruise['id']
+        del updated_cruise['cruise_additional_meta']['cruise_files']
+        del updated_cruise['id']
+        logging.debug("Updated cruise payload:\n %s", json.dumps(updated_cruise, indent=2))
+        logging.info("Updating cruise record")
+
         try:
-            updated_cruise = {**existing_cruise, **cruise}
-            updated_cruise['cruise_additional_meta'] = {
-                **existing_cruise['cruise_additional_meta'],
-                **cruise['cruise_additional_meta']
-            }
-            cruise_uid = updated_cruise['id']
-            del updated_cruise['cruise_additional_meta']['cruise_files']
-            del updated_cruise['id']
-            logging.debug("Updated cruise payload:\n %s", json.dumps(updated_cruise, indent=2))
-            logging.info("Updating cruise record")
             update_cruise(cruise_uid, updated_cruise)
-        except Exception as exc:
+
+        except Exception as exc:  # pylint:disable=W0718
             logging.error("Unable to update cruise record")
             logging.debug(str(exc))
             return

@@ -71,38 +71,32 @@ class SealogInfluxAuxDataRecordBuilder():
         and the class instance's query_measurements and query_fields values.
         '''
 
-        query_range = self._build_query_range(ts)
+        query = f'from(bucket: "{self._influxdb_bucket}")\n'
 
-        try:
-            query = 'from(bucket: "{}")\n'.format(self._influxdb_bucket)
-            query += '|> range({})\n'.format(query_range)
-            query += '|> filter(fn: (r) => {})\n'.format(
-                ' or '.join([
-                    'r["_measurement"] == "{}"'.format(q_measurement)
-                    for q_measurement in self._query_measurements
-                ])
-            )
-            query += '|> filter(fn: (r) => {})\n'.format(
-                ' or '.join([
-                    'r["_field"] == "{}"'.format(q_field)
-                    for q_field in self._query_fields
-                ])
-            )
-            query += '|> sort(columns: ["_time"], desc: true)\n'
-            query += '|> limit(n:1)'
-        except Exception as exc:
-            logging.error("Error building query string")
-            logging.error(" - Range: %s", query_range)
-            logging.error(" - Measurements: %s", self._query_measurements)
-            logging.error(" - Fields: %s", self._query_fields)
-            raise exc
+        query_range = self._build_query_range(ts)
+        query += f'|> range({query_range})\n'
+
+        filter_measurements = " or ".join([
+            f'r["_measurement"] == "{q_measurement}"'
+            for q_measurement in self._query_measurements
+        ])
+        query += f'|> filter(fn: (r) => {filter_measurements})\n'
+
+        filter_fields = " or ".join([
+            f'r["_field"] == "{q_field}"'
+            for q_field in self._query_fields
+        ])
+        query += f'|> filter(fn: (r) => {filter_fields})\n'
+
+        query += '|> sort(columns: ["_time"], desc: true)\n'
+        query += '|> limit(n:1)'
 
         logging.debug("Query: %s", query)
         return query
 
     def _build_aux_data_dict(
         self, event_id, influx_query_result
-    ):
+    ):  # pylint:disable=R0915
         '''
         Internal method to build the sealog aux_data record using the event_id,
         influx_query_result and the class instance's datasource value.
@@ -240,13 +234,10 @@ class SealogInfluxAuxDataRecordBuilder():
             elif str(value).startswith("(404)"):
                 logging.error("InfluxDB API error, verify bucket: %s", self._influxdb_bucket)
             else:
+                logging.error("Error with query:")
+                logging.error(query.replace("|>", '\n'))
+                logging.error(str(exc))
                 raise exc
-
-        except Exception as exc:
-            logging.error("Error with query:")
-            logging.error(query.replace("|>", '\n'))
-            logging.error(str(exc))
-
         else:
             aux_data_record = self._build_aux_data_dict(event['id'], query_result)
 
