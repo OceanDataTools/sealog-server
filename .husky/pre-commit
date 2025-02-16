@@ -1,7 +1,6 @@
 
 echo "Linting NodeJS code with eslint..."
-eslint . --ext .js
-eslint . --ext .js.dist
+eslint . --ext .js --ext .js.dist
 
 echo "Linting python code with Flake8..."
 ./venv/bin/flake8 ./misc

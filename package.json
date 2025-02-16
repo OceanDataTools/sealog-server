@@ -15,8 +15,8 @@
     "start-test": "lab -v **/*.test.js",
     "start-devel": "NODE_ENV=development npm-run-all --parallel lint start:server",
     "start:server": "nodemon server.js",
-    "lint": "eslint . --ext .js",
-    "lint-fix": "eslint . --ext .js --fix",
+    "lint": "eslint . --ext .js --ext .js.dist",
+    "lint-fix": "eslint . --ext .js --ext .js.dist --fix",
     "prepare": "husky"
   },
   "author": "Webb Pinner",
