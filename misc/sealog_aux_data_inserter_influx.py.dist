@@ -62,35 +62,35 @@ INLINE_CONFIG = '''
 - data_source: realtimeVesselPosition
   # query_bucket: openrvdas
   query_measurements:
-    - seapath1
+    - s330
   aux_record_lookup:
-    S1HeadingTrue:
+    S330HeadingTrue:
       name: heading
       uom: deg
       round: 3
-    S1Latitude:
+    S330Latitude:
       name: latitude
       uom: ddeg
       round: 6
       modify:
         - test:
-            - field: S1NorS
+            - field: S330NorS
               eq: S
           operation:
             - multiply: -1
-    S1Longitude:
+    S330Longitude:
       name: longitude
       uom: ddeg
       round: 6
       modify:
         - test:
-            - field: S1EorW
+            - field: S330EorW
               eq: W
           operation:
             - multiply: -1
-    S1NorS:
+    S330NorS:
       no_output: true
-    S1EorW:
+    S330EorW:
       no_output: true
 '''
 
