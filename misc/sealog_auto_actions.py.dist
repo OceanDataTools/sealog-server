@@ -72,7 +72,7 @@ MILESTONE_LOOKUP = {
 # ---------------------------------------------------------
 # For vessel-focused sealog instances
 # ---------------------------------------------------------
-# INCLUDE_SET = ('CRUISE')
+# INCLUDE_SET = ('CRUISE')  # pylint:disable=C0325
 #
 # ASNAP_LOOKUP = {
 #     'Start of Cruise': 'On',
