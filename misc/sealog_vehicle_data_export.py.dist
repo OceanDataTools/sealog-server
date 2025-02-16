@@ -284,7 +284,9 @@ def export_lowering(cruise, lowering):  # pylint:disable=R0915
         # Removing files in export directory that are no longer part of the export.
         existing_framegrab_list = os.listdir(os.path.join(lowering_dir, IMAGES_DIRNAME))
         delete_framegrab_list = list(
-            {os.path.basename(filepath) for filepath in framegrab_list} ^ set(existing_framegrab_list)
+            {
+                os.path.basename(filepath) for filepath in framegrab_list
+            } ^ set(existing_framegrab_list)
         )
         for filename in delete_framegrab_list:
             try:

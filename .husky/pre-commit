@@ -1,9 +1,9 @@
 
-# Lint NodeJS code
+echo "Linting NodeJS code with eslint..."
 npm run lint
 
-# Lint python code with Flake8
+echo "Linting python code with Flake8..."
 ./venv/bin/flake8 ./misc
 
-# Lint python code with PyLint
+echo "Linting python code with PyLint..."
 ./venv/bin/pylint ./misc

@@ -151,7 +151,7 @@ def insert_aux_data(aux_data_builders, event, dry_run=False):
                 if not dry_run:
                     create_event_aux_data(record)
 
-            except Exception as exc: # pylint:disable=W0718
+            except Exception as exc:  # pylint:disable=W0718
                 logging.warning("Error submitting aux data record")
                 logging.debug(str(exc))
         else:

@@ -47,7 +47,7 @@ ASNAP_STATUS_VAR_NAME = 'asnapStatus'
 # ---------------------------------------------------------
 # For vehicle-focused sealog instances
 # ---------------------------------------------------------
-INCLUDE_SET = ( 'VEHICLE' )  # pylint:disable=C0325
+INCLUDE_SET = ('VEHICLE')  # pylint:disable=C0325
 
 ASNAP_LOOKUP = {
     'Off deck': 'On',
@@ -262,7 +262,7 @@ async def auto_actions():
                     _handle_cruise_event(event)
 
     except websockets.exceptions.InvalidURI as exc:
-        logging.error("Invalid URL: %s",WS_SERVER_URL)
+        logging.error("Invalid URL: %s", WS_SERVER_URL)
         logging.debug(str(exc))
 
     except websockets.exceptions.ConnectionClosedError as exc:
