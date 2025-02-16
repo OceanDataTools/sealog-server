@@ -1,6 +1,6 @@
 
 echo "Linting NodeJS code with eslint..."
-npm run lint
+eslint . --ext .js
 
 echo "Linting python code with Flake8..."
 ./venv/bin/flake8 ./misc
