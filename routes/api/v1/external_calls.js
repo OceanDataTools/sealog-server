@@ -36,9 +36,9 @@ exports.plugin = {
       // Start the new child process
       clients.forEach((client) => {
 
-        if(!client.isOpen()) {
-          clients.delete(client)
-          return
+        if (!client.isOpen()) {
+          clients.delete(client);
+          return;
         }
 
         try {
@@ -57,9 +57,9 @@ exports.plugin = {
 
         clients.forEach((client) => {
 
-          if(!client.isOpen()) {
-            clients.delete(client)
-            return
+          if (!client.isOpen()) {
+            clients.delete(client);
+            return;
           }
 
           try {
@@ -76,9 +76,9 @@ exports.plugin = {
 
         clients.forEach((client) => {
 
-          if(!client.isOpen()) {
-            clients.delete(client)
-            return
+          if (!client.isOpen()) {
+            clients.delete(client);
+            return;
           }
 
           try {
@@ -96,9 +96,9 @@ exports.plugin = {
         const exitMessage = `Process exited with code: ${code}`;
         clients.forEach((client) => {
 
-          if(!client.isOpen()) {
-            clients.delete(client)
-            return
+          if (!client.isOpen()) {
+            clients.delete(client);
+            return;
           }
 
           client.send(exitMessage);

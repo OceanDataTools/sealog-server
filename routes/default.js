@@ -18,11 +18,11 @@ const IMAGE_ROUTE = '/files/images';
 const CRUISE_ROUTE = '/files/cruises';
 const LOWERING_ROUTE = '/files/lowerings';
 
-const handleFileUpload = (path,file) => {
+const handleFileUpload = (path, file, prefix = '') => {
 
   return new Promise((resolve, reject) => {
 
-    const filename = file.hapi.filename;
+    const filename = prefix + file.hapi.filename;
     const data = file._data;
 
     Fs.writeFile(path + '/' + filename, data, (err) => {
@@ -438,6 +438,125 @@ exports.plugin = {
         },
         description: 'This route is used for serving image files.',
         tags: ['api','image_files']
+      }
+    });
+
+    server.route({
+      method: 'DELETE',
+      path: IMAGE_ROUTE + '/filepond/revert',
+      async handler(request, h) {
+
+        await handleFileDelete(Path.join(imagePath, request.payload));
+        return h.response().code(204);
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: ['admin', 'write_events']
+        },
+        validate: {
+          headers: authorizationHeader
+        },
+        description: 'This route is used for deleting image files managed with filepond not yet fully associated with a event.',
+        tags: ['images','api','filepond']
+      }
+    });
+
+    server.route({
+      method: 'DELETE',
+      path: IMAGE_ROUTE + '/{file*}',
+      async handler(request, h) {
+
+        const filePath = Path.join(imagePath, request.params.file);
+        await handleFileDelete(filePath);
+        return h.response().code(204);
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: ['admin', 'write_events']
+        },
+        validate: {
+          headers: authorizationHeader
+        },
+        description: 'This route is used for deleting image files associated with events.',
+        tags: ['images','api','files']
+      }
+    });
+
+    server.route({
+      method: 'POST',
+      path: IMAGE_ROUTE + '/filepond/process/{id}',
+      async handler(request, h) {
+
+        const { payload } = request;
+
+        try {
+          await handleFileUpload(imagePath, payload.filepond[1]);
+          return h.response(Path.basename(payload.filepond[1].hapi.filename)).code(201);
+        }
+        catch (err) {
+          return Boom.serverUnavailable('Upload Error', err);
+        }
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: ['admin', 'write_events']
+        },
+        payload: {
+          maxBytes: 1024 * 1024 * 20, // 20Mb
+          output: 'stream',
+          parse: true,
+          multipart: true,
+          allow: 'multipart/form-data' // important
+        },
+        validate: {
+          headers: authorizationHeader,
+          params: filepondFileParam,
+          payload: filepondFilePayload,
+          failAction: (request, h, err) => {
+
+            throw Boom.badRequest(err.message);
+          }
+        },
+        description: 'Upload image file for event via filepond',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>cruise_managers</strong></p>',
+        tags: ['images','api', 'filepond']
+      }
+    });
+
+    server.route({
+      method: 'POST',
+      path: IMAGE_ROUTE + '/{id}',
+      async handler(request, h) {
+
+        const { payload } = request;
+        // const upload = await handleFileUpload(imagePath + '/' + request.params.id, payload.file);
+        const upload = await handleFileUpload(imagePath, payload.file);
+        return h.response({ message: upload.message }).code(201);
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: ['admin', 'write_events']
+        },
+        payload: {
+          maxBytes: 1024 * 1024 * 20, // 20Mb
+          output: 'stream',
+          multipart: true,
+          allow: 'multipart/form-data' // important
+        },
+        validate: {
+          headers: authorizationHeader,
+          params: fileParam,
+          payload: filePayload
+        },
+        description: 'Upload image file',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>cruise_managers</strong></p>',
+        tags: ['images','api', 'files']
       }
     });
 

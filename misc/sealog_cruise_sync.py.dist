@@ -44,14 +44,14 @@ HELLO = {
 }
 
 PING = {
-    'type':'ping',
-    'id':CLIENT_WSID
+    'type': 'ping',
+    'id': CLIENT_WSID
 }
 
 SEALOG_SERVER_INSTANCES = [
     {
         'apiServerURL': '',
-        'token':''
+        'token': ''  # noqa:E501
     }
 ]
 
@@ -72,7 +72,7 @@ def update_cruise_record(cruise_record):
 
         try:
             url = instance['apiServerURL'] + CRUISES_API_PATH + '/' + cruise_record['id']
-            req = requests.get(url, headers=instance_headers)
+            req = requests.get(url, headers=instance_headers, timeout=(2, None))
 
             if req.status_code != 404:
                 logging.debug("Cruise found for Cruise UID: %s", cruise_record['id'])
@@ -95,7 +95,12 @@ def update_cruise_record(cruise_record):
                 logging.debug(json.dumps(cruise_record))
                 updated_cruise_record = deepcopy(cruise_record)
                 del updated_cruise_record['id']
-                req = requests.patch(url, headers=instance_headers, data=json.dumps(updated_cruise_record))
+                req = requests.patch(
+                    url,
+                    headers=instance_headers,
+                    data=json.dumps(updated_cruise_record),
+                    timeout=(2, None)
+                )
                 logging.debug(req.text)
 
             except Exception as exc:
@@ -109,7 +114,7 @@ def update_cruise_record(cruise_record):
                 url = instance['apiServerURL'] + CRUISES_API_PATH
                 logging.debug(url)
                 logging.debug(json.dumps(cruise_record))
-                req = requests.post(url, headers=instance_headers, data=json.dumps(cruise_record))
+                req = requests.post(url, headers=instance_headers, data=json.dumps(cruise_record), timeout=(2, None))
                 logging.debug(req.text)
 
             except Exception as exc:
@@ -150,8 +155,14 @@ async def cruise_sync():
                 else:
                     logging.debug("Skipping because cruise value is in the exclude set")
 
-    except Exception as exc:
-        logging.error(str(exc))
+    except websockets.exceptions.InvalidURI as exc:
+        logging.error("Invalid URI: %s", exc)
+
+    except websockets.exceptions.WebSocketException as exc:
+        logging.error("WebSocket exception occurred: %s", exc)
+
+    except ConnectionRefusedError as exc:
+        logging.error("Connection refused: %s", exc)
 
 # -------------------------------------------------------------------------------------
 # Required python code for running the script as a stand-alone utility
@@ -162,9 +173,10 @@ if __name__ == '__main__':
     import os
 
     parser = argparse.ArgumentParser(description='Cruise Sync Service')
-    parser.add_argument('-v', '--verbosity', dest='verbosity',
-                                            default=0, action='count',
-                                            help='Increase output verbosity')
+    parser.add_argument(
+        '-v', '--verbosity', dest='verbosity', default=0,
+        action='count', help='Increase output verbosity'
+    )
 
     parsed_args = parser.parse_args()
 
@@ -187,4 +199,4 @@ if __name__ == '__main__':
         try:
             sys.exit(0)
         except SystemExit:
-            os._exit(0)  # pylint: disable=protected-access
+            os._exit(0)

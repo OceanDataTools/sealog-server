@@ -41,7 +41,7 @@ def get_cruise(cruise_uid, export_format='json', api_server_url=API_SERVER_URL, 
 
     try:
         url = api_server_url + CRUISES_API_PATH + '/' + cruise_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -75,7 +75,7 @@ def get_cruises(export_format='json', api_server_url=API_SERVER_URL, headers=HEA
 
     try:
         url = api_server_url + CRUISES_API_PATH
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -109,7 +109,7 @@ def create_cruise(payload, api_server_url=API_SERVER_URL, headers=HEADERS):
 
     try:
         url = f'{api_server_url}{CRUISES_API_PATH}'
-        req = requests.post(url, headers=headers, data=json.dumps(payload))
+        req = requests.post(url, headers=headers, data=json.dumps(payload), timeout=(2, None))
         logging.debug(req.text)
 
     except requests.exceptions.RequestException as exc:
@@ -128,7 +128,7 @@ def get_cruise_uid_by_id(cruise_id, api_server_url=API_SERVER_URL, headers=HEADE
 
     try:
         url = api_server_url + CRUISES_API_PATH
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
             cruise = json.loads(req.text)[0]
@@ -161,7 +161,7 @@ def get_cruise_by_id(cruise_id, export_format='json', api_server_url=API_SERVER_
 
     try:
         url = api_server_url + CRUISES_API_PATH
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -197,7 +197,7 @@ def get_cruise_by_lowering(lowering_uid, export_format='json',
 
     try:
         url = api_server_url + CRUISES_API_PATH + '/bylowering/' + lowering_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -233,7 +233,7 @@ def get_cruise_by_event(event_uid, export_format='json', api_server_url=API_SERV
 
     try:
         url = api_server_url + CRUISES_API_PATH + '/byevent/' + event_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -256,14 +256,14 @@ def get_cruise_by_event(event_uid, export_format='json', api_server_url=API_SERV
 
 
 def update_cruise(cruise_uid, payload, api_server_url=API_SERVER_URL,
-                    headers=HEADERS):
+                  headers=HEADERS):
     '''
     Update the cruise record
     '''
 
     try:
         url = f'{api_server_url}{CRUISES_API_PATH}/{cruise_uid}'
-        requests.patch(url, headers=headers, data=json.dumps(payload))
+        requests.patch(url, headers=headers, data=json.dumps(payload), timeout=(2, None))
 
     except requests.exceptions.RequestException as exc:
         raise exc

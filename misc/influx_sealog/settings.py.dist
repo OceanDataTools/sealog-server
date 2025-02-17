@@ -3,7 +3,7 @@
 FILE:           settings.py
 
 DESCRIPTION:    This file contains the settings used by the influx_sealog
-				functions to communicate with the influxDB API
+                functions to communicate with the influxDB API
 
 BUGS:
 NOTES:
@@ -11,7 +11,7 @@ AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
 VERSION:    2.0
 CREATED:    2021-01-01
-REVISION:	2024-07-14
+REVISION:   2024-07-14
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2025
@@ -21,5 +21,5 @@ LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for det
 INFLUXDB_URL = 'http://localhost:8086'
 INFLUXDB_ORG = 'openrvdas'
 INFLUXDB_BUCKET = 'openrvdas'
-INFLUXDB_AUTH_TOKEN = 'DEFAULT_INFLUXDB_AUTH_TOKEN'
+INFLUXDB_AUTH_TOKEN = 'DEFAULT_INFLUXDB_AUTH_TOKEN'  # noqa:E501
 INFLUXDB_VERIFY_SSL = False

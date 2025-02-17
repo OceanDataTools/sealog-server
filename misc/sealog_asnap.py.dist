@@ -58,7 +58,10 @@ def submit_asnap_event(event):
     '''
     try:
         logging.info("Submitting ASNAP Event")
-        requests.post(API_SERVER_URL + EVENTS_API_PATH, headers=HEADERS, data=json.dumps(event))
+        requests.post(
+            API_SERVER_URL + EVENTS_API_PATH, headers=HEADERS,
+            data=json.dumps(event), timeout=(2, None)
+        )
 
     except requests.exceptions.RequestException as exc:
         logging.error("Error submitting new ASNAP event: %s", json.dumps(event))
@@ -142,15 +145,16 @@ if __name__ == '__main__':
     import os
 
     parser = argparse.ArgumentParser(description='ASNAP event submission service')
-    parser.add_argument('-v', '--verbosity', dest='verbosity',
-                        default=0, action='count',
+    parser.add_argument('-v', '--verbosity', dest='verbosity', default=0, action='count',
                         help='Increase output verbosity')
     parser.add_argument('-i', '--interval', default=DEFAULT_INTERVAL, type=int,
                         help='ASNAP interval in seconds.')
     parser.add_argument('-t', '--timeout', dest='timeout', default=0, type=int,
                         help="set a timeout (in minutes) to stop submitting ASNAP events")
-    parser.add_argument('--start_ts', type=iso8601_to_datetime,
-                        help="Add ASNAP events at the specified interval start at this specified start time (UTC)")
+    parser.add_argument(
+        '--start_ts', type=iso8601_to_datetime,
+        help="Add ASNAP events at the specified interval start at this specified start time (UTC)"
+    )
     parser.add_argument('--stop_ts', type=iso8601_to_datetime, default=datetime.utcnow(),
                         help="Add ASNAP events until the specified stop time (UTC)")
 
@@ -186,4 +190,4 @@ if __name__ == '__main__':
         try:
             sys.exit(0)
         except SystemExit:
-            os._exit(0)  # pylint: disable=protected-access
+            os._exit(0)

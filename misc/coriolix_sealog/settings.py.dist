@@ -3,7 +3,7 @@
 FILE:           settings.py
 
 DESCRIPTION:    This file contains the settings used by the influx_sealog
-				functions to communicate with the influxDB API
+                functions to communicate with the influxDB API
 
 BUGS:
 NOTES:
@@ -11,7 +11,7 @@ AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
 VERSION:    2.0
 CREATED:    2025-02-08
-REVISION:	
+REVISION:
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2025

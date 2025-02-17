@@ -43,9 +43,10 @@ HELLO = {
 }
 
 PING = {
-    'type':'ping',
-    'id':CLIENT_WSID
+    'type': 'ping',
+    'id': CLIENT_WSID
 }
+
 
 def update_csv_file(output_file):
     '''
@@ -59,11 +60,12 @@ def update_csv_file(output_file):
     logging.info("Updating cruise csv file")
 
     try:
-        with open( output_file, 'w', encoding='uft-8') as file :
+        with open(output_file, 'w', encoding='uft-8') as file:
             file.write(cruises)
-    except Exception as exc:
+
+    except OSError as exc:
         logging.error('Could not create output file: %s', output_file)
-        logging.error(exc)
+        logging.debug(str(exc))
 
     logging.info("Done")
 
@@ -90,15 +92,23 @@ async def cruise_sync(output_file):
 
                 elif cruise_obj['type'] and cruise_obj['type'] == 'pub':
 
-                    logging.info("A cruise record has been added or an existing record has been updated")
+                    logging.info(
+                        "A cruise record has been added or an existing record has been updated"
+                    )
                     logging.debug(json.dumps(cruise_obj, indent=2))
                     update_csv_file(output_file)
 
                 else:
                     logging.debug("Skipping because message is not important")
 
-    except Exception as exc:
-        logging.error(str(exc))
+    except websockets.exceptions.InvalidURI as exc:
+        logging.error("Invalid URI: %s", exc)
+
+    except websockets.exceptions.WebSocketException as exc:
+        logging.error("WebSocket exception occurred: %s", exc)
+
+    except ConnectionRefusedError as exc:
+        logging.error("Connection refused: %s", exc)
 
 
 # -------------------------------------------------------------------------------------
@@ -110,10 +120,14 @@ if __name__ == "__main__":
     import os
 
     parser = argparse.ArgumentParser(description='Converts sealog cruise records to csv format.')
-    parser.add_argument('-v', '--verbosity', dest='verbosity',
-                                            default=0, action='count',
-                                            help='Increase output verbosity')
-    parser.add_argument('-s', '--service', action='store_true', help='run as service that listens to changes to sealog cruise records.')
+    parser.add_argument(
+        '-v', '--verbosity', dest='verbosity', default=0,
+        action='count', help='Increase output verbosity'
+    )
+    parser.add_argument(
+        '-s', '--service', action='store_true',
+        help='run as service that listens to changes to sealog cruise records.'
+    )
     parser.add_argument('output_file', help='The filepath to save the cruises to.')
 
     parsed_args = parser.parse_args()
@@ -143,4 +157,4 @@ if __name__ == "__main__":
         try:
             sys.exit(0)
         except SystemExit:
-            os._exit(0) # pylint: disable=protected-access
+            os._exit(0)

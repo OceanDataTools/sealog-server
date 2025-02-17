@@ -42,9 +42,10 @@ HELLO = {
 }
 
 PING = {
-    'type':'ping',
-    'id':CLIENT_WSID
+    'type': 'ping',
+    'id': CLIENT_WSID
 }
+
 
 async def cruise_response():
     '''
@@ -74,8 +75,14 @@ async def cruise_response():
                 else:
                     logging.debug("Skipping because cruise value is in the exclude set")
 
-    except Exception as exc:
-        logging.error(str(exc))
+    except websockets.exceptions.InvalidURI as exc:
+        logging.error("Invalid URI: %s", exc)
+
+    except websockets.exceptions.WebSocketException as exc:
+        logging.error("WebSocket exception occurred: %s", exc)
+
+    except ConnectionRefusedError as exc:
+        logging.error("Connection refused: %s", exc)
 
 
 # -------------------------------------------------------------------------------------
@@ -112,4 +119,4 @@ if __name__ == '__main__':
         try:
             sys.exit(0)
         except SystemExit:
-            os._exit(0) #pylint: disable=protected-access
+            os._exit(0)

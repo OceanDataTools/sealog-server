@@ -11,7 +11,7 @@ AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
 VERSION:    1.0
 CREATED:    2025-02-08
-REVISION:   
+REVISION:
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2025
@@ -46,19 +46,22 @@ class SealogCORIOLIXAuxDataRecordBuilder():
         self.logger = logging.getLogger(__name__)
 
     @staticmethod
-    def _build_query_range(ts):  # pylint: disable=invalid-name
+    def _build_query_range(ts):
         '''
         Builds the temporal range for the influxDB query based on the provided
         timestamp (ts).
         '''
         try:
             start_ts = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ") - timedelta(minutes=1)
-            return f'date_after={quote(start_ts.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))}&date_before={quote(ts)}'
+
+            return (f'date_after={quote(start_ts.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))}'
+                    f'&date_before={quote(ts)}')
+
         except ValueError as exc:
             logging.debug(str(exc))
             return None
 
-    def _build_query_urls(self, ts):  # pylint: disable=invalid-name
+    def _build_query_urls(self, ts):
         '''
         Builds the complete influxDB query using the provided timestamp (ts)
         and the class instance's query_measurements and query_fields values.
@@ -68,13 +71,13 @@ class SealogCORIOLIXAuxDataRecordBuilder():
 
         query_urls = []
 
-        for measurement in self._query_measurements:    
+        for measurement in self._query_measurements:
             query_urls.append(f'{self.url}/api/{measurement}/?{query_range}')
             logging.debug("Query: %s", f'{self.url}/{measurement}/?{query_range}')
 
         return query_urls
 
-    def _build_aux_data_dict(self, event_id, query_results):  # pylint: disable=too-many-branches
+    def _build_aux_data_dict(self, event_id, query_results):  # pylint:disable=R0915
         '''
         Internal method to build the sealog aux_data record using the event_id,
         query_results and the class instance's datasource value.
@@ -93,7 +96,7 @@ class SealogCORIOLIXAuxDataRecordBuilder():
         if not coriolix_data:
             return None
 
-        for key, value in self._aux_record_lookup.items():  # pylint: disable=too-many-nested-blocks
+        for key, value in self._aux_record_lookup.items():
             try:
                 if "no_output" in value and value['no_output'] is True:
                     continue
@@ -118,7 +121,7 @@ class SealogCORIOLIXAuxDataRecordBuilder():
                                 if 'field' in test:
 
                                     if test['field'] not in coriolix_data:
-                                        logging.error("test field data not in CORIOLIX query")
+                                        logging.warning("test field data not in CORIOLIX query")
                                         return None
 
                                     if 'eq' in test and coriolix_data[test['field']] == test['eq']:
@@ -163,7 +166,8 @@ class SealogCORIOLIXAuxDataRecordBuilder():
 
                 aux_data_record['data_array'].append({
                     'data_name': value['name'],
-                    'data_value': str(round(output_value, value['round'])) if 'round' in value else str(output_value),
+                    'data_value': str(round(output_value, value['round'])) if 'round' in value
+                    else str(output_value),
                     'data_uom': value['uom'] if 'uom' in value else ''
                 })
             except ValueError as exc:
@@ -192,22 +196,26 @@ class SealogCORIOLIXAuxDataRecordBuilder():
             logging.warning(measurement)
             # run the query against the influxDB
             try:
-                response = requests.get(url)
+                response = requests.get(url, timeout=2)
 
                 if response.status_code != 200:
-                    logging.error(f"Failed to retrieve data. Status code: {response.status_code}")
+                    logging.error("Failed to retrieve data. Status code: %s", response.status_code)
 
                 response_obj = response.json()
                 if len(response_obj):
-                    query_results = {**query_results, **{f"{measurement}__{key}": value for key, value in response_obj[-1].items() if f'{measurement}__{key}' in self._query_fields}}
+                    query_results = {
+                        **query_results,
+                        **{f"{measurement}__{key}": value
+                            for key, value in response_obj[-1].items()
+                            if f'{measurement}__{key}' in self._query_fields}
+                    }
 
             except NewConnectionError:
                 logging.error("CORIOLIX connection error, verify URL: %s", self.url)
 
-            except Exception as exc:
-                logging.error("Error with query:")
-                logging.error(url)
-                logging.error(str(exc))
+            except json.decoder.JSONDecodeError:
+                logging.error("Unable to decode response from URL: %s", url)
+                logging.debug(response)
 
         aux_data_record = self._build_aux_data_dict(event['id'], query_results)
         return aux_data_record
