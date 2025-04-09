@@ -14,7 +14,7 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    services:
+    # services:
       # You can define services that need to be running while testing
       # For example, if your app relies on a database, you could define it here
       # db:
@@ -47,9 +47,15 @@ jobs:
         # Save the secret key for later steps
         echo "SECRET_KEY=$SECRET_KEY" >> $GITHUB_ENV
 
-    - name: Modify docker-compose.yml (example)
+    - name: Modify docker-compose.yml
       run: |
         cp docker-compose.yml.dist docker-compose.yml
+
+        sed -i "s|<SECRET_TOKEN>|${{ secrets.SECRET_KEY }}|g" docker-compose.yml
+
+    - name: Modify Dockerfile
+      run: |
+        cp Dockerfile.dist Dockerfile
 
         sed -i "s|<SECRET_TOKEN>|${{ secrets.SECRET_KEY }}|g" docker-compose.yml
 
