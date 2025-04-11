@@ -79,7 +79,7 @@ def main(force=False):  # pylint:disable=R0915
 
     try:
         req = requests.get(f'{OPENVDM_SERVER_URL}/api/warehouse/getCruiseConfig',
-            headers=HEADERS, timeout=2)
+                           headers=HEADERS, timeout=2)
 
     except requests.exceptions.RequestException as exc:
         logging.error(

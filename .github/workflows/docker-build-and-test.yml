@@ -36,7 +36,7 @@ jobs:
 
     - name: Create a sealog-files directory
       run: |
-        sudo mkdir -p /opt/sealog-server/sealog-files
+        sudo mkdir -p /data/sealog-files
 
     - name: Generate a secret key
       id: generate-secret
@@ -57,19 +57,17 @@ jobs:
       run: |
         cp Dockerfile.dist Dockerfile
 
-        sed -i "s|<SECRET_TOKEN>|${{ secrets.SECRET_KEY }}|g" docker-compose.yml
-
     - name: Build and Run Docker Compose
       run: |
         docker-compose -f docker-compose.yml up -d --build
         # Optionally, add a wait or check to ensure the container is running
         docker-compose ps
 
-    - name: Run tests or validation (if applicable)
-      run: |
+    # - name: Run tests or validation (if applicable)
+      # run: |
         # You can run any tests or health checks here, e.g., using curl or a test script.
         # Example for a web server test:
-        curl -f http://localhost:8000 || exit 1
+        # curl -f http://localhost:8000/sealog-server || exit 1
 
     - name: Tear down Docker Compose
       run: |

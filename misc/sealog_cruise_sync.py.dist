@@ -114,7 +114,8 @@ def update_cruise_record(cruise_record):
                 url = instance['apiServerURL'] + CRUISES_API_PATH
                 logging.debug(url)
                 logging.debug(json.dumps(cruise_record))
-                req = requests.post(url, headers=instance_headers, data=json.dumps(cruise_record), timeout=(2, None))
+                req = requests.post(url, headers=instance_headers, data=json.dumps(cruise_record),
+                                    timeout=(2, None))
                 logging.debug(req.text)
 
             except Exception as exc:

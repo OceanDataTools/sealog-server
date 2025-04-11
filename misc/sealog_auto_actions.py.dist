@@ -78,6 +78,10 @@ MILESTONE_LOOKUP = {
 #     'Start of Cruise': 'On',
 #     'End of Cruise': 'Off'
 # }
+#
+# START_STOP_LOOKUP = {}
+#
+# MILESTONE_LOOKUP = {}
 # ---------------------------------------------------------
 
 
