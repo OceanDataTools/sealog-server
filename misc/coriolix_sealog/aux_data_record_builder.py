@@ -72,8 +72,8 @@ class SealogCORIOLIXAuxDataRecordBuilder():
         query_urls = []
 
         for measurement in self._query_measurements:
-            query_urls.append(f'{self.url}/api/{measurement}/?{query_range}')
-            logging.debug("Query: %s", f'{self.url}/{measurement}/?{query_range}')
+            query_urls.append(f'{self.url}/api/{measurement}/?format=json&{query_range}')
+            logging.debug("Query: %s", query_urls[-1])
 
         return query_urls
 
@@ -193,15 +193,17 @@ class SealogCORIOLIXAuxDataRecordBuilder():
         for url in query_urls:
             logging.debug("Query URL: %s", url)
             measurement = os.path.basename(urlparse(url).path.strip('/'))
-            logging.warning(measurement)
+
             # run the query against the influxDB
             try:
                 response = requests.get(url, timeout=2)
-
                 if response.status_code != 200:
                     logging.error("Failed to retrieve data. Status code: %s", response.status_code)
 
-                response_obj = response.json()
+                response_obj = json.loads(response.text)
+                if isinstance(response_obj, dict):
+                    response_obj = response_obj.get('results', [])
+
                 if len(response_obj):
                     query_results = {
                         **query_results,
@@ -216,6 +218,8 @@ class SealogCORIOLIXAuxDataRecordBuilder():
             except json.decoder.JSONDecodeError:
                 logging.error("Unable to decode response from URL: %s", url)
                 logging.debug(response)
+            except KeyError:
+                logging.error("Something went wrong processing the API response")
 
         aux_data_record = self._build_aux_data_dict(event['id'], query_results)
         return aux_data_record
