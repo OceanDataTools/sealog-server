@@ -1,5 +1,6 @@
 [flake8]
 extend-ignore = E402
 exclude = .git,__pycache__,config,demo,docs,lib,node_modules,plugins,reporting*,routes,sealog-files,*spidertrack*,test,venv
+filename=*.py,*.py.dist
 max-line-length=100
 # max-complexity = 10

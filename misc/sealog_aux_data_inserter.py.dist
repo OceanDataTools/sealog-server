@@ -183,7 +183,6 @@ async def aux_data_inserter():
                         logging.debug(str(exc))
                         continue
 
-
     except Exception as exc:
         logging.error(str(exc))
         raise exc
@@ -232,6 +231,6 @@ if __name__ == '__main__':
                 sys.exit(0)
             except SystemExit:
                 os._exit(0)
-        except Exception as exc:  #pylint:disable=W0718
+        except Exception as exc:  # pylint:disable=W0718
             logging.error("Lost connection to server, trying again in 5 seconds")
             logging.debug(str(exc))
