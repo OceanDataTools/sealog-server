@@ -124,7 +124,11 @@ async def transmit_event_auxdata(server, event_auxdata, path):
             url += '/' + event_auxdata['id']
             update_event_auxdata = copy.deepcopy(event_auxdata)
             del update_event_auxdata['id']
-            requests.patch(url, headers=headers, data=json.dumps(update_event_auxdata), timeout=(2, None))
+            requests.patch(url,
+                           headers=headers,
+                           data=json.dumps(update_event_auxdata),
+                           timeout=(2, None)
+                           )
 
         elif path == '/ws/status/deleteEventAuxData':
             url += '/' + event_auxdata['id']
