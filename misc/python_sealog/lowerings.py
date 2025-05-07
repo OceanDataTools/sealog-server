@@ -14,7 +14,7 @@ CREATED:    2021-01-01
 REVISION:   2022-02-13
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2024
+                Copyright (C) OceanDataTools.org 2025
 '''
 
 import sys
@@ -39,7 +39,7 @@ def get_lowering_uid_by_id(lowering_id, api_server_url=API_SERVER_URL, headers=H
 
     try:
         url = api_server_url + LOWERINGS_API_PATH
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
             lowering = json.loads(req.text)[0]
@@ -68,7 +68,7 @@ def get_lowerings(export_format='json', api_server_url=API_SERVER_URL, headers=H
 
     try:
         url = api_server_url + LOWERINGS_API_PATH
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -95,6 +95,21 @@ def get_lowerings(export_format='json', api_server_url=API_SERVER_URL, headers=H
     return None
 
 
+def create_lowering(payload, api_server_url=API_SERVER_URL, headers=HEADERS):
+    '''
+    Add a lowering record.
+    '''
+
+    try:
+        url = f'{api_server_url}{LOWERINGS_API_PATH}'
+        req = requests.post(url, headers=headers, data=json.dumps(payload), timeout=(2, None))
+        logging.debug(req.text)
+
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+
 def get_lowering_uids_by_cruise(cruise_uid, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the lowering UIDs for the given cruise_uid
@@ -102,7 +117,7 @@ def get_lowering_uids_by_cruise(cruise_uid, api_server_url=API_SERVER_URL, heade
 
     try:
         url = api_server_url + LOWERINGS_API_PATH + '/bycruise/' + cruise_uid
-        req = requests.get(url, headers=headers)
+        req = requests.get(url, headers=headers, timeout=(2, None))
 
         if req.status_code == 200:
             lowerings = json.loads(req.text)
@@ -129,7 +144,7 @@ def get_lowering_ids_by_cruise(cruise_uid, api_server_url=API_SERVER_URL, header
 
     try:
         url = api_server_url + LOWERINGS_API_PATH + '/bycruise/' + cruise_uid
-        req = requests.get(url, headers=headers)
+        req = requests.get(url, headers=headers, timeout=(2, None))
 
         if req.status_code == 200:
             lowerings = json.loads(req.text)
@@ -163,7 +178,7 @@ def get_lowering(lowering_uid, export_format='json', api_server_url=API_SERVER_U
 
     try:
         url = api_server_url + LOWERINGS_API_PATH + '/' + lowering_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -198,7 +213,7 @@ def get_lowering_by_id(lowering_id, export_format='json', api_server_url=API_SER
 
     try:
         url = api_server_url + LOWERINGS_API_PATH
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -232,7 +247,7 @@ def get_lowerings_by_cruise(cruise_uid, export_format='json', api_server_url=API
 
     try:
         url = api_server_url + LOWERINGS_API_PATH + '/bycruise/' + cruise_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -273,7 +288,7 @@ def get_lowering_by_event(event_uid, export_format='json', api_server_url=API_SE
 
     try:
         url = f'{api_server_url}{LOWERINGS_API_PATH}/byevent/{event_uid}'
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -292,6 +307,7 @@ def get_lowering_by_event(event_uid, export_format='json', api_server_url=API_SE
 
     return None
 
+
 def update_lowering(lowering_uid, payload, api_server_url=API_SERVER_URL,
                     headers=HEADERS):
     '''
@@ -300,7 +316,7 @@ def update_lowering(lowering_uid, payload, api_server_url=API_SERVER_URL,
 
     try:
         url = f'{api_server_url}{LOWERINGS_API_PATH}/{lowering_uid}'
-        requests.patch(url, headers=headers, data=json.dumps(payload))
+        requests.patch(url, headers=headers, data=json.dumps(payload), timeout=(2, None))
 
     except requests.exceptions.RequestException as exc:
         raise exc

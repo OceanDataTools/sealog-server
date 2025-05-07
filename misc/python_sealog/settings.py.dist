@@ -9,12 +9,12 @@ BUGS:
 NOTES:
 AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
-VERSION:    0.1
+VERSION:    2.0
 CREATED:    2021-01-01
 REVISION:   2022-02-13
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2024
+                Copyright (C) OceanDataTools.org 2025
 '''
 
 API_SERVER_URL = 'http://localhost:8000/sealog-server'
@@ -36,7 +36,7 @@ LOWERINGS_API_PATH = '/api/v1/lowerings'
 
 API_SERVER_FILE_PATH = '/data/sealog-files'
 
-TOKEN = ''
+TOKEN = ''  # noqa:E501
 
 HEADERS = {
   'Authorization': 'Bearer ' + TOKEN

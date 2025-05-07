@@ -511,7 +511,7 @@ exports.plugin = {
                   _renameAndClearFields(event_aux_data);
 
                   const diff = (new Date().getTime() - queryResult.ts.getTime()) / 1000;
-                  if (Math.abs(Math.round(diff)) < THRESHOLD) {
+                  if (Math.abs(Math.round(diff)) < THRESHOLD || THRESHOLD === 0) {
                     server.publish('/ws/status/newEventAuxData', event_aux_data);
                   }
 

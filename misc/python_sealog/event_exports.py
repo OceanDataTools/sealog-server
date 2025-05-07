@@ -14,7 +14,7 @@ CREATED:    2021-01-01
 REVISION:   2022-02-13
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2024
+                Copyright (C) OceanDataTools.org 2025
 '''
 
 import sys
@@ -50,7 +50,7 @@ def get_event_export(event_uid,
 
     try:
         url = api_server_url + EVENT_EXPORTS_API_PATH + '/' + event_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code != 404:
             event = json.loads(req.text)
@@ -105,7 +105,7 @@ def get_event_exports(export_format='json',
 
     try:
         url = api_server_url + EVENT_EXPORTS_API_PATH
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code != 404:
 
@@ -155,7 +155,7 @@ def get_event_exports_by_cruise(cruise_uid,
 
     try:
         url = api_server_url + EVENT_EXPORTS_API_PATH + '/bycruise/' + cruise_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code != 404:
 
@@ -206,7 +206,7 @@ def get_event_exports_by_lowering(lowering_uid,
 
     try:
         url = api_server_url + EVENT_EXPORTS_API_PATH + '/bylowering/' + lowering_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code != 404:
 

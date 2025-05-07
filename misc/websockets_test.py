@@ -14,7 +14,7 @@ CREATED:    2018-06-27
 REVISION:   2022-02-13
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2024
+                Copyright (C) OceanDataTools.org 2025
 '''
 
 import sys
@@ -41,9 +41,10 @@ HELLO = {
 }
 
 PING = {
-    'type':'ping',
-    'id':CLIENT_WS_ID
+    'type': 'ping',
+    'id': CLIENT_WS_ID
 }
+
 
 async def websocket_test():
     '''
@@ -66,8 +67,15 @@ async def websocket_test():
                 elif event_obj['type'] and event_obj['type'] == 'pub':
                     logging.info("New Event: %s", json.dumps(event_obj['message']))
 
-    except Exception as exc:
-        logging.error(str(exc))
+    except websockets.exceptions.InvalidURI as exc:
+        logging.error("Invalid URI: %s", exc)
+
+    except websockets.exceptions.WebSocketException as exc:
+        logging.error("WebSocket exception occurred: %s", exc)
+
+    except ConnectionRefusedError as exc:
+        logging.error("Connection refused: %s", exc)
+
 
 # -------------------------------------------------------------------------------------
 # Required python code for running the script as a stand-alone utility
@@ -77,7 +85,9 @@ if __name__ == '__main__':
     import argparse
     import os
 
-    parser = argparse.ArgumentParser(description='Simple script to demonstrate how to subscribe to the new event websocket feed')
+    parser = argparse.ArgumentParser(
+        description='Simple script to demonstrate how to subscribe to the new event websocket feed'
+    )
     parser.add_argument('-v', '--verbosity', dest='verbosity',
                         default=1, action='count',
                         help='Increase output verbosity')
@@ -102,4 +112,4 @@ if __name__ == '__main__':
         try:
             sys.exit(0)
         except SystemExit:
-            os._exit(0) # pylint: disable=protected-access
+            os._exit(0)

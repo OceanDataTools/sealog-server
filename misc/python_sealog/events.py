@@ -14,7 +14,7 @@ CREATED:    2021-01-01
 REVISION:   2022-02-13
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2024
+                Copyright (C) OceanDataTools.org 2025
 '''
 
 import sys
@@ -46,7 +46,7 @@ def get_event(event_uid,
 
     try:
         url = api_server_url + EVENTS_API_PATH + '/' + event_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -104,7 +104,7 @@ def get_events(export_format='json',
 
     try:
         url = api_server_url + EVENTS_API_PATH
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -159,7 +159,7 @@ def get_events_by_cruise(cruise_uid,
 
     try:
         url = api_server_url + EVENTS_API_PATH + '/bycruise/' + cruise_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -215,7 +215,7 @@ def get_events_by_lowering(lowering_uid,
 
     try:
         url = api_server_url + EVENTS_API_PATH + '/bylowering/' + lowering_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
 
@@ -243,8 +243,7 @@ def get_events_by_lowering(lowering_uid,
     return None
 
 
-def delete_event(event_uid, api_server_url=API_SERVER_URL,
-                          headers=HEADERS):
+def delete_event(event_uid, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Delete the event record.
     '''
@@ -253,7 +252,7 @@ def delete_event(event_uid, api_server_url=API_SERVER_URL,
 
     try:
         url = api_server_url + EVENTS_API_PATH + '/' + event_uid
-        requests.delete(url, headers=headers, params=params)
+        requests.delete(url, headers=headers, params=params, timeout=(2, None))
 
     except requests.exceptions.RequestException as exc:
         logging.error(str(exc))

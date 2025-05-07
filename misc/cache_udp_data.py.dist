@@ -16,7 +16,7 @@ CREATED:    2018-09-26
 REVISION:   2021-04-27
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2024
+                Copyright (C) OceanDataTools.org 2025
 '''
 
 import socket
@@ -157,12 +157,12 @@ if __name__ == '__main__':
     import os
 
     parser = argparse.ArgumentParser(description='UDP Data Caching Service')
-    parser.add_argument('-v', '--verbosity', dest='verbosity',
-                        default=0, action='count',
-                        help='Increase output verbosity')
-    parser.add_argument('-i', '--ignore_stale', action='store_true',
-                        default=False,
-                        help='only save the new value if it\'s different than the previously recorded value')
+    parser.add_argument(
+        '-v', '--verbosity', dest='verbosity', default=0, action='count',
+        help='Increase output verbosity')
+    parser.add_argument(
+        '-i', '--ignore_stale', action='store_true', default=False,
+        help='only save the new value if it\'s different than the previously recorded value')
 
     parsed_args = parser.parse_args()
 
@@ -188,7 +188,7 @@ if __name__ == '__main__':
             try:
                 sys.exit(0)
             except SystemExit:
-                os._exit(0)  # pylint: disable=protected-access
+                os._exit(0)
 
         # Wait 5 seconds for the server to complete startup
         time.sleep(5)

@@ -14,7 +14,7 @@ CREATED:    2021-01-01
 REVISION:   2022-02-13
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2024
+                Copyright (C) OceanDataTools.org 2025
 '''
 
 import sys
@@ -35,7 +35,7 @@ def get_custom_var(var_uid, api_server_url=API_SERVER_URL, headers=HEADERS):
 
     try:
         url = api_server_url + CUSTOM_VAR_API_PATH + '/' + var_uid
-        req = requests.get(url, headers=headers)
+        req = requests.get(url, headers=headers, timeout=(2, None))
         logging.debug(req.text)
 
         if req.status_code != 404:
@@ -65,7 +65,7 @@ def get_custom_var_uid_by_name(var_name, api_server_url=API_SERVER_URL, headers=
 
     try:
         url = api_server_url + CUSTOM_VAR_API_PATH
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
         logging.debug(req.text)
 
         if req.status_code != 404:
@@ -94,7 +94,7 @@ def get_custom_var_by_name(var_name, api_server_url=API_SERVER_URL, headers=HEAD
 
     try:
         url = api_server_url + CUSTOM_VAR_API_PATH
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
         logging.debug(req.text)
 
         if req.status_code != 404:
@@ -119,7 +119,7 @@ def set_custom_var(var_uid, value, api_server_url=API_SERVER_URL, headers=HEADER
     try:
         payload = {"custom_var_value": value}
         url = api_server_url + CUSTOM_VAR_API_PATH + '/' + var_uid
-        req = requests.patch(url, headers=headers, data=json.dumps(payload))
+        req = requests.patch(url, headers=headers, data=json.dumps(payload), timeout=(2, None))
         logging.debug(req.text)
 
     except requests.exceptions.RequestException as exc:

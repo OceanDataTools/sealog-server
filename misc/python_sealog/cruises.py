@@ -14,7 +14,7 @@ CREATED:    2021-01-01
 REVISION:   2022-02-13
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2024
+                Copyright (C) OceanDataTools.org 2025
 '''
 
 import sys
@@ -41,7 +41,7 @@ def get_cruise(cruise_uid, export_format='json', api_server_url=API_SERVER_URL, 
 
     try:
         url = api_server_url + CRUISES_API_PATH + '/' + cruise_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -75,7 +75,7 @@ def get_cruises(export_format='json', api_server_url=API_SERVER_URL, headers=HEA
 
     try:
         url = api_server_url + CRUISES_API_PATH
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -102,6 +102,21 @@ def get_cruises(export_format='json', api_server_url=API_SERVER_URL, headers=HEA
     return None
 
 
+def create_cruise(payload, api_server_url=API_SERVER_URL, headers=HEADERS):
+    '''
+    Add a cruise record.
+    '''
+
+    try:
+        url = f'{api_server_url}{CRUISES_API_PATH}'
+        req = requests.post(url, headers=headers, data=json.dumps(payload), timeout=(2, None))
+        logging.debug(req.text)
+
+    except requests.exceptions.RequestException as exc:
+        logging.error(str(exc))
+        raise exc
+
+
 def get_cruise_uid_by_id(cruise_id, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return the UID for a cruise record based on the cruise_id.
@@ -113,7 +128,7 @@ def get_cruise_uid_by_id(cruise_id, api_server_url=API_SERVER_URL, headers=HEADE
 
     try:
         url = api_server_url + CRUISES_API_PATH
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
             cruise = json.loads(req.text)[0]
@@ -146,7 +161,7 @@ def get_cruise_by_id(cruise_id, export_format='json', api_server_url=API_SERVER_
 
     try:
         url = api_server_url + CRUISES_API_PATH
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -182,7 +197,7 @@ def get_cruise_by_lowering(lowering_uid, export_format='json',
 
     try:
         url = api_server_url + CRUISES_API_PATH + '/bylowering/' + lowering_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -218,7 +233,7 @@ def get_cruise_by_event(event_uid, export_format='json', api_server_url=API_SERV
 
     try:
         url = api_server_url + CRUISES_API_PATH + '/byevent/' + event_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code == 200:
             if export_format == 'json':
@@ -238,3 +253,17 @@ def get_cruise_by_event(event_uid, export_format='json', api_server_url=API_SERV
         raise exc
 
     return None
+
+
+def update_cruise(cruise_uid, payload, api_server_url=API_SERVER_URL,
+                  headers=HEADERS):
+    '''
+    Update the cruise record
+    '''
+
+    try:
+        url = f'{api_server_url}{CRUISES_API_PATH}/{cruise_uid}'
+        requests.patch(url, headers=headers, data=json.dumps(payload), timeout=(2, None))
+
+    except requests.exceptions.RequestException as exc:
+        raise exc

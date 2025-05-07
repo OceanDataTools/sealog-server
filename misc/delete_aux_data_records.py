@@ -8,12 +8,12 @@ BUGS:
 NOTES:
 AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
-VERSION:    0.1
+VERSION:    2.0
 CREATED:    2022-06-01
 REVISION:
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2022
+                Copyright (C) OceanDataTools.org 2025
 '''
 import sys
 import json
@@ -83,4 +83,4 @@ if __name__ == "__main__":
         try:
             sys.exit(0)
         except SystemExit:
-            os._exit(0)  # pylint: disable=protected-access
+            os._exit(0)

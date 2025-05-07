@@ -1,0 +1,74 @@
+name: Docker Build and Run Test
+
+on:
+  push:
+    branches:
+      - 2.x  # Or any branch you want to trigger the workflow
+      - dev
+  pull_request:
+    branches:
+      - 2.x  # Or any branch you want to trigger the workflow
+      - dev
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    # services:
+      # You can define services that need to be running while testing
+      # For example, if your app relies on a database, you could define it here
+      # db:
+      #   image: postgres:latest
+      #   ports:
+      #     - 5432:5432
+
+    steps:
+    - name: Check out the repository
+      uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Set up Docker Compose
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose
+
+    - name: Create a sealog-files directory
+      run: |
+        sudo mkdir -p /data/sealog-files
+
+    - name: Generate a secret key
+      id: generate-secret
+      run: |
+        # Generate a random secret key using openssl
+        SECRET_KEY=$(openssl rand -base64 32)
+        echo "Generated secret key: $SECRET_KEY"
+        # Save the secret key for later steps
+        echo "SECRET_KEY=$SECRET_KEY" >> $GITHUB_ENV
+
+    - name: Modify docker-compose.yml
+      run: |
+        cp docker-compose.yml.dist docker-compose.yml
+
+        sed -i "s|<SECRET_TOKEN>|${{ secrets.SECRET_KEY }}|g" docker-compose.yml
+
+    - name: Modify Dockerfile
+      run: |
+        cp Dockerfile.dist Dockerfile
+
+    - name: Build and Run Docker Compose
+      run: |
+        docker-compose -f docker-compose.yml up -d --build
+        # Optionally, add a wait or check to ensure the container is running
+        docker-compose ps
+
+    # - name: Run tests or validation (if applicable)
+      # run: |
+        # You can run any tests or health checks here, e.g., using curl or a test script.
+        # Example for a web server test:
+        # curl -f http://localhost:8000/sealog-server || exit 1
+
+    - name: Tear down Docker Compose
+      run: |
+        docker-compose down

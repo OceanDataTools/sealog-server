@@ -1,6 +1,8 @@
 const Fs = require('fs');
 const Pkg = require('../package.json');
 
+const SERVER_PORT = 8000;
+
 let tlsOptions = null;
 try {
   tlsOptions = {
@@ -71,7 +73,7 @@ const {
   sealogDB_devel
 } = require('../config/db_constants');
 
-const port = process.env.SEALOG_SERVER_PORT || 8000;
+const port = process.env.SEALOG_SERVER_PORT || SERVER_PORT;
 let env = process.env.NODE_ENV || 'development';
 env = (env === 'test') ? 'development' : env;
 env = ['demo-vehicle','demo-vessel'].includes(env) ? 'demo' : env;

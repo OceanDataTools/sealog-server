@@ -896,7 +896,7 @@ exports.plugin = {
           _renameAndClearFields(event);
 
           const diff = (new Date().getTime() - event.ts.getTime()) / 1000;
-          if (publish && Math.abs(Math.round(diff)) < THRESHOLD) {
+          if (publish && Math.abs(Math.round(diff)) < THRESHOLD || THRESHOLD === 0) {
             server.publish('/ws/status/newEvents', event);
           }
 

@@ -14,7 +14,7 @@ CREATED:    2021-04-21
 REVISION:   2021-04-27
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2024
+                Copyright (C) OceanDataTools.org 2025
 '''
 
 import os
@@ -65,7 +65,9 @@ class FileCropUtility():
 
                 first_line = file.readline().decode().rstrip('\n')
                 try:
-                    first_ts = datetime.strptime(first_line.split(self.delimiter)[0], self.dt_format)
+                    first_ts = datetime.strptime(
+                        first_line.split(self.delimiter)[0], self.dt_format
+                    )
 
                 except ValueError as exc:
                     logging.warning("Could not process first line in %s: %s", data_file, first_line)
@@ -91,7 +93,10 @@ class FileCropUtility():
                 logging.debug("    Last line: %s", last_line)
                 logging.debug("    Last timestamp: %s", last_ts)
 
-            if not ((self.start_dt - last_ts).total_seconds() > 0 or (first_ts - self.stop_dt).total_seconds() > 0):
+            if not (
+                (self.start_dt - last_ts).total_seconds() > 0
+                or (first_ts - self.stop_dt).total_seconds() > 0
+            ):
                 logging.debug("    ** Include this file **")
                 culled_files.append(data_file)
 
@@ -119,12 +124,17 @@ class FileCropUtility():
                         break
 
                     try:
-                        line_ts = datetime.strptime(line_str.split(self.delimiter)[0], self.dt_format)
+                        line_ts = datetime.strptime(
+                            line_str.split(self.delimiter)[0], self.dt_format
+                        )
 
                     except ValueError as exc:
                         logging.warning("Could not process line: %s", line_str)
                         logging.debug(str(exc))
 
                     else:
-                        if (line_ts - self.start_dt).total_seconds() >= 0 and (self.stop_dt - line_ts).total_seconds() >= 0:
+                        if (
+                            (line_ts - self.start_dt).total_seconds() >= 0 and
+                            (self.stop_dt - line_ts).total_seconds() >= 0
+                        ):
                             yield line_str

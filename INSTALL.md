@@ -82,9 +82,9 @@ Set the `senderAddress` and `notificationEmailAddresses` locations in the `./con
 
 You will also need to uncomment the type of email integration used.  By default email is disabled but the distribution file includes commented code blocks for gmail, mailgun and mailjet integration.
 
-Set the `host`, `port`, `wsPort`, and `prefix` values in the `./config/manifest.js` file to meet your specific installation requirements.  There are 3 sets of these variables for the various ways sealog-server can be run.  If you are only running one instance of Sealog Server on the server then the defaults are sufficient
+Set the `SERVER_PORT` value in the `./config/manifest.js` file to meet your specific installation requirements. If you are only running one instance of Sealog Server on the server then the default value is sufficient. If you plan to use SSL, add the complete privKey and fulchain filepaths to `<privKey.pem>` and `<fullchain.pem>`.
 
-Set the `imagePath`, `cruisePath` and `loweringPath` locations in the `./config/server_settings.js` file to meet your specific installation requirements.  These paths are where the framegrabber image files, cruise files and lowering files are located on the server.
+Set the `FILEPATH_ROOT` location in the `./config/server_settings.js` file to meet your specific installation requirements.
 
 Create a secret JWT encryption key and save it to the `./config/secret.js` file.  Create the key by running the following command:
 ```
@@ -196,20 +196,13 @@ If everything went correctly you should not be able to access the sealog-server 
 By default sealog-server runs over http.  To run the server over https uncomment the following commented lines at the top of the `./config/manifest.js` file and replace `<privKey.pem>` and `<fullchain.pem>` with the appropriate cert files:
 
 ```
-// const Fs = require('fs')
-
-// const tlsOptions = {
-//   key: Fs.readFileSync(<privKey.pem>),
-//   cert: Fs.readFileSync(<fullchain.pem>)
-// };
+  tlsOptions = {
+    key: Fs.readFileSync(process.env.SEALOG_SERVER_TLS_PRIVKEY || '<privKey.pem>'),
+    cert: Fs.readFileSync(process.env.SEALOG_SERVER_TLS_FULLCHAIN || '<fullchain.pem>')
+  };
 ```
 
-AND the following line at line 103:
-```
-//    tls: tlsOptions,
-```
-
-**Note:** Make sure the user running the sealog-server process has read access to the certificate files.
+**Note:** Make sure the user running the sealog-server process has read access to the certificate files.  Make sure any clients communicating with the server know to use TLS.
 
 # Enabling Additional Functionality
 

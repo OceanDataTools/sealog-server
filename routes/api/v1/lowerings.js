@@ -811,19 +811,11 @@ exports.plugin = {
         // Validate user ids in access list
         if ( lowering.lowering_access_list && lowering.lowering_access_list.length > 0 ) {
           try {
-            const users = db.collection(usersTable).toArray();
-            const user_ids = users.map((user) => user._id);
-            const user_are_valid = lowering.lowering_access_list.reduce((result, user_id) => {
+            const users = await db.collection(usersTable).find().toArray();
+            const user_ids = users.map((user) => user._id.toString());
+            const users_are_valid = lowering.lowering_access_list.every((value) => user_ids.includes(value));
 
-              if (!user_ids.includes(user_id)) {
-                result = false;
-              }
-
-              return result;
-
-            }, true);
-
-            if (!user_are_valid) {
+            if (!users_are_valid) {
               return Boom.badRequest('lowering_access_list include invalid user IDs');
             }
           }

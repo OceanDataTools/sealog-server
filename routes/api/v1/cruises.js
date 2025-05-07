@@ -780,10 +780,6 @@ exports.plugin = {
         }
 
         // Validate user ids in access list
-
-        // list1.every(value => list2.includes(value));
-
-
         if ( cruise.cruise_access_list && cruise.cruise_access_list.length > 0 ) {
           try {
             const users = await db.collection(usersTable).find().toArray();

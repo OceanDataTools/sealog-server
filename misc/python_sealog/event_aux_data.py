@@ -14,7 +14,7 @@ CREATED:    2021-01-01
 REVISION:   2022-02-13
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
-                Copyright (C) OceanDataTools.org 2024
+                Copyright (C) OceanDataTools.org 2025
 '''
 
 import sys
@@ -50,7 +50,7 @@ def get_event_aux_data_by_cruise(cruise_uid, datasource=None, limit=0,
 
     try:
         url = api_server_url + EVENT_AUX_DATA_API_PATH + '/bycruise/' + cruise_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         if req.status_code != 404:
             event_aux_data = json.loads(req.text)
@@ -90,7 +90,7 @@ def get_event_aux_data_by_lowering(lowering_uid, datasource=None, limit=0,
 
     try:
         url = api_server_url + EVENT_AUX_DATA_API_PATH + '/bylowering/' + lowering_uid
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(url, headers=headers, params=params, timeout=(2, None))
 
         event_aux_data = json.loads(req.text)
         logging.debug(json.dumps(event_aux_data))
@@ -112,7 +112,7 @@ def create_event_aux_data(payload, api_server_url=API_SERVER_URL, headers=HEADER
 
     try:
         url = f'{api_server_url}{EVENT_AUX_DATA_API_PATH}'
-        req = requests.post(url, headers=headers, data=json.dumps(payload))
+        req = requests.post(url, headers=headers, data=json.dumps(payload), timeout=(2, None))
         logging.debug(req.text)
 
     except requests.exceptions.RequestException as exc:
@@ -130,7 +130,7 @@ def delete_event_aux_data(aux_data_uid, api_server_url=API_SERVER_URL,
 
     try:
         url = api_server_url + EVENT_AUX_DATA_API_PATH + '/' + aux_data_uid
-        requests.delete(url, headers=headers, params=params)
+        requests.delete(url, headers=headers, params=params, timeout=(2, None))
 
     except requests.exceptions.RequestException as exc:
         logging.error(str(exc))

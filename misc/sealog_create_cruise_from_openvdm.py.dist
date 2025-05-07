@@ -1,0 +1,207 @@
+#!/usr/bin/env python3
+'''
+FILE:           sealog_create_cruise_from_openvdm.py
+
+DESCRIPTION:    This script creates a sealog cruise record using the cruise id,
+                dates and port information from OpenVDM.
+
+                To complete the integration with OpenVDM, add the following to
+                the postSetupNewCruise section of the ./server/etc/openvdm.yaml
+                file:
+
+                - name: "Setup new Cruise in Sealog"
+                  command:
+                  - ssh
+                  - sealog_user@sealog-srvr.shipname.edu
+                  - "/opt/sealog-server/venv/bin/python \
+                     /opt/sealog-server/misc/sealog_create_cruise_from_openvdm.py"
+
+                Update the "server_user", "sealog-srvr.shipname.edu" to match
+                installation.
+
+                Setup public/private ssh key authentication from the OpenVDM
+                server to the Sealog server for the Sealog user.
+
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    2.0
+CREATED:    2024-10-21
+REVISION:   2025-02-09
+
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2025
+'''
+
+import sys
+import json
+import logging
+import requests
+
+from datetime import datetime
+
+from os.path import dirname, realpath
+sys.path.append(dirname(dirname(realpath(__file__))))
+
+from misc.python_sealog.cruises import (
+    get_cruise,
+    get_cruise_uid_by_id,
+    create_cruise,
+    update_cruise
+)
+
+from misc.python_sealog.settings import API_SERVER_URL, HEADERS
+
+# URL to OpenVDM main page
+OPENVDM_SERVER_URL = 'http://openvdm'
+
+# Default vessel name to use when creating cruise records
+VESSEL_NAME = 'R/V Discoverer'
+
+DEFAULT_CRUISE = {
+  'cruise_id': None,
+  'start_ts': None,
+  'stop_ts': None,
+  'cruise_additional_meta': {
+    'cruise_departure_location': None,
+    'cruise_arrival_location': None
+  }
+}
+
+
+def main(force=False):  # pylint:disable=R0915
+    '''
+    Main function of script that does all the  work.
+    '''
+
+    cruise = DEFAULT_CRUISE
+
+    try:
+        req = requests.get(f'{OPENVDM_SERVER_URL}/api/warehouse/getCruiseConfig',
+                           headers=HEADERS, timeout=2)
+
+    except requests.exceptions.RequestException as exc:
+        logging.error(
+            "Unable to connect to OpenVDM Server. Please verify URL: %s",
+            OPENVDM_SERVER_URL
+        )
+        logging.debug(str(exc))
+        return
+
+    if req.status_code == 200:
+        cruise_config = json.loads(req.text)
+        cruise['cruise_id'] = cruise_config['cruiseID']
+        cruise['start_ts'] = datetime.strptime(
+            cruise_config['cruiseStartDate'],
+            "%Y/%m/%d %H:%M"
+        ).isoformat()+'Z'
+        cruise['cruise_additional_meta'][
+            'cruise_departure_location'] = cruise_config['cruiseStartPort']
+        cruise['stop_ts'] = datetime.strptime(
+            cruise_config['cruiseEndDate'],
+            "%Y/%m/%d %H:%M"
+        ).isoformat()+'Z'
+        cruise['cruise_additional_meta'][
+            'cruise_arrival_location'] = cruise_config['cruiseEndPort']
+
+        logging.debug("Cruise data from OpenVDM:\n %s", json.dumps(cruise, indent=2))
+
+    else:
+        logging.error(
+            "Unable to connect to OpenVDM Server. Please verify URL: %s",
+            OPENVDM_SERVER_URL
+        )
+
+    existing_cruise = None
+    try:
+        existing_cruise_uid = get_cruise_uid_by_id(cruise['cruise_id'])
+
+    except Exception as exc:  # pylint:disable=W0718
+        logging.error("Unable to connect to Sealog Server. Please verify URL: %s", API_SERVER_URL)
+        logging.debug(str(exc))
+        return
+
+    if existing_cruise_uid:
+        existing_cruise = get_cruise(existing_cruise_uid)
+        logging.debug(
+            "Existing cruise record from Sealog:\n %s",
+            json.dumps(existing_cruise, indent=2)
+        )
+
+    if not existing_cruise:  # create
+        cruise = {
+            'cruise_location': 'FIX ME',
+            'cruise_tags': [],
+            'cruise_hidden': False,
+            **cruise
+        }
+
+        cruise['cruise_additional_meta']['cruise_name'] = 'FIX ME'
+        cruise['cruise_additional_meta']['cruise_pi'] = 'FIX ME'
+        cruise['cruise_additional_meta']['cruise_vessel'] = VESSEL_NAME
+
+        try:
+            logging.debug("New cruise payload:\n %s", json.dumps(cruise, indent=2))
+            logging.info("Creating cruise record")
+            create_cruise(cruise)
+
+        except Exception as exc:  # pylint:disable=W0718
+            logging.error("Unable to create cruise record")
+            logging.debug(str(exc))
+            return
+
+    elif force:  # update
+        updated_cruise = {**existing_cruise, **cruise}
+        updated_cruise['cruise_additional_meta'] = {
+            **existing_cruise['cruise_additional_meta'],
+            **cruise['cruise_additional_meta']
+        }
+        cruise_uid = updated_cruise['id']
+        del updated_cruise['cruise_additional_meta']['cruise_files']
+        del updated_cruise['id']
+        logging.debug("Updated cruise payload:\n %s", json.dumps(updated_cruise, indent=2))
+        logging.info("Updating cruise record")
+
+        try:
+            update_cruise(cruise_uid, updated_cruise)
+
+        except Exception as exc:  # pylint:disable=W0718
+            logging.error("Unable to update cruise record")
+            logging.debug(str(exc))
+            return
+
+    else:
+        logging.info(
+            "Cruise record already exists. Use --force argument to update the existing record"
+        )
+
+
+# -------------------------------------------------------------------------------------
+# Required python code for running the script as a stand-alone utility
+# -------------------------------------------------------------------------------------
+if __name__ == '__main__':
+
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Create cruise from OpenVDM')
+    parser.add_argument('-v', '--verbosity', dest='verbosity',
+                        default=0, action='count',
+                        help='Increase output verbosity')
+    parser.add_argument('-f', '--force', action='store_true', default=False,
+                        help='Update an existing Sealog cruise record.')
+
+    parsed_args = parser.parse_args()
+
+    ############################
+    # Set up logging before we do any other argument parsing (so that we
+    # can log problems with argument parsing).
+
+    LOGGING_FORMAT = '%(asctime)-15s %(levelname)s - %(message)s'
+    logging.basicConfig(format=LOGGING_FORMAT)
+
+    LOG_LEVELS = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
+    parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
+    logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
+
+    main(parsed_args.force)

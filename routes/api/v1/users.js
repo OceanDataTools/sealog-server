@@ -318,21 +318,22 @@ exports.plugin = {
       path: '/users/{id}',
       async handler(request, h) {
 
-        //TODO - add code so that only admins and the user can do this.
-        if (!(request.auth.credentials.id === request.params.id || request.auth.credentials.roles.includes('admin'))) {
-          return Boom.badRequest('Only admins and the owner can edit users');
-        }
-
         if (request.payload.roles && request.payload.roles.includes('admin') && !request.auth.credentials.roles.includes('admin')) {
           return Boom.badRequest('Only admins create other admins');
         }
 
-        if (request.payload.disabled && typeof request.payload.disabled === 'boolean' && !request.auth.credentials.roles.includes('admin')) {
-          return Boom.badRequest('Only admins can enable/disabled users');
-        }
-
         if (request.payload.system_user && typeof request.payload.system_user === 'boolean' && !request.auth.credentials.roles.includes('admin')) {
           return Boom.badRequest('Only admins can promote/demote users to system users');
+        }
+
+        //TODO - add code so that only admins and the user can do this.
+        if (request.auth.credentials.id !== request.params.id && !request.auth.credentials.scope.some((role) => ['admin', 'write_users'].includes(role))) {
+          return Boom.badRequest('Only admins, managers and the owner can edit users');
+        }
+
+
+        if (request.payload.disabled && typeof request.payload.disabled === 'boolean' && !request.auth.credentials.scope.some((role) => ['admin', 'write_users'].includes(role))) {
+          return Boom.badRequest('Only admins and managers can enable/disabled users');
         }
 
         const query = {};
@@ -358,6 +359,11 @@ exports.plugin = {
         catch (err) {
           console.log('ERROR:', err);
           return Boom.serverUnavailable('database error', err);
+        }
+
+        //Trying to edit a system user as a non-admin?
+        if (user_query.system_user && !request.auth.credentials.scope.some((role) => ['admin'].includes(role))) {
+          return Boom.badRequest('Only admins can edit system users');
         }
 
         //Trying to change the username?

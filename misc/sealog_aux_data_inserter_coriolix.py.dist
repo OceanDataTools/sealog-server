@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 '''
-FILE:           sealog_aux_data_inserter_influx.py
+FILE:           sealog_aux_data_inserter_coriolix.py
 
 DESCRIPTION:    This service listens for new events submitted to Sealog, create
                 aux_data records containing the specified real-time data and
                 associates the aux data records with the newly created event.
 
-                This script leverages the OpenRVDAS/InfluxDB integration so that
-                if can add ancillary data from any point in time so long as the
-                data is availble from the InfluxDB.  In the event the data is not
-                available the script will NOT add the corresponding aux_data
-                records.
+                This script leverages the CORILOX database/API so that
+                ancillary data can be added to events from any point in time so
+                long as the data is availble from the CORIOLIX API.  In the event
+                the data is not available the script will NOT add the
+                corresponding aux_data records.
 
-                This script can also add influx data to a list of event ids
+                This script can also add CORIOLIX data to a list of event ids
                 (comma-separated) using the -e flag, or all the events for a given
                 lowering using the -l flag, or all the events for a given
                 cruise using the -c flag
@@ -21,9 +21,9 @@ BUGS:
 NOTES:
 AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
-VERSION:    1.1
-CREATED:    2021-04-21
-REVISION:   2023-02-10
+VERSION:    2.0
+CREATED:    2025-02-09
+REVISION:
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2025
@@ -37,7 +37,6 @@ import logging
 import asyncio
 import websockets
 import yaml
-from influxdb_client import InfluxDBClient
 
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
@@ -48,57 +47,69 @@ from misc.python_sealog.lowerings import get_lowering_uid_by_id
 from misc.python_sealog.cruises import get_cruise_uid_by_id
 
 from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
-from misc.influx_sealog.settings import (
-    INFLUXDB_URL,
-    INFLUXDB_AUTH_TOKEN,
-    INFLUXDB_ORG,
-    INFLUXDB_VERIFY_SSL
-)
-from misc.influx_sealog.aux_data_record_builder import SealogInfluxAuxDataRecordBuilder
+from misc.coriolix_sealog.aux_data_record_builder import SealogCORIOLIXAuxDataRecordBuilder
 
 # ----------------------------------------------------------------------------- #
 
 INLINE_CONFIG = '''
-- data_source: realtimeVesselPosition
-  # query_bucket: openrvdas
+- data_source: 'vesselPosition'
   query_measurements:
-    - s330
+    - gnss_gga_bow
+    - sensor_float_1
   aux_record_lookup:
-    S330HeadingTrue:
+    sensor_float_1__p1:
       name: heading
       uom: deg
       round: 3
-    S330Latitude:
+    gnss_gga_bow__latitude:
       name: latitude
       uom: ddeg
       round: 6
-      modify:
-        - test:
-            - field: S330NorS
-              eq: S
-          operation:
-            - multiply: -1
-    S330Longitude:
+    gnss_gga_bow__longitude:
       name: longitude
       uom: ddeg
       round: 6
+- data_source: 'meteorologicalData'
+  query_measurements:
+    - sensor_mixed_5
+  aux_record_lookup:
+    sensor_mixed_5__p4:
+      name: 'air temp'
+      uom: 'C'
+      round: 2
+    sensor_mixed_5__p3:
+      name: 'air pres'
+      uom: 'mBar'
+      round: 2
       modify:
-        - test:
-            - field: S330EorW
-              eq: W
-          operation:
-            - multiply: -1
-    S330NorS:
-      no_output: true
-    S330EorW:
-      no_output: true
+        - operation:
+          - multiply: 1000
+    sensor_mixed_5__p5:
+      name: 'relHumidity'
+      uom: '%'
+      round: 1
+- data_source: 'courseAndSpeed'
+  query_measurements:
+    - gnss_vtg_bow
+  aux_record_lookup:
+    gnss_vtg_bow__cog:
+      name: course
+      uom: deg
+      round: 2
+    gnss_vtg_bow__sog:
+      name: speed
+      uom: kts
+      round: 1
+      modify:
+        - operation:
+          - multiply: 0.539957
 '''
 
 # set of events to ignore
 EXCLUDE_SET = set()
 
 # needs to be unique for all currently active dataInserter scripts.
-CLIENT_WSID = 'auxData-dataInserter-influx'
+CLIENT_WSID = 'auxData-dataInserter-coriolix'
 
 HELLO = {
     'type': 'hello',
@@ -224,8 +235,8 @@ def insert_aux_data_for_lowering(aux_data_builders, lowering_id, dry_run=False):
 
 async def insert_aux_data_from_ws(aux_data_builders, dry_run=False):
     '''
-    Use the aux_data_builder and the influx_sealog wrapper to submit aux_data
-    records built from influxDB data to the sealog-server API
+    Use the aux_data_builder and the coriolix_sealog wrapper to submit aux_data
+    records built from CORIOLIX data to the sealog-server API
     '''
     try:
         async with websockets.connect(WS_SERVER_URL) as websocket:
@@ -261,17 +272,16 @@ if __name__ == '__main__':
     import argparse
     import os
 
-    parser = argparse.ArgumentParser(description='Aux Data Inserter Service - InfluxDB')
-    parser.add_argument(
-        '-v', '--verbosity', dest='verbosity', default=0,
-        action='count', help='Increase output verbosity'
-    )
+    parser = argparse.ArgumentParser(description='Aux Data Inserter Service - CORIOLIX')
+    parser.add_argument('-v', '--verbosity', dest='verbosity',
+                        default=0, action='count',
+                        help='Increase output verbosity')
     parser.add_argument('-f', '--config_file', help='use the specifed configuration file')
     parser.add_argument(
         '-n', '--dry_run', action='store_true',
         help='compile the aux_data records but do not submit to server API'
     )
-    parser.add_argument('-e', '--events', help='list of event_ids to apply the influx data')
+    parser.add_argument('-e', '--events', help='list of event_ids to apply the CORIOLIX data')
     parser.add_argument('-c', '--cruise_id', help='cruise_id to fix aux_data for')
     parser.add_argument('-l', '--lowering_id', help='lowering_id to fix aux_data for')
 
@@ -319,21 +329,10 @@ if __name__ == '__main__':
 
     logging.debug(json.dumps(AUX_DATA_CONFIGS, indent=2))
 
-    # create an influxDB Client
-    use_ssl = INFLUXDB_URL.find('https:') == 0
-    client = InfluxDBClient(url=INFLUXDB_URL,
-                            token=INFLUXDB_AUTH_TOKEN,
-                            org=INFLUXDB_ORG,
-                            ssl=use_ssl,
-                            verify_ssl=INFLUXDB_VERIFY_SSL)
-
     # Create the Aux Data Record Builders
-    aux_data_builder_list = list(
-        map(
-            lambda config: SealogInfluxAuxDataRecordBuilder(client, config),
-            AUX_DATA_CONFIGS
-        )
-    )
+    aux_data_builder_list = [
+        SealogCORIOLIXAuxDataRecordBuilder(config) for config in AUX_DATA_CONFIGS
+    ]
 
     if parsed_args.events:
         logging.debug("Processing list of event ids")
