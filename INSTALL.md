@@ -27,15 +27,15 @@ echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-6.0.gp
 
 Use `apt` to install MongoDB:
 ```
-apt-get update
-apt-get install mongodb-org
+sudo apt-get update
+sudo apt-get install mongodb-org
 ```
 
 Start MongoDB and setup to start at boot:
 ```
-systemctl start mongod
-systemctl status mongod
-systemctl enable mongod
+sudo systemctl start mongod
+sudo systemctl status mongod
+sudo systemctl enable mongod
 ```
 
 #### Installing NodeJS/npm on Ubuntu 22.04 LTS
@@ -186,7 +186,7 @@ ProxyPassReverse /ws ws://<serverIP>:8000/
 
 You will need to reload Apache for the changes to take affect.
 ```
-service apache2 restart
+sudo service apache2 restart
 ```
 
 If everything went correctly you should not be able to access the sealog-server API at `http://<serverIP>:8000/sealog-server/` and the sealog websocket service at `ws://<serverIP>:8000/ws`
@@ -317,7 +317,4 @@ Sealog for Vessels:
 EXPORT_ROOT_DIR = '/data/sealog-export'
 VESSEL_NAME = 'Discoverer'
 ```
-
-
-
 
