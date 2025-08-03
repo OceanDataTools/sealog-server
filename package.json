@@ -19,6 +19,10 @@
     "lint-fix": "eslint . --ext .js --ext .js.dist --fix",
     "prepare": "husky"
   },
+  "lint-staged": {
+    "*.{js,js.dist}": "eslint --fix",
+    "*.{py,py.dist}": [ "flake8" ]
+  },
   "author": "Webb Pinner",
   "homepage": "https://github.com/oceandatatools/sealog-server",
   "private": false,
