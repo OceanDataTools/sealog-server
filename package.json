@@ -21,7 +21,7 @@
   },
   "lint-staged": {
     "*.{js,js.dist}": "eslint --fix",
-    "*.{py,py.dist}": [ "flake8" ]
+    "*.{py,py.dist}": [ "flake8", "pylint" ]
   },
   "author": "Webb Pinner",
   "homepage": "https://github.com/oceandatatools/sealog-server",

@@ -1,13 +1,2 @@
-# Activate venv if needed
-source venv/bin/activate  # adjust if using .venv or poetry
-
 echo "Linting NodeJS code with eslint..."
 npx lint-staged
-
-# eslint . --ext .js --ext .js.dist
-
-echo "Linting python code with Flake8..."
-flake8 ./misc
-
-echo "Linting python code with PyLint..."
-pylint ./misc
