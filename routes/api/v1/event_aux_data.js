@@ -69,11 +69,11 @@ exports.plugin = {
           const cruiseResult = await db.collection(cruisesTable).findOne({ _id: cruise_id });
 
           if (!cruiseResult) {
-            return Boom.badRequest('Cruise not found for id' + request.params.id);
+            return Boom.badRequest('No cruise record found for id' + request.params.id);
           }
 
           if (!request.auth.credentials.scope.includes('admin') && cruiseResult.cruise_hidden && (useAccessControl && typeof cruiseResult.cruise_access_list !== 'undefined' && !cruiseResult.cruise_access_list.includes(request.auth.credentials.id))) {
-            return Boom.unauthorized('User not authorized to retrieve this cruise');
+            return Boom.unauthorized('User not authorized to retrieve this cruise record');
           }
 
           cruise = cruiseResult;
@@ -89,46 +89,45 @@ exports.plugin = {
           const results = await db.collection(eventsTable).find(eventQuery, { _id: 1 }).sort( { ts: 1 } ).toArray();
 
           // EventID Filtering
-          if (results.length > 0) {
-            const query = {};
+          if (results.length === 0) {
+            return h.response([]).code(200);
+          }
 
-            const eventIDs = results.map((event) => {
+          const query = {};
 
-              return event._id;
-            });
-            query.event_id = { $in: eventIDs };
+          const eventIDs = results.map((event) => {
 
-            // Datasource Filtering
-            if (request.query.datasource) {
-              if (Array.isArray(request.query.datasource)) {
-                query.data_source  = { $in: request.query.datasource };
-              }
-              else {
-                query.data_source  = request.query.datasource;
-              }
+            return event._id;
+          });
+          query.event_id = { $in: eventIDs };
+
+          // Datasource Filtering
+          if (request.query.datasource) {
+            if (Array.isArray(request.query.datasource)) {
+              query.data_source  = { $in: request.query.datasource };
             }
-
-            const limit = (request.query.limit) ? request.query.limit : 0;
-            const offset = (request.query.offset) ? request.query.offset : 0;
-
-            try {
-              const eventAuxDataResults = await db.collection(eventAuxDataTable).find(query).skip(offset).limit(limit).toArray();
-
-              if (eventAuxDataResults.length > 0) {
-                eventAuxDataResults.forEach(_renameAndClearFields);
-
-                return h.response(eventAuxDataResults).code(200);
-              }
-
-              return Boom.notFound('No records found');
-
-            }
-            catch (err) {
-              return Boom.serverUnavailable('database error', err);
+            else {
+              query.data_source  = request.query.datasource;
             }
           }
-          else {
-            return Boom.notFound('No records found');
+
+          const limit = (request.query.limit) ? request.query.limit : 0;
+          const offset = (request.query.offset) ? request.query.offset : 0;
+
+          try {
+            const eventAuxDataResults = await db.collection(eventAuxDataTable).find(query).skip(offset).limit(limit).toArray();
+
+            if (eventAuxDataResults.length === 0) {
+              return h.response([]).code(200);
+            }
+
+            eventAuxDataResults.forEach(_renameAndClearFields);
+
+            return h.response(eventAuxDataResults).code(200);
+
+          }
+          catch (err) {
+            return Boom.serverUnavailable('database error', err);
           }
         }
         catch (err) {
@@ -171,11 +170,11 @@ exports.plugin = {
           const loweringResult = await db.collection(loweringsTable).findOne({ _id: ObjectID(request.params.id) });
 
           if (!loweringResult) {
-            return Boom.notFound('lowering not found for that id');
+            return Boom.notFound('No lowering record found for id' + request.params.id);
           }
 
           if (!request.auth.credentials.scope.includes('admin') && loweringResult.lowering_hidden && (useAccessControl && typeof loweringResult.lowering_access_list !== 'undefined' && !loweringResult.lowering_access_list.includes(request.auth.credentials.id))) {
-            return Boom.unauthorized('User not authorized to retrieve this lowering');
+            return Boom.unauthorized('User not authorized to retrieve this lowering record');
           }
 
           lowering = loweringResult;
@@ -190,46 +189,45 @@ exports.plugin = {
           const results = await db.collection(eventsTable).find(eventQuery, { _id: 1 }).sort( { ts: 1 } ).toArray();
 
           // EventID Filtering
-          if (results.length > 0) {
-            const query = {};
-            const eventIDs = results.map((event) => {
+          if (results.length === 0) {
+            return h.response([]).code(200);
+          }
 
-              return event._id;
-            });
-            query.event_id  = { $in: eventIDs };
+          const query = {};
+          const eventIDs = results.map((event) => {
 
-            // Datasource Filtering
-            if (request.query.datasource) {
-              if (Array.isArray(request.query.datasource)) {
-                query.data_source  = { $in: request.query.datasource };
-              }
-              else {
-                query.data_source  = request.query.datasource;
-              }
+            return event._id;
+          });
+          query.event_id  = { $in: eventIDs };
+
+          // Datasource Filtering
+          if (request.query.datasource) {
+            if (Array.isArray(request.query.datasource)) {
+              query.data_source  = { $in: request.query.datasource };
             }
-
-            // Limiting & Offset
-            const limit = (request.query.limit) ? request.query.limit : 0;
-            const offset = (request.query.offset) ? request.query.offset : 0;
-
-            try {
-              const auxDataResults = await db.collection(eventAuxDataTable).find(query).skip(offset).limit(limit).toArray();
-
-              if (auxDataResults.length > 0) {
-                auxDataResults.forEach(_renameAndClearFields);
-
-                return h.response(auxDataResults).code(200);
-              }
-
-              return Boom.notFound('No records found');
-
-            }
-            catch (err) {
-              return Boom.serverUnavailable('database error', err);
+            else {
+              query.data_source  = request.query.datasource;
             }
           }
-          else {
-            return Boom.notFound('No records found');
+
+          // Limiting & Offset
+          const limit = (request.query.limit) ? request.query.limit : 0;
+          const offset = (request.query.offset) ? request.query.offset : 0;
+
+          try {
+            const auxDataResults = await db.collection(eventAuxDataTable).find(query).skip(offset).limit(limit).toArray();
+
+            if (auxDataResults.length === 0) {
+              return h.response([]).code(200);
+            }
+
+            auxDataResults.forEach(_renameAndClearFields);
+
+            return h.response(auxDataResults).code(200);
+
+          }
+          catch (err) {
+            return Boom.serverUnavailable('database error', err);
           }
         }
         catch (err) {
@@ -278,47 +276,45 @@ exports.plugin = {
             const results = await db.collection(eventsTable).find(eventQuery, { _id: 1 }).sort( { ts: 1 } ).toArray();
 
             // EventID Filtering
-            if (results.length > 0) {
-              const query = {};
+            if (results.length === 0) {
+              return h.response([]).code(200);
+            }
 
-              const eventIDs = results.map((event) => {
+            const query = {};
 
-                return new ObjectID(event._id);
-              });
-              query.event_id  = { $in: eventIDs };
+            const eventIDs = results.map((event) => {
 
-              // Datasource Filtering
-              if (request.query.datasource) {
-                if (Array.isArray(request.query.datasource)) {
-                  query.data_source  = { $in: request.query.datasource };
-                }
-                else {
-                  query.data_source  = request.query.datasource;
-                }
+              return new ObjectID(event._id);
+            });
+            query.event_id  = { $in: eventIDs };
+
+            // Datasource Filtering
+            if (request.query.datasource) {
+              if (Array.isArray(request.query.datasource)) {
+                query.data_source  = { $in: request.query.datasource };
               }
-
-              const limit = (request.query.limit) ? request.query.limit : 0;
-              const offset = (request.query.offset) ? request.query.offset : 0;
-
-              try {
-                const auxDataResults = await db.collection(eventAuxDataTable).find(query).skip(offset).limit(limit).toArray();
-
-                if (auxDataResults.length > 0) {
-
-                  auxDataResults.forEach(_renameAndClearFields);
-
-                  return h.response(auxDataResults).code(200);
-                }
-
-                return Boom.notFound('No records found');
-
-              }
-              catch (err) {
-                return Boom.serverUnavailable('database error', err);
+              else {
+                query.data_source  = request.query.datasource;
               }
             }
-            else {
-              return Boom.notFound('No records found');
+
+            const limit = (request.query.limit) ? request.query.limit : 0;
+            const offset = (request.query.offset) ? request.query.offset : 0;
+
+            try {
+              const auxDataResults = await db.collection(eventAuxDataTable).find(query).skip(offset).limit(limit).toArray();
+
+              if (auxDataResults.length === 0) {
+                return h.response([]).code(200);
+              }
+
+              auxDataResults.forEach(_renameAndClearFields);
+
+              return h.response(auxDataResults).code(200);
+
+            }
+            catch (err) {
+              return Boom.serverUnavailable('database error', err);
             }
           }
           catch (err) {
@@ -360,13 +356,13 @@ exports.plugin = {
           try {
             const results = await db.collection(eventAuxDataTable).find(query).skip(offset).limit(limit).toArray();
 
-            if (results.length > 0) {
-              results.forEach(_renameAndClearFields);
-
-              return h.response(results).code(200);
+            if (results.length === 0) {
+              return h.response([]).code(200);
             }
 
-            return Boom.notFound('No records found');
+            results.forEach(_renameAndClearFields);
+
+            return h.response(results).code(200);
 
           }
           catch (err) {
@@ -408,7 +404,7 @@ exports.plugin = {
         try {
           const result = await db.collection(eventAuxDataTable).findOne(query);
           if (!result) {
-            return Boom.notFound('No record found for id: ' + request.params.id);
+            return Boom.notFound('No aux_data record found for id: ' + request.params.id);
           }
 
           const mod_result = _renameAndClearFields(result);
@@ -495,7 +491,7 @@ exports.plugin = {
             const queryResult = await db.collection(eventsTable).findOne(query);
 
             if (!queryResult) {
-              return Boom.badRequest('event not found');
+              return Boom.badRequest('event record not found');
             }
 
             query = { event_id: event_aux_data.event_id, data_source: event_aux_data.data_source };
@@ -600,7 +596,7 @@ exports.plugin = {
           result = await db.collection(eventAuxDataTable).findOne(query);
 
           if (!result) {
-            return Boom.notFound('No record found for id: ' + request.params.id);
+            return Boom.notFound('No aux_data record found for id: ' + request.params.id);
           }
 
           event_aux_data = request.payload;
@@ -689,7 +685,7 @@ exports.plugin = {
         try {
           const auxData = await db.collection(eventAuxDataTable).findOne(query);
           if (!auxData) {
-            return Boom.notFound('No record found for id: ' + request.params.id);
+            return Boom.notFound('No aux_data record found for id: ' + request.params.id);
           }
         }
         catch (err) {
