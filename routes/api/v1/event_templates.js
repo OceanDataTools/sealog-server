@@ -59,16 +59,16 @@ exports.plugin = {
         try {
           const results = await db.collection(eventTemplatesTable).find(query).sort(sort).skip(offset).limit(limit).toArray();
 
-          if (results.length > 0) {
-            results.forEach((result) => {
-
-              return _renameAndClearFields(result, request.auth.credentials.scope.some((role) => ['admin', 'write_event_templates', 'read_admin_templates'].includes(role)));
-            });
-
-            return h.response(results).code(200);
+          if (results.length === 0) {
+            return h.response([]).code(200);
           }
 
-          return Boom.notFound('No records found');
+          results.forEach((result) => {
+
+            return _renameAndClearFields(result, request.auth.credentials.scope.some((role) => ['admin', 'write_event_templates', 'read_admin_templates'].includes(role)));
+          });
+
+          return h.response(results).code(200);
 
         }
         catch (err) {
@@ -118,11 +118,11 @@ exports.plugin = {
           const result = await db.collection(eventTemplatesTable).findOne(query);
 
           if (!result) {
-            return Boom.notFound('No record found for id: ' + request.params.id);
+            return Boom.notFound('No event template record found for id: ' + request.params.id);
           }
 
           if (!request.auth.credentials.scope.includes('admin') && result.admin_only) {
-            return Boom.notFound('template only available to admin users');
+            return Boom.notFound('template record only available to admin users');
           }
 
           return h.response(_renameAndClearFields(result, request.auth.credentials.scope.some((role) => ['admin', 'write_event_templates', 'read_admin_templates'].includes(role)))).code(200);
@@ -257,7 +257,7 @@ exports.plugin = {
           const result = await db.collection(eventTemplatesTable).findOne(query);
 
           if (!result) {
-            return Boom.badRequest('No record found for id: ' + request.params.id );
+            return Boom.badRequest('No event template record found for id: ' + request.params.id );
           }
 
           event_template = { ...result, ...request.payload };
@@ -326,11 +326,11 @@ exports.plugin = {
         try {
           const result = await db.collection(eventTemplatesTable).findOne(query);
           if (!result) {
-            return Boom.notFound('No record found for id: ' + request.params.id );
+            return Boom.notFound('No event template record found for id: ' + request.params.id );
           }
 
           if (result.system_template && !request.auth.credentials.scope.includes('admin')) {
-            return Boom.unauthorized('user does not have permission to delete system templates');
+            return Boom.unauthorized('user does not have permission to delete system template records');
           }
         }
         catch (err) {
