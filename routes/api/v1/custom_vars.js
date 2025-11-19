@@ -49,14 +49,13 @@ exports.plugin = {
         try {
           const results = await db.collection(customVarsTable).find(query).toArray();
 
-          if (results.length > 0) {
-
-            results.forEach(_renameAndClearFields);
-
-            return h.response(results).code(200);
+          if (results.length === 0) {
+            return h.response([]).code(200);
           }
 
-          return Boom.notFound('No records found');
+          results.forEach(_renameAndClearFields);
+
+          return h.response(results).code(200);
 
         }
         catch (err) {
@@ -104,7 +103,7 @@ exports.plugin = {
         try {
           const result = await db.collection(customVarsTable).findOne(query);
           if (!result) {
-            return Boom.notFound('No record found for id: ' + request.params.id);
+            return Boom.notFound('No custom variable record found for id: ' + request.params.id);
           }
 
           const mod_result = _renameAndClearFields(result);
@@ -157,7 +156,7 @@ exports.plugin = {
           const result = await db.collection(customVarsTable).findOne(query);
 
           if (!result) {
-            return Boom.notFound('No record found for id: ' + request.params.id);
+            return Boom.notFound('No custom variable record found for id: ' + request.params.id);
           }
 
           custom_var_name = result.custom_var_name;

@@ -199,35 +199,37 @@ exports.plugin = {
           const cruises = await db.collection(cruisesTable).find(query).sort( { start_ts: -1 } ).skip(offset).limit(limit).toArray();
 
           // console.log("cruises:", cruises);
-          if (cruises.length > 0) {
-
-            const mod_cruises = cruises.map((cruise) => {
-
-              try {
-                cruise.cruise_additional_meta.cruise_files = Fs.readdirSync(cruisePath + '/' + cruise._id);
-              }
-              catch (error) {
-                cruise.cruise_additional_meta.cruise_files = [];
-              }
-
-              return _renameAndClearFields(cruise);
-            });
-
+          if (cruises.length === 0) {
             if (request.query.format && request.query.format === 'csv') {
-
-              const flat_cruises = flattenCruiseObjs(mod_cruises);
-              const csv_headers = buildCruiseCSVHeaders(flat_cruises);
-              const parser = new AsyncParser({ fields: csv_headers }, {}, {});
-              const csv_results = await parser.parse(flat_cruises).promise();
-
-              return h.response(csv_results).code(200);
+              return h.response('').code(200);
             }
 
-            return h.response(mod_cruises).code(200);
+            return h.response([]).code(200);
           }
 
-          return Boom.notFound('No records found');
+          const mod_cruises = cruises.map((cruise) => {
 
+            try {
+              cruise.cruise_additional_meta.cruise_files = Fs.readdirSync(cruisePath + '/' + cruise._id);
+            }
+            catch (error) {
+              cruise.cruise_additional_meta.cruise_files = [];
+            }
+
+            return _renameAndClearFields(cruise);
+          });
+
+          if (request.query.format && request.query.format === 'csv') {
+
+            const flat_cruises = flattenCruiseObjs(mod_cruises);
+            const csv_headers = buildCruiseCSVHeaders(flat_cruises);
+            const parser = new AsyncParser({ fields: csv_headers }, {}, {});
+            const csv_results = await parser.parse(flat_cruises).promise();
+
+            return h.response(csv_results).code(200);
+          }
+
+          return h.response(mod_cruises).code(200);
         }
         catch (err) {
           return Boom.serverUnavailable('database error', err);
@@ -329,7 +331,7 @@ exports.plugin = {
             return h.response(_renameAndClearFields(cruise)).code(200);
           }
 
-          return Boom.notFound('No records found');
+          return Boom.notFound('No cruise record found');
 
         }
         catch (err) {
@@ -423,7 +425,7 @@ exports.plugin = {
             return h.response(_renameAndClearFields(cruise)).code(200);
           }
 
-          return Boom.notFound('No records found');
+          return Boom.notFound('No cruise record found');
 
         }
         catch (err) {
@@ -476,11 +478,11 @@ exports.plugin = {
         try {
           const result = await db.collection(cruisesTable).findOne(query);
           if (!result) {
-            return Boom.notFound('No record found for id: ' + request.params.id);
+            return Boom.notFound('No cruise record found for id: ' + request.params.id);
           }
 
           if (!request.auth.credentials.scope.includes('admin') && result.cruise_hidden && (useAccessControl && typeof result.cruise_access_list !== 'undefined' && !result.cruise_access_list.includes(request.auth.credentials.id))) {
-            return Boom.unauthorized('User not authorized to retrieve this cruise');
+            return Boom.unauthorized('User not authorized to retrieve this cruise record');
           }
 
           cruise = result;
@@ -554,11 +556,11 @@ exports.plugin = {
         try {
           const result = await db.collection(cruisesTable).findOne(query);
           if (!result) {
-            return Boom.notFound('No record found for id: ' + request.params.id);
+            return Boom.notFound('No cruise record found for id: ' + request.params.id);
           }
 
           if (!request.auth.credentials.scope.includes('admin') && result.cruise_hidden && (useAccessControl && typeof result.cruise_access_list !== 'undefined' && !result.cruise_access_list.includes(request.auth.credentials.id))) {
-            return Boom.unauthorized('User not authorized to retrieve this cruise');
+            return Boom.unauthorized('User not authorized to retrieve this cruise record');
           }
 
           cruise = result;
@@ -756,11 +758,11 @@ exports.plugin = {
           const result = await db.collection(cruisesTable).findOne(query);
 
           if (!result) {
-            return Boom.notFound('No record found for id: ' + request.params.id);
+            return Boom.notFound('No cruise record found for id: ' + request.params.id);
           }
 
           if (!request.auth.credentials.scope.includes('admin') && result.cruise_hidden && ( useAccessControl && typeof result.cruise_access_list !== 'undefined' && !result.cruise_access_list.includes(request.auth.credentials.id))) {
-            return Boom.unauthorized('User not authorized to edit this cruise');
+            return Boom.unauthorized('User not authorized to edit this cruise record');
           }
 
           // if a start date and/or stop date is provided, ensure the new date works with the existing date
@@ -872,9 +874,8 @@ exports.plugin = {
         const loweringQuery = { start_ts: { '$gte': updatedCruise.start_ts }, stop_ts: { '$lt': updatedCruise.stop_ts } };
 
         try {
-          console.error('here 2');
           const cruiseLowerings = await db.collection(loweringsTable).find(loweringQuery).toArray();
-          // console.log(cruiseLowerings);
+
           cruiseLowerings.forEach((lowering) => {
 
             lowering.id = lowering._id;
@@ -940,7 +941,7 @@ exports.plugin = {
           cruise = await db.collection(cruisesTable).findOne(query);
 
           if (!cruise) {
-            return Boom.notFound('No record found for id: ' + request.params.id);
+            return Boom.notFound('No cruise record found for id: ' + request.params.id);
           }
 
         }
@@ -1058,7 +1059,7 @@ exports.plugin = {
           const result = await db.collection(cruisesTable).findOne(query);
 
           if (!result) {
-            return Boom.notFound('No record found for id: ' + request.params.id);
+            return Boom.notFound('No cruise record found for id: ' + request.params.id);
           }
         }
         catch (err) {
