@@ -385,7 +385,15 @@
           "Deployed"
         ],
         "event_option_required": true,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": {
+          "show_hide": "show if",
+          "event_option_name": "Type",
+          "event_option_values": [
+            "Push Core",
+            "Water Sample"
+          ]
+        }
       },
       {
         "event_option_name": "Sample Description",
