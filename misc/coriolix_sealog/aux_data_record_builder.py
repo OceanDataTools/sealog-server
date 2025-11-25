@@ -2,8 +2,8 @@
 '''
 FILE:           aux_data_record_builder.py
 
-DESCRIPTION:    This script builds a sealog aux_data record with data pulled from an
-                influx database.
+DESCRIPTION:    This script builds a sealog aux_data record with data pulled from a
+                CORIOLIX API.
 
 BUGS:
 NOTES:
@@ -28,27 +28,24 @@ from urllib3.exceptions import NewConnectionError
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
 
+from misc.base_aux_data_record_builder import AuxDataRecordBuilder
 from misc.coriolix_sealog.settings import CORIOLIX_URL
 
 
-class SealogCORIOLIXAuxDataRecordBuilder():
+class SealogCORIOLIXAuxDataRecordBuilder(AuxDataRecordBuilder):
     '''
-    Class that handles the construction of an influxDB query and using the
+    Class that handles the construction of CORIOLIX API queries and using the
     resulting data to build a sealog aux_data record.
     '''
 
     def __init__(self, aux_data_config, url=None):
+        super().__init__(aux_data_config)
         self.url = url or CORIOLIX_URL
-        self._query_measurements = aux_data_config['query_measurements']
-        self._query_fields = list(aux_data_config['aux_record_lookup'].keys())
-        self._aux_record_lookup = aux_data_config['aux_record_lookup']
-        self._data_source = aux_data_config['data_source']
-        self.logger = logging.getLogger(__name__)
 
     @staticmethod
     def _build_query_range(ts):
         '''
-        Builds the temporal range for the influxDB query based on the provided
+        Builds the temporal range for the CORIOLIX query based on the provided
         timestamp (ts).
         '''
         try:
@@ -63,7 +60,7 @@ class SealogCORIOLIXAuxDataRecordBuilder():
 
     def _build_query_urls(self, ts):
         '''
-        Builds the complete influxDB query using the provided timestamp (ts)
+        Builds the CORIOLIX API URLs using the provided timestamp (ts)
         and the class instance's query_measurements and query_fields values.
         '''
 
@@ -76,109 +73,6 @@ class SealogCORIOLIXAuxDataRecordBuilder():
             logging.debug("Query: %s", query_urls[-1])
 
         return query_urls
-
-    def _build_aux_data_dict(self, event_id, query_results):  # pylint:disable=R0915
-        '''
-        Internal method to build the sealog aux_data record using the event_id,
-        query_results and the class instance's datasource value.
-        '''
-
-        aux_data_record = {
-            'event_id': event_id,
-            'data_source': self._data_source,
-            'data_array': []
-        }
-
-        coriolix_data = query_results
-
-        logging.debug("raw values: %s", json.dumps(coriolix_data, indent=2))
-
-        if not coriolix_data:
-            return None
-
-        for key, value in self._aux_record_lookup.items():
-            try:
-                if "no_output" in value and value['no_output'] is True:
-                    continue
-
-                if key not in coriolix_data:
-                    continue
-
-                output_value = coriolix_data[key]
-
-                if "modify" in value:
-                    logging.debug("modify found in record")
-                    for mod_op in value['modify']:
-                        test_result = True
-
-                        if 'test' in mod_op:
-                            logging.debug("test found in mod_op")
-                            test_result = False
-
-                            for test in mod_op['test']:
-                                logging.debug(json.dumps(test))
-
-                                if 'field' in test:
-
-                                    if test['field'] not in coriolix_data:
-                                        logging.warning("test field data not in CORIOLIX query")
-                                        return None
-
-                                    if 'eq' in test and coriolix_data[test['field']] == test['eq']:
-                                        test_result = True
-                                        break
-
-                                    if 'gt' in test and coriolix_data[test['field']] > test['gt']:
-                                        test_result = True
-                                        break
-
-                                    if 'gte' in test and coriolix_data[test['field']] >= test['gt']:
-                                        test_result = True
-                                        break
-
-                                    if 'lt' in test and coriolix_data[test['field']] < test['lt']:
-                                        test_result = True
-                                        break
-
-                                    if 'lte' in test and coriolix_data[test['field']] <= test['lt']:
-                                        test_result = True
-                                        break
-
-                                    if 'ne' in test and coriolix_data[test['field']] != test['ne']:
-                                        test_result = True
-                                        break
-
-                        if test_result and 'operation' in mod_op:
-                            logging.debug("operation found in mod_op")
-                            for operan in mod_op['operation']:
-
-                                if 'add' in operan:
-                                    output_value += operan['add']
-
-                                if 'subtract' in operan:
-                                    output_value -= operan['subtract']
-
-                                if 'multiply' in operan:
-                                    output_value *= operan['multiply']
-
-                                if 'divide' in operan:
-                                    output_value /= operan['divide']
-
-                aux_data_record['data_array'].append({
-                    'data_name': value['name'],
-                    'data_value': str(round(output_value, value['round'])) if 'round' in value
-                    else str(output_value),
-                    'data_uom': value['uom'] if 'uom' in value else ''
-                })
-            except ValueError as exc:
-                logging.warning("Problem adding %s", key)
-                logging.debug(str(exc))
-                continue
-
-        if len(aux_data_record['data_array']) > 0:
-            return aux_data_record
-
-        return None
 
     def build_aux_data_record(self, event):
         '''
@@ -194,7 +88,7 @@ class SealogCORIOLIXAuxDataRecordBuilder():
             logging.debug("Query URL: %s", url)
             measurement = os.path.basename(urlparse(url).path.strip('/'))
 
-            # run the query against the influxDB
+            # run the query against the CORIOLIX API
             try:
                 response = requests.get(url, timeout=2)
                 if response.status_code != 200:
@@ -223,31 +117,3 @@ class SealogCORIOLIXAuxDataRecordBuilder():
 
         aux_data_record = self._build_aux_data_dict(event['id'], query_results)
         return aux_data_record
-
-    @property
-    def data_source(self):
-        '''
-        Getter method for the data_source property
-        '''
-        return self._data_source
-
-    @property
-    def measurements(self):
-        '''
-        Getter method for the _query_measurements property
-        '''
-        return self._query_measurements
-
-    @property
-    def fields(self):
-        '''
-        Getter method for the _query_fields property
-        '''
-        return self._query_fields
-
-    @property
-    def record_lookup(self):
-        '''
-        Getter method for the _aux_record_lookup property
-        '''
-        return self._aux_record_lookup
