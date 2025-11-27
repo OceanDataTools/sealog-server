@@ -237,7 +237,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'read_cruises']
         },
         validate: {
@@ -341,7 +341,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'read_cruises']
         },
         validate: {
@@ -435,7 +435,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'read_cruises']
         },
         validate: {
@@ -513,7 +513,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'read_cruises']
         },
         validate: {
@@ -577,7 +577,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'read_cruises']
         },
         validate: {
@@ -697,7 +697,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'create_cruises']
         },
         validate: {
@@ -714,7 +714,7 @@ exports.plugin = {
           }
         },
 
-        description: 'Create a new event template',
+        description: 'Create a new cruise',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
         tags: ['cruises','api']
@@ -892,7 +892,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'write_cruises']
         },
         validate: {
@@ -908,8 +908,12 @@ exports.plugin = {
           status: { }
         },
         description: 'Update a cruise record',
-        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
-          <p>Available to: <strong>admin</strong></p>',
+        notes: '<p>Requires authorization using <strong>either</strong>:</p>\
+          <ul>\
+            <li>JWT Bearer token</li>\
+            <li>API Key (x-api-key)</li>\
+          </ul>\
+          <p>Available to roles: <strong>admin, cruise_manager</strong></p>',
         tags: ['cruises','api']
       }
     });
@@ -1016,7 +1020,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'write_cruises']
         },
         validate: {
@@ -1081,7 +1085,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'create_cruises']
         },
         validate: {
@@ -1131,7 +1135,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin']
         },
         validate: {
