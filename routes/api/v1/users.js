@@ -13,6 +13,7 @@ const {
 } = require('../../../config/server_settings');
 
 const {
+  apiKeysTable,
   cruisesTable,
   loweringsTable,
   usersTable
@@ -406,6 +407,10 @@ exports.plugin = {
 
         try {
           await db.collection(usersTable).updateOne(query, { $set: user });
+          if (typeof query.disabled === 'boolean' && !query.disabled) {
+            await db.collection(apiKeysTable).updateMany({ user_id: query._id }, { $set: { disabled: false } });
+          }
+
           return h.response().code(204);
         }
         catch (err) {
@@ -473,6 +478,7 @@ exports.plugin = {
 
         try {
           await db.collection(usersTable).deleteOne(query);
+          await db.collection(apiKeysTable).deleteMany({ user_id: query._id });
         }
         catch (err) {
           console.log('ERROR:', err);

@@ -227,7 +227,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'read_lowerings']
         },
         validate: {
@@ -377,7 +377,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'read_lowerings']
         },
         validate: {
@@ -471,7 +471,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'read_lowerings']
         },
         validate: {
@@ -549,7 +549,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'read_lowerings']
         },
         validate: {
@@ -614,7 +614,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'read_lowerings']
         },
         validate: {
@@ -728,7 +728,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'create_lowerings']
         },
         validate: {
@@ -878,7 +878,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'write_lowerings']
         },
         validate: {
@@ -1000,7 +1000,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'write_lowerings']
         },
         validate: {
@@ -1062,7 +1062,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'create_lowerings']
         },
         validate: {
@@ -1112,7 +1112,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin']
         },
         validate: {

@@ -170,7 +170,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'read_events']
         },
         validate: {
@@ -281,7 +281,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'read_events']
         },
         validate: {
@@ -412,7 +412,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'read_events']
         },
         validate: {
@@ -518,7 +518,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'read_events']
         },
         validate: {
@@ -654,7 +654,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'read_events']
         },
         validate: {
@@ -748,7 +748,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'read_events']
         },
         validate: {
@@ -810,7 +810,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'read_events']
         },
         validate: {
@@ -915,7 +915,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'write_events']
         },
         validate: {
@@ -1035,7 +1035,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'write_events']
         },
         validate: {
@@ -1192,7 +1192,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin']
         },
         validate: {
@@ -1277,7 +1277,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin', 'write_events']
         },
         validate: {
@@ -1321,7 +1321,7 @@ exports.plugin = {
       },
       config: {
         auth: {
-          strategy: 'jwt',
+          strategies: ['jwt', 'api-key'],
           scope: ['admin']
         },
         validate: {

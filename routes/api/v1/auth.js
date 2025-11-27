@@ -68,6 +68,9 @@ const _rolesToScope = (roles) => {
     else if (role === 'power_logger') {
       return scope_accumulator.concat(['read_events', 'write_events', 'read_event_templates', 'read_cruises', 'read_lowerings', 'read_admin_templates']);
     }
+    else if (role === 'apikey_manager') {
+      return scope_accumulator.concat(['read_events', 'write_events', 'read_event_templates', 'write_event_templates', 'read_cruises', 'write_cruises', 'read_lowerings', 'write_lowerings', 'read_users', 'write_users', 'read_api_keys', 'write_api_keys']);
+    }
 
     return scope_accumulator;
   }, []);
