@@ -65,6 +65,9 @@ const _rolesToScope = (roles) => {
     else if (role === 'cruise_manager') {
       return scope_accumulator.concat(['read_events', 'write_events', 'read_event_templates', 'write_event_templates', 'read_cruises', 'write_cruises', 'read_lowerings', 'write_lowerings', 'read_users', 'write_users']);
     }
+    else if (role === 'apikey_manager') {
+      return scope_accumulator.concat(['read_events', 'write_events', 'read_event_templates', 'write_event_templates', 'read_cruises', 'write_cruises', 'read_lowerings', 'write_lowerings', 'read_users', 'write_users', 'read_api_keys', 'write_api_keys']);
+    }
 
     return scope_accumulator;
   }, []);
