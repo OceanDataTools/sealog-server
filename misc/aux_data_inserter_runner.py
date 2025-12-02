@@ -135,43 +135,38 @@ async def insert_aux_data_from_ws(aux_data_builders, ws_server_url, headers, cli
     Use the aux_data_builder and to submit aux_data
     records built from external data to the sealog-server API
     '''
-    try:
-        async with websockets.connect(ws_server_url) as websocket:
+    async with websockets.connect(ws_server_url) as websocket:
 
-            HELLO = {
-                'type': 'hello',
-                'id': client_wsid,
-                'auth': {'headers': headers},
-                'version': '2',
-                'subs': ['/ws/status/newEvents']
-            }
-            await websocket.send(json.dumps(HELLO))
+        HELLO = {
+            'type': 'hello',
+            'id': client_wsid,
+            'auth': {'headers': headers},
+            'version': '2',
+            'subs': ['/ws/status/newEvents']
+        }
+        await websocket.send(json.dumps(HELLO))
 
-            while True:
+        # Precompute PING JSON to avoid reconstructing on every ping
+        PING = json.dumps({'type': 'ping', 'id': client_wsid})
 
-                event = await websocket.recv()
-                event_obj = json.loads(event)
+        while True:
+            event = await websocket.recv()
+            event_obj = json.loads(event)
+            event_type = event_obj.get('type')
 
-                if event_obj['type'] and event_obj['type'] == 'ping':
-                    PING = {
-                        'type': 'ping',
-                        'id': client_wsid
-                    }
-                    await websocket.send(json.dumps(PING))
+            if event_type:
+                if event_type == 'ping':
+                    await websocket.send(PING)
 
-                elif event_obj['type'] and event_obj['type'] == 'pub':
-
-                    if event_obj['message']['event_value'] in EXCLUDE_SET:
+                elif event_type == 'pub':
+                    message = event_obj.get('message')
+                    if message.get('event_value') in EXCLUDE_SET:
                         logging.debug("Skipping because event value is in the exclude set")
-                        continue
-
-                    logging.debug("Event: %s", event_obj['message'])
-
-                    insert_aux_data(aux_data_builders, event_obj['message'], dry_run)
-
-    except Exception as exc:
-        logging.error(str(exc))
-        raise exc
+                    else:
+                        logging.debug("Event: %s", message)
+                        insert_aux_data(aux_data_builders, message, dry_run)
+            else:
+                logging.warning("Malformed event received")
     
 def run_aux_data_inserter(
     builder_factory: Callable[[Dict[str, Any]], AuxDataRecordBuilder],
@@ -249,7 +244,7 @@ def run_aux_data_inserter(
         insert_aux_data_for_lowering(aux_data_builder_list, parsed_args.lowering_id, parsed_args.dry_run)
         sys.exit(0)
 
-    # Wait then start WS loop forever
+    # Wait then start WS loop forever. Sleep and retry on any disconnect/error
     while True:
         time.sleep(5)
         try:
@@ -262,7 +257,7 @@ def run_aux_data_inserter(
             try:
                 sys.exit(0)
             except SystemExit:
-                os._exit(0)
-        except Exception as err:  # pylint:disable=W0718
+                os._exit(0)  # pylint: disable=protected-access
+        except Exception as err:  # pylint: disable=W0718
             logging.debug(str(err))
             logging.error("Lost connection to server, trying again in 5 seconds")
