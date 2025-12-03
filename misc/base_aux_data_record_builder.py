@@ -36,10 +36,13 @@ class AuxDataRecordBuilder(ABC):
                 - aux_record_lookup: Mapping of fields to output configuration
                 - data_source: Name of the data source
         '''
-        self._query_measurements = aux_data_config['query_measurements']
-        self._query_fields = list(aux_data_config['aux_record_lookup'].keys())
-        self._aux_record_lookup = aux_data_config['aux_record_lookup']
-        self._data_source = aux_data_config['data_source']
+        self._data_source = aux_data_config['data_source']  # don't use get--should throw an error if not specified
+        self._query_measurements = aux_data_config.get('query_measurements')
+        self._aux_record_lookup = aux_data_config.get('aux_record_lookup')
+        if self._aux_record_lookup is None:
+            self._query_fields = []
+        else:
+            self._query_fields = list(self._aux_record_lookup.keys())
         self.logger = logging.getLogger(__name__)
 
     @staticmethod
