@@ -23,8 +23,6 @@ from misc.python_sealog.event_aux_data import create_event_aux_data
 from misc.python_sealog.lowerings import get_lowering_uid_by_id
 from misc.python_sealog.cruises import get_cruise_uid_by_id
 
-EXCLUDE_SET = set() #TODO: not sure what you would want to put here. Should this on the individual inserters instead?
-
 def parse_event_ids(event_id_file):
     '''
     Builds list of event uid from csv-formatted file.
@@ -130,7 +128,7 @@ def insert_aux_data_for_lowering(aux_data_builders, lowering_id, dry_run=False):
     for event in lowering_events:
         insert_aux_data(aux_data_builders, event, dry_run)
 
-async def insert_aux_data_from_ws(aux_data_builders, ws_server_url, headers, client_wsid, dry_run=False):
+async def insert_aux_data_from_ws(aux_data_builders, ws_server_url, headers, client_wsid, exclude_set, dry_run):
     '''
     Use the aux_data_builder and to submit aux_data
     records built from external data to the sealog-server API
@@ -160,7 +158,7 @@ async def insert_aux_data_from_ws(aux_data_builders, ws_server_url, headers, cli
 
                 elif event_type == 'pub':
                     message = event_obj.get('message')
-                    if message.get('event_value') in EXCLUDE_SET:
+                    if message.get('event_value') in exclude_set:
                         logging.debug("Skipping because event value is in the exclude set")
                     else:
                         logging.debug("Event: %s", message)
@@ -174,6 +172,7 @@ def run_aux_data_inserter(
     ws_server_url: str,
     headers: Dict[str, Any],
     client_wsid: str,
+    exclude_set: set = ()
 ):
     """
     Shared CLI and main loop.
@@ -196,7 +195,7 @@ def run_aux_data_inserter(
     parsed_args = parser.parse_args()
 
     # Logging setup
-    LOGGING_FORMAT = '%(asctime)-15s %(levelname)s - %(message)s'
+    LOGGING_FORMAT = '%(asctime)-15s %(levelname)s %(lineno)s - %(message)s'
     logging.basicConfig(format=LOGGING_FORMAT)
     LOG_LEVELS = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
     parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
@@ -252,7 +251,7 @@ def run_aux_data_inserter(
                 aux_data_builder.open_connections()
             logging.debug("Connecting to event websocket feed...")
             asyncio.get_event_loop().run_until_complete(
-                insert_aux_data_from_ws(aux_data_builder_list, ws_server_url, headers, client_wsid, parsed_args.dry_run)
+                insert_aux_data_from_ws(aux_data_builder_list, ws_server_url, headers, client_wsid, exclude_set, parsed_args.dry_run)
             )
         except KeyboardInterrupt:
             logging.error('Keyboard Interrupted')
