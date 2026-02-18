@@ -3,7 +3,7 @@
 FILE:           aux_data_record_builder.py
 
 DESCRIPTION:    This script builds a sealog aux_data record with data pulled from an
-                influx database.
+                influx v2 database.
 
 BUGS:
 NOTES:
@@ -89,6 +89,20 @@ class SealogInfluxAuxDataRecordBuilder(AuxDataRecordBuilder):
 
         logging.debug("Query: %s", query)
         return query
+    
+    def open_connections(self):
+        '''
+        Open any necessary connections to external data sources.
+        For Influx, no persistent connection is needed.
+        '''
+        pass
+    
+    def close_connections(self):
+        '''
+        Close any open connections to external data sources.
+        For Influx, no persistent connection is needed.
+        '''
+        pass
 
     def build_aux_data_record(self, event):
         '''

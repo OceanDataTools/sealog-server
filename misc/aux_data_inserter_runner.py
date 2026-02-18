@@ -248,6 +248,8 @@ def run_aux_data_inserter(
     while True:
         time.sleep(5)
         try:
+            for aux_data_builder in aux_data_builder_list:
+                aux_data_builder.open_connections()
             logging.debug("Connecting to event websocket feed...")
             asyncio.get_event_loop().run_until_complete(
                 insert_aux_data_from_ws(aux_data_builder_list, ws_server_url, headers, client_wsid, parsed_args.dry_run)
@@ -257,7 +259,15 @@ def run_aux_data_inserter(
             try:
                 sys.exit(0)
             except SystemExit:
+                try:
+                    for aux_data_builder in aux_data_builder_list:
+                        aux_data_builder.close_connections()
+                except Exception as err:  # pylint: disable=W0718
+                    logging.debug(str(err))
                 os._exit(0)  # pylint: disable=protected-access
         except Exception as err:  # pylint: disable=W0718
             logging.debug(str(err))
             logging.error("Lost connection to server, trying again in 5 seconds")
+        finally:
+            for aux_data_builder in aux_data_builder_list:
+                aux_data_builder.close_connections()

@@ -61,6 +61,21 @@ class AuxDataRecordBuilder(ABC):
         # I'm not sure why we need this to be a static method, but I'm including it in the base class since it's in both implementations
         pass
     
+    @abstractmethod
+    def open_connections(self):
+        '''
+        Open any necessary connections to external data sources.
+        Must be implemented by subclasses.
+        '''
+        pass
+    
+    @abstractmethod
+    def close_connections(self):
+        '''
+        Close any open connections to external data sources.
+        Must be implemented by subclasses.
+        '''
+        pass
 
     @abstractmethod
     def build_aux_data_record(self, event):
