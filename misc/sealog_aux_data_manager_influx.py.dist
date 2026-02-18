@@ -43,7 +43,7 @@ from misc.influx_sealog.settings import (
     INFLUXDB_VERIFY_SSL
 )
 from misc.influx_sealog.aux_data_record_builder import SealogInfluxAuxDataRecordBuilder
-from misc.aux_data_inserter_runner import run_aux_data_inserter
+from misc.aux_data_manager_runner import run_aux_data_manager
 
 # ----------------------------------------------------------------------------- #
 
@@ -86,8 +86,8 @@ INLINE_CONFIG = '''
 # set of events to ignore
 EXCLUDE_SET = set()
 
-# needs to be unique for all currently active dataInserter scripts.
-CLIENT_WSID = 'auxData-dataInserter-influx'
+# needs to be unique for all currently active dataManager scripts.
+CLIENT_WSID = 'auxData-dataManager-influx'
 
 # -------------------------------------------------------------------------------------
 # The main loop of the utility
@@ -106,7 +106,7 @@ if __name__ == '__main__':
         '''Build an AuxDataRecordBuilder'''
         return SealogInfluxAuxDataRecordBuilder(client, aux_data_config)
 
-    run_aux_data_inserter(
+    run_aux_data_manager(
         builder_factory=builder_factory,
         inline_config=INLINE_CONFIG,
         ws_server_url=WS_SERVER_URL,

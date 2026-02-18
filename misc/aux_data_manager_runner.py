@@ -128,7 +128,7 @@ def insert_aux_data_for_lowering(aux_data_builders, lowering_id, dry_run=False):
     for event in lowering_events:
         insert_aux_data(aux_data_builders, event, dry_run)
 
-async def insert_aux_data_from_ws(aux_data_builders, ws_server_url, headers, client_wsid, exclude_set, dry_run):
+async def manage_aux_data_from_ws(aux_data_builders, ws_server_url, headers, client_wsid, exclude_set, dry_run):
     '''
     Use the aux_data_builder and to submit aux_data
     records built from external data to the sealog-server API
@@ -162,11 +162,12 @@ async def insert_aux_data_from_ws(aux_data_builders, ws_server_url, headers, cli
                         logging.debug("Skipping because event value is in the exclude set")
                     else:
                         logging.debug("Event: %s", message)
+                        # TODO: Check which websocket this came from and then insert, update, or delete accordingly
                         insert_aux_data(aux_data_builders, message, dry_run)
             else:
                 logging.warning("Malformed event received")
     
-def run_aux_data_inserter(
+def run_aux_data_manager(
     builder_factory: Callable[[Dict[str, Any]], AuxDataRecordBuilder],
     inline_config: str,
     ws_server_url: str,
@@ -251,7 +252,7 @@ def run_aux_data_inserter(
                 aux_data_builder.open_connections()
             logging.debug("Connecting to event websocket feed...")
             asyncio.get_event_loop().run_until_complete(
-                insert_aux_data_from_ws(aux_data_builder_list, ws_server_url, headers, client_wsid, exclude_set, parsed_args.dry_run)
+                manage_aux_data_from_ws(aux_data_builder_list, ws_server_url, headers, client_wsid, exclude_set, parsed_args.dry_run)
             )
         except KeyboardInterrupt:
             logging.error('Keyboard Interrupted')

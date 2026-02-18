@@ -35,7 +35,7 @@ sys.path.append(dirname(dirname(realpath(__file__))))
 
 from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
 from misc.coriolix_sealog.aux_data_record_builder import SealogCORIOLIXAuxDataRecordBuilder
-from misc.aux_data_inserter_runner import run_aux_data_inserter
+from misc.aux_data_manager_runner import run_aux_data_manager
 
 # ----------------------------------------------------------------------------- #
 
@@ -93,8 +93,8 @@ INLINE_CONFIG = '''
           - multiply: 0.539957
 '''
 
-# needs to be unique for all currently active dataInserter scripts.
-CLIENT_WSID = 'auxData-dataInserter-coriolix'
+# needs to be unique for all currently active dataManager scripts.
+CLIENT_WSID = 'auxData-dataManager-coriolix'
 
 # -------------------------------------------------------------------------------------
 # The main loop of the utility
@@ -105,7 +105,7 @@ if __name__ == '__main__':
         '''Build an AuxDataRecordBuilder'''
         return SealogCORIOLIXAuxDataRecordBuilder(aux_data_config)
 
-    run_aux_data_inserter(
+    run_aux_data_manager(
         builder_factory=builder_factory,
         inline_config=INLINE_CONFIG,
         ws_server_url=WS_SERVER_URL,
