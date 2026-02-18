@@ -74,6 +74,20 @@ class SealogCORIOLIXAuxDataRecordBuilder(AuxDataRecordBuilder):
 
         return query_urls
 
+    def open_connections(self):
+        '''
+        Open any necessary connections to external data sources.
+        For CORIOLIX, no persistent connection is needed.
+        '''
+        pass
+    
+    def close_connections(self):
+        '''
+        Close any open connections to external data sources.
+        For CORIOLIX, no persistent connection is needed.
+        '''
+        pass
+    
     def build_aux_data_record(self, event):
         '''
         Build the aux_data record for the given event.
