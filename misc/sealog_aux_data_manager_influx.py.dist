@@ -43,6 +43,7 @@ from misc.influx_sealog.settings import (
     INFLUXDB_VERIFY_SSL
 )
 from misc.influx_sealog.aux_data_record_builder import SealogInfluxAuxDataRecordBuilder
+from misc.aux_data_file_cleaners.do_nothing_aux_data_file_cleaner import DoNothingAuxDataFileCleaner
 from misc.aux_data_manager_runner import run_aux_data_manager
 
 # ----------------------------------------------------------------------------- #
@@ -105,9 +106,14 @@ if __name__ == '__main__':
     def builder_factory(aux_data_config):
         '''Build an AuxDataRecordBuilder'''
         return SealogInfluxAuxDataRecordBuilder(client, aux_data_config)
+      
+    def cleaner_factory(aux_data_config):
+        '''Build an AuxDataFileCleaner'''
+        return DoNothingAuxDataFileCleaner(aux_data_config)
 
     run_aux_data_manager(
         builder_factory=builder_factory,
+        cleaner_factory=cleaner_factory,
         inline_config=INLINE_CONFIG,
         ws_server_url=WS_SERVER_URL,
         headers=HEADERS,
