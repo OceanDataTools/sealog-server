@@ -98,7 +98,7 @@ exports.plugin = {
       }
     ];
 
-    console.log('Searching for Lowerings Collection');
+    // console.log('Searching for Lowerings Collection');
     const result = await db.listCollections({ name: loweringsTable }).toArray();
 
     if (result.length) {
@@ -112,7 +112,7 @@ exports.plugin = {
         await db.dropCollection(loweringsTable);
       }
       catch (err) {
-        console.log('DROP ERROR:', err.code);
+        console.error('DROP ERROR:', err.code);
         throw (err);
       }
     }
@@ -122,12 +122,12 @@ exports.plugin = {
       const collection = await db.createCollection(loweringsTable);
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('Populating Lowerings Collection');
+        // console.log('Populating Lowerings Collection');
         await collection.insertMany(init_data);
       }
     }
     catch (err) {
-      console.log('CREATE ERROR:', err.code);
+      console.error('CREATE ERROR:', err.code);
       throw (err);
     }
   }

@@ -12,7 +12,7 @@ exports.plugin = {
   dependencies: [],
   register: async (options) => {
 
-    console.log('Searching for Image Directory');
+    // console.log('Searching for Image Directory');
     if (!Fs.existsSync(imagePath)) {
       console.log('Image Directory not found... trying to create.');
       await mkdirp(imagePath).then(() =>
@@ -23,11 +23,11 @@ exports.plugin = {
         console.error(err)
       );
     }
-    else {
-      console.log('Image Directory found.');
-    }
+    // else {
+    //   console.log('Image Directory found.');
+    // }
 
-    console.log('Searching for Cruise Directory');
+    // console.log('Searching for Cruise Directory');
     if (!Fs.existsSync(cruisePath)) {
       console.log('Cruise Directory not found... trying to create.');
       await mkdirp(cruisePath).then(() =>
@@ -38,11 +38,11 @@ exports.plugin = {
         console.error(err)
       );
     }
-    else {
-      console.log('Cruise Directory found.');
-    }
+    // else {
+    //   console.log('Cruise Directory found.');
+    // }
 
-    console.log('Searching for Lowering Directory');
+    // console.log('Searching for Lowering Directory');
     if (!Fs.existsSync(loweringPath)) {
       console.log('Lowering Directory not found... trying to create.');
       await mkdirp(loweringPath).then(() =>
@@ -53,8 +53,8 @@ exports.plugin = {
         console.error(err)
       );
     }
-    else {
-      console.log('Lowering Directory found.');
-    }
+    // else {
+    //   console.log('Lowering Directory found.');
+    // }
   }
 };

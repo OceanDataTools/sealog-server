@@ -1,6 +1,7 @@
 const { randomAsciiString, hashedPassword } = require('../lib/utils');
 
 const {
+  refreshTokensTable,
   usersTable
 } = require('../config/db_constants');
 
@@ -51,9 +52,8 @@ exports.plugin = {
       }
     ];
 
-    console.log('Searching for Users Collection');
-    const result = await db.listCollections({ name: usersTable }).toArray();
-
+    // console.log('Searching for Users Collection');
+    let result = await db.listCollections({ name: usersTable }).toArray();
     if (result.length) {
       if (process.env.NODE_ENV !== 'development') {
         console.log('Users Collection already exists... we\'re done here.');
@@ -65,7 +65,7 @@ exports.plugin = {
         await db.dropCollection(usersTable);
       }
       catch (err) {
-        console.log('DROP ERROR:', err.code);
+        console.error('DROP ERROR:', err.code);
         throw (err);
       }
     }
@@ -77,8 +77,41 @@ exports.plugin = {
       await collection.insertMany(init_data);
     }
     catch (err) {
-      console.log('CREATE ERROR:', err.code);
+      console.error('CREATE ERROR:', err.code);
       throw (err);
     }
+
+    // console.log('Searching for Refresh Tokens Collection');
+    result = await db.listCollections({ name: refreshTokensTable }).toArray();
+
+    if (result.length) {
+      if (process.env.NODE_ENV !== 'development') {
+        console.log('Refresh Tokens Collection already exists... we\'re done here.');
+        return;
+      }
+
+      console.log('Refresh Tokens Collection exists... dropping it!');
+      try {
+        await db.dropCollection(refreshTokensTable);
+      }
+      catch (err) {
+        console.error('DROP ERROR:', err.code);
+        throw (err);
+      }
+    }
+
+    console.log('Creating Refresh Tokens Collection');
+    try {
+      const collection = await db.createCollection(refreshTokensTable);
+
+      // console.log('Creating index based on event_id field');
+      await collection.createIndex({ user_id: 1 });
+      await collection.createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 });
+    }
+    catch (err) {
+      console.error('CREATE ERROR:', err.code);
+      throw (err);
+    }
+
   }
 };
