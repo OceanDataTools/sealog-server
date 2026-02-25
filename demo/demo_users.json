@@ -51,5 +51,20 @@
     ],
     "system_user": false,
     "disabled": false
+  },
+  {
+    "id": "667d44a536279e84fe945c20",
+    "username": "super_science",
+    "fullname": "Super Scientist",
+    "email": "super_science@notaserver.com",
+    "password": "demo",
+    "roles": [
+      "event_logger",
+      "event_watcher",
+      "template_manager",
+      "power_logger"
+    ],
+    "system_user": false,
+    "disabled": false
   }
 ]
