@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+'''
+FILE:           sealog_aux_data_manager_framegrab.py
+
+DESCRIPTION:    This service listens for new events submitted to Sealog, copies
+                frame grab file(s) from a source dir, renames/copies the file
+                to the sealog-files/images directory and creates an aux_data
+                record containing the specified real-time data and associates
+                the aux data record with the newly created event.  However if
+                the realtime data is older than 20 seconds this service will
+                consider the data stale and will not associate it with the
+                newly created event.
+
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    1.1
+CREATED:    2020-01-27
+REVISION:   2023-02-10
+
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2025
+'''
+
+import sys
+from os.path import dirname, realpath
+sys.path.append(dirname(dirname(realpath(__file__))))
+
+from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
+from misc.framegrab_aux.aux_data_record_builder_framegrab_http import (
+        FramegrabHTTPAuxDataRecordBuilder
+        )
+from misc.aux_data_file_cleaners.delete_files_aux_data_file_cleaner import (
+        DeleteFilesAuxDataFileCleaner
+        )
+from misc.aux_data_manager_runner import run_aux_data_manager
+
+# The data_source to use for the auxData records
+INLINE_CONFIG = '''
+- data_source: 'vehicleRealtimeFramegrabberData'
+'''
+
+# set of events to ignore
+EXCLUDE_SET = ()
+
+# needs to be unique for all currently active dataInserter scripts.
+CLIENT_WSID = f'aux_data_inserter_vehicleRealtimeFramegrabberData'
+
+
+# -------------------------------------------------------------------------------------
+# Required python code for running the script as a stand-alone utility
+# -------------------------------------------------------------------------------------
+if __name__ == '__main__':
+
+    def builder_factory(aux_data_config):
+        '''Build an AuxDataRecordBuilder'''
+        return FramegrabHTTPAuxDataRecordBuilder(aux_data_config)
+
+    def cleaner_factory(aux_data_config):
+        '''Build an AuxDataFileCleaner'''
+        return DeleteFilesAuxDataFileCleaner(aux_data_config)
+
+    run_aux_data_manager(
+        builder_factory=builder_factory,
+        cleaner_factory=cleaner_factory,
+        inline_config=INLINE_CONFIG,
+        ws_server_url=WS_SERVER_URL,
+        headers=HEADERS,
+        client_wsid=CLIENT_WSID,
+        exclude_set=EXCLUDE_SET
+    )
