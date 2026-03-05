@@ -19,6 +19,7 @@ import json
 import logging
 from abc import ABC, abstractmethod
 
+
 class AuxDataRecordBuilder(ABC):
     '''
     Abstract base class for building sealog aux_data records from various data sources.
@@ -29,14 +30,15 @@ class AuxDataRecordBuilder(ABC):
     def __init__(self, aux_data_config):
         '''
         Initialize the base builder with configuration.
-        
+
         Args:
             aux_data_config (dict): Configuration dictionary containing:
                 - query_measurements: List of measurements to query
                 - aux_record_lookup: Mapping of fields to output configuration
                 - data_source: Name of the data source
         '''
-        self._data_source = aux_data_config['data_source']  # don't use get--should throw an error if not specified
+        self._data_source = aux_data_config['data_source']  
+        # don't use get for data source--want to throw an error if not specified
         self._query_measurements = aux_data_config.get('query_measurements')
         self._aux_record_lookup = aux_data_config.get('aux_record_lookup')
         if self._aux_record_lookup is None:
@@ -45,63 +47,44 @@ class AuxDataRecordBuilder(ABC):
             self._query_fields = list(self._aux_record_lookup.keys())
         self.logger = logging.getLogger(__name__)
 
-    @staticmethod
-    @abstractmethod
-    def _build_query_range(ts):
-        '''
-        Builds the temporal range for queries based on the provided timestamp (ts).
-        Format depends on the specific data source implementation.
-        
-        Args:
-            ts (str): Timestamp in ISO 8601 format (YYYY-MM-DDTHH:MM:SS.fffZ)
-            
-        Returns:
-            str or None: Query range string (format varies by implementation)
-        '''
-        # I'm not sure why we need this to be a static method, but I'm including it in the base class since it's in both implementations
-        pass
-    
     @abstractmethod
     def open_connections(self):
         '''
         Open any necessary connections to external data sources.
         Must be implemented by subclasses.
         '''
-        pass
-    
+
     @abstractmethod
     def close_connections(self):
         '''
         Close any open connections to external data sources.
         Must be implemented by subclasses.
         '''
-        pass
 
     @abstractmethod
     def build_aux_data_record(self, event):
         '''
         Build the aux_data record for the given event.
         Must be implemented by subclasses.
-        
+
         Args:
             event (dict): Event dictionary containing 'id' and 'ts' keys
-            
+
         Returns:
             dict or None: Aux data record or None if no data available
         '''
-        pass
 
     def _build_aux_data_dict(self, event_id, query_data):  # pylint:disable=R0915
         '''
         Internal method to build the sealog aux_data record using the event_id,
         query_data and the class instance's datasource value.
-        
+
         This method handles common transformations and modifications across all data sources.
-        
+
         Args:
             event_id (str): The ID of the event
             query_data (dict): Dictionary of field names to values from the data source
-            
+
         Returns:
             dict or None: Aux data record or None if no data available
         '''

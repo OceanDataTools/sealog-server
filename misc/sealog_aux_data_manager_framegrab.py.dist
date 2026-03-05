@@ -45,7 +45,7 @@ INLINE_CONFIG = '''
 EXCLUDE_SET = ()
 
 # needs to be unique for all currently active dataInserter scripts.
-CLIENT_WSID = f'aux_data_inserter_vehicleRealtimeFramegrabberData'
+CLIENT_WSID = 'aux_data_inserter_vehicleRealtimeFramegrabberData'
 
 
 # -------------------------------------------------------------------------------------

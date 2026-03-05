@@ -53,9 +53,10 @@ class DoNothingAuxDataFileCleaner(AuxDataFileCleaner):
 
         if aux_data:
             self.logger.debug(
-                    f"No additional clean up required for event {event['id']} {self._data_source} "
-                    "aux data records"
-                    )
+                "No additional clean up required for event %s %s aux data records",
+                event['id'],
+                self._data_source
+            )
             return aux_data["_id"]
 
         return None
