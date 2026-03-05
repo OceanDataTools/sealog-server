@@ -4,28 +4,28 @@ FILE:           sealog_aux_data_inserter_runner.py
 
 DESCRIPTION:    Shared runner for aux-data inserter scripts.
 '''
+import argparse
+import asyncio
+import json
+import logging
+import os
 import re
 import sys
-import json
 import time
-import logging
-import asyncio
 import websockets
 import yaml
-import os
-import argparse
+
 from typing import Callable, Dict, Any
 
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
-from misc.base_aux_data_record_builder import AuxDataRecordBuilder
 from misc.aux_data_file_cleaners.base_aux_data_file_cleaner import AuxDataFileCleaner
+from misc.base_aux_data_record_builder import AuxDataRecordBuilder
+from misc.python_sealog.cruises import get_cruise_uid_by_id
 from misc.python_sealog.events import get_event, get_events_by_cruise, get_events_by_lowering
 from misc.python_sealog.event_aux_data import create_event_aux_data, delete_event_aux_data
 from misc.python_sealog.lowerings import get_lowering_uid_by_id
-from misc.python_sealog.cruises import get_cruise_uid_by_id
-
 
 LOG_LEVELS = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
 LOGGING_FORMAT = '%(asctime)-15s %(levelname)s %(lineno)s - %(message)s'
@@ -305,16 +305,16 @@ def run_aux_data_manager(
 
     if parsed_args.cruise_id:
         insert_aux_data_for_cruise(
-                aux_data_builder_list,
-                parsed_args.cruise_id,
-                parsed_args.dry_run)
+            aux_data_builder_list,
+            parsed_args.cruise_id,
+            parsed_args.dry_run)
         sys.exit(0)
 
     if parsed_args.lowering_id:
         insert_aux_data_for_lowering(
-                aux_data_builder_list,
-                parsed_args.lowering_id,
-                parsed_args.dry_run)
+            aux_data_builder_list,
+            parsed_args.lowering_id,
+            parsed_args.dry_run)
         sys.exit(0)
 
     # Wait then start WS loop forever. Sleep and retry on any disconnect/error

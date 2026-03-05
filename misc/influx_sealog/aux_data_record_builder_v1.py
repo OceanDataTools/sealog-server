@@ -17,10 +17,10 @@ LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for det
                 Copyright (C) OceanDataTools.org 2025
 '''
 import sys
-import logging
+
 from datetime import datetime, timedelta
-from urllib3.exceptions import NewConnectionError
 from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
+from urllib3.exceptions import NewConnectionError
 
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
@@ -34,7 +34,7 @@ from misc.influx_sealog.settings import (
 )
 
 
-class SealogInfluxV1AuxDataRecordBuilder(AuxDataRecordBuilder):  # pylint: disable=too-few-public-methods # noqa: E501
+class SealogInfluxV1AuxDataRecordBuilder(AuxDataRecordBuilder):
     '''
     Class that handles the construction of an influxDB query and using the
     resulting data to build a sealog aux_data record.
@@ -49,15 +49,20 @@ class SealogInfluxV1AuxDataRecordBuilder(AuxDataRecordBuilder):  # pylint: disab
             if 'query_bucket' in aux_data_config else influxdb_bucket
         )
 
-    @staticmethod
-    def _build_query_range(ts):
+    def _build_query_range(self, ts):
         '''
         Builds the temporal range for the influxDB query based on the provided
         timestamp (ts).
+
+        Args:
+            ts (str): Timestamp in ISO 8601 format (YYYY-MM-DDTHH:MM:SS.fffZ)
+
+        Returns:
+            str or None: Query range string
         '''
         str_start_ts = datetime.strftime(
-                datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ") - timedelta(seconds=20),
-                "%Y-%m-%dT%H:%M:%SZ"
+            datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ") - timedelta(seconds=20),
+            "%Y-%m-%dT%H:%M:%SZ"
         )
         # Note: in the new code, you subtract a whole minute. Did we choose 20 s on purpose?
 
@@ -86,7 +91,7 @@ class SealogInfluxV1AuxDataRecordBuilder(AuxDataRecordBuilder):  # pylint: disab
         WHERE {str_filters}
         ORDER BY DESC LIMIT 1'''
 
-        logging.debug("Query: %s", query)
+        self.logger.debug("Query: %s", query)
 
         return query
 
@@ -95,44 +100,42 @@ class SealogInfluxV1AuxDataRecordBuilder(AuxDataRecordBuilder):  # pylint: disab
         Open any necessary connections to external data sources.
         For Influx, no persistent connection is needed.
         '''
-        pass
-    
+
     def close_connections(self):
         '''
         Close any open connections to external data sources.
         For Influx, no persistent connection is needed.
         '''
-        pass
-    
+
     def build_aux_data_record(self, event):
         '''
         Build the aux_data record for the given event.
         '''
 
-        logging.debug("building query")
+        self.logger.debug("building query")
         query = self._build_query(event['ts'])
 
-        logging.debug("Query: %s", query)
+        self.logger.debug("Query: %s", query)
         # run the query against the influxDB
         try:
             query_result = self._influxdb_client.query(query=query)
 
         except NewConnectionError:
-            logging.error("InfluxDB connection error, verify URL: %s", INFLUXDB_URL)
+            self.logger.error("InfluxDB connection error, verify URL: %s", INFLUXDB_URL)
 
         except (InfluxDBClientError, InfluxDBServerError) as exc:
             _, value, _ = sys.exc_info()
 
             if str(value).startswith("(400)"):
-                logging.error("InfluxDB API error, verify org: %s", INFLUXDB_ORG)
+                self.logger.error("InfluxDB API error, verify org: %s", INFLUXDB_ORG)
             elif str(value).startswith("(401)"):
-                logging.error("InfluxDB API error, verify token: %s", INFLUXDB_AUTH_TOKEN)
+                self.logger.error("InfluxDB API error, verify token: %s", INFLUXDB_AUTH_TOKEN)
             elif str(value).startswith("(404)"):
-                logging.error("InfluxDB API error, verify bucket: %s", self._influxdb_bucket)
+                self.logger.error("InfluxDB API error, verify bucket: %s", self._influxdb_bucket)
             else:
-                logging.error("Error with query:")
-                logging.error(query.replace("|>", '\n'))
-                logging.error(str(exc))
+                self.logger.error("Error with query:")
+                self.logger.error(query.replace("|>", '\n'))
+                self.logger.error(str(exc))
                 raise exc
         else:
             # Parse InfluxDB result into a dictionary format

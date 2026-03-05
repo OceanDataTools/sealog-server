@@ -1,51 +1,40 @@
 #!/usr/bin/env python3
 '''
-FILE:           aux_data_record_builder_test_images.py
+FILE:           aux_data_record_builder_framegrab_http.py
 
-DESCRIPTION:    This script generates test images and uses them to build a sealog aux_data record.
+DESCRIPTION:    This script builds a sealog aux_data record by fetching frame grab images from HTTP source.
 '''
 import os
-import sys
-import logging
-from datetime import datetime, timedelta
 import requests
 import shutil
+import sys
 
+from datetime import datetime, timedelta
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
 from misc.base_aux_data_record_builder import AuxDataRecordBuilder
 from misc.framegrab_aux.settings import DEST_DIR, SOURCES, THRESHOLD
 
-class FramegrabHTTPAuxDataRecordBuilder(AuxDataRecordBuilder):  # pylint: disable=too-few-public-methods
+
+class FramegrabHTTPAuxDataRecordBuilder(AuxDataRecordBuilder):
     '''
     Class that handles generating test images and using the
     resulting data to build a sealog aux_data record.
     '''
-
-    def __init__(self,
-                 aux_data_config):
-        super().__init__(aux_data_config)
-
-    @staticmethod
-    def _build_query_range(ts):
-        # see, this is making me feel like this shouldn't be in the base class
-        raise NotImplementedError("No query for framegrab")
 
     def open_connections(self):
         '''
         Open any necessary connections to external data sources.
         Must be implemented by subclasses.
         '''
-        pass
-    
+
     def close_connections(self):
         '''
         Close any open connections to external data sources.
         Must be implemented by subclasses.
         '''
-        pass
-    
+
     def _build_destination_filepath(self, str_timestamp, filename_prefix, filename_suffix):
         timestamp = datetime.strptime(
             str_timestamp,
@@ -61,7 +50,7 @@ class FramegrabHTTPAuxDataRecordBuilder(AuxDataRecordBuilder):  # pylint: disabl
             DEST_DIR,
             filename_prefix + filename_middle + filename_suffix
         )
-        
+
         return destination_filepath
 
     def build_aux_data_record(self, event):
@@ -72,7 +61,7 @@ class FramegrabHTTPAuxDataRecordBuilder(AuxDataRecordBuilder):  # pylint: disabl
             event['ts'],
             '%Y-%m-%dT%H:%M:%S.%fZ'
         ) < datetime.utcnow()-timedelta(seconds=THRESHOLD):
-            logging.debug("Skipping because event ts is older than thresold")
+            self.logger.debug("Skipping because event ts is older than thresold")
             return None
 
         aux_data_record = {
@@ -89,7 +78,7 @@ class FramegrabHTTPAuxDataRecordBuilder(AuxDataRecordBuilder):  # pylint: disabl
                 source['filename_suffix']
             )
 
-            logging.debug("dst: %s", dst)
+            self.logger.debug("dst: %s", dst)
 
             try:
                 res = requests.get(
@@ -99,23 +88,23 @@ class FramegrabHTTPAuxDataRecordBuilder(AuxDataRecordBuilder):  # pylint: disabl
                 )
 
                 if res.status_code != 200:
-                    logging.error(
+                    self.logger.error(
                         "Unable to retrieve image from: %s",
                         source['source_url'] + source['source_filename']
                     )
                     continue
 
             except requests.exceptions.RequestException as exc:
-                logging.error("Unable to retrieve image from remote server")
-                logging.error(exc)
+                self.logger.error("Unable to retrieve image from remote server")
+                self.logger.error(exc)
 
             try:
                 with open(dst, 'wb') as f:
                     shutil.copyfileobj(res.raw, f)
 
             except shutil.Error as exc:
-                logging.error("Unable to save image to server")
-                logging.error(exc)
+                self.logger.error("Unable to save image to server")
+                self.logger.error(exc)
 
             aux_data_record['data_array'].append(
                 {'data_name': "camera_name", 'data_value': source['source_name']}

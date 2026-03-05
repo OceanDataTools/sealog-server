@@ -15,8 +15,8 @@ REVISION:
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2025
 '''
-import sys
 import os
+import sys
 
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
@@ -54,29 +54,35 @@ class StillcapFFMPEGAuxDataFileCleaner(AuxDataFileCleaner):
 
         if aux_data:
             file_paths = [
-                    data["data_value"]
-                    for data in aux_data["data_array"]
-                    if data["data_name"] == "filename"
-                    ]
+                data["data_value"]
+                for data in aux_data["data_array"]
+                if data["data_name"] == "filename"
+            ]
             for file_path in file_paths:
                 try:
-                    self.logger.debug(f"Deleting file {file_path} for event {event['id']}")
+                    self.logger.debug("Deleting file %s for event %s", file_path, event['id'])
                     if not dry_run:
                         os.remove(file_path)
                 except Exception as e:  # pylint: disable=W0718
                     self.logger.error(
-                            f"Error deleting file {file_path} for event {event['id']}: {e}"
-                            )
+                        "Error deleting file %s for event %s: %s",
+                        file_path,
+                        event['id'],
+                        e
+                    )
 
                 try:
                     sym_path = file_path.replace('png', 'symlink')
-                    self.logger.debug(f"Deleting symlink {sym_path} for event {event['id']}")
+                    self.logger.debug("Deleting symlink %s for event %s", sym_path, event['id'])
                     if not dry_run:
                         os.remove(sym_path)
                 except Exception as e:  # pylint: disable=W0718
                     self.logger.error(
-                            f"Error deleting symlink {sym_path} for event {event['id']}: {e}"
-                            )
+                        "Error deleting symlink %s for event %s: %s",
+                        sym_path,
+                        event['id'],
+                        e
+                    )
             return aux_data["_id"]
 
         return None

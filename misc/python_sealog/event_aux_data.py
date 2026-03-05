@@ -104,21 +104,6 @@ def get_event_aux_data_by_lowering(lowering_uid, datasource=None, limit=0,
         logging.error(str(exc))
         raise exc
 
-def get_event_aux_data_by_event(aux_data_uid,
-                                api_server_url=API_SERVER_URL,
-                                headers=HEADERS):
-    '''
-    Get the aux_data records for an event
-    '''
-    try:
-        url = f'{api_server_url}{EVENT_AUX_DATA_API_PATH}'
-        req = requests.post(url, headers=headers, data=json.dumps(payload), timeout=(2, None))
-        logging.debug(req.text)
-
-    except requests.exceptions.RequestException as exc:
-        logging.error(str(exc))
-        raise exc
-
 
 def create_event_aux_data(payload, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''

@@ -50,6 +50,7 @@ const _renameAndClearFields = (doc) => {
 };
 
 const _deleteEventsWithAuxData = async (db, server, query = {}, limit = 0, offset = 0, sort = { ts: 1 }) => {
+
   // Find the events
   const eventsToDelete = await db.collection(eventsTable)
     .find(query)
@@ -70,10 +71,12 @@ const _deleteEventsWithAuxData = async (db, server, query = {}, limit = 0, offse
     .toArray();
 
   const eventIDToAuxData = allAuxData.reduce((dict, auxData) => {
+
     const eventId = auxData.event_id.toString();
     if (!dict[eventId]) {
       dict[eventId] = [];
     }
+
     dict[eventId].push(auxData);
     return dict;
   }, {});
@@ -87,7 +90,7 @@ const _deleteEventsWithAuxData = async (db, server, query = {}, limit = 0, offse
 
   // Delete event records
   const results = await db.collection(eventsTable).deleteMany({ _id: { $in: eventIDs } });
-  
+
   return { deletedCount: results.deletedCount };
 };
 

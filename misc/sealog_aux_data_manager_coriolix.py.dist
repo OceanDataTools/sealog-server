@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 '''
-FILE:           sealog_aux_data_inserter_coriolix.py
+FILE:           sealog_aux_data_manager_coriolix.py
 
-DESCRIPTION:    This service listens for new events submitted to Sealog, create
+DESCRIPTION:    This service listens for new events submitted to Sealog, creates
                 aux_data records containing the specified real-time data and
                 associates the aux data records with the newly created event.
 
@@ -105,7 +105,7 @@ if __name__ == '__main__':
     def builder_factory(aux_data_config):
         '''Build an AuxDataRecordBuilder'''
         return SealogCORIOLIXAuxDataRecordBuilder(aux_data_config)
-      
+
     def cleaner_factory(aux_data_config):
         '''Build an AuxDataFileCleaner'''
         return DoNothingAuxDataFileCleaner(aux_data_config)

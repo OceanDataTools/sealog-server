@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 '''
-FILE:           sealog_aux_data_manager_influx.py
+FILE:           sealog_aux_data_manager_influx_v1.py
 
 DESCRIPTION:    This service listens for new events submitted to Sealog, create
                 aux_data records containing the specified real-time data and

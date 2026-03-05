@@ -106,7 +106,7 @@ if __name__ == '__main__':
     def builder_factory(aux_data_config):
         '''Build an AuxDataRecordBuilder'''
         return SealogInfluxAuxDataRecordBuilder(client, aux_data_config)
-      
+
     def cleaner_factory(aux_data_config):
         '''Build an AuxDataFileCleaner'''
         return DoNothingAuxDataFileCleaner(aux_data_config)

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 '''
-FILE:           aux_data_record_builder_test_images.py
+FILE:           aux_data_record_builder_framegrab_scp.py
 
-DESCRIPTION:    This script generates test images and uses them to build a sealog aux_data record.
+DESCRIPTION:    This script builds a sealog aux_data record by transferring frame grab images via SCP.
 '''
 import os
 import sys
-import logging
+
 from datetime import datetime, timedelta
 
 try:
@@ -23,7 +23,8 @@ from misc.base_aux_data_record_builder import AuxDataRecordBuilder
 from misc.framegrab_aux.settings import SOURCE_DIR, DEST_DIR, SOURCES, THRESHOLD, \
     HOST, USER, KEY_FILE, PORT
 
-class FramegrabSCPAuxDataRecordBuilder(AuxDataRecordBuilder):  # pylint: disable=too-few-public-methods
+
+class FramegrabSCPAuxDataRecordBuilder(AuxDataRecordBuilder):
     '''
     Class that handles generating test images and using the
     resulting data to build a sealog aux_data record.
@@ -40,14 +41,9 @@ class FramegrabSCPAuxDataRecordBuilder(AuxDataRecordBuilder):  # pylint: disable
         self._user = USER
         self._key = RSAKey.from_private_key_file(KEY_FILE)
         self._port = PORT
-        
+
         self._scp_transport = None
         self._sftp_client = None
-
-    @staticmethod
-    def _build_query_range(ts):
-        # see, this is making me feel like this shouldn't be in the base class
-        raise NotImplementedError("No query for framegrab")
 
     def open_connections(self):
         '''
@@ -58,10 +54,9 @@ class FramegrabSCPAuxDataRecordBuilder(AuxDataRecordBuilder):  # pylint: disable
         self._scp_transport.connect(username=self._user, pkey=self._key)
         self._scp_transport.set_keepalive(30)
         # since opening connection higher up, set keepalive to prevent going stale
-        logging.info("Opening SFTP connection")
+        self.logger.info("Opening SFTP connection")
         self._sftp_client = SFTPClient.from_transport(self._scp_transport)
-        pass
-    
+
     def close_connections(self):
         '''
         Close any open connections to external data sources.
@@ -70,9 +65,8 @@ class FramegrabSCPAuxDataRecordBuilder(AuxDataRecordBuilder):  # pylint: disable
         try:
             self._scp_transport.close()
         except Exception as err:  # pylint: disable=W0718
-            logging.error("Error closing SCP Transport: %s", str(err))
-        pass
-    
+            self.logger.error("Error closing SCP Transport: %s", str(err))
+
     def _build_destination_filepath(self, str_timestamp, filename_prefix, filename_suffix):
         timestamp = datetime.strptime(
             str_timestamp,
@@ -88,7 +82,7 @@ class FramegrabSCPAuxDataRecordBuilder(AuxDataRecordBuilder):  # pylint: disable
             DEST_DIR,
             filename_prefix + filename_middle + filename_suffix
         )
-        
+
         return destination_filepath
 
     def build_aux_data_record(self, event):
@@ -99,7 +93,7 @@ class FramegrabSCPAuxDataRecordBuilder(AuxDataRecordBuilder):  # pylint: disable
             event['ts'],
             '%Y-%m-%dT%H:%M:%S.%fZ'
         ) < datetime.utcnow()-timedelta(seconds=THRESHOLD):
-            logging.debug("Skipping because event ts is older than thresold")
+            self.logger.debug("Skipping because event ts is older than thresold")
             return None
 
         aux_data_record = {
@@ -116,18 +110,18 @@ class FramegrabSCPAuxDataRecordBuilder(AuxDataRecordBuilder):  # pylint: disable
                 source['filename_suffix']
             )
 
-            logging.debug("dst: %s", dst)
+            self.logger.debug("dst: %s", dst)
 
             try:
                 latest_file = os.path.join(SOURCE_DIR, source['source_filename'])
                 src = os.path.join(SOURCE_DIR, latest_file)
                 self._sftp_client.put(src, dst)
             except SFTPError as exc:
-                logging.error("Unable to copy image to server")
-                logging.error(exc)
+                self.logger.error("Unable to copy image to server")
+                self.logger.error(exc)
             except OSError as exc:
-                logging.error("Unable to copy image to server")
-                logging.error(exc)
+                self.logger.error("Unable to copy image to server")
+                self.logger.error(exc)
 
             aux_data_record['data_array'].append(
                 {'data_name': "camera_name", 'data_value': source['source_name']}

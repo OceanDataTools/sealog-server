@@ -16,11 +16,11 @@ REVISION:
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2025
 '''
-import os
-import sys
 import json
-import logging
+import os
 import requests
+import sys
+
 from datetime import datetime, timedelta
 from urllib.parse import quote, urlparse
 from urllib3.exceptions import NewConnectionError
@@ -42,11 +42,16 @@ class SealogCORIOLIXAuxDataRecordBuilder(AuxDataRecordBuilder):
         super().__init__(aux_data_config)
         self.url = url or CORIOLIX_URL
 
-    @staticmethod
-    def _build_query_range(ts):
+    def _build_query_range(self, ts):
         '''
         Builds the temporal range for the CORIOLIX query based on the provided
         timestamp (ts).
+
+        Args:
+            ts (str): Timestamp in ISO 8601 format (YYYY-MM-DDTHH:MM:SS.fffZ)
+
+        Returns:
+            str or None: Query range string
         '''
         try:
             start_ts = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ") - timedelta(minutes=1)
@@ -55,7 +60,7 @@ class SealogCORIOLIXAuxDataRecordBuilder(AuxDataRecordBuilder):
                     f'&date_before={quote(ts)}')
 
         except ValueError as exc:
-            logging.debug(str(exc))
+            self.logger.debug(str(exc))
             return None
 
     def _build_query_urls(self, ts):
@@ -70,7 +75,7 @@ class SealogCORIOLIXAuxDataRecordBuilder(AuxDataRecordBuilder):
 
         for measurement in self._query_measurements:
             query_urls.append(f'{self.url}/api/{measurement}/?format=json&{query_range}')
-            logging.debug("Query: %s", query_urls[-1])
+            self.logger.debug("Query: %s", query_urls[-1])
 
         return query_urls
 
@@ -79,34 +84,35 @@ class SealogCORIOLIXAuxDataRecordBuilder(AuxDataRecordBuilder):
         Open any necessary connections to external data sources.
         For CORIOLIX, no persistent connection is needed.
         '''
-        pass
-    
+
     def close_connections(self):
         '''
         Close any open connections to external data sources.
         For CORIOLIX, no persistent connection is needed.
         '''
-        pass
-    
+
     def build_aux_data_record(self, event):
         '''
         Build the aux_data record for the given event.
         '''
 
-        logging.debug("building query")
+        self.logger.debug("building query")
         query_urls = self._build_query_urls(event['ts'])
 
         query_results = {}
 
         for url in query_urls:
-            logging.debug("Query URL: %s", url)
+            self.logger.debug("Query URL: %s", url)
             measurement = os.path.basename(urlparse(url).path.strip('/'))
 
             # run the query against the CORIOLIX API
             try:
                 response = requests.get(url, timeout=2)
                 if response.status_code != 200:
-                    logging.error("Failed to retrieve data. Status code: %s", response.status_code)
+                    self.logger.error(
+                        "Failed to retrieve data. Status code: %s",
+                        response.status_code
+                    )
 
                 response_obj = json.loads(response.text)
                 if isinstance(response_obj, dict):
@@ -121,13 +127,13 @@ class SealogCORIOLIXAuxDataRecordBuilder(AuxDataRecordBuilder):
                     }
 
             except NewConnectionError:
-                logging.error("CORIOLIX connection error, verify URL: %s", self.url)
+                self.logger.error("CORIOLIX connection error, verify URL: %s", self.url)
 
             except json.decoder.JSONDecodeError:
-                logging.error("Unable to decode response from URL: %s", url)
-                logging.debug(response)
+                self.logger.error("Unable to decode response from URL: %s", url)
+                self.logger.debug(response)
             except KeyError:
-                logging.error("Something went wrong processing the API response")
+                self.logger.error("Something went wrong processing the API response")
 
         aux_data_record = self._build_aux_data_dict(event['id'], query_results)
         return aux_data_record
