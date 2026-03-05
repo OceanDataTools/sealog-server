@@ -30,57 +30,45 @@ LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for det
 '''
 
 import sys
-from influxdb_client import InfluxDBClient
+from influxdb import InfluxDBClient
 
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
 from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
 from misc.influx_sealog.settings import (
-    INFLUXDB_URL,
-    INFLUXDB_AUTH_TOKEN,
-    INFLUXDB_ORG,
-    INFLUXDB_VERIFY_SSL
+  INFLUX_HOST,
+  INFLUX_PORT,
+  INFLUX_USER,
+  INFLUX_PASS
 )
-from misc.influx_sealog.aux_data_record_builder import SealogInfluxAuxDataRecordBuilder
+from misc.influx_sealog.aux_data_record_builder_v1 import SealogInfluxV1AuxDataRecordBuilder
 from misc.aux_data_file_cleaners.do_nothing_aux_data_file_cleaner import DoNothingAuxDataFileCleaner
 from misc.aux_data_manager_runner import run_aux_data_manager
 
 # ----------------------------------------------------------------------------- #
 
 INLINE_CONFIG = '''
-- data_source: realtimeVesselPosition
-  # query_bucket: openrvdas
+- data_source: hercRealtimeNavData
   query_measurements:
-    - s330
+    - sonardyne_nav
+  query_filters:
+    - |-
+      "name" = 'Herc 2412'
   aux_record_lookup:
-    S330HeadingTrue:
-      name: heading
-      uom: deg
-      round: 3
-    S330Latitude:
+    latitude:
       name: latitude
       uom: ddeg
       round: 6
-      modify:
-        - test:
-            - field: S330NorS
-              eq: S
-          operation:
-            - multiply: -1
-    S330Longitude:
+    longitude:
       name: longitude
       uom: ddeg
       round: 6
-      modify:
-        - test:
-            - field: S330EorW
-              eq: W
-          operation:
-            - multiply: -1
-    S330NorS:
-      no_output: true
-    S330EorW:
+    depth:
+      name: depth
+      uom: m
+      round: 2
+    name:
       no_output: true
 '''
 
@@ -88,25 +76,24 @@ INLINE_CONFIG = '''
 EXCLUDE_SET = set()
 
 # needs to be unique for all currently active dataManager scripts.
-CLIENT_WSID = 'auxData-dataManager-influx'
+CLIENT_WSID = 'auxData-dataManager-influx-v1'
 
 # -------------------------------------------------------------------------------------
 # The main loop of the utility
 # -------------------------------------------------------------------------------------
 if __name__ == '__main__':
     # create an influxDB Client
-    use_ssl = INFLUXDB_URL.find('https:') == 0
-    client = InfluxDBClient(url=INFLUXDB_URL,
-                            token=INFLUXDB_AUTH_TOKEN,
-                            org=INFLUXDB_ORG,
-                            ssl=use_ssl,
-                            verify_ssl=INFLUXDB_VERIFY_SSL)
+    client = InfluxDBClient(host=INFLUX_HOST,
+                            port=INFLUX_PORT,
+                            username=INFLUX_USER,
+                            password=INFLUX_PASS
+                            )
 
     # builder factory that injects the client
     def builder_factory(aux_data_config):
         '''Build an AuxDataRecordBuilder'''
-        return SealogInfluxAuxDataRecordBuilder(client, aux_data_config)
-      
+        return SealogInfluxV1AuxDataRecordBuilder(client, aux_data_config)
+
     def cleaner_factory(aux_data_config):
         '''Build an AuxDataFileCleaner'''
         return DoNothingAuxDataFileCleaner(aux_data_config)
