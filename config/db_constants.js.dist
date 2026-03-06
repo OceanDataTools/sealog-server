@@ -1,21 +1,25 @@
 const sealogDB = process.env.SEALOG_DB_NAME || 'sealogDB';
 const sealogDB_devel = process.env.SEALOG_DB_DEVEL_NAME || 'sealogDB_devel';
+const apiKeysTable = 'api_keys';
 const cruisesTable = 'cruises';
 const customVarsTable = 'custom_vars';
 const eventAuxDataTable = 'event_aux_data';
 const eventTemplatesTable = 'event_templates';
 const eventsTable = 'events';
 const loweringsTable = 'lowerings';
+const refreshTokensTable = 'refresh_token';
 const usersTable = 'users';
 
 module.exports = {
   sealogDB,
   sealogDB_devel,
+  apiKeysTable,
   cruisesTable,
   customVarsTable,
   eventAuxDataTable,
   eventTemplatesTable,
   eventsTable,
   loweringsTable,
+  refreshTokensTable,
   usersTable
 };

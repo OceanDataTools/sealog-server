@@ -6,22 +6,21 @@ const { beforeEach, afterEach, describe, it } = exports.lab = Lab.script();
 const { init } = require('../lib/server');
 const { randomAsciiString, hashedApiKey } = require('../lib/utils');
 
-const { apikeysTable, usersTable } = require('../config/db_constants')
+const { apiKeysTable, usersTable } = require('../config/db_constants');
 
 const Jwt = require('jsonwebtoken');
 const { ObjectId } = require('mongodb');
 
 const SECRET = require('../config/secret');
 
-describe('Users API', () => {
+describe('API Keys API', () => {
   let server;
   let db;
   let users;
+  let api_keys;
 
-  const adminLoginToken = randomAsciiString(20)
-  const normalLoginToken = randomAsciiString(20)
-  const apiKey = randomAsciiString(20)
-  const apiKeyHash = hashedApiKey(apiKey)
+  const apiKey = randomAsciiString(20);
+  const apiKeyHash = hashedApiKey(apiKey);
 
   const adminUser = {
     _id: ObjectId('000000000000000000000001'),
@@ -33,7 +32,7 @@ describe('Users API', () => {
     roles: ['admin'],
     system_user: false,
     disabled: false,
-    loginToken: adminLoginToken
+    loginToken: randomAsciiString(20)
   };
 
   const normalUser = {
@@ -41,34 +40,48 @@ describe('Users API', () => {
     username: 'bob',
     fullname: 'test_bob',
     email: 'bob@example.com',
-    password: 'hashedbob',
-    roles: ['cruise_manager'],
+    password: 'hashed',
+    last_login: new Date(),
+    roles: ['event_logger'],
     system_user: false,
     disabled: false,
-    loginToken: normalLoginToken
+    loginToken: randomAsciiString(20)
   };
 
-  const apiKeyRecord = [
-      {
-        _id: ObjectId('000000000000000000000003'),
-        user_id: ObjectId('000000000000000000000002'),  // Reference to users collection
-        key_hash: apiKeyHash,  // We store a hash, never raw key
-        label: 'Default Key',
-        scope: ['read_cruises'],          // Optional: can match user scopes or add more granular scopes
-        created: new Date(),
-        last_used: null,
-        disabled: false,
-        expires: null
-      }
-    ];
+  // Key owned by adminUser
+  const adminApiKey = {
+    _id: ObjectId('aaaaaaaaaaaaaaaaaaaaaaaa'),
+    user_id: ObjectId('000000000000000000000001'),
+    key_hash: apiKeyHash,
+    label: 'Admin Key',
+    scope: ['read_cruises'],
+    created: new Date(),
+    last_used: null,
+    disabled: false,
+    expires: null
+  };
+
+  // Key owned by normalUser
+  const normalApiKey = {
+    _id: ObjectId('bbbbbbbbbbbbbbbbbbbbbbbb'),
+    user_id: ObjectId('000000000000000000000002'),
+    key_hash: 'otherhash',
+    label: 'Bob Key',
+    scope: [],
+    created: new Date(),
+    last_used: null,
+    disabled: false,
+    expires: null
+  };
 
   const adminJwt = Jwt.sign(
     { id: adminUser._id, roles: adminUser.roles, scope: ['admin'] },
     SECRET
   );
 
-  const normalJwt = Jwt.sign(
-    { id: normalUser._id, roles: normalUser.roles, scope: ['read_users'] },
+  // A JWT for normalUser that satisfies the read_apikeys scope check
+  const normalApiKeyJwt = Jwt.sign(
+    { id: normalUser._id, roles: normalUser.roles, scope: ['read_apikeys', 'write_api_keys', 'create_api_keys'] },
     SECRET
   );
 
@@ -77,12 +90,12 @@ describe('Users API', () => {
     db = server.mongo.db;
 
     users = db.collection(usersTable);
-    apikeys = db.collection(apikeysTable);
+    api_keys = db.collection(apiKeysTable);
 
     await users.deleteMany({});
     await users.insertMany([adminUser, normalUser]);
-    await apikeys.deleteMany({});
-    await apikeys.insertMany([apiKeyRecord]);
+    await api_keys.deleteMany({});
+    await api_keys.insertMany([adminApiKey, normalApiKey]);
   });
 
   afterEach(async () => {
@@ -90,10 +103,10 @@ describe('Users API', () => {
   });
 
   // ───────────────────────────────────────────────
-  // GET /users
+  // GET /api_keys
   // ───────────────────────────────────────────────
   describe('GET /api_keys', () => {
-    it('returns all api_keys for admin', async () => {
+    it('returns api keys owned by the authenticated user', async () => {
       const res = await server.inject({
         method: 'GET',
         url: '/sealog-server/api/v1/api_keys',
@@ -102,210 +115,162 @@ describe('Users API', () => {
 
       expect(res.statusCode).to.equal(200);
       expect(res.result.length).to.equal(1);
-      expect(res.result[0]).to.not.include('key_hash');
+      expect(res.result[0].label).to.equal('Admin Key');
     });
 
-    // it('returns only non-system api_keys for non-admin', async () => {
-    //   // mark admin as system user
-    //   await api_keys.updateOne(
-    //     { _id: adminUser._id },
-    //     { $set: { system_user: true } }
-    //   );
+    it('omits key_hash from response', async () => {
+      const res = await server.inject({
+        method: 'GET',
+        url: '/sealog-server/api/v1/api_keys',
+        headers: { Authorization: 'Bearer ' + adminJwt }
+      });
 
-    //   const res = await server.inject({
-    //     method: 'GET',
-    //     url: '/sealog-server/api/v1/api_keys',
-    //     headers: { Authorization: 'Bearer ' + normalJwt }
-    //   });
+      expect(res.statusCode).to.equal(200);
+      expect(res.result[0].key_hash).to.not.exist();
+    });
 
-    //   expect(res.statusCode).to.equal(200);
-    //   expect(res.result.length).to.equal(1);
-    //   expect(res.result[0].username).to.equal('bob');
-    // });
+    it('returns 401 without JWT', async () => {
+      const res = await server.inject({
+        method: 'GET',
+        url: '/sealog-server/api/v1/api_keys'
+      });
+
+      expect(res.statusCode).to.equal(401);
+    });
   });
 
   // ───────────────────────────────────────────────
   // GET /api_keys/{id}
   // ───────────────────────────────────────────────
-//   describe('GET /api_keys/{id}', () => {
-//     it('returns the user for admin', async () => {
-//       const res = await server.inject({
-//         method: 'GET',
-//         url: `/sealog-server/api/v1/api_keys/${normalUser._id}`,
-//         headers: { Authorization: 'Bearer ' + adminJwt }
-//       });
+  describe('GET /api_keys/{id}', () => {
+    it('returns an api key by id for admin', async () => {
+      const res = await server.inject({
+        method: 'GET',
+        url: `/sealog-server/api/v1/api_keys/${adminApiKey._id}`,
+        headers: { Authorization: 'Bearer ' + adminJwt }
+      });
 
-//       expect(res.statusCode).to.equal(200);
-//       expect(res.result.username).to.equal('bob');
-//     });
+      expect(res.statusCode).to.equal(200);
+      expect(res.result.label).to.equal('Admin Key');
+      expect(res.result.key_hash).to.not.exist();
+    });
 
-//     it('blocks non-admin from accessing system_user', async () => {
-//       await api_keys.updateOne(
-//         { _id: ObjectId(adminUser._id) },
-//         { $set: { system_user: true } }
-//       );
+    it('returns 404 for unknown id', async () => {
+      const res = await server.inject({
+        method: 'GET',
+        url: '/sealog-server/api/v1/api_keys/000000000000000000000099',
+        headers: { Authorization: 'Bearer ' + adminJwt }
+      });
 
-//       const res = await server.inject({
-//         method: 'GET',
-//         url: `/sealog-server/api/v1/api_keys/${adminUser._id}`,
-//         headers: { Authorization: 'Bearer ' + normalJwt }
-//       });
+      expect(res.statusCode).to.equal(404);
+    });
 
-//       expect(res.statusCode).to.equal(400);
-//     });
-//   });
+    it('returns 400 when non-admin accesses another user\'s key', async () => {
+      const res = await server.inject({
+        method: 'GET',
+        url: `/sealog-server/api/v1/api_keys/${adminApiKey._id}`,
+        headers: { Authorization: 'Bearer ' + normalApiKeyJwt }
+      });
 
-//   // ───────────────────────────────────────────────
-//   // POST /api_keys
-//   // ───────────────────────────────────────────────
-//   describe('POST /api_keys', () => {
-//     it('creates a new user', async () => {
-//       const payload = {
-//         username: 'charlie',
-//         password: 'pass123',
-//         fullname: 'test_charlie',
-//         email: 'charlie@example.com',
-//         resetURL: 'https://example/reset/',
-//         roles: ['event_logger']
-//       };
+      expect(res.statusCode).to.equal(400);
+    });
+  });
 
-//       const res = await server.inject({
-//         method: 'POST',
-//         url: '/sealog-server/api/v1/api_keys',
-//         headers: { Authorization: 'Bearer ' + adminJwt },
-//         payload
-//       });
+  // ───────────────────────────────────────────────
+  // POST /api_keys
+  // ───────────────────────────────────────────────
+  describe('POST /api_keys', () => {
+    it('creates a new api key for the authenticated user', async () => {
+      const res = await server.inject({
+        method: 'POST',
+        url: '/sealog-server/api/v1/api_keys',
+        headers: { Authorization: 'Bearer ' + adminJwt },
+        payload: {
+          label: 'My New Key'
+        }
+      });
 
-//       expect(res.statusCode).to.equal(201);
+      expect(res.statusCode).to.equal(201);
+      expect(res.result.id).to.exist();
+      expect(res.result.key).to.exist();
+    });
 
-//       const newUser = await api_keys.findOne({ username: 'charlie' });
-//       expect(newUser).to.exist();
-//       expect(newUser.password).to.exist();
-//     });
+    it('returns 401 without JWT', async () => {
+      const res = await server.inject({
+        method: 'POST',
+        url: '/sealog-server/api/v1/api_keys',
+        payload: { label: 'No Auth Key' }
+      });
 
-//     it('rejects duplicate username', async () => {
-//       const payload = {
-//         username: 'bob',
-//         password: 'pass123',
-//         fullname: 'test_bob',
-//         email: 'x@example.com',
-//         resetURL: 'https://example/reset/',
-//         roles: ['event_logger']
-//       };
+      expect(res.statusCode).to.equal(401);
+    });
+  });
 
-//       const res = await server.inject({
-//         method: 'POST',
-//         url: '/sealog-server/api/v1/api_keys',
-//         headers: { Authorization: 'Bearer ' + adminJwt },
-//         payload
-//       });
+  // ───────────────────────────────────────────────
+  // PATCH /api_keys/{id}
+  // ───────────────────────────────────────────────
+  describe('PATCH /api_keys/{id}', () => {
+    it('updates an api key label', async () => {
+      const res = await server.inject({
+        method: 'PATCH',
+        url: `/sealog-server/api/v1/api_keys/${adminApiKey._id}`,
+        headers: { Authorization: 'Bearer ' + adminJwt },
+        payload: { label: 'Updated Label' }
+      });
 
-//       expect(res.statusCode).to.equal(409);
-//     });
-//   });
+      expect(res.statusCode).to.equal(200);
+      const updated = await api_keys.findOne({ _id: adminApiKey._id });
+      expect(updated.label).to.equal('Updated Label');
+    });
 
-//   // ───────────────────────────────────────────────
-//   // PATCH /api_keys/{id}
-//   // ───────────────────────────────────────────────
-//   describe('PATCH /api_keys/{id}', () => {
-//     it('updates a user when authorized', async () => {
-//       const res = await server.inject({
-//         method: 'PATCH',
-//         url: `/sealog-server/api/v1/api_keys/${normalUser._id}`,
-//         headers: { Authorization: 'Bearer ' + normalJwt },
-//         payload: { fullname: 'new_bob' }
-//       });
+    it('returns 404 for unknown id', async () => {
+      const res = await server.inject({
+        method: 'PATCH',
+        url: '/sealog-server/api/v1/api_keys/000000000000000000000099',
+        headers: { Authorization: 'Bearer ' + adminJwt },
+        payload: { label: 'Ghost Key' }
+      });
 
-//       expect(res.statusCode).to.equal(204);
+      expect(res.statusCode).to.equal(404);
+    });
 
-//       const updated = await api_keys.findOne({ _id: normalUser._id });
-//       expect(updated.fullname).to.equal('new_bob');
-//     });
+    it('returns 400 when non-admin updates another user\'s key', async () => {
+      const res = await server.inject({
+        method: 'PATCH',
+        url: `/sealog-server/api/v1/api_keys/${adminApiKey._id}`,
+        headers: { Authorization: 'Bearer ' + normalApiKeyJwt },
+        payload: { label: 'Stolen Label' }
+      });
 
-//     it('disallows non-admin modifying system_user account', async () => {
-//       await api_keys.updateOne(
-//         { _id: adminUser._id },
-//         { $set: { system_user: true } }
-//       );
+      expect(res.statusCode).to.equal(400);
+    });
+  });
 
-//       const res = await server.inject({
-//         method: 'PATCH',
-//         url: `/sealog-server/api/v1/api_keys/${adminUser._id}`,
-//         headers: { Authorization: 'Bearer ' + normalJwt },
-//         payload: { fullname: 'new_admin' }
-//       });
+  // ───────────────────────────────────────────────
+  // DELETE /api_keys/{id}
+  // ───────────────────────────────────────────────
+  describe('DELETE /api_keys/{id}', () => {
+    it('soft-disables an api key (record still exists)', async () => {
+      const res = await server.inject({
+        method: 'DELETE',
+        url: `/sealog-server/api/v1/api_keys/${adminApiKey._id}`,
+        headers: { Authorization: 'Bearer ' + adminJwt }
+      });
 
-//       expect(res.statusCode).to.equal(400);
-//     });
-//   });
+      expect(res.statusCode).to.equal(200);
+      const record = await api_keys.findOne({ _id: adminApiKey._id });
+      expect(record).to.exist();
+      expect(record.disabled).to.equal(true);
+    });
 
-//   // ───────────────────────────────────────────────
-//   // DELETE /api_keys/{id}
-//   // ───────────────────────────────────────────────
-//   describe('DELETE /api_keys/{id}', () => {
-//     it('deletes a user as admin', async () => {
-//       const res = await server.inject({
-//         method: 'DELETE',
-//         url: `/sealog-server/api/v1/api_keys/${normalUser._id}`,
-//         headers: { Authorization: 'Bearer ' + adminJwt }
-//       });
+    it('returns 404 for unknown id', async () => {
+      const res = await server.inject({
+        method: 'DELETE',
+        url: '/sealog-server/api/v1/api_keys/000000000000000000000099',
+        headers: { Authorization: 'Bearer ' + adminJwt }
+      });
 
-//       expect(res.statusCode).to.equal(204);
-
-//       const gone = await api_keys.findOne({ _id: normalUser._id });
-//       expect(gone).to.not.exist();
-//     });
-
-//     it('prevents user from deleting self', async () => {
-//       const res = await server.inject({
-//         method: 'DELETE',
-//         url: `/sealog-server/api/v1/api_keys/${adminUser._id}`,
-//         headers: { Authorization: 'Bearer ' + adminJwt }
-//       });
-
-//       expect(res.statusCode).to.equal(400);
-//     });
-//   });
-
-//   // ───────────────────────────────────────────────
-//   // GET /api_keys/{id}/token
-//   // ───────────────────────────────────────────────
-//   describe('GET /api_keys/{id}/token', () => {
-//     it('returns JWT for owner', async () => {
-//       const res = await server.inject({
-//         method: 'GET',
-//         url: `/sealog-server/api/v1/api_keys/${normalUser._id}/token`,
-//         headers: { Authorization: 'Bearer ' + normalJwt }
-//       });
-
-//       expect(res.statusCode).to.equal(200);
-//       expect(res.result.token).to.exist();
-//     });
-
-//     it('blocks others unless admin', async () => {
-//       const res = await server.inject({
-//         method: 'GET',
-//         url: `/sealog-server/api/v1/api_keys/${normalUser._id}/token`,
-//         headers: { Authorization: 'Bearer ' + adminJwt }
-//       });
-
-//       expect(res.statusCode).to.equal(200);
-//     });
-//   });
-
-//   // ───────────────────────────────────────────────
-//   // GET /api_keys/{id}/loginToken
-//   // ───────────────────────────────────────────────
-//   describe('GET /api_keys/{id}/loginToken', () => {
-//     it('returns loginToken for user', async () => {
-//       const res = await server.inject({
-//         method: 'GET',
-//         url: `/sealog-server/api/v1/api_keys/${normalUser._id}/loginToken`,
-//         headers: { Authorization: 'Bearer ' + normalJwt }
-//       });
-
-//       expect(res.statusCode).to.equal(200);
-//       expect(res.result.loginToken).to.equal(normalLoginToken);
-//     });
-//   });
+      expect(res.statusCode).to.equal(404);
+    });
+  });
 });

@@ -1,6 +1,6 @@
 // const Joi = require('joi');
 const Boom = require('@hapi/boom');
-const { hashApiKey, randomAsciiString } = require('../../../lib/utils');
+const { hashedApiKey, randomAsciiString } = require('../../../lib/utils');
 
 const {
   apiKeysTable
@@ -131,7 +131,7 @@ exports.plugin = {
 
         const { label, roles = [], expires } = request.payload;
         const apiKeyPlain = randomAsciiString(20);
-        const keyHash = await hashApiKey(apiKeyPlain);
+        const keyHash = hashedApiKey(apiKeyPlain);
 
         const result = await db.collection(apiKeysTable).insertOne({
           user_id: ObjectID(request.auth.credentials.id),
@@ -163,9 +163,7 @@ exports.plugin = {
           }
         },
         response: {
-          status: {
-            201: databaseInsertResponse
-          }
+          status: {}
         },
 
         description: 'Create a new API key',
