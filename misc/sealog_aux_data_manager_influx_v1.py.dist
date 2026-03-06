@@ -1,0 +1,108 @@
+#!/usr/bin/env python3
+'''
+FILE:           sealog_aux_data_manager_influx_v1.py
+
+DESCRIPTION:    This service listens for new events submitted to Sealog, create
+                aux_data records containing the specified real-time data and
+                associates the aux data records with the newly created event.
+
+                This script leverages the OpenRVDAS/InfluxDB integration so that
+                if can add ancillary data from any point in time so long as the
+                data is availble from the InfluxDB.  In the event the data is not
+                available the script will NOT add the corresponding aux_data
+                records.
+
+                This script can also add influx data to a list of event ids
+                (comma-separated) using the -e flag, or all the events for a given
+                lowering using the -l flag, or all the events for a given
+                cruise using the -c flag
+
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    1.1
+CREATED:    2021-04-21
+REVISION:   2023-02-10
+
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2025
+'''
+
+import sys
+from influxdb import InfluxDBClient
+
+from os.path import dirname, realpath
+sys.path.append(dirname(dirname(realpath(__file__))))
+
+from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
+from misc.influx_sealog.settings import (
+  INFLUX_HOST,
+  INFLUX_PORT,
+  INFLUX_USER,
+  INFLUX_PASS
+)
+from misc.influx_sealog.aux_data_record_builder_v1 import SealogInfluxV1AuxDataRecordBuilder
+from misc.aux_data_file_cleaners.do_nothing_aux_data_file_cleaner import DoNothingAuxDataFileCleaner
+from misc.aux_data_manager_runner import run_aux_data_manager
+
+# ----------------------------------------------------------------------------- #
+
+INLINE_CONFIG = '''
+- data_source: hercRealtimeNavData
+  query_measurements:
+    - sonardyne_nav
+  query_filters:
+    - |-
+      "name" = 'Herc 2412'
+  aux_record_lookup:
+    latitude:
+      name: latitude
+      uom: ddeg
+      round: 6
+    longitude:
+      name: longitude
+      uom: ddeg
+      round: 6
+    depth:
+      name: depth
+      uom: m
+      round: 2
+    name:
+      no_output: true
+'''
+
+# set of events to ignore
+EXCLUDE_SET = set()
+
+# needs to be unique for all currently active dataManager scripts.
+CLIENT_WSID = 'auxData-dataManager-influx-v1'
+
+# -------------------------------------------------------------------------------------
+# The main loop of the utility
+# -------------------------------------------------------------------------------------
+if __name__ == '__main__':
+    # create an influxDB Client
+    client = InfluxDBClient(host=INFLUX_HOST,
+                            port=INFLUX_PORT,
+                            username=INFLUX_USER,
+                            password=INFLUX_PASS
+                            )
+
+    # builder factory that injects the client
+    def builder_factory(aux_data_config):
+        '''Build an AuxDataRecordBuilder'''
+        return SealogInfluxV1AuxDataRecordBuilder(client, aux_data_config)
+
+    def cleaner_factory(aux_data_config):
+        '''Build an AuxDataFileCleaner'''
+        return DoNothingAuxDataFileCleaner(aux_data_config)
+
+    run_aux_data_manager(
+        builder_factory=builder_factory,
+        cleaner_factory=cleaner_factory,
+        inline_config=INLINE_CONFIG,
+        ws_server_url=WS_SERVER_URL,
+        headers=HEADERS,
+        client_wsid=CLIENT_WSID
+    )

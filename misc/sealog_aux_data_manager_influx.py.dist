@@ -1,0 +1,121 @@
+#!/usr/bin/env python3
+'''
+FILE:           sealog_aux_data_manager_influx.py
+
+DESCRIPTION:    This service listens for new events submitted to Sealog, create
+                aux_data records containing the specified real-time data and
+                associates the aux data records with the newly created event.
+
+                This script leverages the OpenRVDAS/InfluxDB integration so that
+                if can add ancillary data from any point in time so long as the
+                data is availble from the InfluxDB.  In the event the data is not
+                available the script will NOT add the corresponding aux_data
+                records.
+
+                This script can also add influx data to a list of event ids
+                (comma-separated) using the -e flag, or all the events for a given
+                lowering using the -l flag, or all the events for a given
+                cruise using the -c flag
+
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    1.1
+CREATED:    2021-04-21
+REVISION:   2023-02-10
+
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2025
+'''
+
+import sys
+from influxdb_client import InfluxDBClient
+
+from os.path import dirname, realpath
+sys.path.append(dirname(dirname(realpath(__file__))))
+
+from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
+from misc.influx_sealog.settings import (
+    INFLUXDB_URL,
+    INFLUXDB_AUTH_TOKEN,
+    INFLUXDB_ORG,
+    INFLUXDB_VERIFY_SSL
+)
+from misc.influx_sealog.aux_data_record_builder import SealogInfluxAuxDataRecordBuilder
+from misc.aux_data_file_cleaners.do_nothing_aux_data_file_cleaner import DoNothingAuxDataFileCleaner
+from misc.aux_data_manager_runner import run_aux_data_manager
+
+# ----------------------------------------------------------------------------- #
+
+INLINE_CONFIG = '''
+- data_source: realtimeVesselPosition
+  # query_bucket: openrvdas
+  query_measurements:
+    - s330
+  aux_record_lookup:
+    S330HeadingTrue:
+      name: heading
+      uom: deg
+      round: 3
+    S330Latitude:
+      name: latitude
+      uom: ddeg
+      round: 6
+      modify:
+        - test:
+            - field: S330NorS
+              eq: S
+          operation:
+            - multiply: -1
+    S330Longitude:
+      name: longitude
+      uom: ddeg
+      round: 6
+      modify:
+        - test:
+            - field: S330EorW
+              eq: W
+          operation:
+            - multiply: -1
+    S330NorS:
+      no_output: true
+    S330EorW:
+      no_output: true
+'''
+
+# set of events to ignore
+EXCLUDE_SET = set()
+
+# needs to be unique for all currently active dataManager scripts.
+CLIENT_WSID = 'auxData-dataManager-influx'
+
+# -------------------------------------------------------------------------------------
+# The main loop of the utility
+# -------------------------------------------------------------------------------------
+if __name__ == '__main__':
+    # create an influxDB Client
+    use_ssl = INFLUXDB_URL.find('https:') == 0
+    client = InfluxDBClient(url=INFLUXDB_URL,
+                            token=INFLUXDB_AUTH_TOKEN,
+                            org=INFLUXDB_ORG,
+                            ssl=use_ssl,
+                            verify_ssl=INFLUXDB_VERIFY_SSL)
+
+    # builder factory that injects the client
+    def builder_factory(aux_data_config):
+        '''Build an AuxDataRecordBuilder'''
+        return SealogInfluxAuxDataRecordBuilder(client, aux_data_config)
+
+    def cleaner_factory(aux_data_config):
+        '''Build an AuxDataFileCleaner'''
+        return DoNothingAuxDataFileCleaner(aux_data_config)
+
+    run_aux_data_manager(
+        builder_factory=builder_factory,
+        cleaner_factory=cleaner_factory,
+        inline_config=INLINE_CONFIG,
+        ws_server_url=WS_SERVER_URL,
+        headers=HEADERS,
+        client_wsid=CLIENT_WSID
+    )

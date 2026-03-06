@@ -3,7 +3,7 @@
 FILE:           aux_data_record_builder.py
 
 DESCRIPTION:    This script builds a sealog aux_data record with data pulled from an
-                influx v2 database.
+                influx database.
 
 BUGS:
 NOTES:
@@ -19,7 +19,7 @@ LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for det
 import sys
 
 from datetime import datetime, timedelta
-from influxdb_client.rest import ApiException
+from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
 from urllib3.exceptions import NewConnectionError
 
 from os.path import dirname, realpath
@@ -34,7 +34,7 @@ from misc.influx_sealog.settings import (
 )
 
 
-class SealogInfluxAuxDataRecordBuilder(AuxDataRecordBuilder):
+class SealogInfluxV1AuxDataRecordBuilder(AuxDataRecordBuilder):
     '''
     Class that handles the construction of an influxDB query and using the
     resulting data to build a sealog aux_data record.
@@ -42,7 +42,8 @@ class SealogInfluxAuxDataRecordBuilder(AuxDataRecordBuilder):
 
     def __init__(self, influxdb_client, aux_data_config, influxdb_bucket=INFLUXDB_BUCKET):
         super().__init__(aux_data_config)
-        self._influxdb_client = influxdb_client.query_api()
+        self._query_filters = aux_data_config.get('query_filters', [])
+        self._influxdb_client = influxdb_client
         self._influxdb_bucket = (
             aux_data_config['query_bucket']
             if 'query_bucket' in aux_data_config else influxdb_bucket
@@ -59,12 +60,14 @@ class SealogInfluxAuxDataRecordBuilder(AuxDataRecordBuilder):
         Returns:
             str or None: Query range string
         '''
-        try:
-            start_ts = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ") - timedelta(minutes=1)
-            return f'start: {start_ts.strftime("%Y-%m-%dT%H:%M:%S.%fZ")}, stop: {ts}'
-        except ValueError as exc:
-            self.logger.debug(str(exc))
-            return None
+        str_start_ts = datetime.strftime(
+            datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ") - timedelta(seconds=20),
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
+        # Note: in the new code, you subtract a whole minute. Did we choose 20 s on purpose?
+
+        ts_filter = f"time <= '{ts}' AND time > '{str_start_ts}'"
+        return ts_filter
 
     def _build_query(self, ts):
         '''
@@ -72,27 +75,24 @@ class SealogInfluxAuxDataRecordBuilder(AuxDataRecordBuilder):
         and the class instance's query_measurements and query_fields values.
         '''
 
-        query = f'from(bucket: "{self._influxdb_bucket}")\n'
-
-        query_range = self._build_query_range(ts)
-        query += f'|> range({query_range})\n'
-
-        filter_measurements = " or ".join([
-            f'r["_measurement"] == "{q_measurement}"'
-            for q_measurement in self._query_measurements
-        ])
-        query += f'|> filter(fn: (r) => {filter_measurements})\n'
-
-        filter_fields = " or ".join([
-            f'r["_field"] == "{q_field}"'
+        str_field_names = ", ".join([
+            f'"{q_field}"'
             for q_field in self._query_fields
         ])
-        query += f'|> filter(fn: (r) => {filter_fields})\n'
 
-        query += '|> sort(columns: ["_time"], desc: true)\n'
-        query += '|> limit(n:1)'
+        str_time_range = self._build_query_range(ts)
+
+        str_filters = " AND ".join(self._query_filters + [str_time_range])
+
+        # not sure what to do when there's more than one query measurement.
+        # Is that even possible in influx v1?
+        query = f'''SELECT {str_field_names}
+        FROM "{self._influxdb_bucket}"."one_month"."{self._query_measurements[0]}"
+        WHERE {str_filters}
+        ORDER BY DESC LIMIT 1'''
 
         self.logger.debug("Query: %s", query)
+
         return query
 
     def open_connections(self):
@@ -123,7 +123,7 @@ class SealogInfluxAuxDataRecordBuilder(AuxDataRecordBuilder):
         except NewConnectionError:
             self.logger.error("InfluxDB connection error, verify URL: %s", INFLUXDB_URL)
 
-        except ApiException as exc:
+        except (InfluxDBClientError, InfluxDBServerError) as exc:
             _, value, _ = sys.exc_info()
 
             if str(value).startswith("(400)"):

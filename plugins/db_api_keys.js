@@ -29,7 +29,7 @@ exports.plugin = {
       }
     ];
 
-    // console.log('Searching for API Keys Collection');
+    console.log('Searching for API Keys Collection');
     const result = await db.listCollections({ name: apiKeysTable }).toArray();
 
     if (result.length) {
@@ -43,7 +43,7 @@ exports.plugin = {
         await db.dropCollection(apiKeysTable);
       }
       catch (err) {
-        console.error('DROP ERROR:', err.code);
+        console.log('DROP ERROR:', err.code);
         throw (err);
       }
     }
@@ -52,17 +52,17 @@ exports.plugin = {
     try {
       const collection = await db.createCollection(apiKeysTable);
 
-      // console.log('Creating API Key indexes');
+      console.log('Creating API Key indexes');
       await collection.createIndex({ key_hash: 1 }, { unique: true });
       await collection.createIndex({ user_id: 1 });
       await collection.createIndex({ disabled: 1 });
       await collection.createIndex({ expires: 1 });  // for fast expiry checks
 
-      // console.log('Populating API Keys Collection');
+      console.log('Populating API Keys Collection');
       await collection.insertMany(init_data);
     }
     catch (err) {
-      console.error('CREATE ERROR:', err.code);
+      console.log('CREATE ERROR:', err.code);
       throw (err);
     }
   }
