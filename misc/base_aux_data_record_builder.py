@@ -37,7 +37,7 @@ class AuxDataRecordBuilder(ABC):
                 - aux_record_lookup: Mapping of fields to output configuration
                 - data_source: Name of the data source
         '''
-        self._data_source = aux_data_config['data_source']  
+        self._data_source = aux_data_config['data_source']
         # don't use get for data source--want to throw an error if not specified
         self._query_measurements = aux_data_config.get('query_measurements')
         self._aux_record_lookup = aux_data_config.get('aux_record_lookup')

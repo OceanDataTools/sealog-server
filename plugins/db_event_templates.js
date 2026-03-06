@@ -201,7 +201,7 @@ exports.plugin = {
       }
     ];
 
-    console.log('Searching for Event Templates Collection');
+    // console.log('Searching for Event Templates Collection');
     const result = await db.listCollections({ name: eventTemplatesTable }).toArray();
 
     if (result.length) {
@@ -215,7 +215,7 @@ exports.plugin = {
         await db.dropCollection(eventTemplatesTable);
       }
       catch (err) {
-        console.log('DROP ERROR:', err.code);
+        console.error('DROP ERROR:', err.code);
         throw (err);
       }
     }
@@ -225,12 +225,12 @@ exports.plugin = {
       const collection = await db.createCollection(eventTemplatesTable);
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('Populating Event Templates Collection');
+        // console.log('Populating Event Templates Collection');
         await collection.insertMany(init_data);
       }
     }
     catch (err) {
-      console.log('CREATE ERROR:', err.code);
+      console.error('CREATE ERROR:', err.code);
       throw (err);
     }
   }

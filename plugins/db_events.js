@@ -64,7 +64,7 @@ exports.plugin = {
       }
     ];
 
-    console.log('Searching for Events Collection');
+    // console.log('Searching for Events Collection');
     const result = await db.listCollections({ name: eventsTable }).toArray();
 
     if (result.length) {
@@ -78,7 +78,7 @@ exports.plugin = {
         await db.dropCollection(eventsTable);
       }
       catch (err) {
-        console.log('DROP ERROR:', err.code);
+        console.error('DROP ERROR:', err.code);
         throw (err);
       }
     }
@@ -88,12 +88,12 @@ exports.plugin = {
       const collection = await db.createCollection(eventsTable);
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('Populating Events Collection');
+        // console.log('Populating Events Collection');
         await collection.insertMany(init_data);
       }
     }
     catch (err) {
-      console.log('CREATE ERROR:', err.code);
+      console.error('CREATE ERROR:', err.code);
       throw (err);
     }
   }

@@ -2,7 +2,8 @@
 '''
 FILE:           aux_data_record_builder_framegrab_http.py
 
-DESCRIPTION:    This script builds a sealog aux_data record by fetching frame grab images from HTTP source.
+DESCRIPTION:    This script builds a sealog aux_data record by fetching frame grab images from
+                an HTTP source.
 '''
 import os
 import requests

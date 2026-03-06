@@ -39,7 +39,7 @@ exports.plugin = {
     // ---------------- LIST API KEYS ----------------
     server.route({
       method: 'GET',
-      path: '/api_keys',
+      path: '/api-keys',
       handler: async (request, h) => {
 
         // if the request includes a user_id that is not the current user's ID and the user id
@@ -83,7 +83,7 @@ exports.plugin = {
 
     server.route({
       method: 'GET',
-      path: '/api_keys/{id}',
+      path: '/api-keys/{id}',
       handler: async (request, h) => {
 
         const { id } = request.params;
@@ -126,7 +126,7 @@ exports.plugin = {
     // ---------------- CREATE API KEY ----------------
     server.route({
       method: 'POST',
-      path: '/api_keys',
+      path: '/api-keys',
       handler: async (request, h) => {
 
         const { label, roles = [], expires } = request.payload;
@@ -177,7 +177,7 @@ exports.plugin = {
     // ---------------- PATCH / UPDATE LABEL OR EXPIRATION ----------------
     server.route({
       method: 'PATCH',
-      path: '/api_keys/{id}',
+      path: '/api-keys/{id}',
       handler: async (request, h) => {
 
         const { id } = request.params;
@@ -242,7 +242,7 @@ exports.plugin = {
     // ---------------- DELETE / REVOKE API KEY ----------------
     server.route({
       method: 'DELETE',
-      path: '/api_keys/{id}',
+      path: '/api-keys/{id}',
       handler: async (request, h) => {
 
         const { id } = request.params;

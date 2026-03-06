@@ -177,7 +177,7 @@ exports.plugin = {
       }
     ];
 
-    console.log('Searching for Event Aux Data Collection');
+    // console.log('Searching for Event Aux Data Collection');
     const result = await db.listCollections({ name: eventAuxDataTable }).toArray();
 
     if (result.length) {
@@ -191,7 +191,7 @@ exports.plugin = {
         await db.dropCollection(eventAuxDataTable);
       }
       catch (err) {
-        console.log('DROP ERROR:', err.code);
+        console.error('DROP ERROR:', err.code);
         throw (err);
       }
     }
@@ -200,16 +200,16 @@ exports.plugin = {
     try {
       const collection = await db.createCollection(eventAuxDataTable);
 
-      console.log('Creating index based on event_id field');
+      // console.log('Creating index based on event_id field');
       await collection.createIndex({ event_id: 1 });
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('Populating Event Aux Data Collection');
+        // console.log('Populating Event Aux Data Collection');
         await collection.insertMany(init_data);
       }
     }
     catch (err) {
-      console.log('CREATE ERROR:', err.code);
+      console.error('CREATE ERROR:', err.code);
       throw (err);
     }
   }

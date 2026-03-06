@@ -2,7 +2,8 @@
 '''
 FILE:           aux_data_record_builder_framegrab_scp.py
 
-DESCRIPTION:    This script builds a sealog aux_data record by transferring frame grab images via SCP.
+DESCRIPTION:    This script builds a sealog aux_data record by transferring frame grab images
+                via SCP.
 '''
 import os
 import sys

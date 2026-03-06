@@ -68,7 +68,7 @@ exports.plugin = {
       }
     ];
 
-    console.log('Searching for Cruises Collection');
+    // console.log('Searching for Cruises Collection');
     const result = await db.listCollections({ name: cruisesTable }).toArray();
 
     if (result.length) {
@@ -82,7 +82,7 @@ exports.plugin = {
         await db.dropCollection(cruisesTable);
       }
       catch (err) {
-        console.log('DROP ERROR:', err.code);
+        console.error('DROP ERROR:', err.code);
         throw (err);
       }
     }
@@ -92,12 +92,12 @@ exports.plugin = {
       const collection = await db.createCollection(cruisesTable);
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('Populating Cruises Collection');
+        // console.log('Populating Cruises Collection');
         await collection.insertMany(init_data);
       }
     }
     catch (err) {
-      console.log('CREATE ERROR:', err.code);
+      console.error('CREATE ERROR:', err.code);
       throw (err);
     }
   }

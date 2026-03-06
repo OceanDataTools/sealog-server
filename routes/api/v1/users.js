@@ -1,10 +1,7 @@
-const { randomAsciiString } = require('../../../lib/utils');
+const { randomAsciiString, hashedPassword } = require('../../../lib/utils');
 
-const Bcrypt = require('bcryptjs');
 const Boom = require('@hapi/boom');
 const Crypto = require('crypto');
-
-const saltRounds = 10;
 
 const resetPasswordTokenExpires = 24; //hours
 
@@ -16,6 +13,7 @@ const {
   apiKeysTable,
   cruisesTable,
   loweringsTable,
+  refreshTokensTable,
   usersTable
 } = require('../../../config/db_constants');
 
@@ -231,19 +229,9 @@ exports.plugin = {
 
         const password = request.payload.password;
 
-        const hashedPassword = await new Promise((resolve, reject) => {
+        const password_hash = await hashedPassword(password);
 
-          Bcrypt.hash(password, saltRounds, (err, hash) => {
-
-            if (err) {
-              reject(err);
-            }
-
-            resolve(hash);
-          });
-        });
-
-        user.password = hashedPassword;
+        user.password = password_hash;
         user.loginToken = randomAsciiString(20);
 
         let result = null;
@@ -390,25 +378,15 @@ exports.plugin = {
         if (request.payload.password) {
           const password = request.payload.password;
 
-          const hashedPassword = await new Promise((resolve, reject) => {
-
-            Bcrypt.hash(password, saltRounds, (err, hash) => {
-
-              if (err) {
-                reject(err);
-              }
-
-              resolve(hash);
-            });
-          });
-
-          user.password = hashedPassword;
+          const password_hash = await hashedPassword(password);
+          user.password = password_hash;
         }
 
         try {
           await db.collection(usersTable).updateOne(query, { $set: user });
           if (typeof query.disabled === 'boolean' && !query.disabled) {
             await db.collection(apiKeysTable).updateMany({ user_id: query._id }, { $set: { disabled: false } });
+            await db.collection(refreshTokensTable).deleteMany({ user_id: query._id });
           }
 
           return h.response().code(204);
@@ -479,6 +457,7 @@ exports.plugin = {
         try {
           await db.collection(usersTable).deleteOne(query);
           await db.collection(apiKeysTable).deleteMany({ user_id: query._id });
+          await db.collection(refreshTokensTable).deleteMany({ user_id: query._id });
         }
         catch (err) {
           console.log('ERROR:', err);

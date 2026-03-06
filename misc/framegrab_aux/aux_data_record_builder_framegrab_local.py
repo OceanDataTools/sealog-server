@@ -2,7 +2,8 @@
 '''
 FILE:           aux_data_record_builder_framegrab_local.py
 
-DESCRIPTION:    This script builds a sealog aux_data record by copying frame grab images from local directory.
+DESCRIPTION:    This script builds a sealog aux_data record by copying frame grab images from a
+                local directory.
 '''
 import os
 import shutil

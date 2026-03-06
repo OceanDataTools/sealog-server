@@ -29,7 +29,7 @@ exports.plugin = {
 
     ];
 
-    console.log('Searching for Custom Vars Collection');
+    // console.log('Searching for Custom Vars Collection');
     const result = await db.listCollections({ name: customVarsTable }).toArray();
 
     if (result.length) {
@@ -43,7 +43,7 @@ exports.plugin = {
         await db.dropCollection(customVarsTable);
       }
       catch (err) {
-        console.log('DROP ERROR:', err.code);
+        console.error('DROP ERROR:', err.code);
         throw (err);
       }
     }
@@ -51,11 +51,11 @@ exports.plugin = {
     console.log('Creating Custom Vars Collection');
     try {
       const collection = await db.createCollection(customVarsTable);
-      console.log('Populating Custom Vars Collection');
+      // console.log('Populating Custom Vars Collection');
       await collection.insertMany(init_data);
     }
     catch (err) {
-      console.log('CREATE ERROR:', err.code);
+      console.error('CREATE ERROR:', err.code);
       throw (err);
     }
   }

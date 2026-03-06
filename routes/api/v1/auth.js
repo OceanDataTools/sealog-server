@@ -10,6 +10,7 @@ const Crypto = require('crypto');
 const resetPasswordTokenExpires = 15; //minutes
 
 const {
+  refreshTokensTable,
   usersTable
 } = require('../../../config/db_constants');
 
@@ -33,6 +34,8 @@ const {
   loginPayload,
   loginSuccessResponse,
   registerPayload,
+  refreshPayload,
+  refreshSuccessResponse,
   resetPasswordPayload,
   userSuccessResponse,
   userToken
@@ -342,12 +345,43 @@ exports.plugin = {
           }
         }
 
-        user.last_login = new Date();
+        // --- ADD: Refresh Token Generation ---
+        const refreshToken = Jwt.sign(
+          {
+            id: user._id.toString(),
+            type: 'refresh'
+          },
+          SECRET_KEY,
+          { expiresIn: '30d' }   // long lived
+        );
+
+        // Optional: store hashed refresh token in DB so you can revoke it
+        const hashedRefresh = Bcrypt.hashSync(refreshToken, 10);
 
         try {
-          await db.collection(usersTable).updateOne({ _id: new ObjectID(user._id) }, { $set: user });
+          await db.collection(refreshTokensTable).insertOne({
+            user_id: new ObjectID(user._id),
+            hashed_token: hashedRefresh,
+            created_at: new Date(),
+            expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // 30 days
+            user_agent: request.headers['user-agent'] || null,
+            ip: request.info.remoteAddress
+          });
 
-          return h.response({ token: Jwt.sign( { id: user._id, scope: _rolesToScope(user.roles), roles: user.roles }, SECRET_KEY), id: user._id.toString() }).code(200);
+          // Short-lived access token — unchanged
+          const accessToken = Jwt.sign(
+            { id: user._id, scope: _rolesToScope(user.roles), roles: user.roles },
+            SECRET_KEY,
+            { expiresIn: '15m' }    // recommended
+          );
+
+          // --- CHANGE: return refresh_token too ---
+          return h.response({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+            id: user._id.toString(),
+            token_type: 'bearer'
+          }).code(200);
         }
         catch (err) {
           return Boom.serverUnavailable('database error', err);
@@ -552,6 +586,144 @@ exports.plugin = {
         <div class="panel panel-default">\
           <div class="panel-heading"><strong>Status Code: 401</strong> - authenication failed</div>\
           <div class="panel-body">Returns nothing</div>\
+        </div>',
+        tags: ['auth', 'api']
+      }
+    });
+
+    server.route({
+      method: 'POST',
+      path: '/auth/refresh',
+      async handler(request, h) {
+
+        const { refresh_token } = request.payload;
+        const db = request.mongo.db;
+        const ObjectID = request.mongo.ObjectID;
+
+        let decoded;
+        try {
+          decoded = Jwt.verify(refresh_token, SECRET_KEY);
+          if (decoded.type !== 'refresh') {
+            return Boom.unauthorized('invalid token type');
+          }
+        }
+        catch (err) {
+          return Boom.unauthorized('invalid refresh token');
+        }
+
+        const user = await db.collection(usersTable).findOne({
+          _id: new ObjectID(decoded.id)
+        });
+
+        if (!user) {
+          return Boom.unauthorized('user not found');
+        }
+
+        if (user.disabled) {
+          return Boom.unauthorized('account disabled');
+        }
+
+        // Search refresh_tokens collection
+        const tokens = await db.collection(refreshTokensTable).find({
+          user_id: user._id
+        }).toArray();
+
+        let matchingEntry = null;
+
+        for (const entry of tokens) {
+          if (Bcrypt.compareSync(refresh_token, entry.hashed_token)) {
+            matchingEntry = entry;
+            break;
+          }
+        }
+
+        if (!matchingEntry) {
+          return Boom.unauthorized('invalid refresh token');
+        }
+
+        if (matchingEntry.expires_at < new Date()) {
+          return Boom.unauthorized('refresh token expired');
+        }
+
+        // Issue a new access token
+        const newAccessToken = Jwt.sign(
+          { id: user._id, scope: _rolesToScope(user.roles), roles: user.roles },
+          SECRET_KEY,
+          { expiresIn: '15m' }
+        );
+
+        // Remove old token (rotate)
+        await db.collection(refreshTokensTable).deleteOne({ _id: matchingEntry._id });
+
+        // Create new token
+        const newRefreshToken = Jwt.sign(
+          { id: user._id.toString(), type: 'refresh' },
+          SECRET_KEY,
+          { expiresIn: '30d' }
+        );
+
+        await db.collection(refreshTokensTable).insertOne({
+          user_id: user._id,
+          hashed_token: Bcrypt.hashSync(newRefreshToken, 10),
+          created_at: new Date(),
+          expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30)
+        });
+
+        return h.response({
+          access_token: newAccessToken,
+          refresh_token: newRefreshToken,
+          token_type: 'bearer'
+        }).code(200);
+      },
+      config: {
+        validate: {
+          payload: refreshPayload
+        },
+        response: {
+          status: {
+            200: refreshSuccessResponse
+          }
+        },
+        description: 'This is the route used to obtain a new access_token JWT based on the supplied refresh JWT.',
+        notes: '<div class="panel panel-default">\
+          <div class="panel-heading"><strong>Status Code: 200</strong> - re-authenication successful</div>\
+          <div class="panel-body">Returns JSON object conatining updated access_token</div>\
+        </div>\
+        <div class="panel panel-default">\
+          <div class="panel-heading"><strong>Status Code: 401</strong> - authenication failed</div>\
+          <div class="panel-body">Returns nothing</div>\
+        </div>',
+        tags: ['auth', 'api']
+      }
+    });
+
+    server.route({
+      method: 'POST',
+      path: '/auth/logout',
+      async handler(request, h) {
+
+        const { refresh_token } = request.payload;
+        const db = request.mongo.db;
+
+        const entries = await db.collection(refreshTokensTable).find().toArray();
+
+        for (const entry of entries) {
+          if (Bcrypt.compareSync(refresh_token, entry.hashed_token)) {
+            await db.collection(refreshTokensTable).deleteOne({ _id: entry._id });
+            return h.response({ success: true }).code(200);
+          }
+        }
+
+        return h.response({ status: true }).code(200); // No leak of invalid token info
+      },
+      config: {
+        validate: {
+          payload: refreshPayload
+        },
+        description: 'This is the route used to logout / revoke refresh_tokens.',
+        notes: '<div class="panel panel-default">\
+          <div class="panel-heading"><strong>Status Code: 200</strong> - logout successful</div>\
+          <div class="panel-body">Returns JSON object conatining success value</div>\
         </div>',
         tags: ['auth', 'api']
       }
