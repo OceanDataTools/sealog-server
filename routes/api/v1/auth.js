@@ -349,14 +349,16 @@ exports.plugin = {
         const refreshToken = Jwt.sign(
           {
             id: user._id.toString(),
-            type: 'refresh'
+            type: 'refresh',
+            jti: Crypto.randomBytes(16).toString('hex')
           },
           SECRET_KEY,
           { expiresIn: '30d' }   // long lived
         );
 
-        // Optional: store hashed refresh token in DB so you can revoke it
-        const hashedRefresh = Bcrypt.hashSync(refreshToken, 10);
+        // Hash only the JWT signature (43 chars) — bcrypt truncates at 72 bytes so
+        // hashing the full token is unsafe for long JWTs with shared prefixes.
+        const hashedRefresh = Bcrypt.hashSync(refreshToken.split('.')[2], 10);
 
         try {
           await db.collection(refreshTokensTable).insertOne({
@@ -631,7 +633,7 @@ exports.plugin = {
         let matchingEntry = null;
 
         for (const entry of tokens) {
-          if (Bcrypt.compareSync(refresh_token, entry.hashed_token)) {
+          if (Bcrypt.compareSync(refresh_token.split('.')[2], entry.hashed_token)) {
             matchingEntry = entry;
             break;
           }
@@ -657,14 +659,14 @@ exports.plugin = {
 
         // Create new token
         const newRefreshToken = Jwt.sign(
-          { id: user._id.toString(), type: 'refresh' },
+          { id: user._id.toString(), type: 'refresh', jti: Crypto.randomBytes(16).toString('hex') },
           SECRET_KEY,
           { expiresIn: '30d' }
         );
 
         await db.collection(refreshTokensTable).insertOne({
           user_id: user._id,
-          hashed_token: Bcrypt.hashSync(newRefreshToken, 10),
+          hashed_token: Bcrypt.hashSync(newRefreshToken.split('.')[2], 10),
           created_at: new Date(),
           expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30)
         });
@@ -708,7 +710,7 @@ exports.plugin = {
         const entries = await db.collection(refreshTokensTable).find().toArray();
 
         for (const entry of entries) {
-          if (Bcrypt.compareSync(refresh_token, entry.hashed_token)) {
+          if (Bcrypt.compareSync(refresh_token.split('.')[2], entry.hashed_token)) {
             await db.collection(refreshTokensTable).deleteOne({ _id: entry._id });
             return h.response({ success: true }).code(200);
           }

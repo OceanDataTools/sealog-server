@@ -9,7 +9,7 @@ const Bcrypt = require('bcryptjs');
 const Jwt = require('jsonwebtoken');
 const { ObjectId } = require('mongodb');
 const SECRET = require('../config/secret');
-const { usersTable } = require('../config/db_constants');
+const { refreshTokensTable, usersTable } = require('../config/db_constants');
 
 describe('Auth API', () => {
   let server;
@@ -41,6 +41,7 @@ describe('Auth API', () => {
     server = await init();
     db = server.mongo.db;
     await db.collection(usersTable).deleteMany({});
+    await db.collection(refreshTokensTable).deleteMany({});
     await db.collection(usersTable).insertOne(adminUser);
   });
 
@@ -52,7 +53,7 @@ describe('Auth API', () => {
   // POST /auth/login
   // ───────────────────────────────────────────────
   describe('POST /auth/login', () => {
-    it('returns JWT on valid username/password login', async () => {
+    it('returns access_token, refresh_token and id on valid username/password login', async () => {
       const res = await server.inject({
         method: 'POST',
         url: '/sealog-server/api/v1/auth/login',
@@ -60,8 +61,10 @@ describe('Auth API', () => {
       });
 
       expect(res.statusCode).to.equal(200);
-      expect(res.result.token).to.exist();
+      expect(res.result.access_token).to.exist();
+      expect(res.result.refresh_token).to.exist();
       expect(res.result.id).to.exist();
+      expect(res.result.token_type).to.equal('bearer');
     });
 
     it('returns 401 on bad password', async () => {
@@ -84,7 +87,7 @@ describe('Auth API', () => {
       expect(res.statusCode).to.equal(401);
     });
 
-    it('returns JWT on valid loginToken', async () => {
+    it('returns access_token and refresh_token on valid loginToken', async () => {
       const res = await server.inject({
         method: 'POST',
         url: '/sealog-server/api/v1/auth/login',
@@ -92,7 +95,8 @@ describe('Auth API', () => {
       });
 
       expect(res.statusCode).to.equal(200);
-      expect(res.result.token).to.exist();
+      expect(res.result.access_token).to.exist();
+      expect(res.result.refresh_token).to.exist();
     });
 
     it('returns 401 on invalid loginToken', async () => {
@@ -185,6 +189,174 @@ describe('Auth API', () => {
 
       expect(res.statusCode).to.equal(200);
       expect(res.result.token).to.exist();
+    });
+  });
+
+  // ───────────────────────────────────────────────
+  // POST /auth/refresh
+  // ───────────────────────────────────────────────
+  describe('POST /auth/refresh', () => {
+    it('returns new access_token and refresh_token for a valid refresh token', async () => {
+      const loginRes = await server.inject({
+        method: 'POST',
+        url: '/sealog-server/api/v1/auth/login',
+        payload: { username: 'admin', password: plainPassword }
+      });
+      const { refresh_token } = loginRes.result;
+
+      const res = await server.inject({
+        method: 'POST',
+        url: '/sealog-server/api/v1/auth/refresh',
+        payload: { refresh_token }
+      });
+
+      expect(res.statusCode).to.equal(200);
+      expect(res.result.access_token).to.exist();
+      expect(res.result.refresh_token).to.exist();
+      expect(res.result.token_type).to.equal('bearer');
+    });
+
+    it('rotates the refresh token so the old one is no longer valid', async () => {
+      const loginRes = await server.inject({
+        method: 'POST',
+        url: '/sealog-server/api/v1/auth/login',
+        payload: { username: 'admin', password: plainPassword }
+      });
+      const { refresh_token } = loginRes.result;
+
+      // Use the token once — must succeed for rotation to take effect
+      const firstRes = await server.inject({
+        method: 'POST',
+        url: '/sealog-server/api/v1/auth/refresh',
+        payload: { refresh_token }
+      });
+      expect(firstRes.statusCode).to.equal(200);
+
+      // Re-using the same token should fail
+      const res = await server.inject({
+        method: 'POST',
+        url: '/sealog-server/api/v1/auth/refresh',
+        payload: { refresh_token }
+      });
+
+      expect(res.statusCode).to.equal(401);
+    });
+
+    it('returns 401 for a token not stored in DB', async () => {
+      const fakeToken = Jwt.sign(
+        { id: adminUser._id.toString(), type: 'refresh' },
+        SECRET,
+        { expiresIn: '30d' }
+      );
+
+      const res = await server.inject({
+        method: 'POST',
+        url: '/sealog-server/api/v1/auth/refresh',
+        payload: { refresh_token: fakeToken }
+      });
+
+      expect(res.statusCode).to.equal(401);
+    });
+
+    it('returns 401 for a token with wrong type claim', async () => {
+      const wrongTypeToken = Jwt.sign(
+        { id: adminUser._id.toString(), type: 'access' },
+        SECRET,
+        { expiresIn: '30d' }
+      );
+
+      const res = await server.inject({
+        method: 'POST',
+        url: '/sealog-server/api/v1/auth/refresh',
+        payload: { refresh_token: wrongTypeToken }
+      });
+
+      expect(res.statusCode).to.equal(401);
+    });
+
+    it('returns 401 for a token signed with the wrong secret', async () => {
+      const badToken = Jwt.sign(
+        { id: adminUser._id.toString(), type: 'refresh' },
+        'wrong-secret',
+        { expiresIn: '30d' }
+      );
+
+      const res = await server.inject({
+        method: 'POST',
+        url: '/sealog-server/api/v1/auth/refresh',
+        payload: { refresh_token: badToken }
+      });
+
+      expect(res.statusCode).to.equal(401);
+    });
+
+    it('returns 401 for a disabled user', async () => {
+      const loginRes = await server.inject({
+        method: 'POST',
+        url: '/sealog-server/api/v1/auth/login',
+        payload: { username: 'admin', password: plainPassword }
+      });
+      const { refresh_token } = loginRes.result;
+
+      await db.collection(usersTable).updateOne(
+        { _id: adminUser._id },
+        { $set: { disabled: true } }
+      );
+
+      const res = await server.inject({
+        method: 'POST',
+        url: '/sealog-server/api/v1/auth/refresh',
+        payload: { refresh_token }
+      });
+
+      expect(res.statusCode).to.equal(401);
+    });
+  });
+
+  // ───────────────────────────────────────────────
+  // POST /auth/logout
+  // ───────────────────────────────────────────────
+  describe('POST /auth/logout', () => {
+    it('returns 200 and removes the refresh token from the DB', async () => {
+      const loginRes = await server.inject({
+        method: 'POST',
+        url: '/sealog-server/api/v1/auth/login',
+        payload: { username: 'admin', password: plainPassword }
+      });
+      const { refresh_token } = loginRes.result;
+
+      const res = await server.inject({
+        method: 'POST',
+        url: '/sealog-server/api/v1/auth/logout',
+        payload: { refresh_token }
+      });
+
+      expect(res.statusCode).to.equal(200);
+      expect(res.result.success).to.equal(true);
+
+      // Confirm token is gone — refresh should now fail
+      const refreshRes = await server.inject({
+        method: 'POST',
+        url: '/sealog-server/api/v1/auth/refresh',
+        payload: { refresh_token }
+      });
+      expect(refreshRes.statusCode).to.equal(401);
+    });
+
+    it('returns 200 even for an unknown refresh token', async () => {
+      const unknownToken = Jwt.sign(
+        { id: adminUser._id.toString(), type: 'refresh' },
+        SECRET,
+        { expiresIn: '30d' }
+      );
+
+      const res = await server.inject({
+        method: 'POST',
+        url: '/sealog-server/api/v1/auth/logout',
+        payload: { refresh_token: unknownToken }
+      });
+
+      expect(res.statusCode).to.equal(200);
     });
   });
 });
