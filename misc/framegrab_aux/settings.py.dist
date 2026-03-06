@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+'''
+FILE:           settings.py
+
+DESCRIPTION:    This file contains the settings used by the influx_sealog
+                functions to communicate with the influxDB API
+
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    2.0
+CREATED:    2025-02-08
+REVISION:
+
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2025
+'''
+
+THRESHOLD = 20  # seconds
+
+# ------------ only needed for scp transfers --------------
+USER = 'survey'
+HOST = '192.168.1.42'
+PORT = 22
+KEY_FILE = '/home/sealog/.ssh/id_rsa'
+
+# ------------ only needed for local transfers ------------
+SOURCE_DIR = '/mnt/ramdisk'
+
+# ---------------------------------------------------------
+
+# This needs to match the FILEPATH_ROOT variable in ../config/server_setting.js
+DEST_DIR = '/opt/sealog-server/sealog-files/images'
+
+SOURCES = [
+    {
+        'source_url': 'http://192.168.1.42/images/',
+        'source_filename': 'camera1.jpg',
+        'source_name': 'CAMERA_1',
+        'filename_prefix': '',
+        'filename_suffix': '.jpg'
+    }
+]

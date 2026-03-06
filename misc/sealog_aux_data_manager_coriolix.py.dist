@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+'''
+FILE:           sealog_aux_data_manager_coriolix.py
+
+DESCRIPTION:    This service listens for new events submitted to Sealog, creates
+                aux_data records containing the specified real-time data and
+                associates the aux data records with the newly created event.
+
+                This script leverages the CORILOX database/API so that
+                ancillary data can be added to events from any point in time so
+                long as the data is availble from the CORIOLIX API.  In the event
+                the data is not available the script will NOT add the
+                corresponding aux_data records.
+
+                This script can also add CORIOLIX data to a list of event ids
+                (comma-separated) using the -e flag, or all the events for a given
+                lowering using the -l flag, or all the events for a given
+                cruise using the -c flag
+
+BUGS:
+NOTES:
+AUTHOR:     Webb Pinner
+COMPANY:    OceanDataTools.org
+VERSION:    2.0
+CREATED:    2025-02-09
+REVISION:
+
+LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
+                Copyright (C) OceanDataTools.org 2025
+'''
+
+import sys
+from os.path import dirname, realpath
+sys.path.append(dirname(dirname(realpath(__file__))))
+
+from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
+from misc.coriolix_sealog.aux_data_record_builder import SealogCORIOLIXAuxDataRecordBuilder
+from misc.aux_data_file_cleaners.do_nothing_aux_data_file_cleaner import DoNothingAuxDataFileCleaner
+from misc.aux_data_manager_runner import run_aux_data_manager
+
+# ----------------------------------------------------------------------------- #
+
+INLINE_CONFIG = '''
+- data_source: 'vesselPosition'
+  query_measurements:
+    - gnss_gga_bow
+    - sensor_float_1
+  aux_record_lookup:
+    sensor_float_1__p1:
+      name: heading
+      uom: deg
+      round: 3
+    gnss_gga_bow__latitude:
+      name: latitude
+      uom: ddeg
+      round: 6
+    gnss_gga_bow__longitude:
+      name: longitude
+      uom: ddeg
+      round: 6
+- data_source: 'meteorologicalData'
+  query_measurements:
+    - sensor_mixed_5
+  aux_record_lookup:
+    sensor_mixed_5__p4:
+      name: 'air temp'
+      uom: 'C'
+      round: 2
+    sensor_mixed_5__p3:
+      name: 'air pres'
+      uom: 'mBar'
+      round: 2
+      modify:
+        - operation:
+          - multiply: 1000
+    sensor_mixed_5__p5:
+      name: 'relHumidity'
+      uom: '%'
+      round: 1
+- data_source: 'courseAndSpeed'
+  query_measurements:
+    - gnss_vtg_bow
+  aux_record_lookup:
+    gnss_vtg_bow__cog:
+      name: course
+      uom: deg
+      round: 2
+    gnss_vtg_bow__sog:
+      name: speed
+      uom: kts
+      round: 1
+      modify:
+        - operation:
+          - multiply: 0.539957
+'''
+
+# needs to be unique for all currently active dataManager scripts.
+CLIENT_WSID = 'auxData-dataManager-coriolix'
+
+# -------------------------------------------------------------------------------------
+# The main loop of the utility
+# -------------------------------------------------------------------------------------
+if __name__ == '__main__':
+
+    def builder_factory(aux_data_config):
+        '''Build an AuxDataRecordBuilder'''
+        return SealogCORIOLIXAuxDataRecordBuilder(aux_data_config)
+
+    def cleaner_factory(aux_data_config):
+        '''Build an AuxDataFileCleaner'''
+        return DoNothingAuxDataFileCleaner(aux_data_config)
+
+    run_aux_data_manager(
+        builder_factory=builder_factory,
+        cleaner_factory=cleaner_factory,
+        inline_config=INLINE_CONFIG,
+        ws_server_url=WS_SERVER_URL,
+        headers=HEADERS,
+        client_wsid=CLIENT_WSID
+    )

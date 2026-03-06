@@ -49,6 +49,50 @@ const _renameAndClearFields = (doc) => {
   return doc;
 };
 
+const _deleteEventsWithAuxData = async (db, server, query = {}, limit = 0, offset = 0, sort = { ts: 1 }) => {
+
+  // Find the events
+  const eventsToDelete = await db.collection(eventsTable)
+    .find(query)
+    .sort(sort)
+    .skip(offset)
+    .limit(limit)
+    .toArray();
+
+  if (eventsToDelete.length === 0) {
+    return { deletedCount: 0 };
+  }
+
+  const eventIDs = eventsToDelete.map((x) => x._id);
+
+  // Fetch and group aux_data
+  const allAuxData = await db.collection(eventAuxDataTable)
+    .find({ event_id: { $in: eventIDs } })
+    .toArray();
+
+  const eventIDToAuxData = allAuxData.reduce((dict, auxData) => {
+
+    const eventId = auxData.event_id.toString();
+    if (!dict[eventId]) {
+      dict[eventId] = [];
+    }
+
+    dict[eventId].push(auxData);
+    return dict;
+  }, {});
+
+  // Publish deleteEvents message for each event with its aux data
+  // Let the aux data managers handle aux data deletion
+  for (const event of eventsToDelete) {
+    event.aux_data = eventIDToAuxData[event._id.toString()] || [];
+    server.publish('/ws/status/deleteEvents', _renameAndClearFields(event));
+  }
+
+  // Delete event records
+  const results = await db.collection(eventsTable).deleteMany({ _id: { $in: eventIDs } });
+
+  return { deletedCount: results.deletedCount };
+};
 
 exports.plugin = {
   name: 'routes-api-events',
@@ -1011,12 +1055,14 @@ exports.plugin = {
           const updatedEvent = _renameAndClearFields(result.value);
 
           if (time_change) {
-            server.publish('/ws/status/deleteEvents', updatedEvent);
-
             // delete any aux_data
             const aux_data_query = { event_id: updatedEvent.id };
 
-            await db.collection(eventAuxDataTable).deleteMany(aux_data_query);
+            const aux_data_result = await db.collection(eventAuxDataTable).find(aux_data_query).toArray();
+            updatedEvent.aux_data = aux_data_result;
+            server.publish('/ws/status/deleteEvents', _renameAndClearFields(updatedEvent));
+
+            // console.log(del_results);
 
             server.publish('/ws/status/newEvents', updatedEvent);
 
@@ -1106,42 +1152,13 @@ exports.plugin = {
           const offset = (request.query.offset) ? request.query.offset : 0;
           const sort = (request.query.sort === 'newest') ? { ts: -1 } : { ts: 1 };
 
-          let eventIDs = [];
-
-          // find the events
           try {
-            const results = await db.collection(eventsTable).find(query).sort(sort).project({ _id: 1 }).skip(offset).limit(limit).toArray(); // should return just the ids
-            // console.log("results:",results);
-
-            if (results.length === 0) {
-              return h.response({ deletedCount: 0 }).code(200);
-            }
-
-            eventIDs = results.map((x) => x._id);
-            // console.log("eventIDs:",eventIDs);
+            const result = await _deleteEventsWithAuxData(db, server, query, limit, offset, sort);
+            return h.response(result).code(200);
           }
           catch (err) {
             console.log(err);
-            return Boom.serverUnavailable('database error');
-          }
-
-          // delete the aux_data records
-          try {
-            await db.collection(eventAuxDataTable).deleteMany({ event_id: { $in: eventIDs } });
-          }
-          catch (err) {
-            console.log(err);
-            return Boom.serverUnavailable('database error');
-          }
-
-          // delete the event records
-          try {
-            const results = await db.collection(eventsTable).deleteMany({ _id: { $in: eventIDs } });
-            return h.response({ deletedCount: results.deletedCount }).code(200);
-          }
-          catch (err) {
-            console.log(err);
-            return Boom.serverUnavailable('database error');
+            return Boom.serverUnavailable('database error', err);
           }
         }
         else {
@@ -1151,43 +1168,15 @@ exports.plugin = {
           const offset = (request.query.offset) ? request.query.offset : 0;
           const sort = (request.query.sort === 'newest') ? { ts: -1 } : { ts: 1 };
 
-          let eventIDs = [];
-
-          // find the events
           try {
-            const results = await db.collection(eventsTable).find(query).sort(sort).project({ _id: 1 }).skip(offset).limit(limit).toArray();
-            // console.log("results:", results);
-
-            if (results.length === 0) {
-              return h.response({ deletedCount: 0 }).code(200);
-            }
-
-            eventIDs = results.map((x) => x._id);
-            // console.log("eventIDs:",eventIDs);
+            const result = await _deleteEventsWithAuxData(db, server, query, limit, offset, sort);
+            return h.response(result).code(200);
           }
           catch (err) {
             console.log(err);
-            return Boom.serverUnavailable('database error');
+            return Boom.serverUnavailable('database error', err);
           }
 
-          // delete the aux_data records
-          try {
-            await db.collection(eventAuxDataTable).deleteMany({ event_id: { $in: eventIDs } });
-          }
-          catch (err) {
-            console.log(err);
-            return Boom.serverUnavailable('database error');
-          }
-
-          // delete the event records
-          try {
-            const results = await db.collection(eventsTable).deleteMany({ _id: { $in: eventIDs } });
-            return h.response({ deletedCount: results.deletedCount }).code(200);
-          }
-          catch (err) {
-            console.log(err);
-            return Boom.serverUnavailable('database error');
-          }
         }
       },
       config: {
@@ -1263,14 +1252,6 @@ exports.plugin = {
           return Boom.serverUnavailable('database error');
         }
 
-        try {
-          await db.collection(eventAuxDataTable).deleteMany({ event_id: new ObjectID(request.params.id) });
-        }
-        catch (err) {
-          console.log(err);
-          return Boom.serverUnavailable('database error');
-        }
-
         server.publish('/ws/status/deleteEvents', _renameAndClearFields(event));
 
         return h.response().code(204);
@@ -1303,20 +1284,12 @@ exports.plugin = {
         // const ObjectID = request.mongo.ObjectID;
 
         try {
-          await db.collection(eventsTable).deleteMany();
+          const result = await _deleteEventsWithAuxData(db, server);
+          return h.response(result).code(200);
         }
         catch (err) {
           console.log(err);
-          return Boom.serverUnavailable('database error');
-        }
-
-        try {
-          await db.collection(eventAuxDataTable).deleteMany();
-          return h.response().code(204);
-        }
-        catch (err) {
-          console.log(err);
-          return Boom.serverUnavailable('database error');
+          return Boom.serverUnavailable('database error', err);
         }
       },
       config: {

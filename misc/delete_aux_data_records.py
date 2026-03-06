@@ -28,6 +28,7 @@ from misc.python_sealog.event_aux_data import delete_event_aux_data
 def main(uid_file, dry_run):
     '''
     Main function of script, read the file containing aux_data record ids and delete them.
+    This does not use the aux data managers, so it does not do any additional clean up
     '''
     logging.info("Starting main function.")
     logging.info(dry_run)
