@@ -1,4 +1,4 @@
-const FILEPATH_ROOT = process.env.SEALOG_SERVER_FILEPATH_ROOT || '/opt/sealog-server/sealog-files';
+const FILEPATH_ROOT = process.env.SEALOG_SERVER_FILEPATH_ROOT || '/Users/webbpinner/Desktop/Sealog-Related';
 
 const imagePath = `${FILEPATH_ROOT}/images`;
 const cruisePath = `${FILEPATH_ROOT}/cruises`;
@@ -16,6 +16,9 @@ const registeringUserRoles = ['event_watcher', 'event_logger'];
 // Activate per-cruise/per-lowering access permissions
 const useAccessControl = process.env.SEALOG_SERVER_USE_ACCESS_CONTROL || false;
 
+// List of valid user roles
+const roles = ['admin','event_watcher','event_logger','event_manager','template_manager','cruise_manager','apikey_manager','power_logger'];
+
 module.exports = {
   imagePath,
   cruisePath,
@@ -23,5 +26,6 @@ module.exports = {
   loweringPath,
   reCaptchaSecret,
   registeringUserRoles,
+  roles,
   useAccessControl
 };

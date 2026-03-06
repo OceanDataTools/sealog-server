@@ -19,10 +19,15 @@ const swagger_options = {
     title: 'Sealog Server API Documentation',
     version: Pkg.version
   },
+  OAS: 'v3.0',
   tags: [
     {
       name: 'auth',
       description: 'the auth api'
+    },
+    {
+      name: 'api_keys',
+      description: 'the api keys api'
     },
     {
       name: 'cruises',
@@ -62,10 +67,31 @@ const swagger_options = {
     jwt: {
       type: 'apiKey',
       name: 'Authorization',
-      in: 'header'
+      in: 'header',
+      description: `
+  JWT Authentication:
+  Provide: Bearer <your.jwt.token>
+
+  Retrieve a token from: POST /sealog-server/api/v1/auth/login
+  `
+    },
+
+    apiKey: {
+      type: 'apiKey',
+      name: 'x-api-key',
+      in: 'header',
+      description: `
+  API Key Authentication:
+  Provide your API key in the x-api-key header.
+
+  API keys can be created in the /api_keys routes.
+  `
     }
   },
-  security: [{ jwt: [] }]
+  security: [
+    { jwt: [] },
+    { apiKey: [] }
+  ]
 };
 
 const {
@@ -147,6 +173,11 @@ const manifest = {
           prefix: '/sealog-server/api/v1'
         }
       },
+      { plugin: './routes/api/v1/api_keys', options: {},
+        routes: {
+          prefix: '/sealog-server/api/v1'
+        }
+      },
       { plugin: './routes/api/v1/cruises', options: {},
         routes: {
           prefix: '/sealog-server/api/v1'
@@ -182,16 +213,6 @@ const manifest = {
           prefix: '/sealog-server/api/v1'
         }
       },
-      { plugin: './routes/api/v1/lowerings', options: {},
-        routes: {
-          prefix: '/sealog-server/api/v1'
-        }
-      },
-      { plugin: './routes/api/v1/users', options: {},
-        routes: {
-          prefix: '/sealog-server/api/v1'
-        }
-      },
       { plugin: './routes/api/v1/external_calls', options: { clients },
         routes: {
           prefix: '/sealog-server/api/v1'
@@ -202,6 +223,17 @@ const manifest = {
           prefix: '/ws'
         }
       },
+      { plugin: './routes/api/v1/lowerings', options: {},
+        routes: {
+          prefix: '/sealog-server/api/v1'
+        }
+      },
+      { plugin: './routes/api/v1/users', options: {},
+        routes: {
+          prefix: '/sealog-server/api/v1'
+        }
+      },
+      { plugin: './plugins/db_api_keys', options: {} },
       { plugin: './plugins/db_cruises', options: {} },
       { plugin: './plugins/db_custom_vars', options: {} },
       { plugin: './plugins/db_event_aux_data', options: {} },
