@@ -29,16 +29,15 @@ exports.plugin = {
 
     ];
 
-    // console.log('Searching for Custom Vars Collection');
     const result = await db.listCollections({ name: customVarsTable }).toArray();
 
     if (result.length) {
       if (process.env.NODE_ENV !== 'development') {
-        console.log('Custom Vars Collection already exists... we\'re done here.');
+        console.debug('Custom Vars Collection already exists... we\'re done here.');
         return;
       }
 
-      console.log('Custom Vars Collection exists... dropping it!');
+      console.debug('Custom Vars Collection exists... dropping it!');
       try {
         await db.dropCollection(customVarsTable);
       }
@@ -48,10 +47,10 @@ exports.plugin = {
       }
     }
 
-    console.log('Creating Custom Vars Collection');
+    console.debug('Creating Custom Vars Collection');
     try {
       const collection = await db.createCollection(customVarsTable);
-      // console.log('Populating Custom Vars Collection');
+      // console.debug('Populating Custom Vars Collection');
       await collection.insertMany(init_data);
     }
     catch (err) {

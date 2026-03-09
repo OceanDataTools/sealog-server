@@ -44,7 +44,7 @@ const Nodemailer = require('nodemailer'); // eslint-disable-line no-unused-vars
 //       oauth2Client.getAccessToken((err, token) => {
 
 //         if (err) {
-//           console.log('*ERR: ', err);
+//           console.error('*ERR: ', err);
 //           reject();
 //         }
 

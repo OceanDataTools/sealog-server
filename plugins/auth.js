@@ -38,8 +38,7 @@ exports.plugin = {
 
       }
       catch (err) {
-        console.log(err);
-        console.log('Validation ERROR:');
+        console.error('Validation ERROR:', err);
         return { isValid: false };
       }
     };
@@ -63,7 +62,6 @@ exports.plugin = {
 
       // Fetch only keys that are not disabled or deleted
       const keys = await db.collection(apiKeysTable).find({ disabled: { $ne: true } }).toArray();
-      console.error('keys:',keys);
 
       for (const keyRecord of keys) {
         // Compare raw key to hashed key (correct order!!)

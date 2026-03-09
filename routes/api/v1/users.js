@@ -86,7 +86,7 @@ exports.plugin = {
           return h.response(result);
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
       },
@@ -127,7 +127,6 @@ exports.plugin = {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
-          // console.log('invalid ObjectID');
           return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
@@ -145,7 +144,7 @@ exports.plugin = {
 
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
       },
@@ -192,7 +191,7 @@ exports.plugin = {
           }
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
 
@@ -206,7 +205,6 @@ exports.plugin = {
             delete user.id;
           }
           catch (err) {
-            // console.log('invalid ObjectID');
             return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
           }
         }
@@ -240,7 +238,7 @@ exports.plugin = {
           result = await db.collection(usersTable).insertOne(user);
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -250,7 +248,7 @@ exports.plugin = {
           await db.collection(usersTable).updateOne({ _id: user._id }, { $set: { resetPasswordToken: token, resetPasswordExpires: Date.now() + (resetPasswordTokenExpires * 60 * 60 * 1000) } }); // token expires in 24 hours
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
 
@@ -270,7 +268,7 @@ exports.plugin = {
           emailTransporter.sendMail(mailOptions, (err) => {
 
             if (err) {
-              console.log('ERROR:', err);
+              console.error('ERROR:', err);
             }
           });
         }
@@ -333,7 +331,6 @@ exports.plugin = {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
-          // console.log('invalid ObjectID');
           return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
@@ -346,7 +343,7 @@ exports.plugin = {
           user_query = result;
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
           return Boom.serverUnavailable('database error', err);
         }
 
@@ -368,7 +365,7 @@ exports.plugin = {
             }
           }
           catch (err) {
-            console.log('ERROR:', err);
+            console.error('ERROR:', err);
             return Boom.serverUnavailable('database error', err);
           }
         }
@@ -392,7 +389,7 @@ exports.plugin = {
           return h.response().code(204);
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
       },
@@ -436,7 +433,6 @@ exports.plugin = {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
-          // console.log('invalid ObjectID');
           return Boom.unauthorized('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
@@ -450,7 +446,7 @@ exports.plugin = {
           }
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
 
@@ -460,7 +456,7 @@ exports.plugin = {
           await db.collection(refreshTokensTable).deleteMany({ user_id: query._id });
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
 
@@ -523,7 +519,7 @@ exports.plugin = {
           return h.response({ token: Jwt.sign( { id: user._id, scope: server.methods._rolesToScope(user.roles), roles: user.roles }, SECRET_KEY) }).code(200);
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
       },
@@ -574,7 +570,7 @@ exports.plugin = {
           return h.response({ loginToken: user.loginToken }).code(200);
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
       },

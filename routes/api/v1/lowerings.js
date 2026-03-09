@@ -266,7 +266,7 @@ exports.plugin = {
           cruise = cruiseResult;
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('unknown error');
         }
 
@@ -418,7 +418,7 @@ exports.plugin = {
           event = eventResult;
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('unknown error');
         }
 

@@ -177,16 +177,15 @@ exports.plugin = {
       }
     ];
 
-    // console.log('Searching for Event Aux Data Collection');
     const result = await db.listCollections({ name: eventAuxDataTable }).toArray();
 
     if (result.length) {
       if (process.env.NODE_ENV !== 'development') {
-        console.log('Event Aux Data Collection already exists... we\'re done here.');
+        console.debug('Event Aux Data Collection already exists... we\'re done here.');
         return;
       }
 
-      console.log('Event Aux Data Collection exists... dropping it!');
+      console.debug('Event Aux Data Collection exists... dropping it!');
       try {
         await db.dropCollection(eventAuxDataTable);
       }
@@ -196,15 +195,13 @@ exports.plugin = {
       }
     }
 
-    console.log('Creating Event Aux Data Collection');
+    console.debug('Creating Event Aux Data Collection');
     try {
       const collection = await db.createCollection(eventAuxDataTable);
 
-      // console.log('Creating index based on event_id field');
       await collection.createIndex({ event_id: 1 });
 
       if (process.env.NODE_ENV === 'development') {
-        // console.log('Populating Event Aux Data Collection');
         await collection.insertMany(init_data);
       }
     }

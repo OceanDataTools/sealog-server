@@ -98,16 +98,15 @@ exports.plugin = {
       }
     ];
 
-    // console.log('Searching for Lowerings Collection');
     const result = await db.listCollections({ name: loweringsTable }).toArray();
 
     if (result.length) {
       if (process.env.NODE_ENV !== 'development') {
-        console.log('Lowerings Collection already exists... we\'re done here.');
+        console.debug('Lowerings Collection already exists... we\'re done here.');
         return;
       }
 
-      console.log('Lowerings Collection exists... dropping it!');
+      console.debug('Lowerings Collection exists... dropping it!');
       try {
         await db.dropCollection(loweringsTable);
       }
@@ -117,12 +116,11 @@ exports.plugin = {
       }
     }
 
-    console.log('Creating Lowerings Collection');
+    console.debug('Creating Lowerings Collection');
     try {
       const collection = await db.createCollection(loweringsTable);
 
       if (process.env.NODE_ENV === 'development') {
-        // console.log('Populating Lowerings Collection');
         await collection.insertMany(init_data);
       }
     }

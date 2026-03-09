@@ -139,7 +139,7 @@ exports.plugin = {
           return execute_cmd(request, h, command);
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -187,7 +187,7 @@ exports.plugin = {
           return execute_cmd(request, h, command);
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
 

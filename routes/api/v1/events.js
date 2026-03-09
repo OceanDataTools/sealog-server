@@ -127,7 +127,7 @@ exports.plugin = {
           cruise = cruiseResult;
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -140,10 +140,9 @@ exports.plugin = {
 
         try {
           results = await db.collection(eventsTable).find(query).sort(sort).skip(offset).limit(limit).toArray();
-          // console.log("results:", results);
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -182,7 +181,7 @@ exports.plugin = {
             aux_data_results = await db.collection(eventAuxDataTable).find(datasource_query, { _id: 0, event_id: 1 }).toArray();
           }
           catch (err) {
-            console.log(err);
+            console.error(err);
             return Boom.serverUnavailable('database error');
           }
 
@@ -259,7 +258,7 @@ exports.plugin = {
           cruise = cruiseResult;
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -273,10 +272,9 @@ exports.plugin = {
 
         try {
           results = await db.collection(eventsTable).find(query).toArray();
-          // console.log("results:", results);
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -309,7 +307,7 @@ exports.plugin = {
           aux_data_results = await db.collection(eventAuxDataTable).find(datasource_query, { _id: 0, event_id: 1 }).toArray();
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -369,7 +367,7 @@ exports.plugin = {
           lowering = loweringResult;
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -382,10 +380,9 @@ exports.plugin = {
 
         try {
           results = await db.collection(eventsTable).find(query).sort(sort).skip(offset).limit(limit).toArray();
-          // console.log("results:", results);
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -424,7 +421,7 @@ exports.plugin = {
             aux_data_results = await db.collection(eventAuxDataTable).find(datasource_query, { _id: 0, event_id: 1 }).toArray();
           }
           catch (err) {
-            console.log(err);
+            console.error(err);
             return Boom.serverUnavailable('database error');
           }
 
@@ -501,7 +498,7 @@ exports.plugin = {
           lowering = loweringResult;
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -511,10 +508,9 @@ exports.plugin = {
 
         try {
           results = await db.collection(eventsTable).find(query).toArray();
-          // console.log("results:", results);
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -547,7 +543,7 @@ exports.plugin = {
           aux_data_results = await db.collection(eventAuxDataTable).find(datasource_query, { _id: 0, event_id: 1 }).toArray();
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -613,16 +609,11 @@ exports.plugin = {
           try {
 
             const collection = await db.collection(eventAuxDataTable).find(datasource_query, { _id: 0, event_id: 1 }).toArray();
-
             const eventIDs = collection.map((x) => x.event_id);
-
-            // console.log("collection:", eventIDs);
-
             datasourceIDs = { $in: eventIDs };
-
           }
           catch (err) {
-            console.log(err);
+            console.error(err);
             return Boom.serverUnavailable('database error');
           }
 
@@ -634,7 +625,6 @@ exports.plugin = {
 
           try {
             const results = await db.collection(eventsTable).find(query).sort(sort).skip(offset).limit(limit).toArray();
-            // console.log("results:", results);
 
             if (results.length === 0) {
               if (request.query.format && request.query.format === 'csv') {
@@ -649,7 +639,7 @@ exports.plugin = {
 
           }
           catch (err) {
-            console.log(err);
+            console.error(err);
             return Boom.serverUnavailable('database error');
           }
 
@@ -663,7 +653,6 @@ exports.plugin = {
 
           try {
             let results = await db.collection(eventsTable).find(query).sort(sort).skip(offset).limit(limit).toArray();
-            // console.log("results:", results);
 
             if (results.length === 0) {
               if (request.query.format && request.query.format === 'csv') {
@@ -691,7 +680,7 @@ exports.plugin = {
             return h.response(results).code(200);
           }
           catch (err) {
-            console.log(err);
+            console.error(err);
             return Boom.serverUnavailable('database error');
           }
         }
@@ -756,7 +745,7 @@ exports.plugin = {
 
           }
           catch (err) {
-            console.log(err);
+            console.error(err);
             return Boom.serverUnavailable('database error');
           }
 
@@ -770,7 +759,7 @@ exports.plugin = {
 
           }
           catch (err) {
-            console.log(err);
+            console.error(err);
             return Boom.serverUnavailable('database error');
           }
 
@@ -785,7 +774,7 @@ exports.plugin = {
             return h.response({ 'events': results.length }).code(200);
           }
           catch (err) {
-            console.log(err);
+            console.error(err);
             return Boom.serverUnavailable('database error');
           }
         }
@@ -848,7 +837,7 @@ exports.plugin = {
           return h.response(result).code(200);
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
       },
@@ -890,7 +879,7 @@ exports.plugin = {
             delete event.id;
           }
           catch (err) {
-            console.log(err);
+            console.error(err);
             return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
           }
 
@@ -931,7 +920,7 @@ exports.plugin = {
 
           }
           catch (err) {
-            console.log(err);
+            console.error(err);
             return Boom.serverUnavailable('database error');
           }
         }
@@ -953,7 +942,7 @@ exports.plugin = {
           return h.response({ ...result, insertedEvent: event }).code(201);
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
       },
@@ -998,7 +987,7 @@ exports.plugin = {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
@@ -1014,7 +1003,7 @@ exports.plugin = {
           }
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -1061,9 +1050,6 @@ exports.plugin = {
             const aux_data_result = await db.collection(eventAuxDataTable).find(aux_data_query).toArray();
             updatedEvent.aux_data = aux_data_result;
             server.publish('/ws/status/deleteEvents', _renameAndClearFields(updatedEvent));
-
-            // console.log(del_results);
-
             server.publish('/ws/status/newEvents', updatedEvent);
 
           }
@@ -1075,7 +1061,7 @@ exports.plugin = {
 
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
       },
@@ -1142,7 +1128,7 @@ exports.plugin = {
 
           }
           catch (err) {
-            console.log(err);
+            console.error(err);
             return Boom.serverUnavailable('database error');
           }
 
@@ -1157,7 +1143,7 @@ exports.plugin = {
             return h.response(result).code(200);
           }
           catch (err) {
-            console.log(err);
+            console.error(err);
             return Boom.serverUnavailable('database error', err);
           }
         }
@@ -1173,7 +1159,7 @@ exports.plugin = {
             return h.response(result).code(200);
           }
           catch (err) {
-            console.log(err);
+            console.error(err);
             return Boom.serverUnavailable('database error', err);
           }
 
@@ -1213,7 +1199,7 @@ exports.plugin = {
           query._id = new ObjectID(request.params.id);
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
@@ -1230,7 +1216,7 @@ exports.plugin = {
 
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -1240,7 +1226,7 @@ exports.plugin = {
           event.aux_data = aux_data_result;
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -1248,7 +1234,7 @@ exports.plugin = {
           await db.collection(eventsTable).findOneAndDelete(query);
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -1288,7 +1274,7 @@ exports.plugin = {
           return h.response(result).code(200);
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error', err);
         }
       },

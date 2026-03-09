@@ -72,7 +72,7 @@ exports.plugin = {
 
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
       },
@@ -128,7 +128,7 @@ exports.plugin = {
           return h.response(_renameAndClearFields(result, request.auth.credentials.scope.some((role) => ['admin', 'write_event_templates', 'read_admin_templates'].includes(role)))).code(200);
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
       },
@@ -169,7 +169,6 @@ exports.plugin = {
             delete event_template.id;
           }
           catch (err) {
-            console.log('invalid ObjectID');
             return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
           }
         }
@@ -205,7 +204,7 @@ exports.plugin = {
 
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
       },
@@ -263,7 +262,7 @@ exports.plugin = {
           event_template = { ...result, ...request.payload };
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -278,7 +277,7 @@ exports.plugin = {
           return h.response().code(204);
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
       },
@@ -334,7 +333,7 @@ exports.plugin = {
           }
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -345,7 +344,7 @@ exports.plugin = {
           return h.response().code(204);
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('database error');
         }
       },

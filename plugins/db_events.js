@@ -64,16 +64,15 @@ exports.plugin = {
       }
     ];
 
-    // console.log('Searching for Events Collection');
     const result = await db.listCollections({ name: eventsTable }).toArray();
 
     if (result.length) {
       if (process.env.NODE_ENV !== 'development') {
-        console.log('Events Collection already exists... we\'re done here.');
+        console.debug('Events Collection already exists... we\'re done here.');
         return;
       }
 
-      console.log('Events Collection exists... dropping it!');
+      console.debug('Events Collection exists... dropping it!');
       try {
         await db.dropCollection(eventsTable);
       }
@@ -83,12 +82,11 @@ exports.plugin = {
       }
     }
 
-    console.log('Creating Events Collection');
+    console.debug('Creating Events Collection');
     try {
       const collection = await db.createCollection(eventsTable);
 
       if (process.env.NODE_ENV === 'development') {
-        // console.log('Populating Events Collection');
         await collection.insertMany(init_data);
       }
     }

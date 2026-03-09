@@ -198,7 +198,6 @@ exports.plugin = {
         try {
           const cruises = await db.collection(cruisesTable).find(query).sort( { start_ts: -1 } ).skip(offset).limit(limit).toArray();
 
-          // console.log("cruises:", cruises);
           if (cruises.length === 0) {
             if (request.query.format && request.query.format === 'csv') {
               return h.response('').code(200);
@@ -277,7 +276,7 @@ exports.plugin = {
           lowering = loweringResult;
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('unknown error');
         }
 
@@ -335,7 +334,7 @@ exports.plugin = {
 
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
           return Boom.serverUnavailable('database error');
         }
       },
@@ -382,7 +381,7 @@ exports.plugin = {
           event = eventResult;
         }
         catch (err) {
-          console.log(err);
+          console.error(err);
           return Boom.serverUnavailable('unknown error');
         }
 
@@ -429,7 +428,7 @@ exports.plugin = {
 
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
           return Boom.serverUnavailable('database error');
         }
       },
@@ -662,7 +661,7 @@ exports.plugin = {
           result = await db.collection(cruisesTable).insertOne(cruise);
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
           return Boom.serverUnavailable('database error', err);
         }
 
@@ -670,7 +669,7 @@ exports.plugin = {
           Fs.mkdirSync(cruisePath + '/' + result.insertedId);
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
         }
 
         cruise.id = result.insertedId;
@@ -801,7 +800,7 @@ exports.plugin = {
         if (request.payload.cruise_additional_meta && request.payload.cruise_additional_meta.cruise_files) {
           try {
             request.payload.cruise_additional_meta.cruise_files.map((file) => {
-              // console.log("move files from", Path.join(Tmp.tmpdir,file), "to", Path.join(cruisePath, request.params.id));
+
               mvFilesToDir(Path.join(Tmp.tmpdir,file), Path.join(cruisePath, request.params.id), true);
             });
 
@@ -1115,7 +1114,7 @@ exports.plugin = {
           await db.collection(cruisesTable).deleteMany(query);
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
           return Boom.serverUnavailable('database error', err);
         }
 
@@ -1126,7 +1125,7 @@ exports.plugin = {
           }
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
           return Boom.serverUnavailable('error deleting cruise files', err);
         }
 

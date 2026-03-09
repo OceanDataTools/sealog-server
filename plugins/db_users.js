@@ -52,15 +52,14 @@ exports.plugin = {
       }
     ];
 
-    // console.log('Searching for Users Collection');
     let result = await db.listCollections({ name: usersTable }).toArray();
     if (result.length) {
       if (process.env.NODE_ENV !== 'development') {
-        console.log('Users Collection already exists... we\'re done here.');
+        console.debug('Users Collection already exists... we\'re done here.');
         return;
       }
 
-      console.log('Users Collection exists... dropping it!');
+      console.debug('Users Collection exists... dropping it!');
       try {
         await db.dropCollection(usersTable);
       }
@@ -70,10 +69,10 @@ exports.plugin = {
       }
     }
 
-    console.log('Creating Users Collection');
+    console.debug('Creating Users Collection');
     try {
       const collection = await db.createCollection(usersTable);
-      console.log('Populating Users Collection');
+      console.debug('Populating Users Collection');
       await collection.insertMany(init_data);
     }
     catch (err) {
@@ -81,16 +80,15 @@ exports.plugin = {
       throw (err);
     }
 
-    // console.log('Searching for Refresh Tokens Collection');
     result = await db.listCollections({ name: refreshTokensTable }).toArray();
 
     if (result.length) {
       if (process.env.NODE_ENV !== 'development') {
-        console.log('Refresh Tokens Collection already exists... we\'re done here.');
+        console.debug('Refresh Tokens Collection already exists... we\'re done here.');
         return;
       }
 
-      console.log('Refresh Tokens Collection exists... dropping it!');
+      console.debug('Refresh Tokens Collection exists... dropping it!');
       try {
         await db.dropCollection(refreshTokensTable);
       }
@@ -100,11 +98,9 @@ exports.plugin = {
       }
     }
 
-    console.log('Creating Refresh Tokens Collection');
+    console.debug('Creating Refresh Tokens Collection');
     try {
       const collection = await db.createCollection(refreshTokensTable);
-
-      // console.log('Creating index based on event_id field');
       await collection.createIndex({ user_id: 1 });
       await collection.createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 });
     }

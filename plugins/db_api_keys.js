@@ -29,40 +29,40 @@ exports.plugin = {
       }
     ];
 
-    console.log('Searching for API Keys Collection');
+    console.debug('Searching for API Keys Collection');
     const result = await db.listCollections({ name: apiKeysTable }).toArray();
 
     if (result.length) {
       if (process.env.NODE_ENV !== 'development') {
-        console.log('API Keys Collection already exists... we\'re done here.');
+        console.debug('API Keys Collection already exists... we\'re done here.');
         return;
       }
 
-      console.log('API Keys Collection exists... dropping it!');
+      console.debug('API Keys Collection exists... dropping it!');
       try {
         await db.dropCollection(apiKeysTable);
       }
       catch (err) {
-        console.log('DROP ERROR:', err.code);
+        console.error('DROP ERROR:', err.code);
         throw (err);
       }
     }
 
-    console.log('Creating API Keys Collection');
+    console.debug('Creating API Keys Collection');
     try {
       const collection = await db.createCollection(apiKeysTable);
 
-      console.log('Creating API Key indexes');
+      console.debug('Creating API Key indexes');
       await collection.createIndex({ key_hash: 1 }, { unique: true });
       await collection.createIndex({ user_id: 1 });
       await collection.createIndex({ disabled: 1 });
       await collection.createIndex({ expires: 1 });  // for fast expiry checks
 
-      console.log('Populating API Keys Collection');
+      console.debug('Populating API Keys Collection');
       await collection.insertMany(init_data);
     }
     catch (err) {
-      console.log('CREATE ERROR:', err.code);
+      console.error('CREATE ERROR:', err.code);
       throw (err);
     }
   }

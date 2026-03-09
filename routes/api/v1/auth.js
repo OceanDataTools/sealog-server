@@ -196,7 +196,7 @@ exports.plugin = {
             emailTransporter.sendMail(mailOptions, (err) => {
 
               if (err) {
-                console.log('ERROR:', err);
+                console.error('ERROR:', err);
               }
             });
           }
@@ -327,7 +327,7 @@ exports.plugin = {
           }
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
           return Boom.serverUnavailable('database error');
         }
 
@@ -340,7 +340,7 @@ exports.plugin = {
             }
           }
           catch (err) {
-            console.log(err);
+            console.error(err);
             return Boom.serverUnavailable('reCaptcha error');
           }
         }
@@ -361,6 +361,11 @@ exports.plugin = {
         const hashedRefresh = Bcrypt.hashSync(refreshToken.split('.')[2], 10);
 
         try {
+          await db.collection(usersTable).updateOne(
+            { _id: new ObjectID(user._id) },
+            { $set: { last_login: new Date() } }
+          );
+
           await db.collection(refreshTokensTable).insertOne({
             user_id: new ObjectID(user._id),
             hashed_token: hashedRefresh,
@@ -485,7 +490,7 @@ exports.plugin = {
           emailTransporter.sendMail(mailOptions, (err) => {
 
             if (err) {
-              console.log('ERROR:', err);
+              console.error('ERROR:', err);
             }
           });
         }
@@ -526,7 +531,7 @@ exports.plugin = {
 
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
       },
@@ -564,7 +569,7 @@ exports.plugin = {
           return h.response({ token: Jwt.sign( { id: user._id, scope: server.methods._rolesToScope(user.roles), roles: user.roles }, SECRET_KEY) }).code(200);
         }
         catch (err) {
-          console.log('ERROR:', err);
+          console.error('ERROR:', err);
           Boom.serverUnavailable('database error');
         }
       },

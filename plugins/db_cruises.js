@@ -68,16 +68,15 @@ exports.plugin = {
       }
     ];
 
-    // console.log('Searching for Cruises Collection');
     const result = await db.listCollections({ name: cruisesTable }).toArray();
 
     if (result.length) {
       if (process.env.NODE_ENV !== 'development') {
-        console.log('Cruises Collection already exists... we\'re done here.');
+        console.debug('Cruises Collection already exists... we\'re done here.');
         return;
       }
 
-      console.log('Cruises Collection exists... dropping it!');
+      console.debug('Cruises Collection exists... dropping it!');
       try {
         await db.dropCollection(cruisesTable);
       }
@@ -87,12 +86,11 @@ exports.plugin = {
       }
     }
 
-    console.log('Creating Cruises Collection');
+    console.debug('Creating Cruises Collection');
     try {
       const collection = await db.createCollection(cruisesTable);
 
       if (process.env.NODE_ENV === 'development') {
-        // console.log('Populating Cruises Collection');
         await collection.insertMany(init_data);
       }
     }

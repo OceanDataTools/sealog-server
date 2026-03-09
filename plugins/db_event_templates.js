@@ -201,16 +201,15 @@ exports.plugin = {
       }
     ];
 
-    // console.log('Searching for Event Templates Collection');
     const result = await db.listCollections({ name: eventTemplatesTable }).toArray();
 
     if (result.length) {
       if (process.env.NODE_ENV !== 'development') {
-        console.log('Event Templates Collection already exists... we\'re done here.');
+        console.debug('Event Templates Collection already exists... we\'re done here.');
         return;
       }
 
-      console.log('Event Templates Collection exists... dropping it!');
+      console.debug('Event Templates Collection exists... dropping it!');
       try {
         await db.dropCollection(eventTemplatesTable);
       }
@@ -220,12 +219,11 @@ exports.plugin = {
       }
     }
 
-    console.log('Creating Event Templates Collection');
+    console.debug('Creating Event Templates Collection');
     try {
       const collection = await db.createCollection(eventTemplatesTable);
 
       if (process.env.NODE_ENV === 'development') {
-        // console.log('Populating Event Templates Collection');
         await collection.insertMany(init_data);
       }
     }
