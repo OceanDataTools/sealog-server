@@ -39,22 +39,25 @@ exports.plugin = {
     // ---------------- LIST API KEYS ----------------
     server.route({
       method: 'GET',
-      path: '/api-keys',
+      path: '/api_keys',
       handler: async (request, h) => {
 
         // if the request includes a user_id that is not the current user's ID and the user id
-        if (request.params.user_id) {
-          if (!request.auth.credentials.roles.includes('admin') || request.auth.credentials.id !== request.params.user_id) {
-            return Boom.badRequest('The requesting user is unauthorized to make that request');
+        if (request.query.user_id) {
+          if (!request.auth.credentials.roles.includes('admin') || request.auth.credentials.id !== request.query.user_id) {
+            throw Boom.badRequest('The requesting user is unauthorized to make that request');
           }
         }
 
-        const userId = request.params.user_id || request.auth.credentials.id;
+        const userId = request.query.user_id || request.auth.credentials.id;
+        const limit = request.query.limit || 0;
+        const offset = request.query.offset || 0;
+
         const result = await db.collection(apiKeysTable)
           .find({ user_id: ObjectID(userId) })
+          .skip(offset)
+          .limit(limit)
           .toArray();
-
-        console.error(result);
 
         result.forEach(_renameAndClearFields);
 
@@ -63,7 +66,7 @@ exports.plugin = {
       config: {
         auth: {
           strategy: 'jwt',
-          scope: ['admin', 'read_apikeys']
+          scope: ['admin', 'read_api_keys']
         },
         validate: {
           headers: authorizationHeader,
@@ -83,7 +86,7 @@ exports.plugin = {
 
     server.route({
       method: 'GET',
-      path: '/api-keys/{id}',
+      path: '/api_keys/{id}',
       handler: async (request, h) => {
 
         const { id } = request.params;
@@ -94,8 +97,8 @@ exports.plugin = {
           throw Boom.notFound('API Key not found');
         }
 
-        if (!request.auth.credentials.roles.includes('admin') && request.auth.credentials.id !== result.user_id) {
-          return Boom.badRequest('The requesting user is unauthorized to make that request');
+        if (!request.auth.credentials.roles.includes('admin') && request.auth.credentials.id !== result.user_id.toString()) {
+          throw Boom.badRequest('The requesting user is unauthorized to make that request');
         }
 
         const cleanedResult = _renameAndClearFields(result);
@@ -105,7 +108,7 @@ exports.plugin = {
       config: {
         auth: {
           strategy: 'jwt',
-          scope: ['admin', 'read_apikeys']
+          scope: ['admin', 'read_api_keys']
         },
         validate: {
           headers: authorizationHeader,
@@ -116,7 +119,7 @@ exports.plugin = {
             200: apiKeySuccessResponse
           }
         },
-        description: 'Return the API Keys based on query parameters',
+        description: 'Return a single API Key based on query parameters',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>',
         tags: ['api_keys','api']
@@ -126,7 +129,7 @@ exports.plugin = {
     // ---------------- CREATE API KEY ----------------
     server.route({
       method: 'POST',
-      path: '/api-keys',
+      path: '/api_keys',
       handler: async (request, h) => {
 
         const { label, roles = [], expires } = request.payload;
@@ -177,7 +180,7 @@ exports.plugin = {
     // ---------------- PATCH / UPDATE LABEL OR EXPIRATION ----------------
     server.route({
       method: 'PATCH',
-      path: '/api-keys/{id}',
+      path: '/api_keys/{id}',
       handler: async (request, h) => {
 
         const { id } = request.params;
@@ -188,8 +191,8 @@ exports.plugin = {
           throw Boom.notFound('API Key not found');
         }
 
-        if (!request.auth.credentials.roles.includes('admin') && request.auth.credentials.id !== result.user_id) {
-          return Boom.badRequest('The requesting user is unauthorized to make that request');
+        if (!request.auth.credentials.roles.includes('admin') && request.auth.credentials.id !== result.user_id.toString()) {
+          throw Boom.badRequest('The requesting user is unauthorized to make that request');
         }
 
         const updates = request.payload;
@@ -242,7 +245,7 @@ exports.plugin = {
     // ---------------- DELETE / REVOKE API KEY ----------------
     server.route({
       method: 'DELETE',
-      path: '/api-keys/{id}',
+      path: '/api_keys/{id}',
       handler: async (request, h) => {
 
         const { id } = request.params;
@@ -253,8 +256,8 @@ exports.plugin = {
           throw Boom.notFound('API Key not found');
         }
 
-        if (!request.auth.credentials.roles.includes('admin') && request.auth.credentials.id !== result.user_id) {
-          return Boom.badRequest('The requesting user is unauthorized to make that request');
+        if (!request.auth.credentials.roles.includes('admin') && request.auth.credentials.id !== result.user_id.toString()) {
+          throw Boom.badRequest('The requesting user is unauthorized to make that request');
         }
 
         await db.collection(apiKeysTable).updateOne(
@@ -267,7 +270,7 @@ exports.plugin = {
       config: {
         auth: {
           strategy: 'jwt',
-          scope: ['admin', 'create_api_keys']
+          scope: ['admin', 'write_api_keys']
         },
         validate: {
           headers: authorizationHeader,

@@ -81,7 +81,7 @@ describe('API Keys API', () => {
 
   // A JWT for normalUser that satisfies the read_apikeys scope check
   const normalApiKeyJwt = Jwt.sign(
-    { id: normalUser._id, roles: normalUser.roles, scope: ['read_apikeys', 'write_api_keys', 'create_api_keys'] },
+    { id: normalUser._id, roles: normalUser.roles, scope: ['read_api_keys', 'write_api_keys', 'create_api_keys'] },
     SECRET
   );
 
@@ -174,6 +174,17 @@ describe('API Keys API', () => {
 
       expect(res.statusCode).to.equal(400);
     });
+
+    it('allows non-admin to access their own key', async () => {
+      const res = await server.inject({
+        method: 'GET',
+        url: `/sealog-server/api/v1/api_keys/${normalApiKey._id}`,
+        headers: { Authorization: 'Bearer ' + normalApiKeyJwt }
+      });
+
+      expect(res.statusCode).to.equal(200);
+      expect(res.result.label).to.equal('Bob Key');
+    });
   });
 
   // ───────────────────────────────────────────────
@@ -244,6 +255,19 @@ describe('API Keys API', () => {
 
       expect(res.statusCode).to.equal(400);
     });
+
+    it('allows non-admin to update their own key', async () => {
+      const res = await server.inject({
+        method: 'PATCH',
+        url: `/sealog-server/api/v1/api_keys/${normalApiKey._id}`,
+        headers: { Authorization: 'Bearer ' + normalApiKeyJwt },
+        payload: { label: 'My Updated Label' }
+      });
+
+      expect(res.statusCode).to.equal(200);
+      const updated = await api_keys.findOne({ _id: normalApiKey._id });
+      expect(updated.label).to.equal('My Updated Label');
+    });
   });
 
   // ───────────────────────────────────────────────
@@ -271,6 +295,65 @@ describe('API Keys API', () => {
       });
 
       expect(res.statusCode).to.equal(404);
+    });
+
+    it('allows non-admin to disable their own key', async () => {
+      const res = await server.inject({
+        method: 'DELETE',
+        url: `/sealog-server/api/v1/api_keys/${normalApiKey._id}`,
+        headers: { Authorization: 'Bearer ' + normalApiKeyJwt }
+      });
+
+      expect(res.statusCode).to.equal(200);
+      const record = await api_keys.findOne({ _id: normalApiKey._id });
+      expect(record.disabled).to.equal(true);
+    });
+
+    it('returns 400 when non-admin disables another user\'s key', async () => {
+      const res = await server.inject({
+        method: 'DELETE',
+        url: `/sealog-server/api/v1/api_keys/${adminApiKey._id}`,
+        headers: { Authorization: 'Bearer ' + normalApiKeyJwt }
+      });
+
+      expect(res.statusCode).to.equal(400);
+    });
+  });
+
+  // ───────────────────────────────────────────────
+  // Pagination — GET /api_keys
+  // ───────────────────────────────────────────────
+  describe('GET /api_keys pagination', () => {
+    it('respects limit and offset query params', async () => {
+      // Insert a second key for adminUser so we have 2 total
+      await api_keys.insertOne({
+        _id: ObjectId('cccccccccccccccccccccccc'),
+        user_id: ObjectId('000000000000000000000001'),
+        key_hash: 'anotherhash',
+        label: 'Admin Key 2',
+        scope: [],
+        created: new Date(),
+        last_used: null,
+        disabled: false,
+        expires: null
+      });
+
+      const limitRes = await server.inject({
+        method: 'GET',
+        url: '/sealog-server/api/v1/api_keys?limit=1',
+        headers: { Authorization: 'Bearer ' + adminJwt }
+      });
+      expect(limitRes.statusCode).to.equal(200);
+      expect(limitRes.result.length).to.equal(1);
+
+      const offsetRes = await server.inject({
+        method: 'GET',
+        url: '/sealog-server/api/v1/api_keys?limit=1&offset=1',
+        headers: { Authorization: 'Bearer ' + adminJwt }
+      });
+      expect(offsetRes.statusCode).to.equal(200);
+      expect(offsetRes.result.length).to.equal(1);
+      expect(offsetRes.result[0].label).to.not.equal(limitRes.result[0].label);
     });
   });
 });
