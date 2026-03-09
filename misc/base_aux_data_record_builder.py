@@ -135,7 +135,7 @@ class AuxDataRecordBuilder(ABC):
                                         test_result = True
                                         break
 
-                                    if 'gte' in test and query_data[test['field']] >= test['gt']:
+                                    if 'gte' in test and query_data[test['field']] >= test['gte']:
                                         test_result = True
                                         break
 
@@ -143,7 +143,7 @@ class AuxDataRecordBuilder(ABC):
                                         test_result = True
                                         break
 
-                                    if 'lte' in test and query_data[test['field']] <= test['lt']:
+                                    if 'lte' in test and query_data[test['field']] <= test['lte']:
                                         test_result = True
                                         break
 

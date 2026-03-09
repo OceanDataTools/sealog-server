@@ -283,7 +283,7 @@ def convert_lowering_record_fn(record_fn):
         ) from exc
 
 
-def convert_event_record_rn(record_fn):
+def convert_event_record_fn(record_fn):
     '''
     Process the event records in the given file ahead of import into the
     database.
@@ -297,7 +297,7 @@ def convert_event_record_rn(record_fn):
     except Exception as exc:
         logging.debug(str(exc))
         raise ValueError(
-            f"(convert_event_record_rn) Could not convert record file {record_fn}"
+            f"(convert_event_record_fn) Could not convert record file {record_fn}"
         ) from exc
 
 
@@ -360,7 +360,7 @@ if __name__ == '__main__':
             print(json.dumps(convert_lowering_record_fn(parsed_args.record_file)))
 
         elif parsed_args.type == "event":
-            print(json.dumps(convert_event_record_rn(parsed_args.record_file)))
+            print(json.dumps(convert_event_record_fn(parsed_args.record_file)))
 
         elif parsed_args.type == "aux_data":
             print(json.dumps(convert_aux_data_record_fn(parsed_args.record_file)))

@@ -46,8 +46,8 @@ def parse_event_ids(event_id_file):
 
         for event_id in event_ids_from_file:
             if re.match(r"^[a-f\d]{24}$", event_id) is None:
-                logging.error("\"%s\" is an invalid event_id... quiting", event_id)
-                raise ValueError(f'"{event_id}" is an invalid event_id... quiting')
+                logging.error("\"%s\" is an invalid event_id... quitting", event_id)
+                raise ValueError(f'"{event_id}" is an invalid event_id... quitting')
 
     return event_ids_from_file
 
