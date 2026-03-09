@@ -109,6 +109,19 @@ describe('Auth API', () => {
       expect(res.statusCode).to.equal(401);
     });
 
+    it('updates last_login in the DB after a successful login', async () => {
+      const before = adminUser.last_login;
+
+      await server.inject({
+        method: 'POST',
+        url: '/sealog-server/api/v1/auth/login',
+        payload: { username: 'admin', password: plainPassword }
+      });
+
+      const updated = await db.collection(usersTable).findOne({ _id: adminUser._id });
+      expect(updated.last_login.getTime()).to.be.above(before.getTime());
+    });
+
     it('returns 401 for disabled account', async () => {
       await db.collection(usersTable).updateOne(
         { _id: adminUser._id },
