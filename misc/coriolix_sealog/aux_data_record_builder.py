@@ -131,7 +131,7 @@ class SealogCORIOLIXAuxDataRecordBuilder(AuxDataRecordBuilder):
 
             except json.decoder.JSONDecodeError:
                 self.logger.error("Unable to decode response from URL: %s", url)
-                self.logger.debug(response)
+                self.logger.debug(response.text)
             except KeyError:
                 self.logger.error("Something went wrong processing the API response")
 

@@ -104,6 +104,8 @@ def get_event_aux_data_by_lowering(lowering_uid, datasource=None, limit=0,
         logging.error(str(exc))
         raise exc
 
+    return None
+
 
 def create_event_aux_data(payload, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''

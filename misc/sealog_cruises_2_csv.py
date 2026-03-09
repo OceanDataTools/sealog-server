@@ -60,7 +60,7 @@ def update_csv_file(output_file):
     logging.info("Updating cruise csv file")
 
     try:
-        with open(output_file, 'w', encoding='uft-8') as file:
+        with open(output_file, 'w', encoding='utf-8') as file:
             file.write(cruises)
 
     except OSError as exc:
@@ -73,42 +73,51 @@ def update_csv_file(output_file):
 async def cruise_sync(output_file):
     '''
     Listen to the newCruise and updateCruise subscriptions and call
-    update_csv_file whenever there is a change.
+    update_csv_file whenever there is a change. Reconnects automatically
+    on connection loss or error, retrying every 5 seconds.
     '''
 
-    try:
-        async with websockets.connect(WS_SERVER_URL) as websocket:
+    while True:
 
-            await websocket.send(json.dumps(HELLO))
+        try:
+            async with websockets.connect(WS_SERVER_URL) as websocket:
 
-            while True:
+                await websocket.send(json.dumps(HELLO))
 
-                cruise = await websocket.recv()
-                cruise_obj = json.loads(cruise)
+                while True:
 
-                if cruise_obj['type'] and cruise_obj['type'] == 'ping':
+                    cruise = await websocket.recv()
+                    cruise_obj = json.loads(cruise)
 
-                    await websocket.send(json.dumps(PING))
+                    if cruise_obj['type'] and cruise_obj['type'] == 'ping':
 
-                elif cruise_obj['type'] and cruise_obj['type'] == 'pub':
+                        await websocket.send(json.dumps(PING))
 
-                    logging.info(
-                        "A cruise record has been added or an existing record has been updated"
-                    )
-                    logging.debug(json.dumps(cruise_obj, indent=2))
-                    update_csv_file(output_file)
+                    elif cruise_obj['type'] and cruise_obj['type'] == 'pub':
 
-                else:
-                    logging.debug("Skipping because message is not important")
+                        logging.info(
+                            "A cruise record has been added or an existing record has been updated"
+                        )
+                        logging.debug(json.dumps(cruise_obj, indent=2))
+                        update_csv_file(output_file)
 
-    except websockets.exceptions.InvalidURI as exc:
-        logging.error("Invalid URI: %s", exc)
+                    else:
+                        logging.debug("Skipping because message is not important")
 
-    except websockets.exceptions.WebSocketException as exc:
-        logging.error("WebSocket exception occurred: %s", exc)
+        except websockets.exceptions.InvalidURI as exc:
+            logging.error("Invalid URI: %s", exc)
+            break
 
-    except ConnectionRefusedError as exc:
-        logging.error("Connection refused: %s", exc)
+        except websockets.exceptions.WebSocketException as exc:
+            logging.warning("WebSocket connection lost, retrying in 5 seconds: %s", exc)
+
+        except ConnectionRefusedError as exc:
+            logging.warning("Connection refused, retrying in 5 seconds: %s", exc)
+
+        except OSError as exc:
+            logging.warning("Connection error, retrying in 5 seconds: %s", exc)
+
+        await asyncio.sleep(5)
 
 
 # -------------------------------------------------------------------------------------
