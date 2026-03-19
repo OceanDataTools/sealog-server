@@ -90,3 +90,10 @@ class AuxDataFileCleaner(ABC):
         Returns:
             dict or None: Aux data record or None if no data available
         '''
+
+    @property
+    def data_source(self):
+        '''
+        Getter method for the data_source property
+        '''
+        return self._data_source
