@@ -12,7 +12,7 @@ exports.plugin = {
 
     const init_data = [
       {
-        _id: ObjectID('5981f167212b348aed7fa9f5'),
+        _id: new ObjectID('5981f167212b348aed7fa9f5'),
         cruise_id: 'AT37-14',
         cruise_location: 'Jaco Scar, Costa Rica',
         start_ts: new Date('2017/06/14 00:00:00Z'),
@@ -31,7 +31,7 @@ exports.plugin = {
         cruise_hidden: false
       },
       {
-        _id: ObjectID('5981f167212b348aed7fa9f6'),
+        _id: new ObjectID('5981f167212b348aed7fa9f6'),
         cruise_id: 'AT37-13',
         cruise_location: 'Mound 12, Costa Rica',
         start_ts: new Date('2017/05/21 00:00:00Z'),
@@ -49,7 +49,7 @@ exports.plugin = {
         cruise_hidden: false
       },
       {
-        _id: ObjectID('5981f167212b348aed7fa9f7'),
+        _id: new ObjectID('5981f167212b348aed7fa9f7'),
         cruise_id: 'AT29-02',
         cruise_location: 'Gulf of Mexico',
         start_ts: new Date('2015/06/17 00:00:00Z'),

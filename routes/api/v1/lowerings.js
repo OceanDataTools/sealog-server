@@ -254,7 +254,7 @@ exports.plugin = {
         let cruise = null;
 
         try {
-          const cruiseResult = await db.collection(cruisesTable).findOne({ _id: ObjectID(request.params.id) });
+          const cruiseResult = await db.collection(cruisesTable).findOne({ _id: new ObjectID(request.params.id) });
 
           if (!cruiseResult) {
             return Boom.badRequest('No cruise record found for id: ' + request.params.id);
@@ -403,7 +403,7 @@ exports.plugin = {
         let event = null;
 
         try {
-          const eventResult = await db.collection(eventsTable).findOne({ _id: ObjectID(request.params.id) });
+          const eventResult = await db.collection(eventsTable).findOne({ _id: new ObjectID(request.params.id) });
 
           if (!eventResult) {
             return Boom.badRequest('No event record found for id: ' + request.params.id);

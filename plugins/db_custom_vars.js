@@ -12,17 +12,17 @@ exports.plugin = {
 
     const init_data = [
       {
-        _id: ObjectID('59810167212b348aed7fa9f5'),
+        _id: new ObjectID('59810167212b348aed7fa9f5'),
         custom_var_name: 'asnapStatus',
         custom_var_value: 'Off'
       },
       {
-        _id: ObjectID('59810167212b348aed7fa9f6'),
+        _id: new ObjectID('59810167212b348aed7fa9f6'),
         custom_var_name: 'freeSpaceInBytes',
         custom_var_value: '0'
       },
       {
-        _id: ObjectID('59810167212b348aed7fa9f7'),
+        _id: new ObjectID('59810167212b348aed7fa9f7'),
         custom_var_name: 'freeSpacePercentage',
         custom_var_value: '0'
       }
