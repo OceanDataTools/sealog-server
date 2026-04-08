@@ -15,7 +15,7 @@ exports.plugin = {
 
     const init_data = [
       {
-        _id: ObjectID('5981f167212b348aed7fa9f5'),
+        _id: new ObjectID('5981f167212b348aed7fa9f5'),
         username: 'admin',
         fullname: 'Admin',
         email: 'admin@notarealserver.com',
@@ -27,7 +27,7 @@ exports.plugin = {
         loginToken: randomAsciiString(20)
       },
       {
-        _id: ObjectID('5981f167212b348aed7fb9f5'),
+        _id: new ObjectID('5981f167212b348aed7fb9f5'),
         username: 'guest',
         fullname: 'Guest',
         email: 'guest@notarealserver.com',
@@ -39,7 +39,7 @@ exports.plugin = {
         loginToken: randomAsciiString(20)
       },
       {
-        _id: ObjectID('5981f167212b348aed7fc9f5'),
+        _id: new ObjectID('5981f167212b348aed7fc9f5'),
         username: 'pi',
         fullname: 'Primary Investigator',
         email: 'pi@notarealserver.com',

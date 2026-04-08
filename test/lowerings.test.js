@@ -14,7 +14,7 @@ describe('Lowerings API', () => {
   let db;
 
   const adminUser = {
-    _id: ObjectId('000000000000000000000001'),
+    _id: new ObjectId('000000000000000000000001'),
     username: 'admin',
     fullname: 'Test Admin',
     email: 'admin@example.com',
@@ -27,7 +27,7 @@ describe('Lowerings API', () => {
   };
 
   const regularUser = {
-    _id: ObjectId('000000000000000000000002'),
+    _id: new ObjectId('000000000000000000000002'),
     username: 'logger',
     fullname: 'Event Logger',
     email: 'logger@example.com',
@@ -40,7 +40,7 @@ describe('Lowerings API', () => {
   };
 
   const testLowering = {
-    _id: ObjectId('aaaaaaaaaaaaaaaaaaaaaaaa'),
+    _id: new ObjectId('aaaaaaaaaaaaaaaaaaaaaaaa'),
     lowering_id: 'J2-1400',
     start_ts: new Date('2024-03-01T08:00:00Z'),
     stop_ts: new Date('2024-03-01T20:00:00Z'),
@@ -54,7 +54,7 @@ describe('Lowerings API', () => {
   };
 
   const hiddenLowering = {
-    _id: ObjectId('bbbbbbbbbbbbbbbbbbbbbbbb'),
+    _id: new ObjectId('bbbbbbbbbbbbbbbbbbbbbbbb'),
     lowering_id: 'J2-1401',
     start_ts: new Date('2024-03-02T08:00:00Z'),
     stop_ts: new Date('2024-03-02T20:00:00Z'),

@@ -17,8 +17,8 @@ exports.plugin = {
 
     const init_data = [
       {
-        _id: ObjectID('5981f167212b348ae32fa9f5'),
-        user_id: ObjectID('5981f167212b348aed7fa9f5'),  // Reference to users collection
+        _id: new ObjectID('5981f167212b348ae32fa9f5'),
+        user_id: new ObjectID('5981f167212b348aed7fa9f5'),  // Reference to users collection
         key_hash: await hashedApiKey('5981f167212b348ae32fa9f5'),  // We store a hash, never raw key
         label: 'Default Key',
         scope: ['read_cruises'],          // Optional: can match user scopes or add more granular scopes

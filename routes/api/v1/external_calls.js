@@ -125,7 +125,7 @@ exports.plugin = {
         const ObjectID = request.mongo.ObjectID;
 
         try {
-          const lowering = await db.collection(loweringsTable).findOne({ _id: ObjectID(request.params.id) });
+          const lowering = await db.collection(loweringsTable).findOne({ _id: new ObjectID(request.params.id) });
 
           if (!lowering) {
             return Boom.badRequest('No record lowering found for id: ' + request.params.id );
@@ -173,7 +173,7 @@ exports.plugin = {
         const ObjectID = request.mongo.ObjectID;
 
         try {
-          const cruise = await db.collection(cruisesTable).findOne({ _id: ObjectID(request.params.id) });
+          const cruise = await db.collection(cruisesTable).findOne({ _id: new ObjectID(request.params.id) });
 
           if (!cruise) {
             return Boom.badRequest('No record cruise found for id: ' + request.params.id );

@@ -20,7 +20,7 @@ describe('Auth API', () => {
   const hashedPassword = Bcrypt.hashSync(plainPassword, 1);
 
   const adminUser = {
-    _id: ObjectId('000000000000000000000001'),
+    _id: new ObjectId('000000000000000000000001'),
     username: 'admin',
     fullname: 'Test Admin',
     email: 'admin@example.com',

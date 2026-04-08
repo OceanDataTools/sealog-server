@@ -12,7 +12,7 @@ exports.plugin = {
 
     const init_data = [
       {
-        _id: ObjectID('5a71c3d7fa96aa1977822b2c'),
+        _id: new ObjectID('5a71c3d7fa96aa1977822b2c'),
         event_name: 'FISH',
         event_value: 'FISH',
         event_free_text_required: false,
@@ -30,7 +30,7 @@ exports.plugin = {
         }]
       },
       {
-        _id: ObjectID('5a71c3d7fa96aa1977822b2d'),
+        _id: new ObjectID('5a71c3d7fa96aa1977822b2d'),
         event_name: 'ROCK',
         event_value: 'ROCK',
         event_free_text_required: false,
@@ -48,7 +48,7 @@ exports.plugin = {
         }]
       },
       {
-        _id: ObjectID('5a71c3d7fa96aa1977822b2e'),
+        _id: new ObjectID('5a71c3d7fa96aa1977822b2e'),
         event_name: 'CORAL',
         event_value: 'CORAL',
         event_free_text_required: false,
@@ -66,7 +66,7 @@ exports.plugin = {
         }]
       },
       {
-        _id: ObjectID('5a71c3d7fa96aa1977822b2f'),
+        _id: new ObjectID('5a71c3d7fa96aa1977822b2f'),
         event_name: 'CRAB',
         event_value: 'CRAB',
         event_free_text_required: false,
@@ -84,7 +84,7 @@ exports.plugin = {
         }]
       },
       {
-        _id: ObjectID('5a71c3d7fa96aa1977822b30'),
+        _id: new ObjectID('5a71c3d7fa96aa1977822b30'),
         event_name: 'SQUID',
         event_value: 'SQUID',
         event_free_text_required: false,
@@ -102,7 +102,7 @@ exports.plugin = {
         }]
       },
       {
-        _id: ObjectID('5a71c3d7fa96aa1977822b31'),
+        _id: new ObjectID('5a71c3d7fa96aa1977822b31'),
         event_name: 'SAMPLE',
         event_value: 'SAMPLE',
         event_free_text_required: false,
@@ -128,7 +128,7 @@ exports.plugin = {
         ]
       },
       {
-        '_id': ObjectID('5a71c3d7fa96aa1977822b32'),
+        '_id': new ObjectID('5a71c3d7fa96aa1977822b32'),
         event_name: 'PROBLEM',
         event_value: 'PROBLEM',
         event_free_text_required: false,
@@ -138,7 +138,7 @@ exports.plugin = {
         event_options: []
       },
       {
-        '_id': ObjectID('5a71c3d7fa96aa1977822b33'),
+        '_id': new ObjectID('5a71c3d7fa96aa1977822b33'),
         event_name: 'SUPER_EVENT',
         event_value: 'SUPER_EVENT',
         event_free_text_required: false,

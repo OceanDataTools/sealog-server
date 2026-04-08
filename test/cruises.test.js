@@ -14,7 +14,7 @@ describe('Cruises API', () => {
   let db;
 
   const adminUser = {
-    _id: ObjectId('000000000000000000000001'),
+    _id: new ObjectId('000000000000000000000001'),
     username: 'admin',
     fullname: 'Test Admin',
     email: 'admin@example.com',
@@ -27,7 +27,7 @@ describe('Cruises API', () => {
   };
 
   const regularUser = {
-    _id: ObjectId('000000000000000000000002'),
+    _id: new ObjectId('000000000000000000000002'),
     username: 'logger',
     fullname: 'Event Logger',
     email: 'logger@example.com',
@@ -40,7 +40,7 @@ describe('Cruises API', () => {
   };
 
   const testCruise = {
-    _id: ObjectId('aaaaaaaaaaaaaaaaaaaaaaaa'),
+    _id: new ObjectId('aaaaaaaaaaaaaaaaaaaaaaaa'),
     cruise_id: 'EX-2024-01',
     start_ts: new Date('2024-01-01T00:00:00Z'),
     stop_ts: new Date('2024-06-30T23:59:59Z'),
@@ -56,7 +56,7 @@ describe('Cruises API', () => {
   };
 
   const hiddenCruise = {
-    _id: ObjectId('bbbbbbbbbbbbbbbbbbbbbbbb'),
+    _id: new ObjectId('bbbbbbbbbbbbbbbbbbbbbbbb'),
     cruise_id: 'EX-2024-02',
     start_ts: new Date('2024-07-01T00:00:00Z'),
     stop_ts: new Date('2024-12-31T23:59:59Z'),

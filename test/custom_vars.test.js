@@ -14,7 +14,7 @@ describe('Custom Vars API', () => {
   let db;
 
   const adminUser = {
-    _id: ObjectId('000000000000000000000001'),
+    _id: new ObjectId('000000000000000000000001'),
     username: 'admin',
     fullname: 'Test Admin',
     email: 'admin@example.com',
@@ -27,7 +27,7 @@ describe('Custom Vars API', () => {
   };
 
   const loggerUser = {
-    _id: ObjectId('000000000000000000000002'),
+    _id: new ObjectId('000000000000000000000002'),
     username: 'logger',
     fullname: 'Event Logger',
     email: 'logger@example.com',
@@ -40,7 +40,7 @@ describe('Custom Vars API', () => {
   };
 
   const testCustomVar = {
-    _id: ObjectId('aaaaaaaaaaaaaaaaaaaaaaaa'),
+    _id: new ObjectId('aaaaaaaaaaaaaaaaaaaaaaaa'),
     custom_var_name: 'testVar',
     custom_var_value: 'testValue'
   };

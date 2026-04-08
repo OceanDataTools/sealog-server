@@ -155,9 +155,7 @@ const manifest = {
         {
           url: mongodb_URL,
           settings: {
-            maxPoolSize: 20,
-            useNewUrlParser: true,
-            useUnifiedTopology: true
+            maxPoolSize: 20
           },
           decorate: true
         }

@@ -14,7 +14,7 @@ describe('Event Templates API', () => {
   let db;
 
   const adminUser = {
-    _id: ObjectId('000000000000000000000001'),
+    _id: new ObjectId('000000000000000000000001'),
     username: 'admin',
     fullname: 'Test Admin',
     email: 'admin@example.com',
@@ -27,7 +27,7 @@ describe('Event Templates API', () => {
   };
 
   const loggerUser = {
-    _id: ObjectId('000000000000000000000002'),
+    _id: new ObjectId('000000000000000000000002'),
     username: 'logger',
     fullname: 'Event Logger',
     email: 'logger@example.com',
@@ -40,7 +40,7 @@ describe('Event Templates API', () => {
   };
 
   const powerLoggerUser = {
-    _id: ObjectId('000000000000000000000003'),
+    _id: new ObjectId('000000000000000000000003'),
     username: 'powerlogger',
     fullname: 'Power Logger',
     email: 'powerlogger@example.com',
@@ -53,7 +53,7 @@ describe('Event Templates API', () => {
   };
 
   const normalTemplate = {
-    _id: ObjectId('aaaaaaaaaaaaaaaaaaaaaaaa'),
+    _id: new ObjectId('aaaaaaaaaaaaaaaaaaaaaaaa'),
     event_name: 'Normal Template',
     event_value: 'NORMAL',
     event_free_text_required: false,
@@ -65,7 +65,7 @@ describe('Event Templates API', () => {
   };
 
   const adminOnlyTemplate = {
-    _id: ObjectId('bbbbbbbbbbbbbbbbbbbbbbbb'),
+    _id: new ObjectId('bbbbbbbbbbbbbbbbbbbbbbbb'),
     event_name: 'Admin Template',
     event_value: 'ADMIN_ONLY',
     event_free_text_required: false,
@@ -77,7 +77,7 @@ describe('Event Templates API', () => {
   };
 
   const disabledTemplate = {
-    _id: ObjectId('cccccccccccccccccccccccc'),
+    _id: new ObjectId('cccccccccccccccccccccccc'),
     event_name: 'Disabled Template',
     event_value: 'DISABLED',
     event_free_text_required: false,

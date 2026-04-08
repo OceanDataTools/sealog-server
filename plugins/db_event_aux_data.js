@@ -12,8 +12,8 @@ exports.plugin = {
 
     const init_data = [
       {
-        _id: ObjectID('5a7341898c1553258f703ce0'),
-        event_id: ObjectID('5981f167212b348aed7fa9f6'),
+        _id: new ObjectID('5a7341898c1553258f703ce0'),
+        event_id: new ObjectID('5981f167212b348aed7fa9f6'),
         data_source: 'vehicleRealtimeNavData',
         data_array: [{
           data_name: 'latitude',
@@ -35,8 +35,8 @@ exports.plugin = {
         }]
       },
       {
-        _id: ObjectID('5a7341898c1553258f703ce1'),
-        event_id: ObjectID('5981f167212b348aed7fa9f6'),
+        _id: new ObjectID('5a7341898c1553258f703ce1'),
+        event_id: new ObjectID('5981f167212b348aed7fa9f6'),
         data_source: 'framegrabber',
         data_array: [{
           data_name: 'camera_name',
@@ -47,8 +47,8 @@ exports.plugin = {
         }]
       },
       {
-        _id: ObjectID('5a7341898c1553258f703ce2'),
-        event_id: ObjectID('5981f167212b348aed7fa9f6'),
+        _id: new ObjectID('5a7341898c1553258f703ce2'),
+        event_id: new ObjectID('5981f167212b348aed7fa9f6'),
         data_source: 'customgrabber',
         data_array: [{
           data_name: 'customField01',
@@ -56,8 +56,8 @@ exports.plugin = {
         }]
       },
       {
-        _id: ObjectID('5a7341898c1553258f703ce3'),
-        event_id: ObjectID('5981f167212b348aed7fa9f7'),
+        _id: new ObjectID('5a7341898c1553258f703ce3'),
+        event_id: new ObjectID('5981f167212b348aed7fa9f7'),
         data_source: 'framegrabber',
         data_array: [{
           data_name: 'camera_name',
@@ -68,8 +68,8 @@ exports.plugin = {
         }]
       },
       {
-        _id: ObjectID('5a7341898c1553258f703ce4'),
-        event_id: ObjectID('5981f167212b348aed7fa9f7'),
+        _id: new ObjectID('5a7341898c1553258f703ce4'),
+        event_id: new ObjectID('5981f167212b348aed7fa9f7'),
         data_source: 'vehicleRealtimeNavData',
         data_array: [{
           data_name: 'latitude',
@@ -90,8 +90,8 @@ exports.plugin = {
         }]
       },
       {
-        _id: ObjectID('5a7341898c1553258f703ce5'),
-        event_id: ObjectID('5981f167212b348aed7fa9f8'),
+        _id: new ObjectID('5a7341898c1553258f703ce5'),
+        event_id: new ObjectID('5981f167212b348aed7fa9f8'),
         data_source: 'framegrabber',
         data_array: [{
           data_name: 'camera_name',
@@ -102,8 +102,8 @@ exports.plugin = {
         }]
       },
       {
-        _id: ObjectID('5a7341898c1553258f703ce6'),
-        event_id: ObjectID('5981f167212b348aed7fa9f8'),
+        _id: new ObjectID('5a7341898c1553258f703ce6'),
+        event_id: new ObjectID('5981f167212b348aed7fa9f8'),
         data_source: 'vehicleRealtimeNavData',
         data_array: [{
           data_name: 'latitude',
@@ -124,8 +124,8 @@ exports.plugin = {
         }]
       },
       {
-        _id: ObjectID('5a7341898c1553258f703ce7'),
-        event_id: ObjectID('5981f167212b348aed7fa9f9'),
+        _id: new ObjectID('5a7341898c1553258f703ce7'),
+        event_id: new ObjectID('5981f167212b348aed7fa9f9'),
         data_source: 'framegrabber',
         data_array: [{
           data_name: 'camera_name',
@@ -154,8 +154,8 @@ exports.plugin = {
         }]
       },
       {
-        _id: ObjectID('5a7341898c1553258f703ce8'),
-        event_id: ObjectID('5981f167212b348aed7fa9f9'),
+        _id: new ObjectID('5a7341898c1553258f703ce8'),
+        event_id: new ObjectID('5981f167212b348aed7fa9f9'),
         data_source: 'vehicleRealtimeNavData',
         data_array: [{
           data_name: 'latitude',

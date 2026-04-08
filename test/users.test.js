@@ -14,7 +14,7 @@ describe('Users API', () => {
   let db;
 
   const adminUser = {
-    _id: ObjectId('000000000000000000000001'),
+    _id: new ObjectId('000000000000000000000001'),
     username: 'admin',
     fullname: 'Test Admin',
     email: 'admin@example.com',
@@ -27,7 +27,7 @@ describe('Users API', () => {
   };
 
   const regularUser = {
-    _id: ObjectId('000000000000000000000002'),
+    _id: new ObjectId('000000000000000000000002'),
     username: 'bob',
     fullname: 'Bob Smith',
     email: 'bob@example.com',
@@ -40,7 +40,7 @@ describe('Users API', () => {
   };
 
   const systemUser = {
-    _id: ObjectId('000000000000000000000003'),
+    _id: new ObjectId('000000000000000000000003'),
     username: 'system',
     fullname: 'System User',
     email: 'system@example.com',

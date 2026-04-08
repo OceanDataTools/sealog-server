@@ -167,7 +167,7 @@ exports.plugin = {
         let lowering = null;
 
         try {
-          const loweringResult = await db.collection(loweringsTable).findOne({ _id: ObjectID(request.params.id) });
+          const loweringResult = await db.collection(loweringsTable).findOne({ _id: new ObjectID(request.params.id) });
 
           if (!loweringResult) {
             return Boom.notFound('No lowering record found for id' + request.params.id);

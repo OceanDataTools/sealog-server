@@ -54,7 +54,7 @@ exports.plugin = {
         const offset = request.query.offset || 0;
 
         const result = await db.collection(apiKeysTable)
-          .find({ user_id: ObjectID(userId) })
+          .find({ user_id: new ObjectID(userId) })
           .skip(offset)
           .limit(limit)
           .toArray();
@@ -137,7 +137,7 @@ exports.plugin = {
         const keyHash = hashedApiKey(apiKeyPlain);
 
         const result = await db.collection(apiKeysTable).insertOne({
-          user_id: ObjectID(request.auth.credentials.id),
+          user_id: new ObjectID(request.auth.credentials.id),
           key_hash: keyHash,
           label,
           roles,

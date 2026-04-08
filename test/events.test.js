@@ -14,7 +14,7 @@ describe('Events API', () => {
   let db;
 
   const adminUser = {
-    _id: ObjectId('000000000000000000000001'),
+    _id: new ObjectId('000000000000000000000001'),
     username: 'admin',
     fullname: 'Test Admin',
     email: 'admin@example.com',
@@ -27,7 +27,7 @@ describe('Events API', () => {
   };
 
   const eventLoggerUser = {
-    _id: ObjectId('000000000000000000000002'),
+    _id: new ObjectId('000000000000000000000002'),
     username: 'logger',
     fullname: 'Event Logger',
     email: 'logger@example.com',
@@ -40,7 +40,7 @@ describe('Events API', () => {
   };
 
   const testEvent = {
-    _id: ObjectId('aaaaaaaaaaaaaaaaaaaaaaaa'),
+    _id: new ObjectId('aaaaaaaaaaaaaaaaaaaaaaaa'),
     event_author: 'logger',
     ts: new Date('2024-01-01T12:00:00Z'),
     event_value: 'TEST',
@@ -49,8 +49,8 @@ describe('Events API', () => {
   };
 
   const testAuxData = {
-    _id: ObjectId('bbbbbbbbbbbbbbbbbbbbbbbb'),
-    event_id: ObjectId('aaaaaaaaaaaaaaaaaaaaaaaa'),
+    _id: new ObjectId('bbbbbbbbbbbbbbbbbbbbbbbb'),
+    event_id: new ObjectId('aaaaaaaaaaaaaaaaaaaaaaaa'),
     data_source: 'testSource',
     data_array: [{ data_name: 'lat', data_value: '41.0', data_uom: 'ddeg' }]
   };

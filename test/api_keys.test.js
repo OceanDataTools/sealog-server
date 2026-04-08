@@ -23,7 +23,7 @@ describe('API Keys API', () => {
   const apiKeyHash = hashedApiKey(apiKey);
 
   const adminUser = {
-    _id: ObjectId('000000000000000000000001'),
+    _id: new ObjectId('000000000000000000000001'),
     username: 'admin',
     fullname: 'test_admin',
     email: 'admin@example.com',
@@ -36,7 +36,7 @@ describe('API Keys API', () => {
   };
 
   const normalUser = {
-    _id: ObjectId('000000000000000000000002'),
+    _id: new ObjectId('000000000000000000000002'),
     username: 'bob',
     fullname: 'test_bob',
     email: 'bob@example.com',
@@ -50,8 +50,8 @@ describe('API Keys API', () => {
 
   // Key owned by adminUser
   const adminApiKey = {
-    _id: ObjectId('aaaaaaaaaaaaaaaaaaaaaaaa'),
-    user_id: ObjectId('000000000000000000000001'),
+    _id: new ObjectId('aaaaaaaaaaaaaaaaaaaaaaaa'),
+    user_id: new ObjectId('000000000000000000000001'),
     key_hash: apiKeyHash,
     label: 'Admin Key',
     scope: ['read_cruises'],
@@ -63,8 +63,8 @@ describe('API Keys API', () => {
 
   // Key owned by normalUser
   const normalApiKey = {
-    _id: ObjectId('bbbbbbbbbbbbbbbbbbbbbbbb'),
-    user_id: ObjectId('000000000000000000000002'),
+    _id: new ObjectId('bbbbbbbbbbbbbbbbbbbbbbbb'),
+    user_id: new ObjectId('000000000000000000000002'),
     key_hash: 'otherhash',
     label: 'Bob Key',
     scope: [],
@@ -327,8 +327,8 @@ describe('API Keys API', () => {
     it('respects limit and offset query params', async () => {
       // Insert a second key for adminUser so we have 2 total
       await api_keys.insertOne({
-        _id: ObjectId('cccccccccccccccccccccccc'),
-        user_id: ObjectId('000000000000000000000001'),
+        _id: new ObjectId('cccccccccccccccccccccccc'),
+        user_id: new ObjectId('000000000000000000000001'),
         key_hash: 'anotherhash',
         label: 'Admin Key 2',
         scope: [],

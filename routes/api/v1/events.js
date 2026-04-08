@@ -114,7 +114,7 @@ exports.plugin = {
         let cruise = null;
 
         try {
-          const cruiseResult = await db.collection(cruisesTable).findOne({ _id: ObjectID(request.params.id) });
+          const cruiseResult = await db.collection(cruisesTable).findOne({ _id: new ObjectID(request.params.id) });
 
           if (!cruiseResult) {
             return Boom.badRequest('No cruise record found for id: ' + request.params.id );
@@ -245,7 +245,7 @@ exports.plugin = {
         let cruise = null;
 
         try {
-          const cruiseResult = await db.collection(cruisesTable).findOne({ _id: ObjectID(request.params.id) });
+          const cruiseResult = await db.collection(cruisesTable).findOne({ _id: new ObjectID(request.params.id) });
 
           if (!cruiseResult) {
             return Boom.badRequest('No cruise record found for id: ' + request.params.id );
@@ -354,7 +354,7 @@ exports.plugin = {
         let lowering = null;
 
         try {
-          const loweringResult = await db.collection(loweringsTable).findOne({ _id: ObjectID(request.params.id) });
+          const loweringResult = await db.collection(loweringsTable).findOne({ _id: new ObjectID(request.params.id) });
 
           if (!loweringResult) {
             return Boom.badRequest('No lowering record found for id: ' + request.params.id );
@@ -485,7 +485,7 @@ exports.plugin = {
         let lowering = null;
 
         try {
-          const loweringResult = await db.collection(loweringsTable).findOne({ _id: ObjectID(request.params.id) });
+          const loweringResult = await db.collection(loweringsTable).findOne({ _id: new ObjectID(request.params.id) });
 
           if (!loweringResult) {
             return Boom.badRequest('No lowering record found for id: ' + request.params.id );
@@ -809,7 +809,7 @@ exports.plugin = {
         const db = request.mongo.db;
         const ObjectID = request.mongo.ObjectID;
 
-        const query = { _id: ObjectID(request.params.id) };
+        const query = { _id: new ObjectID(request.params.id) };
 
         try {
           let result = await db.collection(eventsTable).findOne(query);
@@ -1041,7 +1041,7 @@ exports.plugin = {
         try {
           // const result = await db.collection(eventsTable).findOneAndUpdate(query, { $set: request.payload },{ returnDocument: 'after' });
           const result = await db.collection(eventsTable).findOneAndUpdate(query, { $set: event },{ returnDocument: 'after' });
-          const updatedEvent = _renameAndClearFields(result.value);
+          const updatedEvent = _renameAndClearFields(result);
 
           if (time_change) {
             // delete any aux_data
