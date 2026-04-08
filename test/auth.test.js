@@ -64,6 +64,18 @@ describe('Auth API', () => {
       expect(res.result.id).to.exist();
     });
 
+    it('returns token and id on valid email/password login', async () => {
+      const res = await server.inject({
+        method: 'POST',
+        url: '/sealog-server/api/v1/auth/login',
+        payload: { username: 'admin@example.com', password: plainPassword }
+      });
+
+      expect(res.statusCode).to.equal(200);
+      expect(res.result.token).to.exist();
+      expect(res.result.id).to.exist();
+    });
+
     it('returns 401 on bad password', async () => {
       const res = await server.inject({
         method: 'POST',
