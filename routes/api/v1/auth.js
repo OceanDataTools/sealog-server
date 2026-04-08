@@ -308,7 +308,12 @@ exports.plugin = {
 
           }
           else {
-            const result = await db.collection(usersTable).findOne({ username: request.payload.username });
+            const result = await db.collection(usersTable).findOne({
+              $or: [
+                { username: request.payload.username },
+                { email: request.payload.username }
+              ]
+            });
             if (!result) {
               return Boom.unauthorized('unknown user or bad password');
             }
