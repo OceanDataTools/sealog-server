@@ -92,9 +92,9 @@ def main(force=False):  # pylint:disable=R0915
     if req.status_code == 200:
         cruise_config = json.loads(req.text)
         cruise['cruise_id'] = cruise_config['cruiseID']
-        cruise['cruise_additional_meta']['cruise_name'] = cruise_config['cruiseName']
-        cruise['cruise_location'] = cruise_config['cruiseLocation']
-        cruise['cruise_additional_meta']['cruise_pi'] = cruise_config['cruisePI']
+        cruise['cruise_additional_meta']['cruise_name'] = cruise_config.get('cruiseName', 'FIX ME')
+        cruise['cruise_location'] = cruise_config.get('cruiseLocation', 'FIX ME')
+        cruise['cruise_additional_meta']['cruise_pi'] = cruise_config.get('cruisePI', 'FIX ME')
 
         cruise['start_ts'] = datetime.strptime(
             cruise_config['cruiseStartDate'],

@@ -10,7 +10,8 @@
         "event_option_default_value": "Off deck",
         "event_option_required": false,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -32,7 +33,8 @@
         "event_option_default_value": "In water",
         "event_option_required": false,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -54,7 +56,8 @@
         "event_option_default_value": "Descending",
         "event_option_required": false,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -76,7 +79,8 @@
         "event_option_default_value": "On bottom",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -98,7 +102,8 @@
         "event_option_default_value": "Off bottom",
         "event_option_required": false,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -120,7 +125,8 @@
         "event_option_default_value": "On surface",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -142,7 +148,8 @@
         "event_option_default_value": "Out of water",
         "event_option_required": false,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -164,7 +171,8 @@
         "event_option_default_value": "On deck",
         "event_option_required": false,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -186,7 +194,8 @@
         "event_option_default_value": "Beacon Tracking",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Beacon",
@@ -196,7 +205,8 @@
           "Secondary Beacon"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -218,7 +228,8 @@
         "event_option_default_value": "Aborted",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -240,7 +251,8 @@
         "event_option_default_value": "float off",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -262,7 +274,8 @@
         "event_option_default_value": "float on",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -284,7 +297,8 @@
         "event_option_default_value": "INS Reset",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -314,7 +328,8 @@
           "Other"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -337,7 +352,8 @@
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_values": [],
-        "event_option_default_value": ""
+        "event_option_default_value": "",
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Type",
@@ -355,7 +371,8 @@
           "Colonization Array"
         ],
         "event_option_required": true,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Storage Location",
@@ -385,14 +402,23 @@
           "Deployed"
         ],
         "event_option_required": true,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": {
+          "show_hide": "show if",
+          "event_option_name": "Type",
+          "event_option_values": [
+            "Push Core",
+            "Water Sample"
+          ]
+        }
       },
       {
         "event_option_name": "Sample Description",
         "event_option_type": "text",
         "event_option_required": true,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -414,7 +440,8 @@
         "event_option_default_value": "SSP to Ranger",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -439,7 +466,8 @@
         "event_option_default_value": "Interval Change",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Timing",
@@ -449,7 +477,8 @@
           "10 Sec"
         ],
         "event_option_required": true,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": null
       }
     ],
     "template_categories": [
@@ -457,7 +486,7 @@
     ],
     "id": "6429825a6594c997767aa5f8"
   },
-{
+  {
     "event_name": "Photo - General",
     "event_value": "IMAGERY",
     "event_free_text_required": false,
@@ -468,7 +497,8 @@
         "event_option_default_value": "General",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Sub Type",
@@ -481,7 +511,8 @@
           "Other"
         ],
         "event_option_required": true,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -508,14 +539,16 @@
           "End"
         ],
         "event_option_required": true,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Site Name",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -541,14 +574,16 @@
           "Video"
         ],
         "event_option_required": true,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Site Name",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Type",
@@ -556,7 +591,8 @@
         "event_option_default_value": "Beauty Shot",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -579,14 +615,16 @@
         "event_option_type": "static text",
         "event_option_default_value": "Geology",
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Site Name",
         "event_option_type": "text",
         "event_option_required": false,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Structures",
@@ -601,7 +639,8 @@
           "Corrugation;Ridge"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Structure Trend",
@@ -626,7 +665,8 @@
           "WNW",
           "NW",
           "NNW"
-        ]
+        ],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Flow Morphology",
@@ -638,7 +678,8 @@
           "Sheet flow"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Igneous Rock Type",
@@ -651,7 +692,8 @@
           "Mafic plutonic",
           "Ultramafic plutonic",
           "Volcaniclastic"
-        ]
+        ],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Igneous Rock Deformation",
@@ -664,7 +706,8 @@
           "Breccia"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Venting",
@@ -675,7 +718,8 @@
           "Diffuse"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Hydrothermal Fluid Type",
@@ -688,7 +732,8 @@
           "Phase separation"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Hydrothermal Precipitate",
@@ -705,7 +750,8 @@
           "Carbonate chimney",
           "Carbonate chimney talus",
           "Vein"
-        ]
+        ],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Hydrothermal Chimney Morphology",
@@ -719,14 +765,16 @@
           "Bulbous"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Chimney Height",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Alteration",
@@ -741,7 +789,8 @@
           "Fe-Ox",
           "Mn-Ox",
           "Other"
-        ]
+        ],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Outcrop Coherence",
@@ -751,7 +800,8 @@
           "Coherent"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Sediment Cover",
@@ -763,7 +813,8 @@
           "None"
         ],
         "event_option_required": false,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Contacts",
@@ -776,7 +827,8 @@
           "Inferred"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Slope",
@@ -788,7 +840,8 @@
           "Sub-vertical"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -811,7 +864,8 @@
         "event_option_default_value": "Microbiology",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_type": "checkboxes",
@@ -824,14 +878,16 @@
         ],
         "event_option_name": "Microbiology Type",
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Color",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -854,7 +910,8 @@
         "event_option_default_value": "Highlight",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Status",
@@ -864,7 +921,8 @@
           "End of highlight"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -886,7 +944,8 @@
         "event_option_default_value": "Logging",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Status",
@@ -897,7 +956,8 @@
         ],
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_default_value": "Started Logging"
+        "event_option_default_value": "Started Logging",
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Camera",
@@ -913,7 +973,8 @@
         ],
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_default_value": "ALL"
+        "event_option_default_value": "ALL",
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -936,7 +997,8 @@
         "event_option_default_value": "Transect",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Status",
@@ -946,14 +1008,16 @@
           "End of transect"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Transect Number",
         "event_option_type": "text",
         "event_option_values": [],
         "event_option_allow_freeform": false,
-        "event_option_required": true
+        "event_option_required": true,
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -981,7 +1045,8 @@
         "event_option_type": "text",
         "event_option_required": true,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Type",
@@ -989,7 +1054,8 @@
         "event_option_default_value": "GTB",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Bottle ID",
@@ -1007,7 +1073,8 @@
           "GT18 orange-white-black"
         ],
         "event_option_required": true,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Fluid Type",
@@ -1021,21 +1088,24 @@
           "Seawater"
         ],
         "event_option_required": true,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Temp Max",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Site Name",
         "event_option_type": "text",
         "event_option_required": false,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "id": "6407d5179c0ebf012084162c"
@@ -1053,7 +1123,8 @@
         "event_option_type": "text",
         "event_option_required": true,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Type",
@@ -1061,7 +1132,8 @@
         "event_option_default_value": "GTHFS",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Bottle ID",
@@ -1079,7 +1151,8 @@
           "GT18 orange-white-black"
         ],
         "event_option_required": true,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Fluid Type",
@@ -1093,21 +1166,24 @@
           "Seawater"
         ],
         "event_option_required": true,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Temp Max",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Site Name",
         "event_option_type": "text",
         "event_option_required": true,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Storage Location",
@@ -1118,7 +1194,8 @@
           "Port Valve 6"
         ],
         "event_option_required": true,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": null
       }
     ],
     "template_categories": [
@@ -1145,7 +1222,8 @@
         "event_option_type": "text",
         "event_option_required": true,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Type",
@@ -1153,7 +1231,8 @@
         "event_option_default_value": "HFS",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "HFS Type",
@@ -1168,14 +1247,16 @@
           "RNA Filter 1",
           "RNA Filter 2"
         ],
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Piston/Bag Number",
         "event_option_type": "text",
         "event_option_required": false,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Fluid Type",
@@ -1189,28 +1270,32 @@
           "Seawater"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Site Name",
         "event_option_type": "text",
         "event_option_required": false,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Temp Max",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Pump Volume",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "id": "6407d9799c0ebf0120841637"
@@ -1232,7 +1317,8 @@
         "event_option_type": "text",
         "event_option_required": true,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Type",
@@ -1240,7 +1326,8 @@
         "event_option_default_value": "Niskin",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Bottle Number",
@@ -1254,7 +1341,8 @@
           "6 (2.5L)"
         ],
         "event_option_required": true,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Fluid type",
@@ -1268,21 +1356,24 @@
           "Seawater"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Altitude above bottom",
         "event_option_type": "text",
         "event_option_required": false,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Site Name",
         "event_option_type": "text",
         "event_option_required": true,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "id": "6407dc6d9c0ebf012084164a"
@@ -1304,14 +1395,16 @@
         "event_option_default_value": "Fluid",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Site Name",
         "event_option_type": "text",
         "event_option_required": false,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "id": "6407de1c9c0ebf0120841651"
@@ -1334,14 +1427,16 @@
         "event_option_default_value": "Rock Sample",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Sample ID",
         "event_option_type": "text",
         "event_option_required": true,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "id": "6407dec89c0ebf0120841653"
@@ -1365,7 +1460,8 @@
         "event_option_default_value": "Venting Area",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Status",
@@ -1375,7 +1471,8 @@
           "Venting Area End"
         ],
         "event_option_required": true,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": null
       }
     ],
     "id": "6407e0159c0ebf012084165a"
@@ -1406,7 +1503,8 @@
           "Other"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Type",
@@ -1414,7 +1512,8 @@
         "event_option_default_value": "Anthropogenic",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "id": "64089fea9c0ebf0120842482"
@@ -1437,7 +1536,8 @@
         "event_option_type": "text",
         "event_option_required": true,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Type",
@@ -1445,7 +1545,8 @@
         "event_option_default_value": "Geology",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Storage Location",
@@ -1477,7 +1578,8 @@
           "Bio Box 1-B (BB1-B)",
           "Bio Box-2 (BB2)",
           "Bio-Box-3 (BB3)"
-        ]
+        ],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Sample Type",
@@ -1488,14 +1590,16 @@
           "Other"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": true
+        "event_option_required": true,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Site Name",
         "event_option_type": "text",
         "event_option_required": false,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Igneous Rock Sample Type",
@@ -1509,7 +1613,8 @@
           "Diabase",
           "Ultramafic plutonic",
           "Volcaniclastic"
-        ]
+        ],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Igneous Rock Additional Details",
@@ -1527,7 +1632,8 @@
           "Mesh Texture"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Hydrothermal Rock Sample Type",
@@ -1545,7 +1651,8 @@
           "Vein"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Hydrothermal Sample Additional Details",
@@ -1566,7 +1673,8 @@
           "Weathered"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       }
     ],
     "id": "6408b11b9c0ebf0120842492"
@@ -1588,14 +1696,16 @@
         "event_option_default_value": "biology",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Site Name",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "id": "6408b2989c0ebf0120842494"
@@ -1618,14 +1728,16 @@
         "event_option_default_value": "biology - intended sample",
         "event_option_required": false,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Sample ID",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "id": "640902349c0ebf0120843cd5"
@@ -1648,7 +1760,8 @@
         "event_option_type": "text",
         "event_option_required": true,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Type",
@@ -1656,14 +1769,16 @@
         "event_option_default_value": "Biology",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Site Name",
         "event_option_type": "text",
         "event_option_required": false,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_type": "checkboxes",
@@ -1678,7 +1793,8 @@
         ],
         "event_option_name": "Biology Type",
         "event_option_required": true,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Storage Location",
@@ -1712,7 +1828,8 @@
           "Suction 6",
           "Suction 7",
           "Suction 8"
-        ]
+        ],
+        "event_option_visibility": null
       }
     ],
     "id": "640a16252fdd7e388976bd91"
@@ -1735,7 +1852,8 @@
         "event_option_type": "text",
         "event_option_required": true,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Type",
@@ -1743,21 +1861,24 @@
         "event_option_default_value": "Microbiology",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Site Name",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Color",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Storage Location",
@@ -1793,7 +1914,8 @@
           "Rock-Box 1B (RB1-B)",
           "Rock-Box 1C (RB1-C)",
           "Rock-Box 1D (RB1-D)"
-        ]
+        ],
+        "event_option_visibility": null
       }
     ],
     "id": "640a27832fdd7e388976c34a"
@@ -1816,7 +1938,8 @@
         "event_option_default_value": "Methane Spec Transect",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Status",
@@ -1826,14 +1949,16 @@
           "End"
         ],
         "event_option_required": true,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Site Name",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "id": "640a7a6c2fdd7e388976dad6"
@@ -1856,21 +1981,24 @@
         "event_option_default_value": "In situ Methane",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Site Name",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Methane Concentration (ppm)",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "id": "640a7afd2fdd7e388976db04"
@@ -1891,7 +2019,8 @@
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Status",
@@ -1899,14 +2028,16 @@
         "event_option_default_value": "deployed",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Site Name",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "id": "640b84112fdd7e3889772b5e"
@@ -1929,21 +2060,24 @@
         "event_option_default_value": "In situ Temperture",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Site Name",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Temperature Measurement",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "id": "640b84462fdd7e3889772b78"
@@ -1981,7 +2115,8 @@
         "event_option_default_value": " Coral",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Group",
@@ -1993,7 +2128,8 @@
           "Unknown Coral Group"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Speculated ID",
@@ -2011,7 +2147,8 @@
           "Other Coral"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Associates",
@@ -2032,7 +2169,8 @@
           "Other Coral Associate"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Additional Details",
@@ -2046,7 +2184,8 @@
           "Sediment accumulation"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Quantity",
@@ -2058,7 +2197,8 @@
           "Abundant (100+)"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       }
     ],
     "id": "640f0c526594c9977675e3fa"
@@ -2081,7 +2221,8 @@
         "event_option_default_value": "Fish",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Group",
@@ -2106,7 +2247,8 @@
           "Other Fish Type"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Additional Details",
@@ -2120,7 +2262,8 @@
           "Sediment accumulation"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Quantity",
@@ -2132,7 +2275,8 @@
           "Abundant (100+)"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       }
     ],
     "id": "640f0c526594c9977675e3fb"
@@ -2155,7 +2299,8 @@
         "event_option_default_value": "Sponge",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Group",
@@ -2169,7 +2314,8 @@
           "Other Sponge Type"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Associates",
@@ -2187,7 +2333,8 @@
           "Shrimp"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Additional Details",
@@ -2201,7 +2348,8 @@
           "Sediment accumulation"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Quantity",
@@ -2213,7 +2361,8 @@
           "Abundant (100+)"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       }
     ],
     "id": "640f0c526594c9977675e3fc"
@@ -2236,7 +2385,8 @@
         "event_option_default_value": "Invertebrate",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Echinoderm",
@@ -2250,7 +2400,8 @@
           "Urchin"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Cnidaria",
@@ -2261,7 +2412,8 @@
           "Hydrocoral"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Arthropod",
@@ -2274,7 +2426,8 @@
           "Shrimp"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Annelid",
@@ -2286,7 +2439,8 @@
           "Tubeworms"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Mollusc",
@@ -2299,7 +2453,8 @@
           "Squid"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Jelly",
@@ -2312,7 +2467,8 @@
           "Other Jelly"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Other",
@@ -2322,7 +2478,8 @@
           "Xenophyophore"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Additional Details",
@@ -2336,7 +2493,8 @@
           "Sediment accumulation"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Quantity",
@@ -2348,7 +2506,8 @@
           "Abundant (100+)"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       }
     ],
     "id": "640f0c526594c9977675e3fd"
@@ -2370,7 +2529,8 @@
         "event_option_default_value": "Outreach",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "id": "6418568e6594c99776773c07"

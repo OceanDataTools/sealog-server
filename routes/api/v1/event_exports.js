@@ -56,7 +56,7 @@ exports.plugin = {
         let cruise = null;
 
         try {
-          const cruiseResult = await db.collection(cruisesTable).findOne({ _id: ObjectID(request.params.id) });
+          const cruiseResult = await db.collection(cruisesTable).findOne({ _id: new ObjectID(request.params.id) });
 
           if (!cruiseResult) {
             return Boom.notFound('cruise not found for that id');
@@ -194,7 +194,7 @@ exports.plugin = {
         let lowering = null;
 
         try {
-          const loweringResult = await db.collection(loweringsTable).findOne({ _id: ObjectID(request.params.id) });
+          const loweringResult = await db.collection(loweringsTable).findOne({ _id: new ObjectID(request.params.id) });
 
           if (!loweringResult) {
             return Boom.notFound('lowering not found for that id');

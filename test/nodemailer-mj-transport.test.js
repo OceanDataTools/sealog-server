@@ -16,7 +16,7 @@ let mailOptions = {
 	<p>If you have any questions please reply to this email address</p><p>Thanks!</p>`
 };
 
-console.log(mailOptions);
+// console.log(mailOptions);
 
 emailTransporter.sendMail(mailOptions, (error, info) => {
   if (error) {

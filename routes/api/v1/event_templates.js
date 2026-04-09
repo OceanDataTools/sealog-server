@@ -273,7 +273,7 @@ exports.plugin = {
 
         try {
           const result = await db.collection(eventTemplatesTable).findOneAndUpdate(query, { $set: event_template },{ returnDocument: 'after' });
-          server.publish('/ws/status/updateEventTemplates', _renameAndClearFields(result.value));
+          server.publish('/ws/status/updateEventTemplates', _renameAndClearFields(result));
 
           return h.response().code(204);
         }
@@ -340,7 +340,7 @@ exports.plugin = {
 
         try {
           const result = await db.collection(eventTemplatesTable).findOneAndDelete(query);
-          server.publish('/ws/status/deleteEventTemplates', _renameAndClearFields(result.value));
+          server.publish('/ws/status/deleteEventTemplates', _renameAndClearFields(result));
 
           return h.response().code(204);
         }

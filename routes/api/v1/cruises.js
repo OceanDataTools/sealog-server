@@ -266,7 +266,7 @@ exports.plugin = {
         let lowering = null;
 
         try {
-          const loweringResult = await db.collection(loweringsTable).findOne({ _id: ObjectID(request.params.id) });
+          const loweringResult = await db.collection(loweringsTable).findOne({ _id: new ObjectID(request.params.id) });
 
           if (!loweringResult) {
             return Boom.badRequest('No lowering record found for id: ' + request.params.id);
@@ -371,7 +371,7 @@ exports.plugin = {
         let event = null;
 
         try {
-          const eventResult = await db.collection(eventsTable).findOne({ _id: ObjectID(request.params.id) });
+          const eventResult = await db.collection(eventsTable).findOne({ _id: new ObjectID(request.params.id) });
 
           if (!eventResult) {
             return Boom.badRequest('No event record found for id: ' + request.params.id);

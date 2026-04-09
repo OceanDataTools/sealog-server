@@ -21,7 +21,8 @@
           "Other"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": true
+        "event_option_required": true,
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -52,7 +53,8 @@
           "UHDAS"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": true
+        "event_option_required": true,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Status",
@@ -62,7 +64,8 @@
           "Stopped logging"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": true
+        "event_option_required": true,
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -105,7 +108,8 @@
           "XBT"
         ],
         "event_option_required": true,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -134,14 +138,16 @@
           "CTD Deployed",
           "CTD Beacon Tracking",
           "CTD on Deck"
-        ]
+        ],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Filename",
         "event_option_type": "text",
         "event_option_required": true,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "System",
@@ -149,7 +155,8 @@
         "event_option_default_value": "CTD",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -182,7 +189,8 @@
           "Magnetometer"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Status",
@@ -196,7 +204,8 @@
           "Data Logging Stopped"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -235,7 +244,8 @@
           "XBT"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -261,14 +271,16 @@
           "Other"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": true
+        "event_option_required": true,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Dive Number",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": true,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -290,7 +302,8 @@
         "event_option_default_value": "Seawater",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Status",
@@ -303,7 +316,8 @@
           "Problem",
           "Started",
           "Secured"
-        ]
+        ],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Sensors",
@@ -316,7 +330,8 @@
           "XMISS"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -338,7 +353,8 @@
         "event_option_default_value": "USBL",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Status",
@@ -351,7 +367,8 @@
           "Other"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": true
+        "event_option_required": true,
+        "event_option_visibility": null
       }
     ],
     "system_template": true,
@@ -375,14 +392,16 @@
         "event_option_allow_freeform": false,
         "event_option_required": false,
         "event_option_values": [],
-        "event_option_default_value": "Bird"
+        "event_option_default_value": "Bird",
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Count",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -405,7 +424,8 @@
         "event_option_default_value": "CTD",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -427,7 +447,8 @@
         "event_option_default_value": "CTD Winch",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -449,14 +470,16 @@
         "event_option_default_value": "Debris",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Count",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -479,14 +502,16 @@
         "event_option_default_value": "Mammal",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Count",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -509,14 +534,16 @@
         "event_option_default_value": "Other",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Count",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -541,7 +568,8 @@
           "EM712"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Status",
@@ -549,7 +577,8 @@
         "event_option_default_value": "SIS RESTART",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -577,7 +606,8 @@
         ],
         "event_option_name": "System",
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Status",
@@ -592,7 +622,8 @@
           "Logging Stopped",
           "Survey Start",
           "Survey Complete"
-        ]
+        ],
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -620,7 +651,8 @@
           "SBP29"
         ],
         "event_option_required": true,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -654,7 +686,8 @@
         "event_option_name": "System",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_default_value": ""
+        "event_option_default_value": "",
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Status",
@@ -662,7 +695,8 @@
         "event_option_default_value": "Setting Change",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -686,7 +720,8 @@
           "EM712"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Status",
@@ -694,7 +729,8 @@
         "event_option_default_value": "SSP Server Started",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -718,7 +754,8 @@
           "EM712"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Status",
@@ -726,7 +763,8 @@
         "event_option_default_value": "SSP Server Stopped",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -751,7 +789,8 @@
         ],
         "event_option_allow_freeform": false,
         "event_option_required": true,
-        "event_option_default_value": "EM124,EM712"
+        "event_option_default_value": "EM124,EM712",
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Status",
@@ -759,7 +798,8 @@
         "event_option_default_value": "SVP Sent to Sonars",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -782,14 +822,16 @@
         "event_option_required": true,
         "event_option_default_value": "Sediment",
         "event_option_name": "Type",
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Sample ID",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -815,14 +857,16 @@
           "Other"
         ],
         "event_option_allow_freeform": false,
-        "event_option_required": true
+        "event_option_required": true,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Filename",
         "event_option_type": "text",
         "event_option_required": true,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -844,14 +888,16 @@
         "event_option_default_value": "water",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Sample ID",
         "event_option_type": "text",
         "event_option_required": true,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -873,7 +919,8 @@
         "event_option_default_value": "weather",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -900,14 +947,16 @@
           "Deck Test - Passed"
         ],
         "event_option_required": true,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Filename",
         "event_option_type": "text",
         "event_option_required": true,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "system_template": false,
@@ -935,14 +984,16 @@
           "Bottle fired"
         ],
         "event_option_required": true,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_visibility": null
       },
       {
         "event_option_name": "Bottle #",
         "event_option_type": "text",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_visibility": null
       }
     ],
     "template_categories": [
