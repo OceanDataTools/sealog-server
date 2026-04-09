@@ -26,7 +26,8 @@ exports.plugin = {
           event_option_default_value: '',
           event_option_values: ['alive','dead','undead'],
           event_option_allow_freeform: false,
-          event_option_required: false
+          event_option_required: false,
+          event_option_visibility: null
         }]
       },
       {
@@ -44,7 +45,8 @@ exports.plugin = {
           event_option_default_value: '',
           event_option_values: ['black','red','green'],
           event_option_allow_freeform: false,
-          event_option_required: false
+          event_option_required: false,
+          event_option_visibility: null
         }]
       },
       {
@@ -62,7 +64,8 @@ exports.plugin = {
           event_option_default_value: '',
           event_option_values: ['black','red','purple'],
           event_option_allow_freeform: false,
-          event_option_required: false
+          event_option_required: false,
+          event_option_visibility: null
         }]
       },
       {
@@ -80,7 +83,8 @@ exports.plugin = {
           event_option_default_value: '',
           event_option_values: ['blue','red','green'],
           event_option_allow_freeform: false,
-          event_option_required: false
+          event_option_required: false,
+          event_option_visibility: null
         }]
       },
       {
@@ -98,7 +102,8 @@ exports.plugin = {
           event_option_default_value: '',
           event_option_values: ['purple','red','pink'],
           event_option_allow_freeform: false,
-          event_option_required: false
+          event_option_required: false,
+          event_option_visibility: null
         }]
       },
       {
@@ -116,14 +121,16 @@ exports.plugin = {
             event_option_name: 'Sample ID',
             event_option_required: true,
             event_option_type: 'text',
-            event_option_values: []
+            event_option_values: [],
+            event_option_visibility: null
           },
           {
             event_option_allow_freeform: false,
             event_option_name: 'Sample Type',
             event_option_required: true,
             event_option_type: 'dropdown',
-            event_option_values: ['push core','physical sample','fluid sample','slurp','majors','gas tight','hog bio', 'hog chem']
+            event_option_values: ['push core','physical sample','fluid sample','slurp','majors','gas tight','hog bio', 'hog chem'],
+            event_option_visibility: null
           }
         ]
       },
@@ -151,28 +158,32 @@ exports.plugin = {
             event_option_name: 'first text option',
             event_option_required: false,
             event_option_type: 'text',
-            event_option_values: []
+            event_option_values: [],
+            event_option_visibility: null
           },
           {
             event_option_allow_freeform: false,
             event_option_name: 'second text option',
             event_option_required: true,
             event_option_type: 'text',
-            event_option_values: []
+            event_option_values: [],
+            event_option_visibility: null
           },
           {
             event_option_allow_freeform: false,
             event_option_name: 'first checkbox option',
             event_option_required: false,
             event_option_type: 'checkboxes',
-            event_option_values: ['1','2','3','4']
+            event_option_values: ['1','2','3','4'],
+            event_option_visibility: null
           },
           {
             event_option_allow_freeform: false,
             event_option_name: 'first select option',
             event_option_required: false,
             event_option_type: 'dropdown',
-            event_option_values: ['1','2','3','4']
+            event_option_values: ['1','2','3','4'],
+            event_option_visibility: null
           },
           {
             event_option_allow_freeform: false,
@@ -180,14 +191,16 @@ exports.plugin = {
             event_option_name: 'second select option',
             event_option_required: false,
             event_option_type: 'dropdown',
-            event_option_values: ['1','2','3','4']
+            event_option_values: ['1','2','3','4'],
+            event_option_visibility: null
           },
           {
             event_option_allow_freeform: false,
             event_option_name: 'third select option',
             event_option_required: true,
             event_option_type: 'dropdown',
-            event_option_values: ['1','2','3','4']
+            event_option_values: ['1','2','3','4'],
+            event_option_visibility: null
           },
           {
             event_option_allow_freeform: false,
@@ -195,7 +208,8 @@ exports.plugin = {
             event_option_name: 'fourth select option',
             event_option_required: true,
             event_option_type: 'dropdown',
-            event_option_values: ['1','2','3','4']
+            event_option_values: ['1','2','3','4'],
+            event_option_visibility: null
           }
         ]
       }
@@ -206,7 +220,25 @@ exports.plugin = {
 
     if (result.length) {
       if (process.env.NODE_ENV !== 'development') {
-        console.log('Event Templates Collection already exists... we\'re done here.');
+        console.log('Event Templates Collection already exists... running migrations.');
+
+        // Migration: ensure event_option_visibility field exists on all event options
+        try {
+          const migrationResult = await db.collection(eventTemplatesTable).updateMany(
+            { event_options: { $elemMatch: { event_option_visibility: { $exists: false } } } },
+            { $set: { 'event_options.$[elem].event_option_visibility': null } },
+            { arrayFilters: [{ 'elem.event_option_visibility': { $exists: false } }] }
+          );
+          if (migrationResult.modifiedCount > 0) {
+            console.log(`Migrated ${migrationResult.modifiedCount} event template(s): added event_option_visibility field.`);
+          }
+        }
+        catch (err) {
+          console.error('MIGRATION ERROR:', err);
+          throw err;
+        }
+
+        console.log('Event Templates Collection migrations complete.');
         return;
       }
 
@@ -215,7 +247,7 @@ exports.plugin = {
         await db.dropCollection(eventTemplatesTable);
       }
       catch (err) {
-        console.log('DROP ERROR:', err.code);
+        console.error('DROP ERROR:', err.code);
         throw (err);
       }
     }
@@ -230,7 +262,7 @@ exports.plugin = {
       }
     }
     catch (err) {
-      console.log('CREATE ERROR:', err.code);
+      console.error('CREATE ERROR:', err.code);
       throw (err);
     }
   }
