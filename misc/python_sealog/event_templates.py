@@ -9,31 +9,30 @@ BUGS:
 NOTES:
 AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
-VERSION:    1.0
+VERSION:    2.0
 CREATED:    2021-01-01
-REVISION:   2022-02-13
+REVISION:   2026-04-15
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2025
 '''
 
 import sys
-import json
 import logging
-import requests
 
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
 
 from misc.python_sealog.settings import API_SERVER_URL, HEADERS, EVENT_TEMPLATES_API_PATH
+from misc.python_sealog._request import _request, _parse
 
 
 def get_event_templates(system=True, non_system=True, api_server_url=API_SERVER_URL,
                         headers=HEADERS):
     '''
-    Return the event_export for the event with the given event_uid.
+    Return event templates.  Pass system=False to exclude system templates,
+    or non_system=False to exclude non-system templates.
     '''
-
     if not system and not non_system:
         logging.warning(
             "Requesting no system templates and no non-system "
@@ -41,34 +40,14 @@ def get_event_templates(system=True, non_system=True, api_server_url=API_SERVER_
         )
         return []
 
-    try:
-        url = api_server_url + EVENT_TEMPLATES_API_PATH
-        req = requests.get(url, headers=headers, timeout=(2, None))
-
-        if req.status_code != 404:
-            event_templates = json.loads(req.text)
-
-            if not system:
-                event_templates = [
-                    template for template in event_templates if not template['system_template']
-                ]
-
-            if not non_system:
-                event_templates = [
-                    template for template in event_templates if template['system_template']
-                ]
-
-            logging.debug(json.dumps(event_templates))
-            return event_templates
-
+    url = api_server_url + EVENT_TEMPLATES_API_PATH
+    result = _parse(_request('GET', url, headers=headers), accept_any=True)
+    if result is None:
         return []
 
-    except requests.exceptions.RequestException as exc:
-        logging.error(str(exc))
-        raise exc
+    if not system:
+        result = [t for t in result if not t['system_template']]
+    if not non_system:
+        result = [t for t in result if t['system_template']]
 
-    except json.JSONDecodeError as exc:
-        logging.error(str(exc))
-        raise exc
-
-    return []
+    return result
