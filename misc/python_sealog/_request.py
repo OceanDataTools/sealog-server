@@ -45,25 +45,18 @@ def _request(method, url, params=None, payload=None, headers=HEADERS):
         raise
 
 
-def _parse(req, export_format='json', collection=False, accept_any=False):
+def _parse(req, export_format='json', collection=False):
     '''
     Parse a sealog API response into the appropriate Python type.
 
-    - 200 (or any non-404 when accept_any=True): return parsed JSON or raw text.
+    - 200: return parsed JSON or raw text.
     - 404 with collection=True: return [] or ''.
     - All other cases: return None.
-
-    accept_any=True is required for endpoints that return 404 when no records
-    exist rather than 200 with an empty object/array.  This is the current
-    behaviour for event_aux_data, event_exports, event_templates, and
-    custom_vars.  Once the API is updated in v2.5 to return 200 + empty data,
-    those callers can drop accept_any and this parameter can be removed.
 
     Logs and re-raises JSONDecodeError on malformed responses.
     '''
     try:
-        ok = (req.status_code != 404) if accept_any else (req.status_code == 200)
-        if ok:
+        if req.status_code == 200:
             return json.loads(req.text) if export_format == 'json' else req.text
         if collection and req.status_code == 404:
             return [] if export_format == 'json' else ''

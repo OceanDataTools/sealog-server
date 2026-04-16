@@ -52,7 +52,7 @@ def get_event_export(event_uid, export_format='json', event_filter=None, add_rec
     url = api_server_url + EVENT_EXPORTS_API_PATH + '/' + event_uid
     params = _export_params(export_format, add_record_ids, event_filter)
     return _parse(_request('GET', url, params=params, headers=headers),
-                  export_format, accept_any=True)
+                  export_format)
 
 
 def get_event_exports(export_format='json', event_filter=None, start_ts=None, stop_ts=None,
@@ -65,7 +65,7 @@ def get_event_exports(export_format='json', event_filter=None, start_ts=None, st
     url = api_server_url + EVENT_EXPORTS_API_PATH
     params = _export_params(export_format, add_record_ids, event_filter, start_ts, stop_ts)
     return _parse(_request('GET', url, params=params, headers=headers),
-                  export_format, accept_any=True)
+                  export_format)
 
 
 def get_event_exports_by_cruise(cruise_uid, export_format='json', event_filter=None,
@@ -80,7 +80,7 @@ def get_event_exports_by_cruise(cruise_uid, export_format='json', event_filter=N
     url = api_server_url + EVENT_EXPORTS_API_PATH + '/bycruise/' + cruise_uid
     params = _export_params(export_format, add_record_ids, event_filter)
     return _parse(_request('GET', url, params=params, headers=headers),
-                  export_format, accept_any=True)
+                  export_format)
 
 
 def get_event_exports_by_lowering(lowering_uid, export_format='json', event_filter=None,
@@ -95,4 +95,4 @@ def get_event_exports_by_lowering(lowering_uid, export_format='json', event_filt
     url = api_server_url + EVENT_EXPORTS_API_PATH + '/bylowering/' + lowering_uid
     params = _export_params(export_format, add_record_ids, event_filter)
     return _parse(_request('GET', url, params=params, headers=headers),
-                  export_format, accept_any=True)
+                  export_format)

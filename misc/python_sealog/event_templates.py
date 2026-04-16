@@ -41,7 +41,7 @@ def get_event_templates(system=True, non_system=True, api_server_url=API_SERVER_
         return []
 
     url = api_server_url + EVENT_TEMPLATES_API_PATH
-    result = _parse(_request('GET', url, headers=headers), accept_any=True)
+    result = _parse(_request('GET', url, headers=headers))
     if result is None:
         return []
 

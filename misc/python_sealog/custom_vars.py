@@ -32,7 +32,7 @@ def get_custom_var(var_uid, api_server_url=API_SERVER_URL, headers=HEADERS):
     Return a custom_var record based on the var_uid.
     '''
     url = api_server_url + CUSTOM_VAR_API_PATH + '/' + var_uid
-    return _parse(_request('GET', url, headers=headers), accept_any=True)
+    return _parse(_request('GET', url, headers=headers))
 
 
 def get_custom_var_uid_by_name(var_name, api_server_url=API_SERVER_URL, headers=HEADERS):
@@ -40,8 +40,7 @@ def get_custom_var_uid_by_name(var_name, api_server_url=API_SERVER_URL, headers=
     Return a custom_var uid based on the var_name.
     '''
     url = api_server_url + CUSTOM_VAR_API_PATH
-    result = _parse(_request('GET', url, params={'name': var_name}, headers=headers),
-                    accept_any=True)
+    result = _parse(_request('GET', url, params={'name': var_name}, headers=headers))
     return result[0]['id'] if result else None
 
 
@@ -50,8 +49,7 @@ def get_custom_var_by_name(var_name, api_server_url=API_SERVER_URL, headers=HEAD
     Return a custom_var based on the var_name.
     '''
     url = api_server_url + CUSTOM_VAR_API_PATH
-    result = _parse(_request('GET', url, params={'name': var_name}, headers=headers),
-                    accept_any=True)
+    result = _parse(_request('GET', url, params={'name': var_name}, headers=headers))
     return result[0] if result else None
 
 

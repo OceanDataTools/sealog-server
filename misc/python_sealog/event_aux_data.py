@@ -50,7 +50,7 @@ def get_event_aux_data_by_cruise(cruise_uid, datasource=None, limit=0,
     '''
     url = api_server_url + EVENT_AUX_DATA_API_PATH + '/bycruise/' + cruise_uid
     result = _parse(_request('GET', url, params=_aux_data_params(datasource, limit),
-                             headers=headers), accept_any=True)
+                             headers=headers))
     if result is not None:
         logging.debug(json.dumps(result))
     return result
@@ -63,12 +63,10 @@ def get_event_aux_data_by_lowering(lowering_uid, datasource=None, limit=0,
     '''
     url = api_server_url + EVENT_AUX_DATA_API_PATH + '/bylowering/' + lowering_uid
     result = _parse(_request('GET', url, params=_aux_data_params(datasource, limit),
-                             headers=headers), accept_any=True)
+                             headers=headers))
     if result is not None:
         logging.debug(json.dumps(result))
     return result
-
-    return None
 
 
 def create_event_aux_data(payload, api_server_url=API_SERVER_URL, headers=HEADERS):
