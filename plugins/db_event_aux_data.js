@@ -9,6 +9,7 @@ exports.plugin = {
 
     const db = server.mongo.db;
     const ObjectID = server.mongo.ObjectID;
+    const resetDB = ['development', 'test'].includes(process.env.NODE_ENV);
 
     const init_data = [
       {
@@ -180,7 +181,7 @@ exports.plugin = {
     const result = await db.listCollections({ name: eventAuxDataTable }).toArray();
 
     if (result.length) {
-      if (process.env.NODE_ENV !== 'development') {
+      if (!resetDB) {
         console.debug('Event Aux Data Collection already exists... we\'re done here.');
         return;
       }
@@ -201,7 +202,7 @@ exports.plugin = {
 
       await collection.createIndex({ event_id: 1 });
 
-      if (process.env.NODE_ENV === 'development') {
+      if (resetDB) {
         await collection.insertMany(init_data);
       }
     }

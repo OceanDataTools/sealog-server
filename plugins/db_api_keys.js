@@ -11,6 +11,7 @@ exports.plugin = {
 
     const db = server.mongo.db;
     const ObjectID = server.mongo.ObjectID;
+    const resetDB = ['development', 'test'].includes(process.env.NODE_ENV);
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30);
@@ -33,7 +34,7 @@ exports.plugin = {
     const result = await db.listCollections({ name: apiKeysTable }).toArray();
 
     if (result.length) {
-      if (process.env.NODE_ENV !== 'development') {
+      if (!resetDB) {
         console.debug('API Keys Collection already exists... we\'re done here.');
         return;
       }

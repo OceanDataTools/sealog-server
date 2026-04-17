@@ -12,6 +12,7 @@ exports.plugin = {
 
     const db = server.mongo.db;
     const ObjectID = server.mongo.ObjectID;
+    const resetDB = ['development', 'test'].includes(process.env.NODE_ENV);
 
     const init_data = [
       {
@@ -54,7 +55,7 @@ exports.plugin = {
 
     let result = await db.listCollections({ name: usersTable }).toArray();
     if (result.length) {
-      if (process.env.NODE_ENV !== 'development') {
+      if (!resetDB) {
         console.debug('Users Collection already exists... we\'re done here.');
         return;
       }
@@ -83,7 +84,7 @@ exports.plugin = {
     result = await db.listCollections({ name: refreshTokensTable }).toArray();
 
     if (result.length) {
-      if (process.env.NODE_ENV !== 'development') {
+      if (!resetDB) {
         console.debug('Refresh Tokens Collection already exists... we\'re done here.');
         return;
       }

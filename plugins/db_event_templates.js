@@ -9,6 +9,7 @@ exports.plugin = {
 
     const db = server.mongo.db;
     const ObjectID = server.mongo.ObjectID;
+    const resetDB = ['development', 'test'].includes(process.env.NODE_ENV);
 
     const init_data = [
       {
@@ -204,7 +205,7 @@ exports.plugin = {
     const result = await db.listCollections({ name: eventTemplatesTable }).toArray();
 
     if (result.length) {
-      if (process.env.NODE_ENV !== 'development') {
+      if (!resetDB) {
         console.debug('Event Templates Collection already exists... we\'re done here.');
         return;
       }
@@ -223,7 +224,7 @@ exports.plugin = {
     try {
       const collection = await db.createCollection(eventTemplatesTable);
 
-      if (process.env.NODE_ENV === 'development') {
+      if (resetDB) {
         await collection.insertMany(init_data);
       }
     }
