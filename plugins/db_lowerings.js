@@ -9,6 +9,7 @@ exports.plugin = {
 
     const db = server.mongo.db;
     const ObjectID = server.mongo.ObjectID;
+    const resetDB = ['development', 'test'].includes(process.env.NODE_ENV);
 
     const init_data = [
       {
@@ -102,7 +103,7 @@ exports.plugin = {
     const result = await db.listCollections({ name: loweringsTable }).toArray();
 
     if (result.length) {
-      if (process.env.NODE_ENV !== 'development') {
+      if (!resetDB) {
         console.log('Lowerings Collection already exists... we\'re done here.');
         return;
       }
@@ -121,7 +122,7 @@ exports.plugin = {
     try {
       const collection = await db.createCollection(loweringsTable);
 
-      if (process.env.NODE_ENV === 'development') {
+      if (resetDB) {
         console.log('Populating Lowerings Collection');
         await collection.insertMany(init_data);
       }

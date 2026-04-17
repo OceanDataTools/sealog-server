@@ -9,6 +9,7 @@ exports.plugin = {
 
     const db = server.mongo.db;
     const ObjectID = server.mongo.ObjectID;
+    const resetDB = ['development', 'test'].includes(process.env.NODE_ENV);
 
     const init_data = [
       {
@@ -205,7 +206,7 @@ exports.plugin = {
     const result = await db.listCollections({ name: eventTemplatesTable }).toArray();
 
     if (result.length) {
-      if (process.env.NODE_ENV !== 'development') {
+      if (!resetDB) {
         console.log('Event Templates Collection already exists... running migrations.');
 
         // Migration: remove any null event_option_visibility fields (field should be absent, not null)
@@ -242,7 +243,7 @@ exports.plugin = {
     try {
       const collection = await db.createCollection(eventTemplatesTable);
 
-      if (process.env.NODE_ENV === 'development') {
+      if (resetDB) {
         console.log('Populating Event Templates Collection');
         await collection.insertMany(init_data);
       }
