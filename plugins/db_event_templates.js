@@ -129,7 +129,7 @@ exports.plugin = {
         ]
       },
       {
-        '_id': new ObjectID('5a71c3d7fa96aa1977822b32'),
+        _id: new ObjectID('5a71c3d7fa96aa1977822b32'),
         event_name: 'PROBLEM',
         event_value: 'PROBLEM',
         event_free_text_required: false,
@@ -139,7 +139,7 @@ exports.plugin = {
         event_options: []
       },
       {
-        '_id': new ObjectID('5a71c3d7fa96aa1977822b33'),
+        _id: new ObjectID('5a71c3d7fa96aa1977822b33'),
         event_name: 'SUPER_EVENT',
         event_value: 'SUPER_EVENT',
         event_free_text_required: false,
