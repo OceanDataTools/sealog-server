@@ -2,27 +2,26 @@
 '''
 FILE:           aux_data_record_builder.py
 
-DESCRIPTION:    This script builds a sealog aux_data record with data pulled from an
-                influx database.
+DESCRIPTION:    This script builds a sealog aux_data record with data pulled from the
+                CORIOLIX REST API.
 
 BUGS:
 NOTES:
 AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
-VERSION:    1.0
+VERSION:    2.0
 CREATED:    2025-02-08
-REVISION:
+REVISION:   2026-05-15
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2025
 '''
-import os
 import sys
 import json
 import logging
 import requests
 from datetime import datetime, timedelta
-from urllib.parse import quote, urlparse
+from urllib.parse import quote
 from urllib3.exceptions import NewConnectionError
 
 from os.path import dirname, realpath
@@ -33,14 +32,17 @@ from misc.coriolix_sealog.settings import CORIOLIX_URL
 
 class SealogCORIOLIXAuxDataRecordBuilder():
     '''
-    Class that handles the construction of an influxDB query and using the
-    resulting data to build a sealog aux_data record.
+    Builds a sealog aux_data record from CORIOLIX full-resolution sensor data.
+
+    Config expects:
+      data_source: str
+      query_parameters: list of {sensor_id: str, parameter: str}
+      aux_record_lookup: dict keyed as "{sensor_id}__{parameter}"
     '''
 
     def __init__(self, aux_data_config, url=None):
         self.url = url or CORIOLIX_URL
-        self._query_measurements = aux_data_config['query_measurements']
-        self._query_fields = list(aux_data_config['aux_record_lookup'].keys())
+        self._query_parameters = aux_data_config['query_parameters']
         self._aux_record_lookup = aux_data_config['aux_record_lookup']
         self._data_source = aux_data_config['data_source']
         self.logger = logging.getLogger(__name__)
@@ -48,32 +50,38 @@ class SealogCORIOLIXAuxDataRecordBuilder():
     @staticmethod
     def _build_query_range(ts):
         '''
-        Builds the temporal range for the influxDB query based on the provided
-        timestamp (ts).
+        Returns (date_after, date_before) strings for a 1-minute window ending at ts.
         '''
         try:
             start_ts = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ") - timedelta(minutes=1)
-
-            return (f'date_after={quote(start_ts.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))}'
-                    f'&date_before={quote(ts)}')
-
+            return (
+                quote(start_ts.strftime("%Y-%m-%dT%H:%M:%S.%fZ")),
+                quote(ts)
+            )
         except ValueError as exc:
             logging.debug(str(exc))
-            return None
+            return None, None
 
     def _build_query_urls(self, ts):
         '''
-        Builds the complete influxDB query using the provided timestamp (ts)
-        and the class instance's query_measurements and query_fields values.
+        Builds one fullres query URL per query_parameter entry.
+        Returns list of (url, lookup_key) tuples.
         '''
-
-        query_range = self._build_query_range(ts)
+        date_after, date_before = self._build_query_range(ts)
+        if not date_after:
+            return []
 
         query_urls = []
-
-        for measurement in self._query_measurements:
-            query_urls.append(f'{self.url}/api/{measurement}/?format=json&{query_range}')
-            logging.debug("Query: %s", query_urls[-1])
+        for qp in self._query_parameters:
+            sensor_id = qp['sensor_id']
+            parameter = qp['parameter']
+            url = (
+                f'{self.url}/api/data/fullres/{sensor_id}/{parameter}/'
+                f'?format=json&date_after={date_after}&date_before={date_before}&last_item=true'
+            )
+            key = f'{sensor_id}__{parameter}'
+            query_urls.append((url, key))
+            logging.debug("Query: %s", url)
 
         return query_urls
 
@@ -190,27 +198,23 @@ class SealogCORIOLIXAuxDataRecordBuilder():
 
         query_results = {}
 
-        for url in query_urls:
+        for url, key in query_urls:
             logging.debug("Query URL: %s", url)
-            measurement = os.path.basename(urlparse(url).path.strip('/'))
 
-            # run the query against the influxDB
             try:
                 response = requests.get(url, timeout=2)
                 if response.status_code != 200:
                     logging.error("Failed to retrieve data. Status code: %s", response.status_code)
+                    continue
 
                 response_obj = json.loads(response.text)
                 if isinstance(response_obj, dict):
                     response_obj = response_obj.get('results', [])
 
-                if len(response_obj):
-                    query_results = {
-                        **query_results,
-                        **{f"{measurement}__{key}": value
-                            for key, value in response_obj[-1].items()
-                            if f'{measurement}__{key}' in self._query_fields}
-                    }
+                if response_obj:
+                    value = response_obj[-1].get('value')
+                    if value is not None:
+                        query_results[key] = value
 
             except NewConnectionError:
                 logging.error("CORIOLIX connection error, verify URL: %s", self.url)
@@ -232,18 +236,11 @@ class SealogCORIOLIXAuxDataRecordBuilder():
         return self._data_source
 
     @property
-    def measurements(self):
+    def query_parameters(self):
         '''
-        Getter method for the _query_measurements property
+        Getter method for the _query_parameters property
         '''
-        return self._query_measurements
-
-    @property
-    def fields(self):
-        '''
-        Getter method for the _query_fields property
-        '''
-        return self._query_fields
+        return self._query_parameters
 
     @property
     def record_lookup(self):
