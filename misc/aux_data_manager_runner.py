@@ -203,8 +203,8 @@ async def manage_aux_data_from_ws(aux_data_builders,
                     if message.get('event_value') in exclude_set:
                         logging.debug("Skipping because event value is in the exclude set")
                     else:
-                        logging.debug("Event: %s", message)
-                        pub_type = event_obj.get('topic', '').split('/')[-1]
+                        logging.info("Handling event: %s", event_obj)
+                        pub_type = event_obj.get('path', '').split('/')[-1]
                         match pub_type:
                             case 'newEvents':
                                 insert_aux_data(aux_data_builders, message, dry_run)
