@@ -91,8 +91,6 @@ class SealogInfluxV1AuxDataRecordBuilder(AuxDataRecordBuilder):
         WHERE {str_filters}
         ORDER BY DESC LIMIT 1'''
 
-        self.logger.debug("Query: %s", query)
-
         return query
 
     def open_connections(self):
@@ -115,10 +113,11 @@ class SealogInfluxV1AuxDataRecordBuilder(AuxDataRecordBuilder):
         self.logger.debug("building query")
         query = self._build_query(event['ts'])
 
-        self.logger.debug("Query: %s", query)
+        self.logger.info("Running query: %s", query)
         # run the query against the influxDB
         try:
             query_result = self._influxdb_client.query(query=query)
+            self.logger.info("Query result: %s", query_result.raw)
 
         except NewConnectionError:
             self.logger.error("InfluxDB connection error, verify URL: %s", INFLUXDB_URL)
@@ -139,11 +138,7 @@ class SealogInfluxV1AuxDataRecordBuilder(AuxDataRecordBuilder):
                 raise exc
         else:
             # Parse InfluxDB result into a dictionary format
-            influx_data = {}
-            for table in query_result:
-                for record in table.records:
-                    influx_data[record.get_field()] = record.get_value()
-
+            influx_data = next(query_result.get_points(), {})
             aux_data_record = self._build_aux_data_dict(event['id'], influx_data)
 
             return aux_data_record
