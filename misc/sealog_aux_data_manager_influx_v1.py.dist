@@ -75,8 +75,7 @@ INLINE_CONFIG = '''
 # set of events to ignore
 EXCLUDE_SET = set()
 
-# needs to be unique for all currently active dataManager scripts.
-CLIENT_WSID = 'auxData-dataManager-influx-v1'
+WSID_DEFAULT = 'auxData-dataManager-influx-v1'
 
 # -------------------------------------------------------------------------------------
 # The main loop of the utility
@@ -104,5 +103,5 @@ if __name__ == '__main__':
         inline_config=INLINE_CONFIG,
         ws_server_url=WS_SERVER_URL,
         headers=HEADERS,
-        client_wsid=CLIENT_WSID
+        wsid_default=WSID_DEFAULT
     )

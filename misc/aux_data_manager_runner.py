@@ -216,7 +216,7 @@ async def manage_aux_data_from_ws(aux_data_builders,
                 logging.warning("Malformed event received: %s", event_obj)
 
 
-def parse_aux_data_args():
+def parse_aux_data_args(wsid_default):
     '''
     Parse command line arguments for aux data manager scripts.
     '''
@@ -229,6 +229,7 @@ def parse_aux_data_args():
     parser.add_argument('-e', '--events', help='list of event_ids to apply aux data')
     parser.add_argument('-c', '--cruise_id', help='cruise_id to fix aux_data for')
     parser.add_argument('-l', '--lowering_id', help='lowering_id to fix aux_data for')
+    parser.add_argument('-w', '--client_wsid', default=wsid_default, help='Websocket ID for this client (must be unique to each aux data manager)')
 
     parsed_args = parser.parse_args()
     parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
@@ -274,17 +275,18 @@ def run_aux_data_manager(
     inline_config: str,
     ws_server_url: str,
     headers: Dict[str, Any],
-    client_wsid: str,
+    wsid_default: str,
     exclude_set: set = ()
 ):
     """
     Shared CLI and main loop.
 
-    builder_factory: callable(config_dict) -> builder instance
+    builder_factory: callable(config_dict) -> builder instance(s)
+    cleaner_factory: callable(config_dict) -> cleaner instance(s)
     inline_config: YAML string used if -f not provided
     ws_server_url, headers, client_wsid: for websocket connection.
     """
-    parsed_args = parse_aux_data_args()
+    parsed_args = parse_aux_data_args(wsid_default)
 
     # Logging setup
     logging.basicConfig(format=LOGGING_FORMAT)
@@ -332,7 +334,7 @@ def run_aux_data_manager(
                     aux_data_cleaner_list,
                     ws_server_url,
                     headers,
-                    client_wsid,
+                    parsed_args.client_wsid,
                     exclude_set,
                     parsed_args.dry_run)
             )
