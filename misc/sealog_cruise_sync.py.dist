@@ -51,17 +51,17 @@ PING = {
 SEALOG_SERVER_INSTANCES = [
     {
         'apiServerURL': '',
-        'token': ''  # noqa:E501
+        'token': ''
     }
 ]
 
 
-def update_cruise_record(cruise_record):
+def update_cruise_record(cruise_record, server_instances):  # pylint:disable=W0621
     '''
     Update the cruise record on the other sealog-servers
     '''
 
-    for instance in SEALOG_SERVER_INSTANCES:
+    for instance in server_instances:
         # check to see if a cruise record with the cruiseID in cruise_record already exists
 
         instance_headers = {
@@ -127,7 +127,7 @@ def update_cruise_record(cruise_record):
 # -------------------------------------------------------------------------------------
 # The main loop of the utility
 # -------------------------------------------------------------------------------------
-async def cruise_sync():
+async def cruise_sync(server_instances):  # pylint:disable=W0621
     '''
     Listen to the newCruise and updateCruise subscriptions and call
     update_cruise_record whenever there is a change.
@@ -151,7 +151,7 @@ async def cruise_sync():
 
                     logging.debug(json.dumps(cruise_obj, indent=2))
                     logging.info("Updating cruise record on other sealog instances")
-                    update_cruise_record(cruise_obj['message'])
+                    update_cruise_record(cruise_obj['message'], server_instances)
 
                 else:
                     logging.debug("Skipping because cruise value is in the exclude set")
@@ -174,10 +174,11 @@ if __name__ == '__main__':
     import os
 
     parser = argparse.ArgumentParser(description='Cruise Sync Service')
-    parser.add_argument(
-        '-v', '--verbosity', dest='verbosity', default=0,
-        action='count', help='Increase output verbosity'
-    )
+    parser.add_argument('-v', '--verbosity', dest='verbosity',
+                        default=0, action='count',
+                        help='Increase output verbosity')
+    parser.add_argument('-f', '--server_instance_file',
+                        help='use the specifed server instance file')
 
     parsed_args = parser.parse_args()
 
@@ -192,9 +193,23 @@ if __name__ == '__main__':
     parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
     logging.getLogger().setLevel(LOG_LEVELS[parsed_args.verbosity])
 
+    server_instances = []
+
+    if parsed_args.server_instance_file:
+
+        try:
+            with open(parsed_args.server_instance_file, encoding='utf-8') as file:
+                server_instances = json.load(file)
+
+        except Exception:  # pylint:disable=W0718
+            logging.error("Could not load server configurations from file")
+            sys.exit(1)
+    else:
+        server_instances = SEALOG_SERVER_INSTANCES
+
     # Run the main loop
     try:
-        asyncio.get_event_loop().run_until_complete(cruise_sync())
+        asyncio.get_event_loop().run_until_complete(cruise_sync(server_instances))
     except KeyboardInterrupt:
         print('Interrupted')
         try:

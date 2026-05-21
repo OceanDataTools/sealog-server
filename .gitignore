@@ -63,3 +63,5 @@ docker-compose.yml
 # python generated files
 *.pyc
 __pycache__
+
+CLAUDE.md

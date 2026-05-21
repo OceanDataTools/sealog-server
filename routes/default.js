@@ -492,8 +492,9 @@ exports.plugin = {
         const { payload } = request;
 
         try {
-          await handleFileUpload(imagePath, payload.filepond[1]);
-          return h.response(Path.basename(payload.filepond[1].hapi.filename)).code(201);
+          const prefix = request.params.id + '_';
+          await handleFileUpload(imagePath, payload.filepond[1], prefix);
+          return h.response(prefix + Path.basename(payload.filepond[1].hapi.filename)).code(201);
         }
         catch (err) {
           return Boom.serverUnavailable('Upload Error', err);
@@ -505,7 +506,7 @@ exports.plugin = {
           scope: ['admin', 'write_events']
         },
         payload: {
-          maxBytes: 1024 * 1024 * 20, // 20Mb
+          maxBytes: 1024 * 1024 * 256, // 256Mb
           output: 'stream',
           parse: true,
           multipart: true,

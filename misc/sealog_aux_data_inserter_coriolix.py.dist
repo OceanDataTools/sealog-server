@@ -21,9 +21,9 @@ BUGS:
 NOTES:
 AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
-VERSION:    2.0
+VERSION:    2.1
 CREATED:    2025-02-09
-REVISION:
+REVISION:   2026-05-15
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2025
@@ -53,50 +53,62 @@ from misc.coriolix_sealog.aux_data_record_builder import SealogCORIOLIXAuxDataRe
 
 INLINE_CONFIG = '''
 - data_source: 'vesselPosition'
-  query_measurements:
-    - gnss_gga_bow
-    - sensor_float_1
+  query_parameters:
+    - sensor_id: gnsspo112593
+      parameter: latitude_degrees
+    - sensor_id: gnsspo112593
+      parameter: longitude_degrees
+    - sensor_id: gnsspo112593
+      parameter: heading_degreestrue
   aux_record_lookup:
-    sensor_float_1__p1:
-      name: heading
-      uom: deg
-      round: 3
-    gnss_gga_bow__latitude:
+    gnsspo112593__latitude_degrees:
       name: latitude
       uom: ddeg
       round: 6
-    gnss_gga_bow__longitude:
+    gnsspo112593__longitude_degrees:
       name: longitude
       uom: ddeg
       round: 6
+    gnsspo112593__heading_degreestrue:
+      name: heading
+      uom: deg
+      round: 3
 - data_source: 'meteorologicalData'
-  query_measurements:
-    - sensor_mixed_5
+  query_parameters:
+    - sensor_id: metsta146582
+      parameter: airtemperature_degreesc
+    - sensor_id: metsta146582
+      parameter: barometricpressure_bar
+    - sensor_id: metsta146582
+      parameter: relativehumidity_percent
   aux_record_lookup:
-    sensor_mixed_5__p4:
+    metsta146582__airtemperature_degreesc:
       name: 'air temp'
       uom: 'C'
       round: 2
-    sensor_mixed_5__p3:
+    metsta146582__barometricpressure_bar:
       name: 'air pres'
       uom: 'mBar'
       round: 2
       modify:
         - operation:
           - multiply: 1000
-    sensor_mixed_5__p5:
+    metsta146582__relativehumidity_percent:
       name: 'relHumidity'
       uom: '%'
       round: 1
 - data_source: 'courseAndSpeed'
-  query_measurements:
-    - gnss_vtg_bow
+  query_parameters:
+    - sensor_id: gnsspo112593
+      parameter: cog_degreestrue
+    - sensor_id: gnsspo112593
+      parameter: sog_kmperhr
   aux_record_lookup:
-    gnss_vtg_bow__cog:
+    gnsspo112593__cog_degreestrue:
       name: course
       uom: deg
       round: 2
-    gnss_vtg_bow__sog:
+    gnsspo112593__sog_kmperhr:
       name: speed
       uom: kts
       round: 1

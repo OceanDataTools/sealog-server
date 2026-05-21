@@ -12,6 +12,12 @@ exports.plugin = {
   dependencies: [],
   register: async (options) => {
 
+    const skipChecks = ['test'].includes(process.env.NODE_ENV);
+
+    if (skipChecks) {
+      return;
+    }
+
     console.log('Searching for Image Directory');
     if (!Fs.existsSync(imagePath)) {
       console.log('Image Directory not found... trying to create.');

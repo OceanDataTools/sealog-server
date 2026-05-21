@@ -9,6 +9,7 @@ exports.plugin = {
 
     const db = server.mongo.db;
     const ObjectID = server.mongo.ObjectID;
+    const resetDB = ['development', 'test'].includes(process.env.NODE_ENV);
 
     const init_data = [
       {
@@ -128,7 +129,7 @@ exports.plugin = {
         ]
       },
       {
-        '_id': new ObjectID('5a71c3d7fa96aa1977822b32'),
+        _id: new ObjectID('5a71c3d7fa96aa1977822b32'),
         event_name: 'PROBLEM',
         event_value: 'PROBLEM',
         event_free_text_required: false,
@@ -138,7 +139,7 @@ exports.plugin = {
         event_options: []
       },
       {
-        '_id': new ObjectID('5a71c3d7fa96aa1977822b33'),
+        _id: new ObjectID('5a71c3d7fa96aa1977822b33'),
         event_name: 'SUPER_EVENT',
         event_value: 'SUPER_EVENT',
         event_free_text_required: false,
@@ -205,7 +206,7 @@ exports.plugin = {
     const result = await db.listCollections({ name: eventTemplatesTable }).toArray();
 
     if (result.length) {
-      if (process.env.NODE_ENV !== 'development') {
+      if (!resetDB) {
         console.log('Event Templates Collection already exists... running migrations.');
 
         // Migration: remove any null event_option_visibility fields (field should be absent, not null)
@@ -242,7 +243,7 @@ exports.plugin = {
     try {
       const collection = await db.createCollection(eventTemplatesTable);
 
-      if (process.env.NODE_ENV === 'development') {
+      if (resetDB) {
         console.log('Populating Event Templates Collection');
         await collection.insertMany(init_data);
       }
