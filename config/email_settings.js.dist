@@ -28,49 +28,40 @@ const Nodemailer = require('nodemailer'); // eslint-disable-line no-unused-vars
 
 // const createTransporter = async (clientId, clientSecret, serverUrl, refreshToken) => {
 
-//   try {
-//     const oauth2Client = new OAuth2(
-//       clientId,
-//       clientSecret,
-//       serverUrl
-//     );
+//   const oauth2Client = new OAuth2(clientId, clientSecret, serverUrl);
 
-//     oauth2Client.setCredentials({
-//       refresh_token: refreshToken
-//     });
+//   oauth2Client.setCredentials({ refresh_token: refreshToken });
 
-//     const accessToken = await new Promise((resolve, reject) => {
+//   const accessToken = await new Promise((resolve, reject) => {
 
-//       oauth2Client.getAccessToken((err, token) => {
+//     oauth2Client.getAccessToken((err, token) => {
 
-//         if (err) {
-//           console.log('*ERR: ', err);
-//           reject();
-//         }
-
+//       if (err) {
+//         console.error('*ERR: ', err);
+//         reject(err);
+//       }
+//       else {
 //         resolve(token);
-//       });
-//     });
-
-//     const transporter = Nodemailer.createTransport({
-//       service: 'gmail',
-//       auth: {
-//         type: 'OAuth2',
-//         user: senderAddress,
-//         accessToken,
-//         clientId,
-//         clientSecret,
-//         refreshToken
 //       }
 //     });
-//     return transporter;
-//   }
-//   catch (err) {
-//     return err;
-//   }
+//   });
+
+//   return Nodemailer.createTransport({
+//     service: 'gmail',
+//     auth: {
+//       type: 'OAuth2',
+//       user: senderAddress,
+//       accessToken,
+//       clientId,
+//       clientSecret,
+//       refreshToken
+//     }
+//   });
 // };
 
-// emailTransporter = createTransporter(client_id, client_secret, server_url, refresh_token); // eslint-disable-line no-dupe-keys
+// createTransporter(client_id, client_secret, server_url, refresh_token) // eslint-disable-line no-dupe-keys
+//   .then((t) => { emailTransporter = t; })
+//   .catch((err) => { console.error('Email transporter init failed:', err); });
 
 
 // ------------------------------------------------------------------------- //
