@@ -160,7 +160,7 @@ exports.plugin = {
 
           const disabledAccountTxt = (disableRegisteringUsers) ? '<p>For security reasons, accounts created via self-registration are disabled by default.  The system adminstrator has been notified of your account request and will enable the account shortly.</p>' : '';
 
-          if (emailTransporter !== null) {
+          if (emailTransporter !== null && typeof emailTransporter.sendMail === 'function') {
             let mailOptions = {
               from: senderAddress,
               to: request.payload.email,
@@ -444,7 +444,7 @@ exports.plugin = {
           <p><a href='${resetLink}'>${resetLink}</a></p>`
         };
 
-        if (emailTransporter !== null) {
+        if (emailTransporter !== null && typeof emailTransporter.sendMail === 'function') {
           emailTransporter.sendMail(mailOptions, (err) => {
 
             if (err) {

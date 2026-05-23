@@ -265,7 +265,7 @@ exports.plugin = {
           Boom.serverUnavailable('database error');
         }
 
-        if (emailTransporter !== null) {
+        if (emailTransporter !== null && typeof emailTransporter.sendMail === 'function') {
           const resetLink = `${resetURL}${token}`;
           const mailOptions = {
             from: senderAddress,
