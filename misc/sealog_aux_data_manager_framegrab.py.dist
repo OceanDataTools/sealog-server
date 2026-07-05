@@ -27,14 +27,15 @@ import sys
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
-from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
-from misc.framegrab_aux.aux_data_record_builder_framegrab_http import (
-        FramegrabHTTPAuxDataRecordBuilder
-        )
-from misc.aux_data_file_cleaners.delete_files_aux_data_file_cleaner import (
-        DeleteFilesAuxDataFileCleaner
-        )
 from misc.aux_data_manager_runner import run_aux_data_manager
+from misc.aux_data_file_cleaners.delete_files_aux_data_file_cleaner import (
+    DeleteFilesAuxDataFileCleaner
+)
+from misc.framegrab_aux.aux_data_record_builder_framegrab_http import (
+    FramegrabHTTPAuxDataRecordBuilder
+)
+from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
+
 
 # The data_source to use for the auxData records
 INLINE_CONFIG = '''
@@ -45,7 +46,7 @@ INLINE_CONFIG = '''
 EXCLUDE_SET = ()
 
 # needs to be unique for all currently active dataInserter scripts.
-CLIENT_WSID = 'aux_data_inserter_vehicleRealtimeFramegrabberData'
+DEFAULT_WSID = 'aux_data_inserter_vehicleRealtimeFramegrabberData'
 
 
 # -------------------------------------------------------------------------------------
@@ -67,6 +68,6 @@ if __name__ == '__main__':
         inline_config=INLINE_CONFIG,
         ws_server_url=WS_SERVER_URL,
         headers=HEADERS,
-        client_wsid=CLIENT_WSID,
+        client_wsid=DEFAULT_WSID,
         exclude_set=EXCLUDE_SET
     )

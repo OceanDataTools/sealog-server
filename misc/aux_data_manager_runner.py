@@ -20,12 +20,12 @@ from typing import Callable, Dict, Any
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
-from misc.aux_data_file_cleaners.base_aux_data_file_cleaner import AuxDataFileCleaner
-from misc.base_aux_data_record_builder import AuxDataRecordBuilder
-from misc.python_sealog.cruises import get_cruise_uid_by_id
-from misc.python_sealog.events import get_event, get_events_by_cruise, get_events_by_lowering
-from misc.python_sealog.event_aux_data import create_event_aux_data, delete_event_aux_data
 from misc.python_sealog.lowerings import get_lowering_uid_by_id
+from misc.python_sealog.event_aux_data import create_event_aux_data, delete_event_aux_data
+from misc.python_sealog.events import get_event, get_events_by_cruise, get_events_by_lowering
+from misc.python_sealog.cruises import get_cruise_uid_by_id
+from misc.base_aux_data_record_builder import AuxDataRecordBuilder
+from misc.aux_data_file_cleaners.base_aux_data_file_cleaner import AuxDataFileCleaner
 
 LOG_LEVELS = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
 LOGGING_FORMAT = '%(asctime)-15s %(levelname)s %(lineno)s - %(message)s'
@@ -203,8 +203,8 @@ async def manage_aux_data_from_ws(aux_data_builders,
                     if message.get('event_value') in exclude_set:
                         logging.debug("Skipping because event value is in the exclude set")
                     else:
-                        logging.debug("Event: %s", message)
-                        pub_type = event_obj.get('topic', '').split('/')[-1]
+                        logging.info("Handling event: %s", event_obj)
+                        pub_type = event_obj.get('path', '').split('/')[-1]
                         match pub_type:
                             case 'newEvents':
                                 insert_aux_data(aux_data_builders, message, dry_run)
@@ -216,7 +216,7 @@ async def manage_aux_data_from_ws(aux_data_builders,
                 logging.warning("Malformed event received: %s", event_obj)
 
 
-def parse_aux_data_args():
+def parse_aux_data_args(client_wsid):
     '''
     Parse command line arguments for aux data manager scripts.
     '''
@@ -229,6 +229,8 @@ def parse_aux_data_args():
     parser.add_argument('-e', '--events', help='list of event_ids to apply aux data')
     parser.add_argument('-c', '--cruise_id', help='cruise_id to fix aux_data for')
     parser.add_argument('-l', '--lowering_id', help='lowering_id to fix aux_data for')
+    parser.add_argument('-w', '--client_wsid', default=client_wsid,
+                        help='Websocket ID for client (must be unique to each aux data manager)')
 
     parsed_args = parser.parse_args()
     parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
@@ -280,11 +282,13 @@ def run_aux_data_manager(
     """
     Shared CLI and main loop.
 
-    builder_factory: callable(config_dict) -> builder instance
+    builder_factory: callable(config_dict) -> builder instance(s)
+    cleaner_factory: callable(config_dict) -> cleaner instance(s)
     inline_config: YAML string used if -f not provided
-    ws_server_url, headers, client_wsid: for websocket connection.
+    ws_server_url, headers: for websocket connection.
+    client_wsid: default value for -w/--client_wsid, overridable on the CLI
     """
-    parsed_args = parse_aux_data_args()
+    parsed_args = parse_aux_data_args(client_wsid)
 
     # Logging setup
     logging.basicConfig(format=LOGGING_FORMAT)
@@ -332,7 +336,7 @@ def run_aux_data_manager(
                     aux_data_cleaner_list,
                     ws_server_url,
                     headers,
-                    client_wsid,
+                    parsed_args.client_wsid,
                     exclude_set,
                     parsed_args.dry_run)
             )

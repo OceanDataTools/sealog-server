@@ -35,16 +35,17 @@ from influxdb_client import InfluxDBClient
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
-from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
+from misc.aux_data_manager_runner import run_aux_data_manager
+from misc.aux_data_file_cleaners.do_nothing_aux_data_file_cleaner import DoNothingAuxDataFileCleaner
+from misc.influx_sealog.aux_data_record_builder import SealogInfluxAuxDataRecordBuilder
 from misc.influx_sealog.settings import (
     INFLUXDB_URL,
     INFLUXDB_AUTH_TOKEN,
     INFLUXDB_ORG,
     INFLUXDB_VERIFY_SSL
 )
-from misc.influx_sealog.aux_data_record_builder import SealogInfluxAuxDataRecordBuilder
-from misc.aux_data_file_cleaners.do_nothing_aux_data_file_cleaner import DoNothingAuxDataFileCleaner
-from misc.aux_data_manager_runner import run_aux_data_manager
+from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
+
 
 # ----------------------------------------------------------------------------- #
 
@@ -87,8 +88,7 @@ INLINE_CONFIG = '''
 # set of events to ignore
 EXCLUDE_SET = set()
 
-# needs to be unique for all currently active dataManager scripts.
-CLIENT_WSID = 'auxData-dataManager-influx'
+DEFAULT_WSID = 'auxData-dataManager-influx'
 
 # -------------------------------------------------------------------------------------
 # The main loop of the utility
@@ -117,5 +117,5 @@ if __name__ == '__main__':
         inline_config=INLINE_CONFIG,
         ws_server_url=WS_SERVER_URL,
         headers=HEADERS,
-        client_wsid=CLIENT_WSID
+        client_wsid=DEFAULT_WSID
     )
