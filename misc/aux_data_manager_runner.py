@@ -20,12 +20,12 @@ from typing import Callable, Dict, Any
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
-from misc.aux_data_file_cleaners.base_aux_data_file_cleaner import AuxDataFileCleaner
-from misc.base_aux_data_record_builder import AuxDataRecordBuilder
-from misc.python_sealog.cruises import get_cruise_uid_by_id
-from misc.python_sealog.events import get_event, get_events_by_cruise, get_events_by_lowering
-from misc.python_sealog.event_aux_data import create_event_aux_data, delete_event_aux_data
 from misc.python_sealog.lowerings import get_lowering_uid_by_id
+from misc.python_sealog.event_aux_data import create_event_aux_data, delete_event_aux_data
+from misc.python_sealog.events import get_event, get_events_by_cruise, get_events_by_lowering
+from misc.python_sealog.cruises import get_cruise_uid_by_id
+from misc.base_aux_data_record_builder import AuxDataRecordBuilder
+from misc.aux_data_file_cleaners.base_aux_data_file_cleaner import AuxDataFileCleaner
 
 LOG_LEVELS = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
 LOGGING_FORMAT = '%(asctime)-15s %(levelname)s %(lineno)s - %(message)s'
@@ -229,7 +229,8 @@ def parse_aux_data_args(wsid_default):
     parser.add_argument('-e', '--events', help='list of event_ids to apply aux data')
     parser.add_argument('-c', '--cruise_id', help='cruise_id to fix aux_data for')
     parser.add_argument('-l', '--lowering_id', help='lowering_id to fix aux_data for')
-    parser.add_argument('-w', '--client_wsid', default=wsid_default, help='Websocket ID for this client (must be unique to each aux data manager)')
+    parser.add_argument('-w', '--client_wsid', default=wsid_default,
+                        help='Websocket ID for client (must be unique to each aux data manager)')
 
     parsed_args = parser.parse_args()
     parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))

@@ -35,16 +35,17 @@ from influxdb import InfluxDBClient
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
-from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
-from misc.influx_sealog.settings import (
-  INFLUX_HOST,
-  INFLUX_PORT,
-  INFLUX_USER,
-  INFLUX_PASS
-)
-from misc.influx_sealog.aux_data_record_builder_v1 import SealogInfluxV1AuxDataRecordBuilder
-from misc.aux_data_file_cleaners.do_nothing_aux_data_file_cleaner import DoNothingAuxDataFileCleaner
 from misc.aux_data_manager_runner import run_aux_data_manager
+from misc.aux_data_file_cleaners.do_nothing_aux_data_file_cleaner import DoNothingAuxDataFileCleaner
+from misc.influx_sealog.aux_data_record_builder_v1 import SealogInfluxV1AuxDataRecordBuilder
+from misc.influx_sealog.settings import (
+    INFLUX_HOST,
+    INFLUX_PORT,
+    INFLUX_USER,
+    INFLUX_PASS
+)
+from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
+
 
 # ----------------------------------------------------------------------------- #
 

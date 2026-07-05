@@ -25,13 +25,13 @@ from urllib3.exceptions import NewConnectionError
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
 
-from misc.base_aux_data_record_builder import AuxDataRecordBuilder
 from misc.influx_sealog.settings import (
     INFLUXDB_URL,
     INFLUXDB_AUTH_TOKEN,
     INFLUXDB_ORG,
     INFLUXDB_BUCKET
 )
+from misc.base_aux_data_record_builder import AuxDataRecordBuilder
 
 
 class SealogInfluxV1AuxDataRecordBuilder(AuxDataRecordBuilder):

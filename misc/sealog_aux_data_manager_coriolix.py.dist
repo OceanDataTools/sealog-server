@@ -33,10 +33,11 @@ import sys
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
-from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
-from misc.coriolix_sealog.aux_data_record_builder import SealogCORIOLIXAuxDataRecordBuilder
-from misc.aux_data_file_cleaners.do_nothing_aux_data_file_cleaner import DoNothingAuxDataFileCleaner
 from misc.aux_data_manager_runner import run_aux_data_manager
+from misc.aux_data_file_cleaners.do_nothing_aux_data_file_cleaner import DoNothingAuxDataFileCleaner
+from misc.coriolix_sealog.aux_data_record_builder import SealogCORIOLIXAuxDataRecordBuilder
+from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
+
 
 # ----------------------------------------------------------------------------- #
 
