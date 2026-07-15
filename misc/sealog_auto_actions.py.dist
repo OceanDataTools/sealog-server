@@ -32,13 +32,16 @@ import sys
 import asyncio
 import json
 import logging
+import re
 import time
 import websockets
 
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
 
+from misc.python_sealog.cruises import get_cruise_by_event
 from misc.python_sealog.custom_vars import get_custom_var_uid_by_name, set_custom_var
+from misc.python_sealog.events import get_events_by_cruise, update_event
 from misc.python_sealog.lowerings import get_lowering_by_event, update_lowering
 from misc.python_sealog.settings import WS_SERVER_URL, HEADERS
 
@@ -47,7 +50,11 @@ ASNAP_STATUS_VAR_NAME = 'asnapStatus'
 # ---------------------------------------------------------
 # For vehicle-focused sealog instances
 # ---------------------------------------------------------
-INCLUDE_SET = ('VEHICLE')  # pylint:disable=C0325
+EVENT_NAME_SAMPLE = 'SAMPLE'
+OPTION_NAME_SAMPLE_ID = 'SAMPLEID'
+PATTERN_SAMPLE_ID = re.compile(r'NA\d{3}-(?P<sample_num>\d{3})')
+
+INCLUDE_SET = ('VEHICLE', EVENT_NAME_SAMPLE)  # pylint:disable=C0325
 
 ASNAP_LOOKUP = {
     'Off deck': 'On',
@@ -103,6 +110,55 @@ PING = {
 }
 
 
+def _handle_sample_event(event):
+    '''
+    The function handles auto actions for sample events.
+    If the sample ID of the event is set to "auto", it will set the sample ID to the next available
+    sample ID for the cruise.
+    '''
+    if event['event_value'] != EVENT_NAME_SAMPLE:
+        return
+
+    logging.debug("Applying auto actions to sample event: %s", json.dumps(event, indent=2))
+    for i in range(len(event['event_options'])):
+        option = event['event_options'][i]
+        if option['event_option_name'] == OPTION_NAME_SAMPLE_ID:
+            sample_id_current = option['event_option_value']
+
+            if sample_id_current != 'auto':
+                logging.info("Event %s already has %s set to %s",
+                             event['id'], OPTION_NAME_SAMPLE_ID, sample_id_current)
+                return
+
+            cruise = get_cruise_by_event(event['id'])
+            if cruise is None:
+                logging.error("No cruise found for event %s", event['id'])
+                return
+
+            last_sample_event = get_events_by_cruise(
+                cruise['id'], event_filter=EVENT_NAME_SAMPLE, limit=1)
+            if last_sample_event and len(last_sample_event) > 0:
+                # If there is a previous sample event, get the sample ID and increment it
+                sample_id_previous = _get_event_option_value(
+                    last_sample_event[0], OPTION_NAME_SAMPLE_ID)
+                match = PATTERN_SAMPLE_ID.match(sample_id_previous)
+                if not match:
+                    logging.error("Previous %s %s does not match expected pattern",
+                                  OPTION_NAME_SAMPLE_ID, sample_id_previous)
+                    return
+                sample_num_previous = int(match.group('sample_num'))
+                sample_id_current = f"{cruise['id']}-{sample_num_previous + 1:03d}"
+            else:
+                # If there is no previous sample event, start with 001
+                sample_id_current = f"{cruise['id']}-001"
+
+            # Update the event in the db
+            logging.debug("Setting %s for event %s to %s",
+                          OPTION_NAME_SAMPLE_ID, event['id'], sample_id_current)
+            event['event_options'][i]['event_option_value'] = sample_id_current
+            update_event(event['id'], event)
+
+
 def _handle_vehicle_event(event):
     '''
     The function handle auto actions for the VEHICLE event_value.  It uses the
@@ -113,13 +169,8 @@ def _handle_vehicle_event(event):
     if event['event_value'] != 'VEHICLE':
         return
 
-    milestone = None
-
     # if event has milestone event_option, pass milestone to _set_asnap and _set_milestones
-    for option in event['event_options']:
-        if option['event_option_name'] == "milestone":
-            milestone = option['event_option_value']
-            break
+    milestone = _get_event_option_value(event, "milestone")
 
     if milestone is not None:
         _set_asnap(milestone)
@@ -135,13 +186,8 @@ def _handle_cruise_event(event):
     if event['event_value'] != 'CRUISE':
         return
 
-    milestone = None
-
-    # if event has milestone event_option, pass milestone to _set_asnap and _set_milestones
-    for option in event['event_options']:
-        if option['event_option_name'] == "status":
-            milestone = option['event_option_value']
-            break
+    # if event has milestone event_option, pass milestone to _set_asnap
+    milestone = _get_event_option_value(event, "status")
 
     if milestone is not None:
         _set_asnap(milestone)
@@ -233,6 +279,18 @@ def _set_milestones(event, evt_milestone):
         logging.debug(str(exc))
 
 
+def _get_event_option_value(event, option_name):
+    '''
+    Return the value of the event_option with the name of option_name
+    '''
+
+    for option in event['event_options']:
+        if option['event_option_name'] == option_name:
+            return option['event_option_value']
+
+    return None
+
+
 async def auto_actions():
     '''
     Listen to the new and updated events and respond as instructed based on the
@@ -264,6 +322,7 @@ async def auto_actions():
 
                     _handle_vehicle_event(event)
                     _handle_cruise_event(event)
+                    _handle_sample_event(event)
 
     except websockets.exceptions.InvalidURI as exc:
         logging.error("Invalid URL: %s", WS_SERVER_URL)
