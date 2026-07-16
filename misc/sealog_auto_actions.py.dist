@@ -136,7 +136,7 @@ def _handle_sample_event(event):
                 return
 
             last_sample_event = get_events_by_cruise(
-                cruise['id'], event_filter=EVENT_NAME_SAMPLE, limit=1)
+                cruise['id'], event_filter=EVENT_NAME_SAMPLE, limit=1, sort='newest')
             if last_sample_event and len(last_sample_event) > 0:
                 # If there is a previous sample event, get the sample ID and increment it
                 sample_id_previous = _get_event_option_value(
