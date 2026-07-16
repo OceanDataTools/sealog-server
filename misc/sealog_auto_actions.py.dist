@@ -322,7 +322,9 @@ async def auto_actions():
 
                     _handle_vehicle_event(event)
                     _handle_cruise_event(event)
-                    _handle_sample_event(event)
+                    sub = msg_obj['path'].split('/')[-1]
+                    if sub == 'updateEvents':
+                        _handle_sample_event(event)
 
     except websockets.exceptions.InvalidURI as exc:
         logging.error("Invalid URL: %s", WS_SERVER_URL)
