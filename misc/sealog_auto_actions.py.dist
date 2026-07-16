@@ -118,7 +118,7 @@ def _get_max_sample_num(sample_events):
     '''
     sample_nums = [0]
     for sample_event in sample_events:
-        sample_id = _get_event_option_value(sample_event, OPTION_NAME_SAMPLE_ID)
+        sample_id = _get_event_option_value(sample_event, OPTION_NAME_SAMPLE_ID.lower())
 
         if not sample_id:
             # if the event is a draft from another user/tab, won't have event options
@@ -154,7 +154,7 @@ def _handle_sample_event(event):
     logging.debug("Applying auto actions to sample event: %s", json.dumps(event, indent=2))
     for i in range(len(event['event_options'])):
         option = event['event_options'][i]
-        if option['event_option_name'] == OPTION_NAME_SAMPLE_ID:
+        if option['event_option_name'] == OPTION_NAME_SAMPLE_ID.lower():
             sample_id_current = option['event_option_value']
 
             if sample_id_current != DEFAULT_SAMPLE_ID:
@@ -171,7 +171,7 @@ def _handle_sample_event(event):
             # The very most recent event will probably be the initial mostly empty draft version of
             # this event, so we need to check multiple
             most_recent_samples = get_events_by_cruise(
-                cruise['id'], event_filter=EVENT_NAME_SAMPLE, limit=5, sort='newest')
+                cruise['id'], event_filter=[EVENT_NAME_SAMPLE], limit=5, sort='newest')
             try:
                 sample_num_previous = _get_max_sample_num(most_recent_samples)
             except ValueError as exc:
@@ -184,7 +184,11 @@ def _handle_sample_event(event):
             logging.debug("Setting %s for event %s to %s",
                           OPTION_NAME_SAMPLE_ID, event['id'], sample_id_current)
             event['event_options'][i]['event_option_value'] = sample_id_current
-            update_event(event['id'], event)
+            # create new event object with just the event options
+            event_update = {
+                'event_options': event['event_options']
+            }
+            update_event(event['id'], event_update)
 
 
 
