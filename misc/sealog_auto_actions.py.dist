@@ -53,6 +53,7 @@ ASNAP_STATUS_VAR_NAME = 'asnapStatus'
 EVENT_NAME_SAMPLE = 'SAMPLE'
 OPTION_NAME_SAMPLE_ID = 'SAMPLEID'
 PATTERN_SAMPLE_ID = re.compile(r'NA\d{3}-(?P<sample_num>\d{3})')
+DEFAULT_SAMPLE_ID = 'auto'
 
 INCLUDE_SET = ('VEHICLE', EVENT_NAME_SAMPLE)  # pylint:disable=C0325
 
@@ -110,6 +111,37 @@ PING = {
 }
 
 
+def _get_max_sample_num(sample_events):
+    '''
+    Return the maximum sample number from a list of sample events.  If no
+    sample events are found, return 0.
+    '''
+    sample_nums = [0]
+    for sample_event in sample_events:
+        sample_id = _get_event_option_value(sample_event, OPTION_NAME_SAMPLE_ID)
+
+        if not sample_id:
+            # if the event is a draft from another user/tab, won't have event options
+            logging.debug("Previous sample event %s has no %s set, skipping",
+                          sample_event['id'], OPTION_NAME_SAMPLE_ID)
+            continue
+
+        if sample_id == DEFAULT_SAMPLE_ID:
+            logging.debug("Previous sample event %s has %s set to 'auto', skipping",
+                          sample_event['id'], OPTION_NAME_SAMPLE_ID)
+            continue
+
+        match = PATTERN_SAMPLE_ID.fullmatch(sample_id)
+        if not match:
+            raise ValueError(f"{OPTION_NAME_SAMPLE_ID} {sample_id} for event {sample_event['id']}"
+                             "does not match expected pattern")
+        logging.debug("Previous sample event %s has %s value %s, adding to list",
+                          sample_event['id'], OPTION_NAME_SAMPLE_ID, match.group('sample_num'))
+        sample_nums.append(int(match.group('sample_num')))
+
+    return max(sample_nums)
+
+
 def _handle_sample_event(event):
     '''
     The function handles auto actions for sample events.
@@ -125,7 +157,7 @@ def _handle_sample_event(event):
         if option['event_option_name'] == OPTION_NAME_SAMPLE_ID:
             sample_id_current = option['event_option_value']
 
-            if sample_id_current != 'auto':
+            if sample_id_current != DEFAULT_SAMPLE_ID:
                 logging.info("Event %s already has %s set to %s",
                              event['id'], OPTION_NAME_SAMPLE_ID, sample_id_current)
                 return
@@ -135,28 +167,25 @@ def _handle_sample_event(event):
                 logging.error("No cruise found for event %s", event['id'])
                 return
 
-            last_sample_event = get_events_by_cruise(
-                cruise['id'], event_filter=EVENT_NAME_SAMPLE, limit=1, sort='newest')
-            if last_sample_event and len(last_sample_event) > 0:
-                # If there is a previous sample event, get the sample ID and increment it
-                sample_id_previous = _get_event_option_value(
-                    last_sample_event[0], OPTION_NAME_SAMPLE_ID)
-                match = PATTERN_SAMPLE_ID.match(sample_id_previous)
-                if not match:
-                    logging.error("Previous %s %s does not match expected pattern",
-                                  OPTION_NAME_SAMPLE_ID, sample_id_previous)
-                    return
-                sample_num_previous = int(match.group('sample_num'))
-                sample_id_current = f"{cruise['id']}-{sample_num_previous + 1:03d}"
-            else:
-                # If there is no previous sample event, start with 001
-                sample_id_current = f"{cruise['id']}-001"
+            # Check 5 most recent sample events for the cruise to find the last sample ID
+            # The very most recent event will probably be the initial mostly empty draft version of
+            # this event, so we need to check multiple
+            most_recent_samples = get_events_by_cruise(
+                cruise['id'], event_filter=EVENT_NAME_SAMPLE, limit=5, sort='newest')
+            try:
+                sample_num_previous = _get_max_sample_num(most_recent_samples)
+            except ValueError as exc:
+                logging.error(exc)
+                return
+
+            sample_id_current = f"{cruise['cruise_id']}-{sample_num_previous + 1:03d}"
 
             # Update the event in the db
             logging.debug("Setting %s for event %s to %s",
                           OPTION_NAME_SAMPLE_ID, event['id'], sample_id_current)
             event['event_options'][i]['event_option_value'] = sample_id_current
             update_event(event['id'], event)
+
 
 
 def _handle_vehicle_event(event):
