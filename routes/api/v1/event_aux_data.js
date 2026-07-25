@@ -266,10 +266,10 @@ exports.plugin = {
         const db = server.mongo.db;
         const ObjectID = server.mongo.ObjectID;
 
-        if (request.query.author || request.query.value || request.query.freetext || request.query.startTS || request.query.stopTS) {
+        if (request.query.author || request.query.value || request.query.freetext || request.query.fulltext || request.query.startTS || request.query.stopTS) {
 
           if (request.query.eventID) {
-            return Boom.badRequest('Cannot include param eventID when using author, value, freetext, startTS or stopTS');
+            return Boom.badRequest('Cannot include param eventID when using author, value, freetext, fulltext, startTS or stopTS');
           }
 
           const eventQuery = buildEventsQuery(request);
