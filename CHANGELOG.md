@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.4.6 (2026-07-25)
+
+### Features
+
+* Added support for the `fulltext` query parameter to the `event_aux_data` routes, matching the existing `events` and `event_exports` behavior
+
+### Chores
+
+* Updated dependencies (`@hapi/hapi`, `@json2csv/node`, `prettier`)
+* Updated Python requirements (`influxdb-client`, `jsonschema`, `jsonschema-specifications`, `pymongo`, `pytz`, `PyYAML`)
+
 ## 2.4.5 (2026-07-14)
 
 ### Features
