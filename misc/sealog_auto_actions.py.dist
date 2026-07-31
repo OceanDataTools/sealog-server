@@ -50,12 +50,7 @@ ASNAP_STATUS_VAR_NAME = 'asnapStatus'
 # ---------------------------------------------------------
 # For vehicle-focused sealog instances
 # ---------------------------------------------------------
-EVENT_NAME_SAMPLE = 'SAMPLE'
-OPTION_NAME_SAMPLE_ID = 'SAMPLEID'
-PATTERN_SAMPLE_ID = re.compile(r'NA\d{3}-(?P<sample_num>\d{3})')
-DEFAULT_SAMPLE_ID = 'auto'
-
-INCLUDE_SET = ('VEHICLE', EVENT_NAME_SAMPLE)  # pylint:disable=C0325
+INCLUDE_SET = ('VEHICLE')  # pylint:disable=C0325
 
 ASNAP_LOOKUP = {
     'Off deck': 'On',
@@ -90,6 +85,29 @@ MILESTONE_LOOKUP = {
 # START_STOP_LOOKUP = {}
 #
 # MILESTONE_LOOKUP = {}
+# ---------------------------------------------------------
+
+
+# ---------------------------------------------------------
+# For automated sample IDs
+# ---------------------------------------------------------
+EVENT_NAME_SAMPLE = 'SAMPLE'
+INCLUDE_SET = (INCLUDE_SET, EVENT_NAME_SAMPLE)  # comment out to avoid auto ID
+OPTION_NAME_SAMPLE_ID = 'SAMPLEID'
+DEFAULT_SAMPLE_ID = 'auto'
+
+# If you aren't usually logging more than one sample at a time, 5 seems to work fine
+# If you are logging multiple samples at a time, you might want to increase this--should be big
+# enough to include any open draft events + the most recent submitted sample + wiggle room
+NUM_SAMPLES_TO_CHECK_FOR_IDS = 5
+
+# Make sure these two patterns match;
+# PATTERN_SAMPLE_ID must be able to parse anything _build_sample_id() produces
+PATTERN_SAMPLE_ID = re.compile(r'NA\d{3}-(?P<sample_num>\d{3})')
+
+
+def _build_sample_id(cruise_id, sample_num):
+    return f"{cruise_id}-{sample_num:03d}"
 # ---------------------------------------------------------
 
 
@@ -133,10 +151,10 @@ def _get_max_sample_num(sample_events):
 
         match = PATTERN_SAMPLE_ID.fullmatch(sample_id)
         if not match:
-            raise ValueError(f"{OPTION_NAME_SAMPLE_ID} {sample_id} for event {sample_event['id']}"
+            raise ValueError(f"{OPTION_NAME_SAMPLE_ID} {sample_id} for event {sample_event['id']} "
                              "does not match expected pattern")
         logging.debug("Previous sample event %s has %s value %s, adding to list",
-                          sample_event['id'], OPTION_NAME_SAMPLE_ID, match.group('sample_num'))
+                      sample_event['id'], OPTION_NAME_SAMPLE_ID, match.group('sample_num'))
         sample_nums.append(int(match.group('sample_num')))
 
     return max(sample_nums)
@@ -155,11 +173,11 @@ def _handle_sample_event(event):
     for i in range(len(event['event_options'])):
         option = event['event_options'][i]
         if option['event_option_name'] == OPTION_NAME_SAMPLE_ID.lower():
-            sample_id_current = option['event_option_value']
+            sample_id_submitted = option['event_option_value']
 
-            if sample_id_current != DEFAULT_SAMPLE_ID:
+            if sample_id_submitted != DEFAULT_SAMPLE_ID:
                 logging.info("Event %s already has %s set to %s",
-                             event['id'], OPTION_NAME_SAMPLE_ID, sample_id_current)
+                             event['id'], OPTION_NAME_SAMPLE_ID, sample_id_submitted)
                 return
 
             cruise = get_cruise_by_event(event['id'])
@@ -167,29 +185,29 @@ def _handle_sample_event(event):
                 logging.error("No cruise found for event %s", event['id'])
                 return
 
-            # Check 5 most recent sample events for the cruise to find the last sample ID
+            # Check most recent sample events for the cruise to find the last sample ID
             # The very most recent event will probably be the initial mostly empty draft version of
             # this event, so we need to check multiple
             most_recent_samples = get_events_by_cruise(
-                cruise['id'], event_filter=[EVENT_NAME_SAMPLE], limit=5, sort='newest')
+                cruise['id'],
+                event_filter=[EVENT_NAME_SAMPLE],
+                limit=NUM_SAMPLES_TO_CHECK_FOR_IDS,
+                sort='newest')
             try:
                 sample_num_previous = _get_max_sample_num(most_recent_samples)
             except ValueError as exc:
                 logging.error(exc)
                 return
-
-            sample_id_current = f"{cruise['cruise_id']}-{sample_num_previous + 1:03d}"
+            sample_id_new = _build_sample_id(cruise['cruise_id'], sample_num_previous + 1)
 
             # Update the event in the db
             logging.debug("Setting %s for event %s to %s",
-                          OPTION_NAME_SAMPLE_ID, event['id'], sample_id_current)
-            event['event_options'][i]['event_option_value'] = sample_id_current
-            # create new event object with just the event options
+                          OPTION_NAME_SAMPLE_ID, event['id'], sample_id_new)
+            event['event_options'][i]['event_option_value'] = sample_id_new
             event_update = {
                 'event_options': event['event_options']
             }
             update_event(event['id'], event_update)
-
 
 
 def _handle_vehicle_event(event):
