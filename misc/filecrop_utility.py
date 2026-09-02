@@ -96,8 +96,12 @@ class FileCropUtility():  # pylint:disable=R0902
                     self._header_str = file.readline().decode()
 
                 # Read lines until we get a non-empty one
+                first_line = ''
                 while True:
-                    first_line = file.readline().decode().strip()
+                    line = file.readline()
+                    if not line:
+                        break
+                    first_line = line.decode().strip()
                     if first_line:  # If line is not empty
                         break
 
@@ -170,6 +174,9 @@ class FileCropUtility():  # pylint:disable=R0902
         for data_file in data_files:
             logging.debug("File: %s", data_file)
             with open(data_file, 'r', encoding='utf-8') as file:
+                if self.header:
+                    _ = file.readline()
+
                 while True:
 
                     # send header
