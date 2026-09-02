@@ -172,6 +172,29 @@ class TestAutoSampleId(unittest.TestCase):
         self.assertIn('ERROR', log.output[0])
         self.assertIn('No cruise found', log.output[0])
 
+    @patch('misc.sealog_auto_actions.update_event')
+    @patch('misc.sealog_auto_actions.get_events_by_cruise')
+    @patch('misc.sealog_auto_actions.get_cruise_by_event')
+    def test_handle_sample_event_bad_sample_id_logs_error(
+        self,
+        mock_get_cruise_by_event,
+        mock_get_events_by_cruise,
+        mock_update_event
+    ):
+        '''
+        If there's no cruise found for the event, it should log an error but not do anything else
+        '''
+        mock_get_cruise_by_event.return_value = CRUISE_ID
+
+        event = _build_ws_sample_event('006')
+        with self.assertLogs(level='ERROR') as log:
+            _handle_sample_event(event)
+
+        mock_get_events_by_cruise.assert_not_called()
+        mock_update_event.assert_not_called()
+        self.assertIn('ERROR', log.output[0])
+        self.assertIn('Malformed', log.output[0])
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -162,6 +162,9 @@ def _handle_sample_event(event):
             if sample_id_submitted != DEFAULT_SAMPLE_ID:
                 logging.info("Event %s already has %s set to %s",
                              event['id'], OPTION_NAME_SAMPLE_ID, sample_id_submitted)
+                if not PATTERN_SAMPLE_ID.fullmatch(sample_id_submitted):
+                    logging.error("Malformed %s %s for event %s",
+                                  OPTION_NAME_SAMPLE_ID, sample_id_submitted, event['id'])
                 return
 
             cruise = get_cruise_by_event(event['id'])
