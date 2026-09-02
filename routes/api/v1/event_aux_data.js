@@ -465,6 +465,10 @@ exports.plugin = {
               if (err.code === 11000) {
                 try {
                   const updateResults = await db.collection(eventAuxDataTable).updateOne( { _id: event_aux_data._id }, { $set: event_aux_data } );
+                  server.publish(
+                    '/ws/status/updateEventAuxData',
+                    _renameAndClearFields({ ...event_aux_data })
+                  );
                   return h.response(updateResults).code(204);
                 }
                 catch (err) {
@@ -522,6 +526,17 @@ exports.plugin = {
                   if (err.code === 11000) {
                     try {
                       const updateResults = await db.collection(eventAuxDataTable).updateOne( query, { $set: event_aux_data } );
+                      const diff = (new Date().getTime() - queryResult.ts.getTime()) / 1000;
+                      if (Math.abs(Math.round(diff)) < THRESHOLD || THRESHOLD === 0) {
+                        const updatedEventAuxData = await db.collection(eventAuxDataTable).findOne(query);
+                        if (updatedEventAuxData) {
+                          server.publish(
+                            '/ws/status/updateEventAuxData',
+                            _renameAndClearFields(updatedEventAuxData)
+                          );
+                        }
+                      }
+
                       return h.response(updateResults).code(204);
                     }
                     catch (err) {
@@ -539,6 +554,14 @@ exports.plugin = {
 
                 try {
                   await db.collection(eventAuxDataTable).updateOne( query, { $set: event_aux_data } );
+                  const diff = (new Date().getTime() - queryResult.ts.getTime()) / 1000;
+                  if (Math.abs(Math.round(diff)) < THRESHOLD || THRESHOLD === 0) {
+                    server.publish(
+                      '/ws/status/updateEventAuxData',
+                      _renameAndClearFields({ ...result, ...event_aux_data })
+                    );
+                  }
+
                   return h.response().code(204);
                 }
                 catch (err) {
@@ -643,6 +666,10 @@ exports.plugin = {
 
         try {
           await db.collection(eventAuxDataTable).updateOne( query, { $set: event_aux_data } );
+          server.publish(
+            '/ws/status/updateEventAuxData',
+            _renameAndClearFields({ ...result, ...event_aux_data })
+          );
           return h.response().code(204);
         }
         catch (err) {
@@ -686,8 +713,9 @@ exports.plugin = {
           return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
         }
 
+        let auxData;
         try {
-          const auxData = await db.collection(eventAuxDataTable).findOne(query);
+          auxData = await db.collection(eventAuxDataTable).findOne(query);
           if (!auxData) {
             return Boom.notFound('No record found for id: ' + request.params.id);
           }
@@ -698,6 +726,10 @@ exports.plugin = {
 
         try {
           await db.collection(eventAuxDataTable).deleteOne(query);
+          server.publish('/ws/status/deleteEventAuxData', {
+            id: auxData._id.toString(),
+            event_id: auxData.event_id.toString()
+          });
           return h.response().code(204);
         }
         catch (err) {
