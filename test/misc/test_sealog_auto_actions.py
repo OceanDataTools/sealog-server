@@ -21,7 +21,7 @@ from unittest.mock import patch
 
 from misc.sealog_auto_actions import (
     _handle_sample_event,
-    _get_max_sample_num,
+    _count_submitted_samples_for_cruise,
     EVENT_NAME_SAMPLE,
     OPTION_NAME_SAMPLE_ID,
     DEFAULT_SAMPLE_ID,
@@ -30,7 +30,7 @@ from misc.sealog_auto_actions import (
 
 CRUISE_ID = "NA001"
 
-DB_EVENT_CLICKED_BUT_NOT_SUBMITTED = {'id': '', 'event_options': []}
+DB_EVENT_CLICKED_BUT_NOT_SUBMITTED = {'id': '', 'event_value': EVENT_NAME_SAMPLE, 'event_options': []}
 
 
 def _build_ws_sample_event(sample_id: str):
@@ -49,6 +49,7 @@ def _build_ws_sample_event(sample_id: str):
 def _build_db_sample_event(sample_id: str):
     return {
         'id': '',
+        'event_value': EVENT_NAME_SAMPLE,
         'event_options': [
             {'event_option_name': OPTION_NAME_SAMPLE_ID.lower(),
                 'event_option_value': sample_id}
@@ -61,64 +62,51 @@ class TestAutoSampleId(unittest.TestCase):
     Tests for automatically assigning a sample ID to sample events
     '''
 
-    def test_get_max_sample_num_no_previous_samples_returns_0(self):
-        '''If there are no previous sample events, _get_max_sample_num should return 0'''
-        self.assertEqual(_get_max_sample_num([]), 0)
+    @patch('misc.sealog_auto_actions.get_events_by_cruise')
+    def test_count_submitted_samples_for_cruise_no_events_returns_0(
+        self,
+        mock_get_events_by_cruise
+    ):
+        '''
+        If there are no events at all, return 0
+        '''
 
-    def test_get_max_sample_num_no_valid_previous_samples_returns_0(self):
-        '''
-        If there are previous sample events, but they don't have valid sample IDs,
-        _get_max_sample_num should still return 0
-        '''
-        events = [DB_EVENT_CLICKED_BUT_NOT_SUBMITTED,
-                  _build_db_sample_event("auto")]
-        max_sample_num_observed = _get_max_sample_num(events)
-        self.assertEqual(0, max_sample_num_observed)
+        mock_get_events_by_cruise.return_value = []
 
-    def test_get_max_sample_num_incomplete_sample_events_gets_max_valid(self):
-        '''
-        _get_max_sample_num should return the highest sample ID value, ignoring incomplete events
-        '''
-        max_sample_num_expected = 2
-        events = [DB_EVENT_CLICKED_BUT_NOT_SUBMITTED,
-                  _build_db_sample_event("auto"),
-                  _build_db_sample_event(f"{CRUISE_ID}-001"),
-                  _build_db_sample_event(f"{CRUISE_ID}-{max_sample_num_expected:03d}")]
-        max_sample_num_observed = _get_max_sample_num(events)
-        self.assertEqual(max_sample_num_expected, max_sample_num_observed)
+        num_samples_observed = _count_submitted_samples_for_cruise(CRUISE_ID)
+        self.assertEqual(num_samples_observed, 0)
 
-    def test_get_max_sample_num_out_of_order_sample_events_gets_max(self):
+    @patch('misc.sealog_auto_actions.get_events_by_cruise')
+    def test_count_submitted_samples_for_cruise_SAMPLE_INSITU_and_incomplete_SAMPLEs_only_counts_submitted_SAMPLEs(
+        self,
+        mock_get_events_by_cruise
+    ):
         '''
-        _get_max_sample_num should return the highest sample ID value from the events given,
-        regardless of their order. Events retrieved from the db will be in the order that they were
-        created, but their sample IDs will be in the order they were submitted, so you can't just
-        choose the most recent valid sample ID.
+        If the db query returns submitted sample events with valid IDs, SAMPLE_INSITU events, 
+        sample events that haven't been submitted, and samples that haven't been assigned an ID
+        yet, only count the submitted ones with valid IDs
         '''
+
         events = [
             _build_db_sample_event(f"{CRUISE_ID}-001"),
             _build_db_sample_event(f"{CRUISE_ID}-003"),
             _build_db_sample_event(f"{CRUISE_ID}-002"),
+            {'id':'', 'event_value':f'{EVENT_NAME_SAMPLE}_INSITU'},
+            DB_EVENT_CLICKED_BUT_NOT_SUBMITTED,  # unsubmitted
+            _build_db_sample_event(DEFAULT_SAMPLE_ID)  # submitted but not yet assigned an ID
         ]
-        self.assertEqual(_get_max_sample_num(events), 3)
+        mock_get_events_by_cruise.return_value = events
 
-    def test_get_max_sample_invalid_previous_sample_event_throws_error(self):
-        '''
-        If there's a previous event with a sample ID that isn't the default but also doesn't match
-        the pattern, something has gone wrong--throw an error. You have up to
-        NUM_SAMPLES_TO_CHECK_FOR_IDS sample events to fix it until all of the sample numbers get
-        messed up.
-        '''
-        events = [_build_db_sample_event("not-a-valid-id")]
-        with self.assertRaises(ValueError):
-            _get_max_sample_num(events)
+        num_samples_observed = _count_submitted_samples_for_cruise(CRUISE_ID)
+        self.assertEqual(num_samples_observed, 3)
 
     @patch('misc.sealog_auto_actions.update_event')
-    @patch('misc.sealog_auto_actions.get_events_by_cruise')
+    @patch('misc.sealog_auto_actions._count_submitted_samples_for_cruise')
     @patch('misc.sealog_auto_actions.get_cruise_by_event')
-    def test_handle_sample_event_no_previous_samples_assigns_001(
+    def test_handle_sample_event_has_auto_id_updates_with_num_samples_plus_one(
         self,
         mock_get_cruise_by_event,
-        mock_get_events_by_cruise,
+        mock_count_submitted_samples_for_cruise,
         mock_update_event
     ):
         '''
@@ -130,7 +118,7 @@ class TestAutoSampleId(unittest.TestCase):
             'id': '',
             'cruise_id': CRUISE_ID
         }
-        mock_get_events_by_cruise.return_value = []
+        mock_count_submitted_samples_for_cruise.return_value = 0
 
         event = _build_ws_sample_event(DEFAULT_SAMPLE_ID)
         _handle_sample_event(event)
@@ -140,36 +128,6 @@ class TestAutoSampleId(unittest.TestCase):
         sample_id_observed = updated_payload['event_options'][0]['event_option_value']
         sample_num_observed = PATTERN_SAMPLE_ID.fullmatch(sample_id_observed).group('sample_num')
         self.assertEqual(int(sample_num_observed), 1)
-
-    @patch('misc.sealog_auto_actions.update_event')
-    @patch('misc.sealog_auto_actions.get_events_by_cruise')
-    @patch('misc.sealog_auto_actions.get_cruise_by_event')
-    def test_handle_sample_event_previous_sample_event_adds_1(
-        self,
-        mock_get_cruise_by_event,
-        mock_get_events_by_cruise,
-        mock_update_event
-    ):
-        '''
-        If there are previous sample events with filled-in IDs, should update current sample event
-        with max sample number + 1
-        '''
-        mock_get_cruise_by_event.return_value = {
-            'id': '',
-            'cruise_id': CRUISE_ID
-        }
-        mock_get_events_by_cruise.return_value = [
-            _build_db_sample_event(f"{CRUISE_ID}-005")
-        ]
-
-        event = _build_ws_sample_event(DEFAULT_SAMPLE_ID)
-        _handle_sample_event(event)
-
-        mock_update_event.assert_called_once()
-        updated_payload = mock_update_event.call_args[0][1]
-        sample_id_observed = updated_payload['event_options'][0]['event_option_value']
-        sample_num_observed = PATTERN_SAMPLE_ID.fullmatch(sample_id_observed).group('sample_num')
-        self.assertEqual(int(sample_num_observed), 6)
 
     @patch('misc.sealog_auto_actions.update_event')
     @patch('misc.sealog_auto_actions.get_events_by_cruise')
