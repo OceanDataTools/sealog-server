@@ -133,12 +133,13 @@ def _count_submitted_samples_for_cruise(cruise_id):
     # Get all events with event_type that contains EVENT_NAME_SAMPLE
     cruise_sampley_events = get_events_by_cruise(
         cruise_id, event_filter=[EVENT_NAME_SAMPLE])
+    
     # Count number of exact match events that have IDs
     num_samples = 0
     for e in cruise_sampley_events:
         if e['event_value'] == EVENT_NAME_SAMPLE:
-            sample_id = _get_event_option_value(e,OPTION_NAME_SAMPLE_ID.lower())
-            if sample_id and not sample_id == DEFAULT_SAMPLE_ID:
+            # check if the event has a sample ID--if not, it's just a draft event
+            if _get_event_option_value(e,OPTION_NAME_SAMPLE_ID.lower()):
                 num_samples+=1
 
     return num_samples
@@ -172,10 +173,10 @@ def _handle_sample_event(event):
                 logging.error("No cruise found for event %s", event['id'])
                 return
 
-            # Get number of submitted sample events for this cruise
+            # Get number of submitted sample events for this cruise, including this one
             num_samples = _count_submitted_samples_for_cruise(cruise['id'])
 
-            sample_id_new = _build_sample_id(cruise['cruise_id'], num_samples + 1)
+            sample_id_new = _build_sample_id(cruise['cruise_id'], num_samples)
 
             # Update the event in the db
             logging.debug("Setting %s for event %s to %s",

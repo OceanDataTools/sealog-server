@@ -98,12 +98,12 @@ class TestAutoSampleId(unittest.TestCase):
         mock_get_events_by_cruise.return_value = events
 
         num_samples_observed = _count_submitted_samples_for_cruise(CRUISE_ID)
-        self.assertEqual(num_samples_observed, 3)
+        self.assertEqual(num_samples_observed, 4)
 
     @patch('misc.sealog_auto_actions.update_event')
     @patch('misc.sealog_auto_actions._count_submitted_samples_for_cruise')
     @patch('misc.sealog_auto_actions.get_cruise_by_event')
-    def test_handle_sample_event_has_auto_id_updates_with_num_samples_plus_one(
+    def test_handle_sample_event_has_auto_id_updates_with_num_samples(
         self,
         mock_get_cruise_by_event,
         mock_count_submitted_samples_for_cruise,
@@ -118,7 +118,7 @@ class TestAutoSampleId(unittest.TestCase):
             'id': '',
             'cruise_id': CRUISE_ID
         }
-        mock_count_submitted_samples_for_cruise.return_value = 0
+        mock_count_submitted_samples_for_cruise.return_value = 1
 
         event = _build_ws_sample_event(DEFAULT_SAMPLE_ID)
         _handle_sample_event(event)
