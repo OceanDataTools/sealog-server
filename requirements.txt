@@ -6,7 +6,7 @@ jsonschema-specifications==2025.9.1
 pylint==3.3.8
 pymongo==4.17.0
 python-dateutil==2.9.0.post0
-pytz==2026.3
+pytz==2026.3.post1
 PyYAML==6.0.3
 requests==2.34.2
 urllib3==2.7.0
