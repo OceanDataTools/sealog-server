@@ -71,7 +71,7 @@ class FileCropUtility():  # pylint:disable=R0902
         # Clear counts after reporting
         self._error_counts.clear()
 
-    def cull_files(self, data_files):
+    def cull_files(self, data_files):  # pylint:disable=R0915
         '''
         Peek at the first/last entries in the file(s) and return only the files
         that contain data between the start/stop timestamps.
@@ -95,9 +95,14 @@ class FileCropUtility():  # pylint:disable=R0902
                 if self.header:
                     self._header_str = file.readline().decode()
 
-                # Read lines until we get a non-empty one
+                # Read lines until we get a non-empty one, or hit EOF
+                first_line = ''
                 while True:
-                    first_line = file.readline().decode().strip()
+                    raw_line = file.readline()
+                    if not raw_line:  # EOF
+                        break
+
+                    first_line = raw_line.decode().strip()
                     if first_line:  # If line is not empty
                         break
 
@@ -162,7 +167,7 @@ class FileCropUtility():  # pylint:disable=R0902
         '''
 
         logging.info("Cropping file data")
-        header_sent = not self.header
+        header_sent = False
 
         if not isinstance(data_files, list):
             data_files = [data_files]
@@ -170,12 +175,16 @@ class FileCropUtility():  # pylint:disable=R0902
         for data_file in data_files:
             logging.debug("File: %s", data_file)
             with open(data_file, 'r', encoding='utf-8') as file:
-                while True:
 
-                    # send header
+                # consume the source file's header line so it isn't parsed as data
+                if self.header:
+                    header_line = file.readline()
+
                     if not header_sent:
                         header_sent = True
-                        yield self._header_str
+                        yield self._header_str or header_line
+
+                while True:
 
                     line_str = file.readline()
 
