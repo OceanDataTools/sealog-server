@@ -767,10 +767,10 @@ exports.plugin = {
           if (cruise.start_ts && cruise.stop_ts && (cruise.start_ts >= cruise.stop_ts)) {
             return Boom.badRequest('Start date must be older than stop date');
           }
-          else if (cruise.start_ts && cruise.start_ts >= result.stop_ts) {
+          else if (cruise.start_ts && !cruise.stop_ts && cruise.start_ts >= result.stop_ts) {
             return Boom.badRequest('Start date must be older than stop date');
           }
-          else if (cruise.stop_ts && result.start_ts >= cruise.stop_ts) {
+          else if (cruise.stop_ts && !cruise.start_ts && result.start_ts >= cruise.stop_ts) {
             return Boom.badRequest('Start date must be older than stop date');
           }
 

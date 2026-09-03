@@ -253,6 +253,23 @@ describe('Cruises API', () => {
       expect(updated.cruise_location).to.equal('Indian Ocean');
     });
 
+    it('updates start and stop timestamps together against the new range', async () => {
+      const res = await server.inject({
+        method: 'PATCH',
+        url: `/sealog-server/api/v1/cruises/${testCruise._id}`,
+        headers: { Authorization: 'Bearer ' + adminJwt },
+        payload: {
+          start_ts: '2025-01-01T00:00:00.000Z',
+          stop_ts: '2025-06-30T23:59:59.000Z'
+        }
+      });
+
+      expect(res.statusCode).to.equal(204);
+      const updated = await db.collection(cruisesTable).findOne({ _id: testCruise._id });
+      expect(updated.start_ts.toISOString()).to.equal('2025-01-01T00:00:00.000Z');
+      expect(updated.stop_ts.toISOString()).to.equal('2025-06-30T23:59:59.000Z');
+    });
+
     it('updates a cruise as cruise_manager', async () => {
       await db.collection(usersTable).updateOne({ _id: regularUser._id }, { $set: { roles: ['cruise_manager'] } });
 
