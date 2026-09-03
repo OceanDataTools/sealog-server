@@ -7,64 +7,35 @@ const notificationEmailAddresses = process.env.SEALOG_SERVER_NOTIFICATION_EMAIL_
   : ['<BCC_ADDRESS>'];
 
 // Needed for email integration
-let emailTransporter = null; //eslint-disable-line prefer-const
-const Nodemailer = require('nodemailer'); // eslint-disable-line no-unused-vars
+let emailTransporter = null;
+const Nodemailer = require('nodemailer');
 
 // ========================================================================= //
-// Uncomment ONE of the following sections for email integration
+// Configure ONE of the following providers for email integration
 // ========================================================================= //
 
 // ------------------------------------------------------------------------- //
-// GMail integration
-// To setup OAuth2 access for nodemailer please refer to:
-// https://rupali.hashnode.dev/send-emails-in-nodejs-using-nodemailer-gmail-oauth2
+// Gmail OAuth2 integration
+// Enabled automatically when GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, and
+// GMAIL_REFRESH_TOKEN are all set. https://nodemailer.com/smtp/oauth2
 // ------------------------------------------------------------------------- //
-// const { google } = require('googleapis'); // eslint-disable-line no-unused-vars
+const gmailClientId = process.env.GMAIL_CLIENT_ID;
+const gmailClientSecret = process.env.GMAIL_CLIENT_SECRET;
+const gmailRefreshToken = process.env.GMAIL_REFRESH_TOKEN;
 
-// const OAuth2 = google.auth.OAuth2; // eslint-disable-line no-unused-vars
-
-// const client_id = process.env.GMAIL_CLIENT_ID || '<GMAIL_CLIENT_ID>';
-// const client_secret = process.env.GMAIL_CLIENT_SECRET || '<GMAIL_CLIENT_SECRET>';
-// const server_url = process.env.GMAIL_SERVER_URL || '<GMAIL_SERVER_URL>';
-// const refresh_token = process.env.GMAIL_REFRESH_TOKEN || '<GMAIL_REFRESH_TOKEN>';
-
-// const createTransporter = async (clientId, clientSecret, serverUrl, refreshToken) => {
-
-//   const oauth2Client = new OAuth2(clientId, clientSecret, serverUrl);
-
-//   oauth2Client.setCredentials({ refresh_token: refreshToken });
-
-//   const accessToken = await new Promise((resolve, reject) => {
-
-//     oauth2Client.getAccessToken((err, token) => {
-
-//       if (err) {
-//         console.error('*ERR: ', err);
-//         reject(err);
-//       }
-//       else {
-//         resolve(token);
-//       }
-//     });
-//   });
-
-//   return Nodemailer.createTransport({
-//     service: 'gmail',
-//     auth: {
-//       type: 'OAuth2',
-//       user: senderAddress,
-//       accessToken,
-//       clientId,
-//       clientSecret,
-//       refreshToken
-//     }
-//   });
-// };
-
-// createTransporter(client_id, client_secret, server_url, refresh_token) // eslint-disable-line no-dupe-keys
-//   .then((t) => { emailTransporter = t; })
-//   .catch((err) => { console.error('Email transporter init failed:', err); });
-
+if (gmailClientId && gmailClientSecret && gmailRefreshToken) {
+  // Nodemailer obtains and refreshes access tokens as needed.
+  emailTransporter = Nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      type: 'OAuth2',
+      user: senderAddress,
+      clientId: gmailClientId,
+      clientSecret: gmailClientSecret,
+      refreshToken: gmailRefreshToken
+    }
+  }); // eslint-disable-line no-dupe-keys
+}
 
 // ------------------------------------------------------------------------- //
 // Mailgun integration

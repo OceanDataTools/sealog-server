@@ -14,6 +14,11 @@ services:
       #- SEALOG_SERVER_NOTIFICATION_EMAIL_ADDRESSES=<BCC_ADDRESS1>,<BCC_ADDRESS2>
       #- SEALOG_SERVER_DISABLE_REGISTERING_USERS=false
       #- SEALOG_SERVER_RECAPTCHA_SECRET=<RECAPTCHA_SECRET>
+
+      # Gmail OAuth2 email integration is enabled when all three are set
+      #- GMAIL_CLIENT_ID=<GMAIL_CLIENT_ID>
+      #- GMAIL_CLIENT_SECRET=<GMAIL_CLIENT_SECRET>
+      #- GMAIL_REFRESH_TOKEN=<GMAIL_REFRESH_TOKEN>
       
       # Create SEALOG_SERVER_SECRET with:
       # node -e "console.log(require('crypto').randomBytes(256).toString('base64'));"
