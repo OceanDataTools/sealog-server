@@ -84,7 +84,7 @@ You will also need to uncomment the type of email integration used.  By default 
 
 Set the `SERVER_PORT` value in the `./config/manifest.js` file to meet your specific installation requirements. If you are only running one instance of Sealog Server on the server then the default value is sufficient. If you plan to use SSL, add the complete privKey and fulchain filepaths to `<privKey.pem>` and `<fullchain.pem>`.
 
-Set the `FILEPATH_ROOT` location in the `./config/server_settings.js` file to meet your specific installation requirements.
+Set the `FILEPATH_ROOT` location in the `./config/server_settings.js` file to meet your specific installation requirements. `disableRegisteringUsers` and `reCaptchaSecret` in the same file can also be set via the `SEALOG_SERVER_DISABLE_REGISTERING_USERS` and `SEALOG_SERVER_RECAPTCHA_SECRET` environment variables instead of editing the file directly.
 
 Create a secret JWT encryption key and save it to the `./config/secret.js` file.  Create the key by running the following command:
 ```
