@@ -1,5 +1,4 @@
 const checkDiskSpace = require('check-disk-space').default;
-const Boom = require('@hapi/boom');
 const { imagePath } = require('../config/server_settings');
 
 const {
@@ -19,15 +18,15 @@ exports.plugin = {
 
         try {
           let query = { custom_var_name: 'freeSpaceInBytes' };
-          let results = await db.collection(customVarsTable).findOneAndUpdate(query, { $set: { custom_var_value: diskSpace.free.toString() } }, { returnNewDocument: true });
-          server.publish('/ws/status/updateCustomVars', { id: results.value._id, custom_var_name: results.value.custom_var_name, custom_var_value: results.value.custom_var_value } );
+          let results = await db.collection(customVarsTable).findOneAndUpdate(query, { $set: { custom_var_value: diskSpace.free.toString() } }, { returnDocument: 'after' });
+          server.publish('/ws/status/updateCustomVars', { id: results._id, custom_var_name: results.custom_var_name, custom_var_value: results.custom_var_value } );
 
           query = { custom_var_name: 'freeSpacePercentage' };
-          results = await db.collection(customVarsTable).findOneAndUpdate(query, { $set: { custom_var_value: Math.round((diskSpace.free / diskSpace.size) * 100).toString() } }, { returnNewDocument: true });
-          server.publish('/ws/status/updateCustomVars', { id: results.value._id, custom_var_name: results.value.custom_var_name, custom_var_value: results.value.custom_var_value } );
+          results = await db.collection(customVarsTable).findOneAndUpdate(query, { $set: { custom_var_value: Math.round((diskSpace.free / diskSpace.size) * 100).toString() } }, { returnDocument: 'after' });
+          server.publish('/ws/status/updateCustomVars', { id: results._id, custom_var_name: results.custom_var_name, custom_var_value: results.custom_var_value } );
         }
         catch (err) {
-          return Boom.serverUnavailable('check-disk-space error: ', err);
+          console.log('ERROR: check-disk-space error:', err);
         }
       });
     };
