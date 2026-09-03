@@ -795,10 +795,10 @@ exports.plugin = {
           if (lowering.start_ts && lowering.stop_ts && (lowering.start_ts >= lowering.stop_ts)) {
             return Boom.badRequest('Start date must be older than stop date');
           }
-          else if (lowering.start_ts && lowering.start_ts >= result.stop_ts) {
+          else if (lowering.start_ts && !lowering.stop_ts && lowering.start_ts >= result.stop_ts) {
             return Boom.badRequest('Start date must be older than stop date');
           }
-          else if (lowering.stop_ts && result.start_ts >= lowering.stop_ts) {
+          else if (lowering.stop_ts && !lowering.start_ts && result.start_ts >= lowering.stop_ts) {
             return Boom.badRequest('Start date must be older than stop date');
           }
 

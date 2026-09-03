@@ -42,10 +42,6 @@ exports.plugin = {
 
         const db = request.mongo.db;
 
-        if (request.query.system_template) {
-          query.system_template = request.query.system_template;
-        }
-
         const limit = (request.query.limit) ? request.query.limit : 0;
         const offset = (request.query.offset) ? request.query.offset : 0;
         const sort = (request.query.sort) ? { [request.query.sort]: 1 } : {};

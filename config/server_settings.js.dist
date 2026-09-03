@@ -5,16 +5,16 @@ const cruisePath = `${FILEPATH_ROOT}/cruises`;
 const loweringPath = `${FILEPATH_ROOT}/lowerings`;
 
 // Server-side reCaptcha key, set to null if not using reCaptcha bot protection
-const reCaptchaSecret = null;
+const reCaptchaSecret = process.env.SEALOG_SERVER_RECAPTCHA_SECRET || null;
 
 // Disable registering users, requires Sealog admin user to enable the accounts prior to use
-const disableRegisteringUsers = false;
+const disableRegisteringUsers = process.env.SEALOG_SERVER_DISABLE_REGISTERING_USERS ? process.env.SEALOG_SERVER_DISABLE_REGISTERING_USERS.toLowerCase() === 'true' : false;
 
 // Default roles of self-registering users
 const registeringUserRoles = ['event_watcher', 'event_logger'];
 
 // Activate per-cruise/per-lowering access permissions
-const useAccessControl = process.env.SEALOG_SERVER_USE_ACCESS_CONTROL || false;
+const useAccessControl = process.env.SEALOG_SERVER_USE_ACCESS_CONTROL ? process.env.SEALOG_SERVER_USE_ACCESS_CONTROL.toLowerCase() === 'true' : false;
 
 module.exports = {
   imagePath,

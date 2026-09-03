@@ -249,6 +249,23 @@ describe('Lowerings API', () => {
       expect(updated.lowering_location).to.equal('East Pacific Rise');
     });
 
+    it('updates start and stop timestamps together against the new range', async () => {
+      const res = await server.inject({
+        method: 'PATCH',
+        url: `/sealog-server/api/v1/lowerings/${testLowering._id}`,
+        headers: { Authorization: 'Bearer ' + adminJwt },
+        payload: {
+          start_ts: '2024-03-02T08:00:00.000Z',
+          stop_ts: '2024-03-02T20:00:00.000Z'
+        }
+      });
+
+      expect(res.statusCode).to.equal(204);
+      const updated = await db.collection(loweringsTable).findOne({ _id: testLowering._id });
+      expect(updated.start_ts.toISOString()).to.equal('2024-03-02T08:00:00.000Z');
+      expect(updated.stop_ts.toISOString()).to.equal('2024-03-02T20:00:00.000Z');
+    });
+
     it('updates a lowering as cruise_manager', async () => {
       await db.collection(usersTable).updateOne({ _id: regularUser._id }, { $set: { roles: ['cruise_manager'] } });
 
