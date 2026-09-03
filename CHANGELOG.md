@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.5.0 (2026-09-03)
+
+### Features
+
+* `senderAddress`, `notificationEmailAddresses`, `disableRegisteringUsers`, and `reCaptchaSecret` can now optionally be set via environment variables instead of editing `config/email_settings.js`/`config/server_settings.js` directly (#90, #91)
+* Wired up native Gmail OAuth2 email integration, auto-enabled via `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, and `GMAIL_REFRESH_TOKEN`, replacing dead example code that referenced an unused `googleapis` dependency
+
+### Bug Fixes
+
+* Fixed `SEALOG_SERVER_USE_ACCESS_CONTROL` being parsed with a truthy `||` fallback, where a literal `false` string was always treated as enabled (#77)
+* Removed a dead code path in `GET /event_templates` that referenced `query` before it was declared (#78)
+* Fixed the `misc/filecrop_utility.py` file-crop utility hanging on empty/blank files and misparsing each source file's header row as data (#79)
+* `event_aux_data` PATCH and DELETE (and POST's upsert paths) now publish `updateEventAuxData`/`deleteEventAuxData` websocket events, so other connected clients see attachment updates and deletions live instead of only on refresh (#80)
+* Fixed free-space byte/percentage updates breaking under the MongoDB 6 Node driver's `findOneAndUpdate` return shape (#81)
+* Fixed lowering and cruise timestamp validation incorrectly rejecting valid combined start/stop updates whose range had shifted relative to the stored one (#82, #89)
+
+### Chores
+
+* Resolved 3 high-severity npm advisories (`brace-expansion`, `browserslist`, `js-yaml`) via `npm audit fix`
+* Updated dependencies (`axios`, `joi`, `@json2csv/node`, `nodemailer`)
+* Updated Python requirements (`pytz`)
+
 ## 2.4.6 (2026-07-25)
 
 ### Features
