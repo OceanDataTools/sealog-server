@@ -10,6 +10,8 @@ services:
       #- SEALOG_SERVER_FILEPATH_ROOT=/data/sealog-files
       #- SEALOG_SERVER_TLS_PRIVKEY=<privkey.pem>
       #- SEALOG_SERVER_TLS_FULLCHAIN=<fulchain.pem>
+      #- SEALOG_SERVER_SENDER_ADDRESS=<SENDER_ADDRESS>
+      #- SEALOG_SERVER_NOTIFICATION_EMAIL_ADDRESSES=<BCC_ADDRESS1>,<BCC_ADDRESS2>
       
       # Create SEALOG_SERVER_SECRET with:
       # node -e "console.log(require('crypto').randomBytes(256).toString('base64'));"

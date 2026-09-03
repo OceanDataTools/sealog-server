@@ -78,7 +78,7 @@ cp ./config/secret.js.dist ./config/secret.js
 
 Set the `sealogDB` and `sealogDB_devel` names in the `./config/db_constants.js` file to meet your specific installation requirements.  If you are only running one instance of Sealog Server on the server then the defaults are sufficient
 
-Set the `senderAddress` and `notificationEmailAddresses` locations in the `./config/email_settings.js` file to meet your specific installation requirements.
+Set the `senderAddress` and `notificationEmailAddresses` locations in the `./config/email_settings.js` file to meet your specific installation requirements. These can also be set via the `SEALOG_SERVER_SENDER_ADDRESS` and `SEALOG_SERVER_NOTIFICATION_EMAIL_ADDRESSES` (comma-separated) environment variables instead of editing the file directly.
 
 You will also need to uncomment the type of email integration used.  By default email is disabled but the distribution file includes commented code blocks for gmail, mailgun and mailjet integration.
 

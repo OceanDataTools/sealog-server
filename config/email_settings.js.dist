@@ -1,8 +1,10 @@
 // The sender address for all emails
-const senderAddress = '<SENDER_ADDRESS>';
+const senderAddress = process.env.SEALOG_SERVER_SENDER_ADDRESS || '<SENDER_ADDRESS>';
 
 // Additional receipents for and sent emails.
-const notificationEmailAddresses = ['<BCC_ADDRESS>'];
+const notificationEmailAddresses = process.env.SEALOG_SERVER_NOTIFICATION_EMAIL_ADDRESSES
+  ? process.env.SEALOG_SERVER_NOTIFICATION_EMAIL_ADDRESSES.split(',').map((address) => address.trim()).filter(Boolean)
+  : ['<BCC_ADDRESS>'];
 
 // Needed for email integration
 let emailTransporter = null; //eslint-disable-line prefer-const
