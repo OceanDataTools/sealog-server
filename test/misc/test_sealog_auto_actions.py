@@ -30,7 +30,11 @@ from misc.sealog_auto_actions import (
 
 CRUISE_ID = "NA001"
 
-DB_EVENT_CLICKED_BUT_NOT_SUBMITTED = {'id': '', 'event_value': EVENT_NAME_SAMPLE, 'event_options': []}
+DB_EVENT_CLICKED_BUT_NOT_SUBMITTED = {'id': '',
+                                      'event_value': EVENT_NAME_SAMPLE,
+                                      'event_options': []}
+
+DB_SAMPLE_INSITU_EVENT = {'id': '', 'event_value': f'{EVENT_NAME_SAMPLE}_INSITU'}
 
 
 def _build_ws_sample_event(sample_id: str):
@@ -77,28 +81,51 @@ class TestAutoSampleId(unittest.TestCase):
         self.assertEqual(num_samples_observed, 0)
 
     @patch('misc.sealog_auto_actions.get_events_by_cruise')
-    def test_count_submitted_samples_for_cruise_SAMPLE_INSITU_and_incomplete_SAMPLEs_only_counts_submitted_SAMPLEs(
+    def test_count_submitted_samples_for_cruise_unsubmitted_samples_only_counts_submitted(
         self,
         mock_get_events_by_cruise
     ):
         '''
-        If the db query returns submitted sample events with valid IDs, SAMPLE_INSITU events, 
-        sample events that haven't been submitted, and samples that haven't been assigned an ID
-        yet, only count the submitted ones with valid IDs
+        If the db query returns sample events with good (numeric) IDs (i.e. have been submitted and
+        assigned an ID), default IDs (i.e. have been submitted but not yet assigned an ID), and no
+        IDs (i.e. have not been submitted), count the ones that have IDs
         '''
-
-        events = [
-            _build_db_sample_event(f"{CRUISE_ID}-001"),
-            _build_db_sample_event(f"{CRUISE_ID}-003"),
-            _build_db_sample_event(f"{CRUISE_ID}-002"),
-            {'id':'', 'event_value':f'{EVENT_NAME_SAMPLE}_INSITU'},
-            DB_EVENT_CLICKED_BUT_NOT_SUBMITTED,  # unsubmitted
-            _build_db_sample_event(DEFAULT_SAMPLE_ID)  # submitted but not yet assigned an ID
-        ]
+        num_samples_with_good_ids = 100
+        num_samples_with_default_ids = 5
+        # return an unsubmitted event with no sample ID
+        events = [DB_EVENT_CLICKED_BUT_NOT_SUBMITTED]
+        # return submitted events with valid numeric and default IDs
+        for i in range(num_samples_with_good_ids):
+            events.append(_build_db_sample_event(f"{CRUISE_ID}-{i+1:03d}"))
+        for i in range(num_samples_with_default_ids):
+            events.append(_build_db_sample_event(DEFAULT_SAMPLE_ID))
+        # add another unsubmitted event at the end to confirm order doesn't matter
+        events.append(DB_EVENT_CLICKED_BUT_NOT_SUBMITTED)
         mock_get_events_by_cruise.return_value = events
 
         num_samples_observed = _count_submitted_samples_for_cruise(CRUISE_ID)
-        self.assertEqual(num_samples_observed, 4)
+        self.assertEqual(num_samples_observed,
+                         num_samples_with_good_ids + num_samples_with_default_ids)
+
+    @patch('misc.sealog_auto_actions.get_events_by_cruise')
+    def test_count_submitted_samples_for_cruise_multiple_event_types_only_counts_exact_match(
+        self,
+        mock_get_events_by_cruise
+    ):
+        '''
+        If the db query returns EVENT_NAME_SAMPLE-type events and events with a type that contains
+        but does not exactly match EVENT_NAME_SAMPLE, only count the EVENT_NAME_SAMPLEs
+        '''
+        num_exact_match_sample_events = 10
+        events = [DB_SAMPLE_INSITU_EVENT]
+        for i in range(num_exact_match_sample_events):
+            events.append(_build_db_sample_event(f"{CRUISE_ID}-{i+1:03d}"))
+        events.append(DB_SAMPLE_INSITU_EVENT)
+        mock_get_events_by_cruise.return_value = events
+
+        num_samples_observed = _count_submitted_samples_for_cruise(CRUISE_ID)
+        self.assertEqual(num_samples_observed,
+                         num_exact_match_sample_events)
 
     @patch('misc.sealog_auto_actions.update_event')
     @patch('misc.sealog_auto_actions._count_submitted_samples_for_cruise')

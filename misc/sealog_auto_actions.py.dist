@@ -131,18 +131,17 @@ PING = {
 
 def _count_submitted_samples_for_cruise(cruise_id):
     # Get all events with event_type that contains EVENT_NAME_SAMPLE
-    cruise_sampley_events = get_events_by_cruise(
+    # Note that the API uses regex matching, NOT exact matching
+    cruise_sample_events = get_events_by_cruise(
         cruise_id, event_filter=[EVENT_NAME_SAMPLE])
-    
-    # Count number of exact match events that have IDs
-    num_samples = 0
-    for e in cruise_sampley_events:
-        if e['event_value'] == EVENT_NAME_SAMPLE:
-            # check if the event has a sample ID--if not, it's just a draft event
-            if _get_event_option_value(e,OPTION_NAME_SAMPLE_ID.lower()):
-                num_samples+=1
 
-    return num_samples
+    # Count number of exact match events that have IDs
+    # EVENT_NAME_SAMPLE events without IDs are just drafts that haven't been submitted yet
+    num_submitted_samples = sum(bool(_get_event_option_value(e, OPTION_NAME_SAMPLE_ID.lower()))
+                                for e in cruise_sample_events
+                                if e['event_value'] == EVENT_NAME_SAMPLE)
+
+    return num_submitted_samples
 
 
 def _handle_sample_event(event):
