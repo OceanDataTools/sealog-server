@@ -1,0 +1,60 @@
+name: Lint and Test
+
+on:
+  push:
+    branches:
+      - 2.x
+      - dev
+  pull_request:
+    branches:
+      - 2.x
+      - dev
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+
+      - name: Create config files from templates
+        run: |
+          cp config/db_constants.js.dist config/db_constants.js
+          cp config/email_settings.js.dist config/email_settings.js
+          cp config/manifest.js.dist config/manifest.js
+          cp config/server_settings.js.dist config/server_settings.js
+          cp config/secret.js.dist config/secret.js
+
+      - name: Wait for MongoDB
+        run: |
+          for i in $(seq 1 30); do
+            (echo > /dev/tcp/localhost/27017) >/dev/null 2>&1 && exit 0
+            sleep 1
+          done
+          echo "MongoDB did not become ready in time" >&2
+          exit 1
+
+      - name: Run test suite
+        env:
+          SEALOG_SERVER_SECRET: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: npm run start-test
