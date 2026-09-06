@@ -1,0 +1,2 @@
+echo "Running unit tests..."
+npx lab **/*.test.js
