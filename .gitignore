@@ -60,6 +60,9 @@ config/secret.js
 Dockerfile
 docker-compose.yml
 
+# environment variable file built from .env.dist
+.env
+
 # python generated files
 *.pyc
 __pycache__
