@@ -52,6 +52,7 @@ services:
       # `docker cp`/`docker exec`), replace the line below with a bind
       # mount to a host path instead, e.g.:
       #   - /opt/sealog-server/sealog-files:/data/sealog-files
+      #
       # Make sure that directory exists on the host first, and note that on
       # macOS/Windows with Docker Desktop, paths outside your home directory
       # (like /opt) must be added under Settings > Resources > File Sharing
