@@ -1,3 +1,9 @@
+# Docker Compose automatically reads a `.env` file located next to this
+# file (see .env.dist for the full list of supported variables) and uses
+# it to fill in the ${VAR} references below. If no .env file exists, or a
+# variable is missing from it, the fallback after ':-' is used instead.
+# SEALOG_SERVER_SECRET has no fallback, so it must be set via .env or the
+# shell environment.
 services:
   sealog-server:
     build:
@@ -6,38 +12,52 @@ services:
     depends_on:
       - mongo
     environment:
-      #- SEALOG_SERVER_PORT=8000
-      #- SEALOG_SERVER_FILEPATH_ROOT=/data/sealog-files
-      #- SEALOG_SERVER_TLS_PRIVKEY=<privkey.pem>
-      #- SEALOG_SERVER_TLS_FULLCHAIN=<fulchain.pem>
-      #- SEALOG_SERVER_SENDER_ADDRESS=<SENDER_ADDRESS>
-      #- SEALOG_SERVER_NOTIFICATION_EMAIL_ADDRESSES=<BCC_ADDRESS1>,<BCC_ADDRESS2>
-      #- SEALOG_SERVER_DISABLE_REGISTERING_USERS=false
-      #- SEALOG_SERVER_RECAPTCHA_SECRET=<RECAPTCHA_SECRET>
+      - SEALOG_SERVER_PORT=${SEALOG_SERVER_PORT:-8000}
+      - SEALOG_SERVER_FILEPATH_ROOT=${SEALOG_SERVER_FILEPATH_ROOT:-/data/sealog-files}
+      - SEALOG_SERVER_TLS_PRIVKEY=${SEALOG_SERVER_TLS_PRIVKEY:-}
+      - SEALOG_SERVER_TLS_FULLCHAIN=${SEALOG_SERVER_TLS_FULLCHAIN:-}
+      - SEALOG_SERVER_SENDER_ADDRESS=${SEALOG_SERVER_SENDER_ADDRESS:-}
+      - SEALOG_SERVER_NOTIFICATION_EMAIL_ADDRESSES=${SEALOG_SERVER_NOTIFICATION_EMAIL_ADDRESSES:-}
+      - SEALOG_SERVER_DISABLE_REGISTERING_USERS=${SEALOG_SERVER_DISABLE_REGISTERING_USERS:-false}
+      - SEALOG_SERVER_USE_ACCESS_CONTROL=${SEALOG_SERVER_USE_ACCESS_CONTROL:-false}
+      - SEALOG_SERVER_RECAPTCHA_SECRET=${SEALOG_SERVER_RECAPTCHA_SECRET:-}
 
       # Gmail OAuth2 email integration is enabled when all three are set
-      #- GMAIL_CLIENT_ID=<GMAIL_CLIENT_ID>
-      #- GMAIL_CLIENT_SECRET=<GMAIL_CLIENT_SECRET>
-      #- GMAIL_REFRESH_TOKEN=<GMAIL_REFRESH_TOKEN>
-      
+      - GMAIL_CLIENT_ID=${GMAIL_CLIENT_ID:-}
+      - GMAIL_CLIENT_SECRET=${GMAIL_CLIENT_SECRET:-}
+      - GMAIL_REFRESH_TOKEN=${GMAIL_REFRESH_TOKEN:-}
+
       # Create SEALOG_SERVER_SECRET with:
       # node -e "console.log(require('crypto').randomBytes(256).toString('base64'));"
-      - SEALOG_SERVER_SECRET='<SECRET_TOKEN>'
-      
+      - SEALOG_SERVER_SECRET=${SEALOG_SERVER_SECRET:?SEALOG_SERVER_SECRET must be set via .env or the shell environment}
+
       # NODE_ENV Options are:
       # - production: what to use for realz
       # - development: preloads some events, event templates cruises and lowerings
       # - demo-vessel: preloads some event templates, cruises, and events... good for evaluating Sealog for vessels
       # - demo-vehicle: preloads some event templates, cruises, lowerings and events... good for evaluating Sealog for vehicles
-      - NODE_ENV=production
-      - MONGO_URL=mongodb://mongo:27017/sealogDB
+      - NODE_ENV=${NODE_ENV:-production}
+      - MONGO_URL=${MONGO_URL:-mongodb://mongo:27017/sealogDB}
     image: sealog-server
     ports:
-      - "8000:8000"
+      - "${SEALOG_SERVER_PORT:-8000}:${SEALOG_SERVER_PORT:-8000}"
     restart: unless-stopped
     volumes:
-      # Make sure this directory exists
-      - /opt/sealog-server/sealog-files:/data/sealog-files
+      # Uploaded images and cruise/lowering exports are stored in the
+      # sealog_files named volume by default - no host directory setup is
+      # required, and it works the same way on Linux, macOS, and Windows.
+      #
+      # If you need direct host filesystem access to these files (e.g. to
+      # back them up with a host-level tool, or browse them without
+      # `docker cp`/`docker exec`), replace the line below with a bind
+      # mount to a host path instead, e.g.:
+      #   - /opt/sealog-server/sealog-files:/data/sealog-files
+      #
+      # Make sure that directory exists on the host first, and note that on
+      # macOS/Windows with Docker Desktop, paths outside your home directory
+      # (like /opt) must be added under Settings > Resources > File Sharing
+      # before Compose can mount them.
+      - sealog_files:/data/sealog-files
 
   mongo:
     image: mongo
@@ -49,3 +69,4 @@ services:
 
 volumes:
   db_data:
+  sealog_files:

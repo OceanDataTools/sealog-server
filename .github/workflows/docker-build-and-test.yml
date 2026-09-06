@@ -38,20 +38,16 @@ jobs:
       run: |
         sudo mkdir -p /data/sealog-files
 
-    - name: Generate a secret key
-      id: generate-secret
+    - name: Create a .env file
       run: |
-        # Generate a random secret key using openssl
-        SECRET_KEY=$(openssl rand -base64 32)
-        echo "Generated secret key: $SECRET_KEY"
-        # Save the secret key for later steps
-        echo "SECRET_KEY=$SECRET_KEY" >> $GITHUB_ENV
+        # docker-compose.yml.dist reads ${SEALOG_SERVER_SECRET} from a .env
+        # file in the project root (Docker Compose's built-in env file support)
+        cp .env.dist .env
+        echo "SEALOG_SERVER_SECRET=$(openssl rand -base64 32)" >> .env
 
     - name: Modify docker-compose.yml
       run: |
         cp docker-compose.yml.dist docker-compose.yml
-
-        sed -i "s|<SECRET_TOKEN>|${{ secrets.SECRET_KEY }}|g" docker-compose.yml
 
     - name: Modify Dockerfile
       run: |
