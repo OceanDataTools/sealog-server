@@ -22,6 +22,25 @@ jobs:
       - run: npm ci
       - run: npm run lint
 
+  lint-python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      # pylint's config sets recursive=no, so a directory argument silently
+      # skips subdirectories - pass an explicit file list instead (flake8
+      # would be fine with a directory arg since it respects .flake8's own
+      # exclude/filename settings, but this keeps both tools consistent).
+      - name: Run flake8
+        run: find misc \( -name "*.py" -o -name "*.py.dist" \) -not -path "*/reporting*" -print0 | xargs -0 flake8
+      - name: Run pylint
+        run: find misc \( -name "*.py" -o -name "*.py.dist" \) -not -path "*/reporting*" -print0 | xargs -0 pylint
+
   test:
     runs-on: ubuntu-latest
     services:
