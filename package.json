@@ -52,7 +52,7 @@
     "hapi-mongodb": "^11.0.0",
     "hapi-pino": "^13.0.0",
     "hapi-swagger": "^17.3.2",
-    "joi": "^17.13.4",
+    "joi": "^18.2.9",
     "lint-staged": "^16.4.0",
     "mkdirp": "^3.0.1",
     "mongodb": "^6.21.0",
