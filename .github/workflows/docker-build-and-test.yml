@@ -14,24 +14,12 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    # services:
-      # You can define services that need to be running while testing
-      # For example, if your app relies on a database, you could define it here
-      # db:
-      #   image: postgres:latest
-      #   ports:
-      #     - 5432:5432
-
     steps:
     - name: Check out the repository
       uses: actions/checkout@v3
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
-
-    - name: Create a sealog-files directory
-      run: |
-        sudo mkdir -p /data/sealog-files
 
     - name: Create a .env file
       run: |
@@ -51,15 +39,24 @@ jobs:
     - name: Build and Run Docker Compose
       run: |
         docker compose -f docker-compose.yml up -d --build
-        # Optionally, add a wait or check to ensure the container is running
         docker compose ps
 
-    # - name: Run tests or validation (if applicable)
-      # run: |
-        # You can run any tests or health checks here, e.g., using curl or a test script.
-        # Example for a web server test:
-        # curl -f http://localhost:8000/sealog-server || exit 1
+    - name: Wait for sealog-server to respond
+      run: |
+        for i in $(seq 1 60); do
+          curl -fs -o /dev/null http://localhost:8000/sealog-server/documentation && exit 0
+          sleep 2
+        done
+        echo "sealog-server did not respond within 120s" >&2
+        exit 1
+
+    - name: Show container logs
+      if: failure()
+      run: |
+        docker compose ps -a
+        docker compose logs
 
     - name: Tear down Docker Compose
+      if: always()
       run: |
-        docker compose down
+        docker compose down -v
