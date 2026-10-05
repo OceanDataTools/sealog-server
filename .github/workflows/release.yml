@@ -1,0 +1,57 @@
+name: Release
+
+# Creates (or updates) a GitHub Release when a version tag such as 2.4.8 is
+# pushed, using that version's section of CHANGELOG.md as the release notes.
+# The tag is expected to point at the "Merge branch 'dev' into 2.x" commit,
+# which already carries the CHANGELOG entry for the release.
+#
+# workflow_dispatch re-runs it for an existing tag (e.g. after fixing a
+# CHANGELOG typo). The tagged commit must contain this workflow file, so
+# tags older than 2.4.8 have to be released manually with `gh release create`.
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag to (re)release, e.g. 2.4.8
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: refs/tags/${{ inputs.tag || github.ref_name }}
+
+      - name: Extract release notes from CHANGELOG.md
+        run: |
+          # Everything between "## <tag> (<date>)" and the next "## " heading,
+          # with leading/trailing blank lines trimmed.
+          awk -v v="$TAG" '$0 ~ "^## "v" " {f=1; next} f && /^## / {exit} f' CHANGELOG.md \
+            | sed -e '/./,$!d' | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' > notes.md
+          if [ ! -s notes.md ]; then
+            echo "::error::No '## $TAG (...)' section found in CHANGELOG.md at tag $TAG" >&2
+            exit 1
+          fi
+          # Release title is the CHANGELOG heading, e.g. "2.4.8 (2026-10-05)"
+          title=$(grep -m1 "^## $TAG " CHANGELOG.md | sed 's/^## //')
+          echo "TITLE=$title" >> "$GITHUB_ENV"
+          cat notes.md
+
+      - name: Create or update GitHub Release
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "$TITLE" --notes-file notes.md
+          else
+            gh release create "$TAG" --verify-tag --title "$TITLE" --notes-file notes.md
+          fi
