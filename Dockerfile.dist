@@ -24,4 +24,7 @@ COPY config/secret.js.dist config/secret.js
 EXPOSE 8000
 
 # Command to run the Node.js application
-CMD [ "node", "server.js" ]
+# --env-file-if-exists loads variables from a .env file in the working
+# directory (see .env.dist) if one was copied into the image or mounted
+# as a volume; it is a no-op when no .env file is present.
+CMD [ "node", "--env-file-if-exists=.env", "server.js" ]

@@ -1,0 +1,79 @@
+name: Lint and Test
+
+on:
+  push:
+    branches:
+      - 2.x
+      - dev
+  pull_request:
+    branches:
+      - 2.x
+      - dev
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
+  lint-python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      # pylint's config sets recursive=no, so a directory argument silently
+      # skips subdirectories - pass an explicit file list instead (flake8
+      # would be fine with a directory arg since it respects .flake8's own
+      # exclude/filename settings, but this keeps both tools consistent).
+      - name: Run flake8
+        run: find misc \( -name "*.py" -o -name "*.py.dist" \) -not -path "*/reporting*" -print0 | xargs -0 flake8
+      - name: Run pylint
+        run: find misc \( -name "*.py" -o -name "*.py.dist" \) -not -path "*/reporting*" -print0 | xargs -0 pylint
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+
+      - name: Create config files from templates
+        run: |
+          cp config/db_constants.js.dist config/db_constants.js
+          cp config/email_settings.js.dist config/email_settings.js
+          cp config/manifest.js.dist config/manifest.js
+          cp config/server_settings.js.dist config/server_settings.js
+          cp config/secret.js.dist config/secret.js
+
+      - name: Wait for MongoDB
+        run: |
+          for i in $(seq 1 30); do
+            (echo > /dev/tcp/localhost/27017) >/dev/null 2>&1 && exit 0
+            sleep 1
+          done
+          echo "MongoDB did not become ready in time" >&2
+          exit 1
+
+      - name: Run test suite
+        env:
+          SEALOG_SERVER_SECRET: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: npm run start-test

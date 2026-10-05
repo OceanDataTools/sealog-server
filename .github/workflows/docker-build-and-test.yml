@@ -14,44 +14,23 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    # services:
-      # You can define services that need to be running while testing
-      # For example, if your app relies on a database, you could define it here
-      # db:
-      #   image: postgres:latest
-      #   ports:
-      #     - 5432:5432
-
     steps:
     - name: Check out the repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v7
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      uses: docker/setup-buildx-action@v4
 
-    - name: Set up Docker Compose
+    - name: Create a .env file
       run: |
-        sudo apt-get update
-        sudo apt-get install -y docker-compose
-
-    - name: Create a sealog-files directory
-      run: |
-        sudo mkdir -p /data/sealog-files
-
-    - name: Generate a secret key
-      id: generate-secret
-      run: |
-        # Generate a random secret key using openssl
-        SECRET_KEY=$(openssl rand -base64 32)
-        echo "Generated secret key: $SECRET_KEY"
-        # Save the secret key for later steps
-        echo "SECRET_KEY=$SECRET_KEY" >> $GITHUB_ENV
+        # docker-compose.yml.dist reads ${SEALOG_SERVER_SECRET} from a .env
+        # file in the project root (Docker Compose's built-in env file support)
+        cp .env.dist .env
+        echo "SEALOG_SERVER_SECRET=$(openssl rand -base64 32)" >> .env
 
     - name: Modify docker-compose.yml
       run: |
         cp docker-compose.yml.dist docker-compose.yml
-
-        sed -i "s|<SECRET_TOKEN>|${{ secrets.SECRET_KEY }}|g" docker-compose.yml
 
     - name: Modify Dockerfile
       run: |
@@ -59,16 +38,25 @@ jobs:
 
     - name: Build and Run Docker Compose
       run: |
-        docker-compose -f docker-compose.yml up -d --build
-        # Optionally, add a wait or check to ensure the container is running
-        docker-compose ps
+        docker compose -f docker-compose.yml up -d --build
+        docker compose ps
 
-    # - name: Run tests or validation (if applicable)
-      # run: |
-        # You can run any tests or health checks here, e.g., using curl or a test script.
-        # Example for a web server test:
-        # curl -f http://localhost:8000/sealog-server || exit 1
+    - name: Wait for sealog-server to respond
+      run: |
+        for i in $(seq 1 60); do
+          curl -fs -o /dev/null http://localhost:8000/sealog-server/documentation && exit 0
+          sleep 2
+        done
+        echo "sealog-server did not respond within 120s" >&2
+        exit 1
+
+    - name: Show container logs
+      if: failure()
+      run: |
+        docker compose ps -a
+        docker compose logs
 
     - name: Tear down Docker Compose
+      if: always()
       run: |
-        docker-compose down
+        docker compose down -v
