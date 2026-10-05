@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.4.8 (2026-10-05)
+
+### Features
+
+* Added a `.env.dist` template documenting every deployment environment variable; `npm start` (and the other `start-*` scripts), the Docker image, and `docker-compose.yml.dist` now load a `.env` file automatically if present (#92)
+* `docker-compose.yml.dist` now stores uploaded files in a `sealog_files` named volume instead of a `/opt/sealog-server/sealog-files` host bind mount, so `docker compose up` works on a fresh checkout without pre-creating directories or configuring Docker Desktop file sharing (#93)
+
+### Upgrade Notes
+
+* The `start*` npm scripts and `Dockerfile.dist` now pass `--env-file-if-exists` to Node, which requires Node.js 22.9+ (or a recent Node.js 20 release); older versions fail at startup with `bad option`
+* Existing Docker deployments that re-copy `docker-compose.yml.dist` will switch from the host bind mount to the new named volume. Either keep the bind mount (see the inline comments in the template) or copy existing files into the volume before switching
+* `docker-compose.yml.dist` now requires `SEALOG_SERVER_SECRET` to be set via `.env` or the shell environment, replacing the old `<SECRET_TOKEN>` placeholder
+
+### Chores
+
+* Added a GitHub Actions workflow that runs `eslint`, `flake8`/`pylint` on `misc/`, and the test suite against MongoDB on every push and PR (#95, #97)
+* The Docker CI workflow now checks that the server actually responds, uses the built-in `docker compose` v2, and runs on current action versions (#99, #100, #101)
+* Added a Dependabot config for weekly npm, pip, and GitHub Actions version updates (#102)
+* Husky now runs `lint-staged` on pre-commit and the test suite on pre-push, instead of both on every commit (#96)
+* Resolved the `brace-expansion` high-severity npm advisory via `npm audit fix`
+* Updated dependencies (`nodemailer`)
+* Updated Python requirements (`urllib3`)
+
 ## 2.4.7 (2026-09-03)
 
 ### Features
