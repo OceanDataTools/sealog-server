@@ -29,11 +29,6 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
 
-    - name: Set up Docker Compose
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y docker-compose
-
     - name: Create a sealog-files directory
       run: |
         sudo mkdir -p /data/sealog-files
@@ -55,9 +50,9 @@ jobs:
 
     - name: Build and Run Docker Compose
       run: |
-        docker-compose -f docker-compose.yml up -d --build
+        docker compose -f docker-compose.yml up -d --build
         # Optionally, add a wait or check to ensure the container is running
-        docker-compose ps
+        docker compose ps
 
     # - name: Run tests or validation (if applicable)
       # run: |
@@ -67,4 +62,4 @@ jobs:
 
     - name: Tear down Docker Compose
       run: |
-        docker-compose down
+        docker compose down
