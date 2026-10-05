@@ -9,5 +9,5 @@ python-dateutil==2.9.0.post0
 pytz==2026.3.post1
 PyYAML==6.0.3
 requests==2.34.2
-urllib3==2.7.0
+urllib3==2.8.0
 websockets==15.0.1
