@@ -1,0 +1,40 @@
+# Version updates open PRs against dev (PRs target dev, then dev is merged
+# into 2.x). Security updates are configured separately in the repo
+# settings and always target the default branch.
+#
+# Minor/patch bumps are grouped into a single PR per ecosystem to keep
+# the PR count down; major bumps still get their own PR so breaking
+# changes can be reviewed individually.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+    groups:
+      npm-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: pip
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+    groups:
+      pip-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
