@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Bug Fixes
+
+* Ensure a timestamp index on `events` during initialization, including existing databases and demo resets, to support timestamp filtering and sorting (#121)
+
+### Upgrade Notes
+
+* The first startup after upgrading an unindexed events collection waits for the timestamp index to build. Allow for additional startup time and temporary database load on large collections; existing full, visible single-field timestamp indexes are reused.
+
 ## 2.4.8 (2026-10-05)
 
 ### Features
