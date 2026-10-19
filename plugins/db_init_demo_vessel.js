@@ -8,6 +8,8 @@ const {
 
 const { filePreProcessor } = require('../lib/utils');
 
+const { ensureEventTimestampIndex } = require('../lib/db_indexes');
+
 exports.plugin = {
   name: 'db_init_demo_vehicle',
   dependencies: ['hapi-mongodb'],
@@ -62,6 +64,7 @@ exports.plugin = {
     console.log('Creating Events Collection');
     try {
       const collection = await db.createCollection(eventsTable);
+      await ensureEventTimestampIndex(collection);
 
       const init_data = filePreProcessor('./demo/FKt230303_eventOnlyExport.json', 'events');
       await collection.insertMany(init_data);
