@@ -7,6 +7,7 @@ const { init } = require('../lib/server');
 const Jwt = require('jsonwebtoken');
 const { ObjectId } = require('mongodb');
 const SECRET = require('../config/secret');
+const ServerSettings = require('../config/server_settings');
 const { usersTable, eventsTable, eventAuxDataTable } = require('../config/db_constants');
 
 describe('Events API', () => {
@@ -196,6 +197,52 @@ describe('Events API', () => {
 
       expect(res.statusCode).to.equal(400);
     });
+
+    describe('future timestamps', () => {
+      const originalAllowFutureEvents = ServerSettings.allowFutureEvents;
+
+      afterEach(() => {
+        ServerSettings.allowFutureEvents = originalAllowFutureEvents;
+      });
+
+      const postWithTs = (ts) => server.inject({
+        method: 'POST',
+        url: '/sealog-server/api/v1/events',
+        headers: { Authorization: 'Bearer ' + loggerJwt },
+        payload: { event_value: 'NEW_EVENT', ts }
+      });
+
+      it('accepts a past ts when future events are disallowed', async () => {
+        ServerSettings.allowFutureEvents = false;
+        const res = await postWithTs(new Date(Date.now() - 60 * 60 * 1000).toISOString());
+
+        expect(res.statusCode).to.equal(201);
+      });
+
+      it('accepts the current ts when future events are disallowed', async () => {
+        ServerSettings.allowFutureEvents = false;
+        const res = await postWithTs(new Date().toISOString());
+
+        expect(res.statusCode).to.equal(201);
+      });
+
+      it('returns 400 for a future ts when future events are disallowed', async () => {
+        ServerSettings.allowFutureEvents = false;
+        const res = await postWithTs(new Date(Date.now() + 60 * 60 * 1000).toISOString());
+
+        expect(res.statusCode).to.equal(400);
+        expect(res.result.message).to.contain('current server time');
+        const count = await db.collection(eventsTable).countDocuments({ event_value: 'NEW_EVENT' });
+        expect(count).to.equal(0);
+      });
+
+      it('accepts a future ts when future events are allowed', async () => {
+        ServerSettings.allowFutureEvents = true;
+        const res = await postWithTs(new Date(Date.now() + 60 * 60 * 1000).toISOString());
+
+        expect(res.statusCode).to.equal(201);
+      });
+    });
   });
 
   // ───────────────────────────────────────────────
@@ -224,6 +271,70 @@ describe('Events API', () => {
       });
 
       expect(res.statusCode).to.equal(400);
+    });
+
+    describe('future timestamps', () => {
+      const originalAllowFutureEvents = ServerSettings.allowFutureEvents;
+
+      afterEach(() => {
+        ServerSettings.allowFutureEvents = originalAllowFutureEvents;
+      });
+
+      const patchWithTs = (id, ts) => server.inject({
+        method: 'PATCH',
+        url: `/sealog-server/api/v1/events/${id}`,
+        headers: { Authorization: 'Bearer ' + loggerJwt },
+        payload: { ts }
+      });
+
+      it('accepts a past ts when future events are disallowed', async () => {
+        ServerSettings.allowFutureEvents = false;
+        const newTs = new Date('2024-01-02T12:00:00Z');
+        const res = await patchWithTs(testEvent._id, newTs.toISOString());
+
+        expect(res.statusCode).to.equal(204);
+        const updated = await db.collection(eventsTable).findOne({ _id: testEvent._id });
+        expect(updated.ts.getTime()).to.equal(newTs.getTime());
+      });
+
+      it('accepts the current ts when future events are disallowed', async () => {
+        ServerSettings.allowFutureEvents = false;
+        const res = await patchWithTs(testEvent._id, new Date().toISOString());
+
+        expect(res.statusCode).to.equal(204);
+      });
+
+      it('returns 400 for a future ts when future events are disallowed', async () => {
+        ServerSettings.allowFutureEvents = false;
+        const res = await patchWithTs(testEvent._id, new Date(Date.now() + 60 * 60 * 1000).toISOString());
+
+        expect(res.statusCode).to.equal(400);
+        expect(res.result.message).to.contain('current server time');
+        const unchanged = await db.collection(eventsTable).findOne({ _id: testEvent._id });
+        expect(unchanged.ts.getTime()).to.equal(testEvent.ts.getTime());
+      });
+
+      it('accepts a future ts when future events are allowed', async () => {
+        ServerSettings.allowFutureEvents = true;
+        const res = await patchWithTs(testEvent._id, new Date(Date.now() + 60 * 60 * 1000).toISOString());
+
+        expect(res.statusCode).to.equal(204);
+      });
+
+      it('allows editing an existing future-dated event without changing its ts', async () => {
+        ServerSettings.allowFutureEvents = false;
+        const futureTs = new Date(Date.now() + 60 * 60 * 1000);
+        await db.collection(eventsTable).updateOne({ _id: testEvent._id }, { $set: { ts: futureTs } });
+
+        const res = await server.inject({
+          method: 'PATCH',
+          url: `/sealog-server/api/v1/events/${testEvent._id}`,
+          headers: { Authorization: 'Bearer ' + loggerJwt },
+          payload: { ts: futureTs.toISOString(), event_free_text: 'edited' }
+        });
+
+        expect(res.statusCode).to.equal(204);
+      });
     });
   });
 

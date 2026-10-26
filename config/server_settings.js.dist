@@ -16,7 +16,11 @@ const registeringUserRoles = ['event_watcher', 'event_logger'];
 // Activate per-cruise/per-lowering access permissions
 const useAccessControl = process.env.SEALOG_SERVER_USE_ACCESS_CONTROL ? process.env.SEALOG_SERVER_USE_ACCESS_CONTROL.toLowerCase() === 'true' : false;
 
+// Allow events to be submitted/updated with timestamps later than the current server time
+const allowFutureEvents = process.env.SEALOG_SERVER_ALLOW_FUTURE_EVENTS ? process.env.SEALOG_SERVER_ALLOW_FUTURE_EVENTS.toLowerCase() === 'true' : false;
+
 module.exports = {
+  allowFutureEvents,
   imagePath,
   cruisePath,
   disableRegisteringUsers,

@@ -86,6 +86,8 @@ Set the `SERVER_PORT` value in the `./config/manifest.js` file to meet your spec
 
 Set the `FILEPATH_ROOT` location in the `./config/server_settings.js` file to meet your specific installation requirements. `disableRegisteringUsers` and `reCaptchaSecret` in the same file can also be set via the `SEALOG_SERVER_DISABLE_REGISTERING_USERS` and `SEALOG_SERVER_RECAPTCHA_SECRET` environment variables instead of editing the file directly.
 
+By default the server rejects events created or updated with a timestamp later than the current server time. To allow future-dated events, set `allowFutureEvents` to `true` in `./config/server_settings.js` or set the `SEALOG_SERVER_ALLOW_FUTURE_EVENTS` environment variable to `true`.
+
 Create a secret JWT encryption key and save it to the `./config/secret.js` file.  Create the key by running the following command:
 ```
 node -e "console.log(require('crypto').randomBytes(256).toString('base64'));"

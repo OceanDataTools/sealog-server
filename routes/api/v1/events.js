@@ -2,6 +2,7 @@ const Boom = require('@hapi/boom');
 const { AsyncParser } = require('@json2csv/node');
 
 const THRESHOLD = 120; //seconds
+const FUTURE_TS_TOLERANCE = 5; //seconds, allowance for client clock skew
 
 const {
   addEventRecordIDs,
@@ -10,9 +11,10 @@ const {
   buildEventsQuery
 } = require('../../../lib/utils');
 
-const {
-  useAccessControl
-} = require('../../../config/server_settings');
+// allowFutureEvents is read at request time (not destructured) so it can be toggled in tests
+const ServerSettings = require('../../../config/server_settings');
+
+const { useAccessControl } = ServerSettings;
 
 const {
   authorizationHeader,
@@ -48,6 +50,17 @@ const _renameAndClearFields = (doc) => {
 
   return doc;
 };
+
+const isFutureTs = (ts) => {
+
+  if (ServerSettings.allowFutureEvents) {
+    return false;
+  }
+
+  return new Date(ts).getTime() > new Date().getTime() + (FUTURE_TS_TOLERANCE * 1000);
+};
+
+const FUTURE_TS_ERROR = 'event ts cannot be later than the current server time';
 
 
 exports.plugin = {
@@ -834,6 +847,10 @@ exports.plugin = {
 
         const event = request.payload;
 
+        if (event.ts && isFutureTs(event.ts)) {
+          return Boom.badRequest(FUTURE_TS_ERROR);
+        }
+
         if (event.id) {
           try {
             event._id = new ObjectID(event.id);
@@ -966,6 +983,11 @@ exports.plugin = {
         catch (err) {
           console.log(err);
           return Boom.serverUnavailable('database error');
+        }
+
+        // only check changed timestamps so existing future-dated events can still be edited
+        if (time_change && isFutureTs(request.payload.ts)) {
+          return Boom.badRequest(FUTURE_TS_ERROR);
         }
 
         const event = request.payload;
