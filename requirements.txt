@@ -1,12 +1,12 @@
-flake8==7.3.0
+flake8==7.4.1
 Husky==0.1.7
 influxdb-client==1.50.0
 jsonschema==4.26.0
 jsonschema-specifications==2025.9.1
 pylint==3.3.8
-pymongo==4.17.0
+pymongo==4.18.2
 python-dateutil==2.9.0.post0
-pytz==2026.3.post1
+pytz==2026.4
 PyYAML==6.0.3
 requests==2.34.2
 urllib3==2.8.0
