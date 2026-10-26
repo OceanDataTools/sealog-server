@@ -7,7 +7,7 @@ name: Release
 #
 # workflow_dispatch re-runs it for an existing tag (e.g. after fixing a
 # CHANGELOG typo). The tagged commit must contain this workflow file, so
-# tags older than 2.4.8 have to be released manually with `gh release create`.
+# 2.4.8 and earlier tags have to be released manually with `gh release create`.
 
 on:
   push:
