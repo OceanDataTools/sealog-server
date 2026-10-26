@@ -34,7 +34,7 @@ DATABASE = 'sealog_udp_cache'
 COLLECTION = 'udpData'
 
 # Valid line headers to process
-validLineLabels = ['GGA']
+VALID_LINE_LABELS = ['GGA']
 
 
 def _convert_gga_ll(value, hemisphere):
@@ -118,7 +118,7 @@ def insert_udp_data(ignore_stale=False):
         logging.debug(data.rstrip())
 
         message_type = None
-        for label in validLineLabels:
+        for label in VALID_LINE_LABELS:
             if data.startswith(label):
                 message_type = label
                 break

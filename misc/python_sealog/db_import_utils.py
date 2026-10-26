@@ -116,7 +116,7 @@ event_schema = {
     ]
 }
 
-auxData_schema = {
+aux_data_schema = {
     "type": "object",
     "properties": {
         "id": {"type": "string"},
@@ -308,7 +308,7 @@ def convert_aux_data_record_fn(record_fn):
     '''
 
     def _validate_aux_data_record(record):
-        _validate_record(record, auxData_schema)
+        _validate_record(record, aux_data_schema)
 
     try:
         return _convert_record_fn(record_fn, _convert_aux_data_record, _validate_aux_data_record)
