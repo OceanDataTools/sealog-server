@@ -81,6 +81,19 @@ describe('Events API', () => {
     await server.stop();
   });
 
+  it('supports timestamp-sorted event history through the initialized index', async () => {
+
+    const result = await db.collection(eventsTable)
+      .find({ ts: { $gte: new Date(0) } })
+      .sort({ ts: -1 })
+      .hint({ ts: -1 })
+      .limit(20)
+      .explain('executionStats');
+
+    expect(result.executionStats.nReturned).to.equal(1);
+    expect(result.executionStats.totalKeysExamined).to.be.above(0);
+  });
+
   // ───────────────────────────────────────────────
   // GET /events
   // ───────────────────────────────────────────────

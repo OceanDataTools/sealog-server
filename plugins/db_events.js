@@ -2,6 +2,8 @@ const {
   eventsTable
 } = require('../config/db_constants');
 
+const { ensureEventTimestampIndex } = require('../lib/db_indexes');
+
 exports.plugin = {
   name: 'db_populate_events',
   dependencies: ['hapi-mongodb'],
@@ -70,7 +72,8 @@ exports.plugin = {
 
     if (result.length) {
       if (!resetDB) {
-        console.log('Events Collection already exists... we\'re done here.');
+        console.log('Events Collection already exists... checking timestamp index.');
+        await ensureEventTimestampIndex(db.collection(eventsTable));
         return;
       }
 
@@ -87,6 +90,7 @@ exports.plugin = {
     console.log('Creating Events Collection');
     try {
       const collection = await db.createCollection(eventsTable);
+      await ensureEventTimestampIndex(collection);
 
       if (resetDB) {
         console.log('Populating Events Collection');

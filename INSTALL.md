@@ -131,6 +131,24 @@ npm start
 
 **This will start the server in production mode.**  This mode will connect to a mongo database that was already setup for use with sealog-server.  If no database is found, sealog-server will attempt to create it.  Running in production mode for the first time will create an admin account (admin:demo) and 1 regular user account (guest).  There is no password set for the regular account.
 
+On startup, the server ensures that the `events` collection has a full single-field
+index on `ts` (`{ ts: -1 }`, named `ts_-1` by default). This applies to fresh
+installations and existing databases after upgrades. An existing full, visible
+single-field `ts` index in either direction is reused, regardless of its name.
+Production event records and existing indexes are preserved. Development/test
+resets and demo initialization also create the index.
+
+The server waits for index creation before serving requests. The first startup
+against a large unindexed collection can take longer and temporarily increase
+database load. Schedule upgrades accordingly. Index-creation failures abort
+startup and are reported in the server logs; subsequent startups reuse the index.
+
+To verify, run this on the database host, substituting the configured database name:
+
+```bash
+mongosh --quiet --eval 'db.getSiblingDB("sealogDB").events.getIndexes()'
+```
+
 The recommended way to setup Sealog to start at boot is to use Supervisor.  To install Supervisor no Ubuntu:
 
 ```
