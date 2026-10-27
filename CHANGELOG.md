@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file.
 
 * Added a GitHub Actions workflow that publishes a GitHub Release from the matching `CHANGELOG.md` section when a version tag is pushed (#115)
 * Resolved npm security advisories in `handlebars` (critical), `shell-quote` (critical), `follow-redirects` (high), and `joi` (moderate)
-* Updated dependencies (`@hapi/nes`, `nodemailer`, `pino-pretty`, `prettier`)
+* Updated dependencies (`@hapi/hapi`, `@hapi/inert`, `@hapi/nes`, `nodemailer`, `pino-pretty`, `prettier`)
 * Updated Python requirements (`flake8`, `pylint`, `pymongo`, `pytz`, `websockets`)
 
 ## 2.4.8 (2026-10-05)
