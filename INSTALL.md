@@ -208,7 +208,7 @@ By default sealog-server runs over http.  To run the server over https uncomment
 
 # Enabling Additional Functionality
 
-Although Sealog-Server is written in NodeJS, many of the additional functionality is written in Python3 (v3.6+).  These additional features are completely optional and do not have to be configured to install and run Sealog but greatly add to the overall usefulness of the platform.
+Although Sealog-Server is written in NodeJS, many of the additional functionality is written in Python3 (v3.11+).  These additional features are completely optional and do not have to be configured to install and run Sealog but greatly add to the overall usefulness of the platform.
 
 ## Prerequisites
 It is recommended to setup a python virtual environment within the sealog-server root directory from which to run the python scripts.
@@ -222,6 +222,16 @@ Goto the sealog-server installation directory and create the python virtual envi
 ```
 cd /opt/sealog-server
 python3 -m venv ./venv
+```
+
+If the system's default `python3` is older than 3.11 (e.g. Ubuntu 22.04 or RHEL/Rocky/Alma 8 and 9), install a newer Python alongside it and use it to create the virtual environment instead:
+```
+# Ubuntu 22.04
+sudo apt-get install python3.11 python3.11-venv
+# RHEL/Rocky/Alma 8 or 9
+sudo dnf install python3.11
+
+python3.11 -m venv ./venv
 ```
 
 Activate the python virtual environment and install the requried python libraries
