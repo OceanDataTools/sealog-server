@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.4.9 (2026-10-27)
+
+### Features
+
+* Added an `allowFutureEvents` server setting (also settable via `SEALOG_SERVER_ALLOW_FUTURE_EVENTS`) that controls whether events can be created or updated with a timestamp later than the current server time. Defaults to `false` (#125)
+
+### Upgrade Notes
+
+* Future-dated events are now rejected by default: `POST /events` and `PATCH /events/{id}` return `400` when `ts` is more than 5 seconds ahead of the server clock. An existing `config/server_settings.js` without the new `allowFutureEvents` key behaves as `false`. Set it to `true` (or set `SEALOG_SERVER_ALLOW_FUTURE_EVENTS=true`) to keep the previous behavior. Edits that don't change an event's `ts` are unaffected
+* The optional Python tools in `misc/` now require Python 3.11+ (previously 3.9+), because `websockets` 17 requires it. On systems whose default `python3` is older (e.g. Ubuntu 22.04, RHEL/Rocky/Alma 8 and 9), install `python3.11` and recreate the virtual environment with `python3.11 -m venv ./venv`; see `INSTALL.md`. The Node server itself is unaffected
+
+### Chores
+
+* Added a GitHub Actions workflow that publishes a GitHub Release from the matching `CHANGELOG.md` section when a version tag is pushed (#115)
+* Resolved npm security advisories in `handlebars` (critical), `shell-quote` (critical), `follow-redirects` (high), and `joi` (moderate)
+* Updated dependencies (`@hapi/hapi`, `@hapi/inert`, `@hapi/nes`, `nodemailer`, `pino-pretty`, `prettier`)
+* Updated Python requirements (`flake8`, `pylint`, `pymongo`, `pytz`, `websockets`)
+
 ## 2.4.8 (2026-10-05)
 
 ### Features
