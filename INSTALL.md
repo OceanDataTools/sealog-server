@@ -1,5 +1,18 @@
 # Installation Instructions
 
+## Quick install (install script)
+
+On a fresh AlmaLinux/Rocky Linux/RHEL 9 or 10, Debian 12 or 13, or Ubuntu 24.04 or 26.04 server, `install.sh` installs Node.js (NodeSource), MongoDB 8.0, and sealog-server into `/opt/sealog-server`, then runs it as the `sealog-server` systemd service under a dedicated `sealog` user:
+
+```
+curl -fsSL https://raw.githubusercontent.com/OceanDataTools/sealog-server/2.x/install.sh -o install.sh
+sudo bash install.sh
+```
+
+Settings are written to `/opt/sealog-server/.env` (see `.env.dist`), including a generated `SEALOG_SERVER_SECRET`. Run `sudo bash install.sh --help` for options such as `--port`, `--ref`, `--mongo-url` (use an existing database), `--with-python` (set up the venv for the `misc/` scripts) and `--open-firewall`. Re-running the script updates the checkout and dependencies without overwriting existing configuration.
+
+On x86_64, MongoDB requires a CPU with AVX; on virtual machines, make sure the host CPU model is passed through. The remainder of this document describes the manual installation.
+
 ### Prerequisites
 
  - [MongoDB](https://www.mongodb.com) >=v6.x
