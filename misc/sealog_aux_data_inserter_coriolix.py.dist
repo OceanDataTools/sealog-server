@@ -75,25 +75,25 @@ INLINE_CONFIG = '''
       round: 3
 - data_source: 'meteorologicalData'
   query_parameters:
-    - sensor_id: metsta146582
+    - sensor_id: metsta146581
       parameter: airtemperature_degreesc
-    - sensor_id: metsta146582
+    - sensor_id: metsta146581
       parameter: barometricpressure_bar
-    - sensor_id: metsta146582
+    - sensor_id: metsta146581
       parameter: relativehumidity_percent
   aux_record_lookup:
-    metsta146582__airtemperature_degreesc:
+    metsta146581__airtemperature_degreesc:
       name: 'air temp'
       uom: 'C'
       round: 2
-    metsta146582__barometricpressure_bar:
+    metsta146581__barometricpressure_bar:
       name: 'air pres'
       uom: 'mBar'
       round: 2
       modify:
         - operation:
           - multiply: 1000
-    metsta146582__relativehumidity_percent:
+    metsta146581__relativehumidity_percent:
       name: 'relHumidity'
       uom: '%'
       round: 1
