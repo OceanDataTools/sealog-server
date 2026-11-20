@@ -11,7 +11,7 @@ AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
 VERSION:    2.0
 CREATED:    2025-02-08
-REVISION:   2026-05-15
+REVISION:   2026-11-20
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2025
@@ -20,9 +20,9 @@ import sys
 import json
 import logging
 import requests
+import urllib3
 from datetime import datetime, timedelta
 from urllib.parse import quote
-from urllib3.exceptions import NewConnectionError
 
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
@@ -40,12 +40,40 @@ class SealogCORIOLIXAuxDataRecordBuilder():
       aux_record_lookup: dict keyed as "{sensor_id}__{parameter}"
     '''
 
-    def __init__(self, aux_data_config, url=None):
+    def __init__(self, aux_data_config, url=None, verify_ssl=True):
         self.url = url or CORIOLIX_URL
+        self.verify_ssl = verify_ssl
         self._query_parameters = aux_data_config['query_parameters']
         self._aux_record_lookup = aux_data_config['aux_record_lookup']
         self._data_source = aux_data_config['data_source']
         self.logger = logging.getLogger(__name__)
+
+        if not self.verify_ssl:
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+    def check_connection(self):
+        '''
+        Verify the CORIOLIX API is reachable. Returns True if it is.
+        '''
+        try:
+            response = requests.get(f'{self.url}/api/', timeout=5, verify=self.verify_ssl)
+            if response.status_code != 200:
+                logging.error("CORIOLIX API at %s returned status code: %s",
+                              self.url, response.status_code)
+                return False
+
+        except requests.exceptions.SSLError as exc:
+            logging.error("SSL certificate verification failed for %s, use -k/--insecure "
+                          "to skip verification", self.url)
+            logging.debug(str(exc))
+            return False
+
+        except requests.exceptions.RequestException as exc:
+            logging.error("Unable to connect to CORIOLIX API, verify URL: %s", self.url)
+            logging.debug(str(exc))
+            return False
+
+        return True
 
     @staticmethod
     def _build_query_range(ts):
@@ -132,27 +160,29 @@ class SealogCORIOLIXAuxDataRecordBuilder():
                                         logging.warning("test field data not in CORIOLIX query")
                                         return None
 
-                                    if 'eq' in test and coriolix_data[test['field']] == test['eq']:
+                                    field_value = coriolix_data[test['field']]
+
+                                    if 'eq' in test and field_value == test['eq']:
                                         test_result = True
                                         break
 
-                                    if 'gt' in test and coriolix_data[test['field']] > test['gt']:
+                                    if 'gt' in test and field_value > test['gt']:
                                         test_result = True
                                         break
 
-                                    if 'gte' in test and coriolix_data[test['field']] >= test['gt']:
+                                    if 'gte' in test and field_value >= test['gte']:
                                         test_result = True
                                         break
 
-                                    if 'lt' in test and coriolix_data[test['field']] < test['lt']:
+                                    if 'lt' in test and field_value < test['lt']:
                                         test_result = True
                                         break
 
-                                    if 'lte' in test and coriolix_data[test['field']] <= test['lt']:
+                                    if 'lte' in test and field_value <= test['lte']:
                                         test_result = True
                                         break
 
-                                    if 'ne' in test and coriolix_data[test['field']] != test['ne']:
+                                    if 'ne' in test and field_value != test['ne']:
                                         test_result = True
                                         break
 
@@ -202,7 +232,7 @@ class SealogCORIOLIXAuxDataRecordBuilder():
             logging.debug("Query URL: %s", url)
 
             try:
-                response = requests.get(url, timeout=2)
+                response = requests.get(url, timeout=2, verify=self.verify_ssl)
                 if response.status_code != 200:
                     logging.error("Failed to retrieve data. Status code: %s", response.status_code)
                     continue
@@ -216,14 +246,14 @@ class SealogCORIOLIXAuxDataRecordBuilder():
                     if value is not None:
                         query_results[key] = value
 
-            except NewConnectionError:
-                logging.error("CORIOLIX connection error, verify URL: %s", self.url)
-
             except json.decoder.JSONDecodeError:
                 logging.error("Unable to decode response from URL: %s", url)
                 logging.debug(response)
             except KeyError:
                 logging.error("Something went wrong processing the API response")
+            except requests.exceptions.RequestException as exc:
+                logging.error("CORIOLIX request failed, verify URL: %s", self.url)
+                logging.debug(str(exc))
 
         aux_data_record = self._build_aux_data_dict(event['id'], query_results)
         return aux_data_record
