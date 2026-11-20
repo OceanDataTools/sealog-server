@@ -45,7 +45,18 @@ class AuxDataRecordBuilder(ABC):
             self._query_fields = []
         else:
             self._query_fields = list(self._aux_record_lookup.keys())
+        self.verify_ssl = True
         self.logger = logging.getLogger(__name__)
+
+    def check_connection(self):
+        '''
+        Verify the external data source is reachable. Called once at startup.
+        Subclasses should override this if they can check their data source.
+
+        Returns:
+            bool: True if the data source is reachable
+        '''
+        return True
 
     @abstractmethod
     def open_connections(self):

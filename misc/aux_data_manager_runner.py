@@ -12,6 +12,7 @@ import os
 import re
 import sys
 import time
+import urllib3
 import websockets
 import yaml
 
@@ -231,6 +232,9 @@ def parse_aux_data_args(client_wsid):
     parser.add_argument('-l', '--lowering_id', help='lowering_id to fix aux_data for')
     parser.add_argument('-w', '--client_wsid', default=client_wsid,
                         help='Websocket ID for client (must be unique to each aux data manager)')
+    parser.add_argument('-k', '--insecure', action='store_true',
+                        help='skip SSL certificate verification for builders that make HTTPS '
+                        'requests (e.g. expired certificate)')
 
     parsed_args = parser.parse_args()
     parsed_args.verbosity = min(parsed_args.verbosity, max(LOG_LEVELS))
@@ -300,6 +304,16 @@ def run_aux_data_manager(
     aux_data_builder_list = [builder_factory(cfg) for cfg in aux_data_configs]
     aux_data_cleaner_list = [cleaner_factory(cfg) for cfg in aux_data_configs]
 
+    if parsed_args.insecure:
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        for aux_data_builder in aux_data_builder_list:
+            aux_data_builder.verify_ssl = False
+
+    # Verify the external data sources are reachable before doing anything else
+    for aux_data_builder in aux_data_builder_list:
+        if not aux_data_builder.check_connection():
+            sys.exit(1)
+
     # Dispatch actions requested on CLI
     if parsed_args.events:
         event_ids = parse_event_ids(parsed_args.events)
@@ -330,7 +344,7 @@ def run_aux_data_manager(
             for aux_data_cleaner in aux_data_cleaner_list:
                 aux_data_cleaner.open_connections()
             logging.debug("Connecting to event websocket feed...")
-            asyncio.get_event_loop().run_until_complete(
+            asyncio.run(
                 manage_aux_data_from_ws(
                     aux_data_builder_list,
                     aux_data_cleaner_list,

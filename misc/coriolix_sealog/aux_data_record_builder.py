@@ -23,7 +23,6 @@ import sys
 
 from datetime import datetime, timedelta
 from urllib.parse import quote, urlparse
-from urllib3.exceptions import NewConnectionError
 
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
@@ -41,6 +40,30 @@ class SealogCORIOLIXAuxDataRecordBuilder(AuxDataRecordBuilder):
     def __init__(self, aux_data_config, url=None):
         super().__init__(aux_data_config)
         self.url = url or CORIOLIX_URL
+
+    def check_connection(self):
+        '''
+        Verify the CORIOLIX API is reachable. Returns True if it is.
+        '''
+        try:
+            response = requests.get(f'{self.url}/api/', timeout=5, verify=self.verify_ssl)
+            if response.status_code != 200:
+                self.logger.error("CORIOLIX API at %s returned status code: %s",
+                                  self.url, response.status_code)
+                return False
+
+        except requests.exceptions.SSLError as exc:
+            self.logger.error("SSL certificate verification failed for %s, use -k/--insecure "
+                              "to skip verification", self.url)
+            self.logger.debug(str(exc))
+            return False
+
+        except requests.exceptions.RequestException as exc:
+            self.logger.error("Unable to connect to CORIOLIX API, verify URL: %s", self.url)
+            self.logger.debug(str(exc))
+            return False
+
+        return True
 
     def _build_query_range(self, ts):
         '''
@@ -107,7 +130,7 @@ class SealogCORIOLIXAuxDataRecordBuilder(AuxDataRecordBuilder):
 
             # run the query against the CORIOLIX API
             try:
-                response = requests.get(url, timeout=2)
+                response = requests.get(url, timeout=2, verify=self.verify_ssl)
                 if response.status_code != 200:
                     self.logger.error(
                         "Failed to retrieve data. Status code: %s",
@@ -126,14 +149,14 @@ class SealogCORIOLIXAuxDataRecordBuilder(AuxDataRecordBuilder):
                             if f'{measurement}__{key}' in self._query_fields}
                     }
 
-            except NewConnectionError:
-                self.logger.error("CORIOLIX connection error, verify URL: %s", self.url)
-
             except json.decoder.JSONDecodeError:
                 self.logger.error("Unable to decode response from URL: %s", url)
                 self.logger.debug(response.text)
             except KeyError:
                 self.logger.error("Something went wrong processing the API response")
+            except requests.exceptions.RequestException as exc:
+                self.logger.error("CORIOLIX request failed, verify URL: %s", self.url)
+                self.logger.debug(str(exc))
 
         aux_data_record = self._build_aux_data_dict(event['id'], query_results)
         return aux_data_record
