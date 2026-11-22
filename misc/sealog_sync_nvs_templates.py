@@ -32,9 +32,9 @@ DESCRIPTION:    Build Sealog event templates whose options are drawn from NERC
                 (event_option_vocab), so the server can attach the term IDs
                 to events created from these templates.
 
-                Only templates carrying the marker category (default "NVS")
-                are created, updated or deleted; hand-built templates are
-                never touched.
+                Only templates carrying the marker category (default "NVS",
+                matched ignoring case) are created, updated or deleted;
+                hand-built templates are never touched.
 
 USAGE:          ./sealog_sync_nvs_templates.py -c nvs_templates.example.json --dry-run
                 ./sealog_sync_nvs_templates.py -c nvs_templates.example.json
@@ -463,8 +463,11 @@ def sync(templates, marker, prune, api_server_url, headers):
     templates no longer in the config.
     '''
     existing = get_event_templates(api_server_url=api_server_url, headers=headers)
+
+    # Ignore case: the vessel client lowercases categories when they're edited
     managed = {template['event_name']: template for template in existing
-               if marker in (template.get('template_categories') or [])}
+               if marker.lower() in [category.lower()
+                                     for category in template.get('template_categories') or []]}
     unmanaged = {template['event_name'] for template in existing} - set(managed)
 
     for template in templates:
