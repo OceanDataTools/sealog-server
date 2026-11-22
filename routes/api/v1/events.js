@@ -11,6 +11,8 @@ const {
   buildEventsQuery
 } = require('../../../lib/utils');
 
+const { syncVocabAuxData } = require('../../../lib/vocab_aux_data');
+
 // allowFutureEvents is read at request time (not destructured) so it can be toggled in tests
 const ServerSettings = require('../../../config/server_settings');
 
@@ -913,8 +915,16 @@ exports.plugin = {
           _renameAndClearFields(event);
 
           const diff = (new Date().getTime() - event.ts.getTime()) / 1000;
-          if (publish && Math.abs(Math.round(diff)) < THRESHOLD || THRESHOLD === 0) {
+          const publishNew = publish && Math.abs(Math.round(diff)) < THRESHOLD || THRESHOLD === 0;
+          if (publishNew) {
             server.publish('/ws/status/newEvents', event);
+          }
+
+          try {
+            await syncVocabAuxData(server, db, { ...event, _id: result.insertedId }, publishNew);
+          }
+          catch (err) {
+            console.log('Could not record vocabulary IDs:', err);
           }
 
           return h.response({ ...result, insertedEvent: event }).code(201);
@@ -1042,6 +1052,16 @@ exports.plugin = {
           }
           else {
             server.publish('/ws/status/updateEvents', updatedEvent);
+          }
+
+          // Clients often create an event first and send its options in a
+          // later update, so keep the vocabulary IDs in step on every update
+          try {
+            const diff = (new Date().getTime() - updatedEvent.ts.getTime()) / 1000;
+            await syncVocabAuxData(server, db, { ...updatedEvent, _id: query._id }, Math.abs(Math.round(diff)) < THRESHOLD || THRESHOLD === 0);
+          }
+          catch (err) {
+            console.log('Could not record vocabulary IDs:', err);
           }
 
           return h.response().code(204);
