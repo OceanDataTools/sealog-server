@@ -334,4 +334,133 @@ describe('Event Templates API', () => {
       expect(res.statusCode).to.equal(403);
     });
   });
+  // ───────────────────────────────────────────────
+  // event_option_vocab
+  // ───────────────────────────────────────────────
+  describe('event_option_vocab', () => {
+    const actionOption = (vocab) => ({
+      event_option_name: 'Action',
+      event_option_type: 'dropdown',
+      event_option_values: ['InWater', 'OnBottom'],
+      event_option_allow_freeform: false,
+      event_option_required: true,
+      ...(vocab && { event_option_vocab: vocab })
+    });
+
+    const actionVocab = {
+      collection: 'EL1',
+      version: '2',
+      terms: [
+        { value: 'InWater', notation: 'SDN:EL1::act16', uri: 'http://vocab.nerc.ac.uk/collection/EL1/current/act16/' },
+        { value: 'OnBottom', notation: 'SDN:EL1::act7' }
+      ]
+    };
+
+    const createTemplate = (event_options) => {
+
+      return server.inject({
+        method: 'POST',
+        url: '/sealog-server/api/v1/event_templates',
+        headers: { Authorization: 'Bearer ' + adminJwt },
+        payload: {
+          event_name: 'Vocab Template',
+          event_value: 'VOCAB',
+          event_free_text_required: false,
+          system_template: false,
+          event_options
+        }
+      });
+    };
+
+    it('stores the vocabulary and returns it from GET', async () => {
+      const res = await createTemplate([actionOption(actionVocab)]);
+      expect(res.statusCode).to.equal(201);
+
+      const get = await server.inject({
+        method: 'GET',
+        url: `/sealog-server/api/v1/event_templates/${res.result.insertedId}`,
+        headers: { Authorization: 'Bearer ' + adminJwt }
+      });
+
+      expect(get.statusCode).to.equal(200);
+      expect(get.result.event_options[0].event_option_vocab).to.equal(actionVocab);
+    });
+
+    it('still accepts options without a vocabulary', async () => {
+      const res = await createTemplate([actionOption()]);
+      expect(res.statusCode).to.equal(201);
+
+      const stored = await db.collection(eventTemplatesTable).findOne({ _id: res.result.insertedId });
+      expect(stored.event_options[0].event_option_vocab).to.not.exist();
+    });
+
+    it('accepts a term matching a static text default value', async () => {
+      const res = await createTemplate([{
+        event_option_name: 'Instrument',
+        event_option_type: 'static text',
+        event_option_default_value: 'CTD',
+        event_option_values: [],
+        event_option_allow_freeform: false,
+        event_option_required: false,
+        event_option_vocab: { collection: 'L22', terms: [{ value: 'CTD', notation: 'SDN:L22::TOOL0058' }] }
+      }]);
+      expect(res.statusCode).to.equal(201);
+
+      const stored = await db.collection(eventTemplatesTable).findOne({ _id: res.result.insertedId });
+      expect(stored.event_options[0].event_option_vocab.terms).to.equal([{ value: 'CTD', notation: 'SDN:L22::TOOL0058' }]);
+    });
+
+    it('rejects a term without a notation', async () => {
+      const res = await createTemplate([actionOption({ collection: 'EL1', terms: [{ value: 'InWater' }] })]);
+      expect(res.statusCode).to.equal(400);
+    });
+
+    it('rejects a vocabulary without a collection', async () => {
+      const res = await createTemplate([actionOption({ terms: [{ value: 'InWater', notation: 'SDN:EL1::act16' }] })]);
+      expect(res.statusCode).to.equal(400);
+    });
+
+    it('rejects two terms for the same value', async () => {
+      const res = await createTemplate([actionOption({
+        collection: 'EL1',
+        terms: [{ value: 'InWater', notation: 'SDN:EL1::act16' }, { value: 'InWater', notation: 'SDN:EL1::act7' }]
+      })]);
+      expect(res.statusCode).to.equal(400);
+    });
+
+    it('drops terms for values the option does not offer', async () => {
+      const res = await createTemplate([actionOption({
+        ...actionVocab,
+        terms: [...actionVocab.terms, { value: 'OnDeck', notation: 'SDN:EL1::act9' }]
+      })]);
+      expect(res.statusCode).to.equal(201);
+
+      const stored = await db.collection(eventTemplatesTable).findOne({ _id: res.result.insertedId });
+      expect(stored.event_options[0].event_option_vocab.terms.map((term) => term.value)).to.equal(['InWater', 'OnBottom']);
+    });
+
+    it('drops stale terms when PATCH removes a value', async () => {
+      const res = await createTemplate([actionOption(actionVocab)]);
+
+      // A client unaware of vocabularies sends the old vocab back with fewer values
+      const patch = await server.inject({
+        method: 'PATCH',
+        url: `/sealog-server/api/v1/event_templates/${res.result.insertedId}`,
+        headers: { Authorization: 'Bearer ' + adminJwt },
+        payload: { event_options: [{ ...actionOption(actionVocab), event_option_values: ['InWater'] }] }
+      });
+      expect(patch.statusCode).to.equal(204);
+
+      const stored = await db.collection(eventTemplatesTable).findOne({ _id: res.result.insertedId });
+      expect(stored.event_options[0].event_option_vocab.terms).to.equal([actionVocab.terms[0]]);
+    });
+
+    it('removes the vocabulary when no terms are left', async () => {
+      const res = await createTemplate([{ ...actionOption(actionVocab), event_option_values: ['Recovered'] }]);
+      expect(res.statusCode).to.equal(201);
+
+      const stored = await db.collection(eventTemplatesTable).findOne({ _id: res.result.insertedId });
+      expect(stored.event_options[0].event_option_vocab).to.not.exist();
+    });
+  });
 });
