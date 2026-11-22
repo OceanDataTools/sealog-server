@@ -2,8 +2,15 @@ const Boom = require('@hapi/boom');
 
 const {
   authorizationHeader,
+  localTermCreatePayload,
+  localTermDeleteResponse,
+  localTermUpdatePayload,
+  termVisibilityPayload,
   vocabulariesResponse,
   vocabularyBundle,
+  vocabularyCreatePayload,
+  vocabularyResponse,
+  vocabularyVisibility,
   vocabularyImportResponse,
   vocabularyParam,
   vocabularyTermParam,
@@ -14,9 +21,19 @@ const {
 } = require('../../../lib/validations');
 
 const {
+  LOCAL_SOURCE,
+  addLocalTerm,
   applyVocabulary,
+  createLocalVocabulary,
   exportBundle,
   fetchNvsCollection,
+  isHidden,
+  isLocal,
+  removeLocalTerm,
+  setTermHidden,
+  setVisibility,
+  visibilityOf,
+  visibleTermsQuery,
   vocabulariesTable,
   vocabularyCollections,
   vocabularyTermsTable
@@ -26,7 +43,7 @@ const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const vocabularyError = (err) => {
 
-  if (err.code === 'VOCABULARY_BUSY') {
+  if (['VOCABULARY_BUSY', 'VOCABULARY_EXISTS', 'TERM_EXISTS'].includes(err.code)) {
     return Boom.conflict(err.message);
   }
 
@@ -40,6 +57,25 @@ exports.plugin = {
   register: (server, options) => {
 
     server.subscription('/ws/status/updateVocabularies');
+
+    const editScope = ['admin', 'write_event_templates'];
+
+    // The vocabulary, or a Boom error if it isn't cached (or isn't local when
+    // local is required)
+    const findVocabulary = async (db, collection, local = false) => {
+
+      const vocabulary = await db.collection(vocabulariesTable).findOne({ collection }, { projection: { _id: 0 } });
+
+      if (!vocabulary) {
+        return { error: Boom.notFound('No vocabulary found for collection: ' + collection) };
+      }
+
+      if (local && !isLocal(vocabulary)) {
+        return { error: Boom.conflict(`${collection} is a downloaded vocabulary (source: ${vocabulary.source}); its terms can't be edited, only hidden with PUT /vocabularies/${collection}/visibility`) };
+      }
+
+      return { vocabulary };
+    };
 
     const publishUpdate = (report) => {
 
@@ -60,6 +96,14 @@ exports.plugin = {
 
         try {
           const results = await db.collection(vocabulariesTable).find({}, { projection: { _id: 0 } }).sort({ collection: 1 }).toArray();
+
+          for (const vocabulary of results) {
+            const visibility = visibilityOf(vocabulary);
+            vocabulary.visibility_mode = visibility.mode;
+            vocabulary.visible_count = await db.collection(vocabularyTermsTable).countDocuments({ collection: vocabulary.collection, ...visibleTermsQuery(visibility) });
+            delete vocabulary.visibility;
+          }
+
           return h.response(results).code(200);
         }
         catch (err) {
@@ -102,10 +146,15 @@ exports.plugin = {
             return Boom.notFound('No vocabulary found for collection: ' + collection);
           }
 
+          const visibility = visibilityOf(vocabulary);
           const query = { collection };
 
           if (!request.query.include_deprecated) {
             query.deprecated = false;
+          }
+
+          if (!request.query.include_hidden) {
+            Object.assign(query, visibleTermsQuery(visibility));
           }
 
           if (request.query.broader) {
@@ -130,7 +179,13 @@ exports.plugin = {
             cursor = cursor.limit(request.query.limit);
           }
 
-          return h.response(await cursor.toArray()).code(200);
+          const terms = await cursor.toArray();
+          terms.forEach((term) => {
+
+            term.hidden = isHidden(visibility, term.id);
+          });
+
+          return h.response(terms).code(200);
         }
         catch (err) {
           console.log(err);
@@ -156,7 +211,8 @@ exports.plugin = {
           <p>Available to: <strong>all users</strong></p>\
           <p><strong>q</strong> matches part of the label, alternative label, ID or notation (case-insensitive). \
           <strong>broader</strong> takes a notation, e.g. SDN:L05::130 for the L22 devices in that L05 category. \
-          Deprecated terms are left out unless <strong>include_deprecated=true</strong>. \
+          Deprecated terms are left out unless <strong>include_deprecated=true</strong>, \
+          and terms hidden on this server unless <strong>include_hidden=true</strong>. \
           An empty array means the vocabulary exists but nothing matched.</p>',
         tags: ['vocabularies','api']
       }
@@ -178,6 +234,9 @@ exports.plugin = {
           if (!result) {
             return Boom.notFound(`No term found for ${request.params.collection}::${request.params.id}`);
           }
+
+          const vocabulary = await db.collection(vocabulariesTable).findOne({ collection: request.params.collection });
+          result.hidden = Boolean(vocabulary) && isHidden(visibilityOf(vocabulary), result.id);
 
           return h.response(result).code(200);
         }
@@ -305,7 +364,8 @@ exports.plugin = {
 
         try {
           for (const vocabulary of request.payload.vocabularies) {
-            const report = await applyVocabulary(db, vocabulary, 'import');
+            // A local vocabulary moved by file stays editable on this server
+            const report = await applyVocabulary(db, vocabulary, vocabulary.source === LOCAL_SOURCE ? LOCAL_SOURCE : 'import');
             publishUpdate(report);
             reports.push(report);
           }
@@ -342,6 +402,333 @@ exports.plugin = {
           <p>Available to: <strong>admin</strong> or <strong>template_manager</strong></p>\
           <p>Takes a bundle from GET /vocabularies/export (gzip request bodies are accepted). \
           Each vocabulary in it replaces the cached copy; returns one change report per vocabulary.</p>',
+        tags: ['vocabularies','api']
+      }
+    });
+
+    server.route({
+      method: 'GET',
+      path: '/vocabularies/{collection}/visibility',
+      async handler(request, h) {
+
+        const { vocabulary, error } = await findVocabulary(request.mongo.db, request.params.collection);
+        return error || h.response(visibilityOf(vocabulary)).code(200);
+      },
+      config: {
+        auth: {
+          strategy: 'jwt'
+        },
+        validate: {
+          headers: authorizationHeader,
+          params: vocabularyParam
+        },
+        response: {
+          status: {
+            200: vocabularyVisibility
+          }
+        },
+        description: 'Return which terms of a vocabulary are shown on this server',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>all users</strong></p>',
+        tags: ['vocabularies','api']
+      }
+    });
+
+    server.route({
+      method: 'PUT',
+      path: '/vocabularies/{collection}/visibility',
+      async handler(request, h) {
+
+        const db = request.mongo.db;
+        const { collection } = request.params;
+
+        try {
+          const { error } = await findVocabulary(db, collection);
+          if (error) {
+            return error;
+          }
+
+          const known = await db.collection(vocabularyTermsTable).distinct('id', { collection, id: { $in: request.payload.terms } });
+          const unknown = request.payload.terms.filter((id) => !known.includes(id));
+          if (unknown.length) {
+            return Boom.badRequest(`Unknown ${collection} terms: ${unknown.slice(0, 10).join(', ')}${unknown.length > 10 ? `, … (${unknown.length} in all)` : ''}`);
+          }
+
+          const visibility = await setVisibility(db, collection, request.payload);
+          server.publish('/ws/status/updateVocabularies', { collection, visibility_mode: visibility.mode });
+          return h.response(visibility).code(200);
+        }
+        catch (err) {
+          return vocabularyError(err);
+        }
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: editScope
+        },
+        validate: {
+          headers: authorizationHeader,
+          params: vocabularyParam,
+          payload: vocabularyVisibility,
+          failAction: (request, h, err) => {
+
+            throw Boom.badRequest(err.message);
+          }
+        },
+        response: {
+          status: {
+            200: vocabularyVisibility
+          }
+        },
+        description: 'Choose which terms of a vocabulary are shown on this server',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong> or <strong>template_manager</strong></p>\
+          <p><strong>hide_listed</strong>: every term is shown except the listed ones. \
+          <strong>show_only_listed</strong>: only the listed terms are shown, and terms added by later refreshes stay hidden until listed. \
+          Visibility is kept across refreshes and imports and isn\'t exported.</p>',
+        tags: ['vocabularies','api']
+      }
+    });
+
+    server.route({
+      method: 'PATCH',
+      path: '/vocabularies/{collection}/terms/{id}/visibility',
+      async handler(request, h) {
+
+        const db = request.mongo.db;
+        const { collection, id } = request.params;
+
+        try {
+          const { vocabulary, error } = await findVocabulary(db, collection);
+          if (error) {
+            return error;
+          }
+
+          if (!await db.collection(vocabularyTermsTable).countDocuments({ collection, id })) {
+            return Boom.notFound(`No term found for ${collection}::${id}`);
+          }
+
+          const visibility = await setTermHidden(db, vocabulary, id, request.payload.hidden);
+          server.publish('/ws/status/updateVocabularies', { collection, visibility_mode: visibility.mode });
+          return h.response(visibility).code(200);
+        }
+        catch (err) {
+          return vocabularyError(err);
+        }
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: editScope
+        },
+        validate: {
+          headers: authorizationHeader,
+          params: vocabularyTermParam,
+          payload: termVisibilityPayload
+        },
+        response: {
+          status: {
+            200: vocabularyVisibility
+          }
+        },
+        description: 'Show or hide one vocabulary term on this server',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong> or <strong>template_manager</strong></p>',
+        tags: ['vocabularies','api']
+      }
+    });
+
+    server.route({
+      method: 'POST',
+      path: '/vocabularies',
+      async handler(request, h) {
+
+        const { collection } = request.payload;
+
+        if (vocabularyCollections.includes(collection)) {
+          return Boom.badRequest(`${collection} is one of the configured NVS collections`);
+        }
+
+        try {
+          const vocabulary = await createLocalVocabulary(request.mongo.db, request.payload);
+          server.publish('/ws/status/updateVocabularies', { collection, source: LOCAL_SOURCE, term_count: 0 });
+          return h.response(vocabulary).code(201);
+        }
+        catch (err) {
+          return vocabularyError(err);
+        }
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: editScope
+        },
+        validate: {
+          headers: authorizationHeader,
+          payload: vocabularyCreatePayload,
+          failAction: (request, h, err) => {
+
+            throw Boom.badRequest(err.message);
+          }
+        },
+        response: {
+          status: {
+            201: vocabularyResponse
+          }
+        },
+        description: 'Create a local vocabulary',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong> or <strong>template_manager</strong></p>\
+          <p>Local vocabularies hold terms this server defines, e.g. vessel-specific equipment that NVS doesn\'t list. \
+          Their terms get notations like PREFIX:CODE::ID; <strong>prefix</strong> defaults to the server\'s localVocabularyPrefix setting.</p>',
+        tags: ['vocabularies','api']
+      }
+    });
+
+    server.route({
+      method: 'POST',
+      path: '/vocabularies/{collection}/terms',
+      async handler(request, h) {
+
+        const db = request.mongo.db;
+
+        try {
+          const { vocabulary, error } = await findVocabulary(db, request.params.collection, true);
+          if (error) {
+            return error;
+          }
+
+          const term = await addLocalTerm(db, vocabulary, request.payload);
+          server.publish('/ws/status/updateVocabularies', { collection: vocabulary.collection, source: LOCAL_SOURCE });
+          return h.response(term).code(201);
+        }
+        catch (err) {
+          return vocabularyError(err);
+        }
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: editScope
+        },
+        validate: {
+          headers: authorizationHeader,
+          params: vocabularyParam,
+          payload: localTermCreatePayload,
+          failAction: (request, h, err) => {
+
+            throw Boom.badRequest(err.message);
+          }
+        },
+        response: {
+          status: {
+            201: vocabularyTermResponse
+          }
+        },
+        description: 'Add a term to a local vocabulary',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong> or <strong>template_manager</strong></p>\
+          <p><strong>id</strong> (letters, digits, - and _) can\'t be changed later.</p>',
+        tags: ['vocabularies','api']
+      }
+    });
+
+    server.route({
+      method: 'PATCH',
+      path: '/vocabularies/{collection}/terms/{id}',
+      async handler(request, h) {
+
+        const db = request.mongo.db;
+        const { collection, id } = request.params;
+
+        try {
+          const { error } = await findVocabulary(db, collection, true);
+          if (error) {
+            return error;
+          }
+
+          const result = await db.collection(vocabularyTermsTable).updateOne({ collection, id }, { $set: request.payload });
+          if (!result.matchedCount) {
+            return Boom.notFound(`No term found for ${collection}::${id}`);
+          }
+
+          server.publish('/ws/status/updateVocabularies', { collection, source: LOCAL_SOURCE });
+          return h.response().code(204);
+        }
+        catch (err) {
+          return vocabularyError(err);
+        }
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: editScope
+        },
+        validate: {
+          headers: authorizationHeader,
+          params: vocabularyTermParam,
+          payload: localTermUpdatePayload,
+          failAction: (request, h, err) => {
+
+            throw Boom.badRequest(err.message);
+          }
+        },
+        response: {
+          status: {}
+        },
+        description: 'Update a term in a local vocabulary',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong> or <strong>template_manager</strong></p>',
+        tags: ['vocabularies','api']
+      }
+    });
+
+    server.route({
+      method: 'DELETE',
+      path: '/vocabularies/{collection}/terms/{id}',
+      async handler(request, h) {
+
+        const db = request.mongo.db;
+        const { collection, id } = request.params;
+
+        try {
+          const { vocabulary, error } = await findVocabulary(db, collection, true);
+          if (error) {
+            return error;
+          }
+
+          const term = await db.collection(vocabularyTermsTable).findOne({ collection, id });
+          if (!term) {
+            return Boom.notFound(`No term found for ${collection}::${id}`);
+          }
+
+          const action = await removeLocalTerm(db, vocabulary, term);
+          server.publish('/ws/status/updateVocabularies', { collection, source: LOCAL_SOURCE });
+          return h.response({ id, action }).code(200);
+        }
+        catch (err) {
+          return vocabularyError(err);
+        }
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: editScope
+        },
+        validate: {
+          headers: authorizationHeader,
+          params: vocabularyTermParam
+        },
+        response: {
+          status: {
+            200: localTermDeleteResponse
+          }
+        },
+        description: 'Delete a term from a local vocabulary',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong> or <strong>template_manager</strong></p>\
+          <p>A term recorded on events is marked deprecated instead (<strong>action: deprecated</strong>) so those events still resolve.</p>',
         tags: ['vocabularies','api']
       }
     });

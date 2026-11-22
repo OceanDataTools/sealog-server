@@ -8,7 +8,7 @@ const { init } = require('../lib/server');
 const Jwt = require('jsonwebtoken');
 const { ObjectId } = require('mongodb');
 const SECRET = require('../config/secret');
-const { usersTable, eventTemplatesTable } = require('../config/db_constants');
+const { usersTable, eventTemplatesTable, eventAuxDataTable } = require('../config/db_constants');
 const {
   applyVocabulary,
   loadSeedBundle,
@@ -118,6 +118,7 @@ describe('Vocabularies API', () => {
     await db.collection(eventTemplatesTable).deleteMany({});
     await db.collection(vocabulariesTable).deleteMany({});
     await db.collection(vocabularyTermsTable).deleteMany({});
+    await db.collection(eventAuxDataTable).deleteMany({ data_source: 'vocab' });
     await db.collection(usersTable).insertMany(users);
     await applyVocabulary(db, parseNvsCollection('EL1', el1Doc), 'nvs');
     await applyVocabulary(db, l22, 'import');
@@ -403,6 +404,218 @@ describe('Vocabularies API', () => {
     it('is admin only', async () => {
       const res = await request('DELETE', '/vocabularies/L22', templateManagerJwt);
       expect(res.statusCode).to.equal(403);
+    });
+  });
+
+  describe('visibility', () => {
+    const terms = async (url) => (await request('GET', url, watcherJwt)).result.map((term) => term.id);
+
+    it('shows every term by default', async () => {
+      const res = await request('GET', '/vocabularies', watcherJwt);
+      const el1 = res.result.find((vocabulary) => vocabulary.collection === 'EL1');
+
+      expect(el1).to.include({ visibility_mode: 'hide_listed', visible_count: 3 });
+      expect((await request('GET', '/vocabularies/EL1/visibility', watcherJwt)).result).to.equal({ mode: 'hide_listed', terms: [] });
+    });
+
+    it('hides the listed terms', async () => {
+      const res = await request('PUT', '/vocabularies/EL1/visibility', templateManagerJwt, { mode: 'hide_listed', terms: ['act1'] });
+      expect(res.statusCode).to.equal(200);
+
+      expect(await terms('/vocabularies/EL1/terms')).to.equal(['act16', 'act7']);
+
+      const all = (await request('GET', '/vocabularies/EL1/terms?include_hidden=true', watcherJwt)).result;
+      expect(all.map((term) => [term.id, term.hidden])).to.equal([['act16', false], ['act7', false], ['act1', true]]);
+
+      const hidden = await request('GET', '/vocabularies/EL1/terms/act1', watcherJwt);
+      expect(hidden.statusCode).to.equal(200);
+      expect(hidden.result.hidden).to.be.true();
+
+      const list = await request('GET', '/vocabularies', watcherJwt);
+      expect(list.result.find((vocabulary) => vocabulary.collection === 'EL1').visible_count).to.equal(2);
+    });
+
+    it('shows only the listed terms, and keeps new terms hidden after a refresh', async () => {
+      await request('PUT', '/vocabularies/L22/visibility', adminJwt, { mode: 'show_only_listed', terms: ['TOOL0058'] });
+      expect(await terms('/vocabularies/L22/terms')).to.equal(['TOOL0058']);
+
+      await applyVocabulary(db, { ...l22, terms: [...l22.terms, { ...l22.terms[0], id: 'TOOL9999', notation: 'SDN:L22::TOOL9999', prefLabel: 'New CTD' }] }, 'nvs');
+
+      expect(await terms('/vocabularies/L22/terms')).to.equal(['TOOL0058']);
+      expect((await request('GET', '/vocabularies/L22/visibility', watcherJwt)).result).to.equal({ mode: 'show_only_listed', terms: ['TOOL0058'] });
+    });
+
+    it('shows and hides single terms in either mode', async () => {
+      await request('PUT', '/vocabularies/L22/visibility', adminJwt, { mode: 'show_only_listed', terms: ['TOOL0058'] });
+
+      let res = await request('PATCH', '/vocabularies/L22/terms/NETT0028/visibility', templateManagerJwt, { hidden: false });
+      expect(res.result).to.equal({ mode: 'show_only_listed', terms: ['NETT0028', 'TOOL0058'] });
+
+      res = await request('PATCH', '/vocabularies/L22/terms/TOOL0058/visibility', templateManagerJwt, { hidden: true });
+      expect(res.result).to.equal({ mode: 'show_only_listed', terms: ['NETT0028'] });
+
+      await request('PUT', '/vocabularies/EL1/visibility', adminJwt, { mode: 'hide_listed', terms: [] });
+      res = await request('PATCH', '/vocabularies/EL1/terms/act7/visibility', templateManagerJwt, { hidden: true });
+      expect(res.result).to.equal({ mode: 'hide_listed', terms: ['act7'] });
+    });
+
+    it('rejects unknown terms', async () => {
+      const res = await request('PUT', '/vocabularies/L22/visibility', adminJwt, { mode: 'show_only_listed', terms: ['TOOL0058', 'NOPE'] });
+
+      expect(res.statusCode).to.equal(400);
+      expect(res.result.message).to.contain('NOPE');
+      expect((await request('PATCH', '/vocabularies/L22/terms/NOPE/visibility', adminJwt, { hidden: true })).statusCode).to.equal(404);
+    });
+
+    it('is not exported, and an import does not change it', async () => {
+      await request('PUT', '/vocabularies/EL1/visibility', adminJwt, { mode: 'hide_listed', terms: ['act1'] });
+
+      const exported = await request('GET', '/vocabularies/export', adminJwt);
+      expect(exported.result.vocabularies[0]).to.not.include('visibility');
+
+      await request('POST', '/vocabularies/import', adminJwt, exported.result);
+      expect((await request('GET', '/vocabularies/EL1/visibility', watcherJwt)).result.terms).to.equal(['act1']);
+    });
+
+    it('returns 403 for event_logger', async () => {
+      expect((await request('PUT', '/vocabularies/EL1/visibility', loggerJwt, { mode: 'hide_listed', terms: [] })).statusCode).to.equal(403);
+      expect((await request('PATCH', '/vocabularies/EL1/terms/act1/visibility', loggerJwt, { hidden: true })).statusCode).to.equal(403);
+    });
+  });
+
+  describe('local vocabularies', () => {
+    const createLocal = (payload = { collection: 'SKQEQ', title: 'Sikuliaq equipment', prefix: 'SKQ' }) => request('POST', '/vocabularies', templateManagerJwt, payload);
+    const addTerm = (payload, collection = 'SKQEQ') => request('POST', `/vocabularies/${collection}/terms`, templateManagerJwt, payload);
+
+    it('creates a local vocabulary with the default prefix', async () => {
+      const res = await createLocal({ collection: 'LOCALEQ', title: 'Local equipment' });
+
+      expect(res.statusCode).to.equal(201);
+      expect(res.result).to.include({ collection: 'LOCALEQ', source: 'local', prefix: 'CV', term_count: 0 });
+    });
+
+    it('adds terms with notations under the vocabulary prefix', async () => {
+      await createLocal();
+
+      const res = await addTerm({ id: 'ROV-ODYSSEY', prefLabel: 'ROV Odyssey', broader: ['SDN:L05::22'] });
+
+      expect(res.statusCode).to.equal(201);
+      expect(res.result).to.include({ collection: 'SKQEQ', id: 'ROV-ODYSSEY', notation: 'SKQ:SKQEQ::ROV-ODYSSEY', prefLabel: 'ROV Odyssey', deprecated: false, broader: ['SDN:L05::22'] });
+      expect((await request('GET', '/vocabularies/SKQEQ/terms', watcherJwt)).result.map((term) => term.notation)).to.equal(['SKQ:SKQEQ::ROV-ODYSSEY']);
+      expect((await db.collection(vocabulariesTable).findOne({ collection: 'SKQEQ' })).term_count).to.equal(1);
+    });
+
+    it('rejects duplicate and invalid codes and term IDs', async () => {
+      await createLocal();
+
+      expect((await createLocal()).statusCode).to.equal(409);
+      expect((await createLocal({ collection: 'L22', title: 'Not NVS' })).statusCode).to.equal(400);
+      expect((await createLocal({ collection: 'skq', title: 'Lowercase' })).statusCode).to.equal(400);
+
+      await addTerm({ id: 'CTD1', prefLabel: 'CTD 1' });
+      expect((await addTerm({ id: 'CTD1', prefLabel: 'Again' })).statusCode).to.equal(409);
+      expect((await addTerm({ id: 'CTD 2', prefLabel: 'Space' })).statusCode).to.equal(400);
+    });
+
+    it('updates labels but not IDs', async () => {
+      await createLocal();
+      await addTerm({ id: 'CTD1', prefLabel: 'CTD 1' });
+
+      const res = await request('PATCH', '/vocabularies/SKQEQ/terms/CTD1', templateManagerJwt, { prefLabel: 'Main CTD', definition: 'The rosette CTD' });
+      expect(res.statusCode).to.equal(204);
+      expect((await request('GET', '/vocabularies/SKQEQ/terms/CTD1', watcherJwt)).result).to.include({ prefLabel: 'Main CTD', definition: 'The rosette CTD', notation: 'SKQ:SKQEQ::CTD1' });
+
+      expect((await request('PATCH', '/vocabularies/SKQEQ/terms/CTD1', templateManagerJwt, { id: 'CTD2' })).statusCode).to.equal(400);
+      expect((await request('PATCH', '/vocabularies/SKQEQ/terms/NOPE', templateManagerJwt, { prefLabel: 'x' })).statusCode).to.equal(404);
+    });
+
+    it('deletes unused terms and deprecates terms recorded on events', async () => {
+      await createLocal();
+      await addTerm({ id: 'CTD1', prefLabel: 'CTD 1' });
+      await addTerm({ id: 'ROV-ODYSSEY', prefLabel: 'ROV Odyssey' });
+      await db.collection(eventAuxDataTable).insertOne({ event_id: new ObjectId(), data_source: 'vocab', data_array: [{ data_name: 'instrument', data_value: 'SKQ:SKQEQ::ROV-ODYSSEY', data_uom: 'notation' }] });
+
+      let res = await request('DELETE', '/vocabularies/SKQEQ/terms/CTD1', templateManagerJwt);
+      expect(res.result).to.equal({ id: 'CTD1', action: 'deleted' });
+
+      res = await request('DELETE', '/vocabularies/SKQEQ/terms/ROV-ODYSSEY', templateManagerJwt);
+      expect(res.result).to.equal({ id: 'ROV-ODYSSEY', action: 'deprecated' });
+
+      const remaining = await db.collection(vocabularyTermsTable).find({ collection: 'SKQEQ' }).toArray();
+      expect(remaining.map((term) => [term.id, term.deprecated])).to.equal([['ROV-ODYSSEY', true]]);
+    });
+
+    it('refuses term edits on downloaded vocabularies', async () => {
+      const res = await addTerm({ id: 'NEW', prefLabel: 'New' }, 'L22');
+
+      expect(res.statusCode).to.equal(409);
+      expect(res.result.message).to.contain('visibility');
+      expect((await request('PATCH', '/vocabularies/L22/terms/TOOL0058', adminJwt, { prefLabel: 'x' })).statusCode).to.equal(409);
+      expect((await request('DELETE', '/vocabularies/L22/terms/TOOL0058', adminJwt)).statusCode).to.equal(409);
+    });
+
+    it('stays local and keeps its prefix when moved by export and import', async () => {
+      await createLocal();
+      await addTerm({ id: 'CTD1', prefLabel: 'CTD 1' });
+
+      const exported = await request('GET', '/vocabularies/export', adminJwt);
+      await db.collection(vocabulariesTable).deleteOne({ collection: 'SKQEQ' });
+      await db.collection(vocabularyTermsTable).deleteMany({ collection: 'SKQEQ' });
+
+      expect((await request('POST', '/vocabularies/import', adminJwt, exported.result)).statusCode).to.equal(200);
+      expect(await db.collection(vocabulariesTable).findOne({ collection: 'SKQEQ' })).to.include({ source: 'local', prefix: 'SKQ', term_count: 1 });
+      expect((await addTerm({ id: 'CTD2', prefLabel: 'CTD 2' })).result.notation).to.equal('SKQ:SKQEQ::CTD2');
+    });
+
+    it('cannot be refreshed', async () => {
+      await createLocal();
+      expect((await request('POST', '/vocabularies/SKQEQ/refresh', adminJwt)).statusCode).to.equal(400);
+    });
+
+    it('returns 403 for event_logger', async () => {
+      expect((await request('POST', '/vocabularies', loggerJwt, { collection: 'SKQEQ', title: 'x' })).statusCode).to.equal(403);
+      await createLocal();
+      expect((await request('POST', '/vocabularies/SKQEQ/terms', loggerJwt, { id: 'A', prefLabel: 'A' })).statusCode).to.equal(403);
+    });
+  });
+
+  describe('deprecate instead of delete', () => {
+    const recordOnEvent = (notation) => db.collection(eventAuxDataTable).insertOne({ event_id: new ObjectId(), data_source: 'vocab', data_array: [{ data_name: 'action', data_value: notation, data_uom: 'notation' }] });
+    const refreshWith = (doc) => {
+
+      stubFetch({ status: 200, body: doc });
+      return request('POST', '/vocabularies/EL1/refresh', adminJwt);
+    };
+
+    it('keeps a removed term that is recorded on events, deprecated', async () => {
+      await recordOnEvent('SDN:EL1::act1');
+      const withoutStart = nvsDoc('2', [{ id: 'act16', label: 'InWater' }, { id: 'act7', label: 'OnBottom' }]);
+
+      let res = await refreshWith(withoutStart);
+      expect(res.result).to.include({ removed: [], retained: ['SDN:EL1::act1'], term_count: 3 });
+      expect(await db.collection(vocabularyTermsTable).findOne({ collection: 'EL1', id: 'act1' })).to.include({ deprecated: true, source_removed: true });
+
+      // Not reported again by the next refresh
+      res = await refreshWith(withoutStart);
+      expect(res.result).to.include({ removed: [], retained: [] });
+
+      // Restored if the source brings it back
+      res = await refreshWith(el1Doc);
+      expect(await db.collection(vocabularyTermsTable).findOne({ collection: 'EL1', id: 'act1' })).to.include({ deprecated: false }).and.to.not.include('source_removed');
+    });
+
+    it('still deletes removed terms that no event uses', async () => {
+      const res = await refreshWith(nvsDoc('2', [{ id: 'act16', label: 'InWater' }, { id: 'act7', label: 'OnBottom' }]));
+
+      expect(res.result).to.include({ removed: ['SDN:EL1::act1'], retained: [], term_count: 2 });
+    });
+
+    it('applies to imports too', async () => {
+      await recordOnEvent('SDN:L22::NETT0028');
+      const bundle = { format: 'sealog-vocabularies', format_version: 1, vocabularies: [{ ...l22, terms: l22.terms.filter((term) => term.id !== 'NETT0028') }] };
+
+      const res = await request('POST', '/vocabularies/import', adminJwt, bundle);
+      expect(res.result[0]).to.include({ removed: [], retained: ['SDN:L22::NETT0028'] });
     });
   });
 

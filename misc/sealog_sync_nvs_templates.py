@@ -23,6 +23,9 @@ DESCRIPTION:    Build Sealog event templates whose options are drawn from NERC
                 Terms are referenced as COLL::ID (e.g. "L22::TOOL0058"), SDN
                 notation ("SDN:L22::TOOL0058") or by ID or label within the
                 option's default collection (e.g. "InWater" for actions).
+                Instrument and platform options also accept terms from local
+                vocabularies on the server (e.g. "SKQEQ::ROV-ODYSSEY").
+                Terms hidden on the server can't be used.
 
                 Every option records which terms its values came from
                 (event_option_vocab), so the server can attach the term IDs
@@ -45,7 +48,7 @@ AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
 VERSION:    1.0
 CREATED:    2026-11-22
-REVISION:   2026-11-22
+REVISION:   2026-11-23
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2025
@@ -189,8 +192,8 @@ def load_nvs_vocabs(collections, cache_path, offline=False):
 
     missing = sorted(set(collections) - set(cache))
     if missing:
-        sys.exit(f'ERROR: no copy of {", ".join(missing)} '
-                 f'(NVS unreachable and not in {cache_path})')
+        sys.exit(f'ERROR: no copy of {", ".join(missing)} (NVS unreachable and not in '
+                 f'{cache_path}; local vocabularies need --source server)')
 
     if changed:
         with open(cache_path, 'w', encoding='utf-8') as cache_file:
@@ -212,8 +215,8 @@ def load_server_vocabs(collections, api_server_url, headers):
 
     vocabs = {}
     for collection in collections:
-        terms = get_vocabulary_terms(collection, api_server_url=api_server_url,
-                                     headers=headers) or []
+        terms = get_vocabulary_terms(collection, include_hidden=True,
+                                     api_server_url=api_server_url, headers=headers) or []
         vocabs[collection] = {**cached[collection],
                               'concepts': {term['id']: term for term in terms}}
     return vocabs
@@ -277,13 +280,17 @@ def option_vocab(concepts, values, vocabs):
     '''
     event_option_vocab for an option built from concepts.
     '''
-    collections = sorted({concept['notation'].split('::')[0].replace('SDN:', '')
+    # SDN:L22::TOOL0058 -> L22; local terms look like SKQ:SKQEQ::ROV-ODYSSEY
+    collections = sorted({concept['notation'].split('::')[0].split(':')[-1]
                           for concept in concepts})
-    vocab = {
-        'collection': ','.join(collections),
-        'terms': [{'value': value, 'notation': concept['notation'], 'uri': concept['uri']}
-                  for value, concept in zip(values, concepts)],
-    }
+    terms = []
+    for value, concept in zip(values, concepts):
+        term = {'value': value, 'notation': concept['notation']}
+        if concept.get('uri'):  # local terms have none
+            term['uri'] = concept['uri']
+        terms.append(term)
+
+    vocab = {'collection': ','.join(collections), 'terms': terms}
     if len(collections) == 1 and vocabs[collections[0]].get('version'):
         vocab['version'] = str(vocabs[collections[0]]['version'])
     return vocab
@@ -319,8 +326,14 @@ def resolve_refs(entry, key, default_collection, allowed, vocabs):
     '''
     refs = entry.get(key)
     if refs == 'all':
-        refs = sorted(vocabs[default_collection]['concepts'],
-                      key=lambda term_id: int(''.join(filter(str.isdigit, term_id)) or 0))
+        usable = [term_id for term_id, concept in vocabs[default_collection]['concepts'].items()
+                  if not concept['deprecated'] and not concept.get('hidden')]
+        refs = sorted(usable, key=lambda term_id: int(''.join(filter(str.isdigit, term_id)) or 0))
+
+    # Local vocabularies hold vessel-specific instruments and platforms
+    if key in FIXED_IF_SINGLE:
+        allowed = allowed | {collection for collection, vocab in vocabs.items()
+                             if vocab.get('source') == 'local'}
 
     concepts, errors = [], []
     for ref in _as_list(refs):
@@ -334,7 +347,10 @@ def resolve_refs(entry, key, default_collection, allowed, vocabs):
         except KeyError as err:
             errors.append(f"{entry['name']}: {err.args[0]}")
             continue
-        if concept['deprecated']:
+        if concept.get('hidden'):
+            errors.append(f"{entry['name']}: {concept['notation']} ({concept['prefLabel']}) "
+                          'is hidden on this server')
+        elif concept['deprecated']:
             hint = ''
             if concept['replacedBy']:
                 hint = f"; replaced by {', '.join(concept['replacedBy'])}"

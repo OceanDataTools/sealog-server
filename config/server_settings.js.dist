@@ -25,10 +25,15 @@ const vocabularyCollections = process.env.SEALOG_SERVER_VOCABULARY_COLLECTIONS ?
 // Base URL of the NVS collection API
 const nvsUrl = process.env.SEALOG_SERVER_NVS_URL || 'https://vocab.nerc.ac.uk/collection';
 
+// Authority prefix for terms in vocabularies created on this server, e.g.
+// CV:SKQEQ::ROV-ODYSSEY. Stored on each vocabulary when it's created.
+const localVocabularyPrefix = process.env.SEALOG_SERVER_LOCAL_VOCABULARY_PREFIX || 'CV';
+
 module.exports = {
   allowFutureEvents,
   imagePath,
   cruisePath,
+  localVocabularyPrefix,
   disableRegisteringUsers,
   loweringPath,
   nvsUrl,
