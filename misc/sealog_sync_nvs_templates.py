@@ -24,7 +24,8 @@ DESCRIPTION:    Build Sealog event templates whose options are drawn from NERC
                 notation ("SDN:L22::TOOL0058") or by ID or label within the
                 option's default collection (e.g. "InWater" for actions).
                 Instrument and platform options also accept terms from local
-                vocabularies on the server (e.g. "SKQEQ::ROV-ODYSSEY").
+                or URL-sourced vocabularies on the server (e.g.
+                "SKQEQ::ROV-ODYSSEY").
                 Terms hidden on the server can't be used.
 
                 Every option records which terms its values came from
@@ -330,10 +331,11 @@ def resolve_refs(entry, key, default_collection, allowed, vocabs):
                   if not concept['deprecated'] and not concept.get('hidden')]
         refs = sorted(usable, key=lambda term_id: int(''.join(filter(str.isdigit, term_id)) or 0))
 
-    # Local vocabularies hold vessel-specific instruments and platforms
+    # Local and URL-sourced vocabularies hold vessel-specific instruments and
+    # platforms
     if key in FIXED_IF_SINGLE:
         allowed = allowed | {collection for collection, vocab in vocabs.items()
-                             if vocab.get('source') == 'local'}
+                             if vocab.get('source') in ('local', 'url')}
 
     concepts, errors = [], []
     for ref in _as_list(refs):

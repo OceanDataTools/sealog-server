@@ -29,6 +29,10 @@ const nvsUrl = process.env.SEALOG_SERVER_NVS_URL || 'https://vocab.nerc.ac.uk/co
 // CV:SKQEQ::ROV-ODYSSEY. Stored on each vocabulary when it's created.
 const localVocabularyPrefix = process.env.SEALOG_SERVER_LOCAL_VOCABULARY_PREFIX || 'CV';
 
+// Hosts the server may pull vocabularies from by URL (POST /vocabularies/{code}/source),
+// e.g. ['data.example.org', '*.s3.amazonaws.com']. Empty disables vocabulary sources.
+const vocabularySourceHosts = process.env.SEALOG_SERVER_VOCABULARY_SOURCE_HOSTS ? process.env.SEALOG_SERVER_VOCABULARY_SOURCE_HOSTS.split(',').map((host) => host.trim()).filter(Boolean) : [];
+
 module.exports = {
   allowFutureEvents,
   imagePath,
@@ -40,5 +44,6 @@ module.exports = {
   reCaptchaSecret,
   registeringUserRoles,
   useAccessControl,
-  vocabularyCollections
+  vocabularyCollections,
+  vocabularySourceHosts
 };

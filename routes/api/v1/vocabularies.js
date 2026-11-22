@@ -9,7 +9,9 @@ const {
   vocabulariesResponse,
   vocabularyBundle,
   vocabularyCreatePayload,
+  vocabularyExportQuery,
   vocabularyResponse,
+  vocabularySourcePayload,
   vocabularyVisibility,
   vocabularyImportResponse,
   vocabularyParam,
@@ -22,11 +24,13 @@ const {
 
 const {
   LOCAL_SOURCE,
+  URL_SOURCE,
   addLocalTerm,
   applyVocabulary,
   createLocalVocabulary,
   exportBundle,
   fetchNvsCollection,
+  fetchVocabularySource,
   isHidden,
   isLocal,
   removeLocalTerm,
@@ -71,10 +75,33 @@ exports.plugin = {
       }
 
       if (local && !isLocal(vocabulary)) {
-        return { error: Boom.conflict(`${collection} is a downloaded vocabulary (source: ${vocabulary.source}); its terms can't be edited, only hidden with PUT /vocabularies/${collection}/visibility`) };
+        const owner = vocabulary.source === URL_SOURCE ? `is pulled from ${vocabulary.source_url}; edit it there` : `is a downloaded vocabulary (source: ${vocabulary.source}); its terms can't be edited`;
+        return { error: Boom.conflict(`${collection} ${owner}, or hide terms with PUT /vocabularies/${collection}/visibility`) };
       }
 
       return { vocabulary };
+    };
+
+    // Fetch a vocabulary from its source URL and replace the cached copy
+    const pullSource = async (db, collection, url, h) => {
+
+      let vocabulary;
+      try {
+        vocabulary = await fetchVocabularySource(collection, url);
+      }
+      catch (err) {
+        console.log(`Vocabulary source ${url} for ${collection} failed:`, err.message);
+        return err.code === 'VOCABULARY_SOURCE_REFUSED' ? Boom.badRequest(err.message) : Boom.badGateway(`Could not fetch ${collection} from ${url}: ${err.message}`);
+      }
+
+      try {
+        const report = await applyVocabulary(db, vocabulary, URL_SOURCE);
+        publishUpdate(report);
+        return h.response(report).code(200);
+      }
+      catch (err) {
+        return vocabularyError(err);
+      }
     };
 
     const publishUpdate = (report) => {
@@ -273,8 +300,13 @@ exports.plugin = {
         const db = request.mongo.db;
         const { collection } = request.params;
 
+        const existing = await db.collection(vocabulariesTable).findOne({ collection });
+        if (existing && existing.source === URL_SOURCE) {
+          return await pullSource(db, collection, existing.source_url, h);
+        }
+
         if (!vocabularyCollections.includes(collection)) {
-          return Boom.badRequest(`${collection} is not one of the configured vocabulary collections (${vocabularyCollections.join(', ')})`);
+          return Boom.badRequest(`${collection} is not one of the configured NVS collections (${vocabularyCollections.join(', ')}) and has no source URL`);
         }
 
         let vocabulary;
@@ -309,7 +341,7 @@ exports.plugin = {
             200: vocabularyUpdateReport
           }
         },
-        description: 'Refresh a cached vocabulary from the NERC Vocabulary Server',
+        description: 'Refresh a cached vocabulary from the NERC Vocabulary Server or its source URL',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong> or <strong>template_manager</strong></p>\
           <p>Returns the terms added, newly deprecated and removed, and any event templates mapping values to deprecated or removed terms. \
@@ -326,7 +358,11 @@ exports.plugin = {
         const db = request.mongo.db;
 
         try {
-          const bundle = await exportBundle(db);
+          const bundle = await exportBundle(db, request.query.collection);
+          if (request.query.collection && !bundle.vocabularies.length) {
+            return Boom.notFound('No vocabulary found for collection: ' + request.query.collection.join(', '));
+          }
+
           const date = bundle.exported.slice(0, 10).replace(/-/g, '');
 
           return h.response(bundle)
@@ -344,12 +380,15 @@ exports.plugin = {
           scope: ['admin', 'write_event_templates']
         },
         validate: {
-          headers: authorizationHeader
+          headers: authorizationHeader,
+          query: vocabularyExportQuery
         },
-        description: 'Download a bundle of all cached vocabularies',
+        description: 'Download a bundle of cached vocabularies',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong> or <strong>template_manager</strong></p>\
-          <p>The bundle can be loaded on another server, e.g. a ship without internet access, with POST /vocabularies/import.</p>',
+          <p>Exports every vocabulary, or only those named with <strong>collection</strong> (repeatable). \
+          The bundle can be loaded on another server with POST /vocabularies/import, or hosted for POST /vocabularies/{collection}/source. \
+          Per-install visibility and source URLs aren\'t included.</p>',
         tags: ['vocabularies','api']
       }
     });
@@ -729,6 +768,55 @@ exports.plugin = {
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong> or <strong>template_manager</strong></p>\
           <p>A term recorded on events is marked deprecated instead (<strong>action: deprecated</strong>) so those events still resolve.</p>',
+        tags: ['vocabularies','api']
+      }
+    });
+
+    server.route({
+      method: 'POST',
+      path: '/vocabularies/{collection}/source',
+      async handler(request, h) {
+
+        const db = request.mongo.db;
+        const { collection } = request.params;
+
+        if (vocabularyCollections.includes(collection)) {
+          return Boom.badRequest(`${collection} is one of the configured NVS collections`);
+        }
+
+        const existing = await db.collection(vocabulariesTable).findOne({ collection });
+        if (existing && isLocal(existing)) {
+          return Boom.conflict(`${collection} is a local vocabulary; delete it first or use another code`);
+        }
+
+        return await pullSource(db, collection, request.payload.url, h);
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: ['admin']
+        },
+        validate: {
+          headers: authorizationHeader,
+          params: vocabularyParam,
+          payload: vocabularySourcePayload,
+          failAction: (request, h, err) => {
+
+            throw Boom.badRequest(err.message);
+          }
+        },
+        response: {
+          status: {
+            200: vocabularyUpdateReport
+          }
+        },
+        description: 'Pull a vocabulary from a URL',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong></p>\
+          <p>Fetches a Sealog vocabulary bundle (from GET /vocabularies/export; the vocabulary with this code is used) \
+          or an NVS-style SKOS JSON-LD collection, and keeps the URL for later refreshes. \
+          The URL\'s host must be listed in the server\'s vocabularySourceHosts setting. \
+          The vocabulary is owned by its source: its terms can\'t be edited here, only hidden.</p>',
         tags: ['vocabularies','api']
       }
     });
