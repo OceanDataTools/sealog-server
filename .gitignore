@@ -68,3 +68,7 @@ docker-compose.yml
 __pycache__
 
 CLAUDE.md
+
+# sealog_sync_nvs_templates.py output
+nvs_vocab_cache.json
+nvs_event_templates.json

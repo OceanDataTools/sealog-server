@@ -1,0 +1,60 @@
+{
+  "marker_category": "NVS",
+  "defaults": {
+    "option_type": "dropdown",
+    "value_format": "label",
+    "options_required": true,
+    "free_text_required": false,
+    "template_categories": []
+  },
+  "instruments": [
+    {
+      "name": "CTD",
+      "template_categories": ["Science"],
+      "instrument": "L22::TOOL0058",
+      "processes": ["Deployment", "Profile", "Sample collection", "Recovery"],
+      "actions": ["Start", "InWater", "AtDepth", "AtMaxDepth", "Ascend", "OutWater", "OnBoard", "End", "Abort"]
+    },
+    {
+      "name": "Mooring",
+      "template_categories": ["Science"],
+      "platform": "L06::43",
+      "processes": ["Deployment", "Recovery"],
+      "actions": ["Start", "InWater", "Released", "OnBottom", "Sighted", "Located", "OnBoard", "End", "Abort", "Lost"]
+    },
+    {
+      "name": "Net Tow",
+      "template_categories": ["Science"],
+      "instrument": ["L22::NETT0028", "L05::22"],
+      "processes": ["Deployment", "Sample collection", "Recovery"],
+      "actions": ["Start", "InWater", "Open", "Close", "AtMaxDepth", "OutWater", "OnBoard", "End", "Abort"]
+    },
+    {
+      "name": "ROV",
+      "template_categories": ["Science"],
+      "platform": "L06::22",
+      "processes": ["Deployment", "Observation", "Sample collection", "Recovery"],
+      "actions": ["Start", "InWater", "Descend", "OnBottom", "OffBottom", "Ascend", "OutWater", "OnBoard", "Pause", "Resume", "End", "Abort"]
+    },
+    {
+      "name": "Multibeam",
+      "template_categories": ["Underway"],
+      "instrument": "L22::TOOL1799",
+      "processes": ["Recording", "Transect", "Calibration", "Malfunction"],
+      "actions": ["Start", "Pause", "Resume", "End", "Failure"]
+    },
+    {
+      "name": "Station",
+      "template_categories": ["Ship Ops"],
+      "processes": ["Station", "Transect", "Repositioning"],
+      "actions": ["Start", "End", "Abort"]
+    },
+    {
+      "name": "Cruise",
+      "template_categories": ["Ship Ops"],
+      "platform": "L06::31",
+      "processes": ["Mobilisation", "Cruise", "Leg", "Demobilisation"],
+      "actions": ["Start", "End"]
+    }
+  ]
+}
