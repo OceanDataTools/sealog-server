@@ -2,6 +2,8 @@ const {
   eventAuxDataTable
 } = require('../config/db_constants');
 
+const { ensureCollectionIndexesInBackground } = require('../lib/db_indexes');
+
 exports.plugin = {
   name: 'db_populate_event_aux_data',
   dependencies: ['hapi-mongodb'],
@@ -183,7 +185,8 @@ exports.plugin = {
 
     if (result.length) {
       if (!resetDB) {
-        console.log('Event Aux Data Collection already exists... we\'re done here.');
+        console.log('Event Aux Data Collection already exists... checking indexes.');
+        ensureCollectionIndexesInBackground(db, eventAuxDataTable);
         return;
       }
 
@@ -201,9 +204,6 @@ exports.plugin = {
     try {
       const collection = await db.createCollection(eventAuxDataTable);
 
-      console.log('Creating index based on event_id field');
-      await collection.createIndex({ event_id: 1 });
-
       if (resetDB) {
         console.log('Populating Event Aux Data Collection');
         await collection.insertMany(init_data);
@@ -213,5 +213,7 @@ exports.plugin = {
       console.log('CREATE ERROR:', err.code);
       throw (err);
     }
+
+    ensureCollectionIndexesInBackground(db, eventAuxDataTable);
   }
 };
