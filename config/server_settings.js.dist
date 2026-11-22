@@ -19,13 +19,21 @@ const useAccessControl = process.env.SEALOG_SERVER_USE_ACCESS_CONTROL ? process.
 // Allow events to be submitted/updated with timestamps later than the current server time
 const allowFutureEvents = process.env.SEALOG_SERVER_ALLOW_FUTURE_EVENTS ? process.env.SEALOG_SERVER_ALLOW_FUTURE_EVENTS.toLowerCase() === 'true' : false;
 
+// NERC Vocabulary Server (NVS) collections the server caches and can refresh
+const vocabularyCollections = process.env.SEALOG_SERVER_VOCABULARY_COLLECTIONS ? process.env.SEALOG_SERVER_VOCABULARY_COLLECTIONS.split(',').map((collection) => collection.trim()).filter(Boolean) : ['EL1', 'EL2', 'L05', 'L06', 'L22'];
+
+// Base URL of the NVS collection API
+const nvsUrl = process.env.SEALOG_SERVER_NVS_URL || 'https://vocab.nerc.ac.uk/collection';
+
 module.exports = {
   allowFutureEvents,
   imagePath,
   cruisePath,
   disableRegisteringUsers,
   loweringPath,
+  nvsUrl,
   reCaptchaSecret,
   registeringUserRoles,
-  useAccessControl
+  useAccessControl,
+  vocabularyCollections
 };

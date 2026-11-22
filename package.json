@@ -15,6 +15,7 @@
     "start-test": "NODE_ENV=test lab -v **/*.test.js",
     "start-devel": "NODE_ENV=development npm-run-all --parallel lint start:server",
     "start:server": "nodemon --exec \"node --env-file-if-exists=.env\" server.js",
+    "build-vocabulary-seed": "node data/build_nvs_seed.js",
     "lint": "eslint . --ext .js --ext .js.dist",
     "lint-fix": "eslint . --ext .js --ext .js.dist --fix",
     "prepare": "husky"

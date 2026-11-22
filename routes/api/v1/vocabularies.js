@@ -1,0 +1,393 @@
+const Boom = require('@hapi/boom');
+
+const {
+  authorizationHeader,
+  vocabulariesResponse,
+  vocabularyBundle,
+  vocabularyImportResponse,
+  vocabularyParam,
+  vocabularyTermParam,
+  vocabularyTermResponse,
+  vocabularyTermsQuery,
+  vocabularyTermsResponse,
+  vocabularyUpdateReport
+} = require('../../../lib/validations');
+
+const {
+  applyVocabulary,
+  exportBundle,
+  fetchNvsCollection,
+  vocabulariesTable,
+  vocabularyCollections,
+  vocabularyTermsTable
+} = require('../../../lib/vocabularies');
+
+const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const vocabularyError = (err) => {
+
+  if (err.code === 'VOCABULARY_BUSY') {
+    return Boom.conflict(err.message);
+  }
+
+  console.log(err);
+  return Boom.serverUnavailable('database error');
+};
+
+exports.plugin = {
+  name: 'routes-api-vocabularies',
+  dependencies: ['hapi-mongodb', '@hapi/nes'],
+  register: (server, options) => {
+
+    server.subscription('/ws/status/updateVocabularies');
+
+    const publishUpdate = (report) => {
+
+      server.publish('/ws/status/updateVocabularies', {
+        collection: report.collection,
+        version: report.version,
+        source: report.source,
+        term_count: report.term_count
+      });
+    };
+
+    server.route({
+      method: 'GET',
+      path: '/vocabularies',
+      async handler(request, h) {
+
+        const db = request.mongo.db;
+
+        try {
+          const results = await db.collection(vocabulariesTable).find({}, { projection: { _id: 0 } }).sort({ collection: 1 }).toArray();
+          return h.response(results).code(200);
+        }
+        catch (err) {
+          console.log(err);
+          return Boom.serverUnavailable('database error');
+        }
+      },
+      config: {
+        auth: {
+          strategy: 'jwt'
+        },
+        validate: {
+          headers: authorizationHeader
+        },
+        response: {
+          status: {
+            200: vocabulariesResponse
+          }
+        },
+        description: 'Return the cached controlled vocabularies',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>all users</strong></p>\
+          <p>Vocabulary content from the NERC Vocabulary Server is licensed under CC BY 4.0</p>',
+        tags: ['vocabularies','api']
+      }
+    });
+
+    server.route({
+      method: 'GET',
+      path: '/vocabularies/{collection}/terms',
+      async handler(request, h) {
+
+        const db = request.mongo.db;
+        const { collection } = request.params;
+
+        try {
+          const vocabulary = await db.collection(vocabulariesTable).findOne({ collection });
+
+          if (!vocabulary) {
+            return Boom.notFound('No vocabulary found for collection: ' + collection);
+          }
+
+          const query = { collection };
+
+          if (!request.query.include_deprecated) {
+            query.deprecated = false;
+          }
+
+          if (request.query.broader) {
+            query.broader = request.query.broader;
+          }
+
+          if (request.query.q) {
+            const pattern = new RegExp(escapeRegex(request.query.q), 'i');
+            query.$or = [{ prefLabel: pattern }, { altLabel: pattern }, { id: pattern }, { notation: pattern }];
+          }
+
+          let cursor = db.collection(vocabularyTermsTable)
+            .find(query, { projection: { _id: 0 } })
+            .collation({ locale: 'en', strength: 2 })
+            .sort({ prefLabel: 1 });
+
+          if (request.query.offset) {
+            cursor = cursor.skip(request.query.offset);
+          }
+
+          if (request.query.limit) {
+            cursor = cursor.limit(request.query.limit);
+          }
+
+          return h.response(await cursor.toArray()).code(200);
+        }
+        catch (err) {
+          console.log(err);
+          return Boom.serverUnavailable('database error');
+        }
+      },
+      config: {
+        auth: {
+          strategy: 'jwt'
+        },
+        validate: {
+          headers: authorizationHeader,
+          params: vocabularyParam,
+          query: vocabularyTermsQuery
+        },
+        response: {
+          status: {
+            200: vocabularyTermsResponse
+          }
+        },
+        description: 'Return the terms of a cached vocabulary',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>all users</strong></p>\
+          <p><strong>q</strong> matches part of the label, alternative label, ID or notation (case-insensitive). \
+          <strong>broader</strong> takes a notation, e.g. SDN:L05::130 for the L22 devices in that L05 category. \
+          Deprecated terms are left out unless <strong>include_deprecated=true</strong>. \
+          An empty array means the vocabulary exists but nothing matched.</p>',
+        tags: ['vocabularies','api']
+      }
+    });
+
+    server.route({
+      method: 'GET',
+      path: '/vocabularies/{collection}/terms/{id}',
+      async handler(request, h) {
+
+        const db = request.mongo.db;
+
+        try {
+          const result = await db.collection(vocabularyTermsTable).findOne(
+            { collection: request.params.collection, id: request.params.id },
+            { projection: { _id: 0 } }
+          );
+
+          if (!result) {
+            return Boom.notFound(`No term found for ${request.params.collection}::${request.params.id}`);
+          }
+
+          return h.response(result).code(200);
+        }
+        catch (err) {
+          console.log(err);
+          return Boom.serverUnavailable('database error');
+        }
+      },
+      config: {
+        auth: {
+          strategy: 'jwt'
+        },
+        validate: {
+          headers: authorizationHeader,
+          params: vocabularyTermParam
+        },
+        response: {
+          status: {
+            200: vocabularyTermResponse
+          }
+        },
+        description: 'Return a single vocabulary term',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>all users</strong></p>',
+        tags: ['vocabularies','api']
+      }
+    });
+
+    server.route({
+      method: 'POST',
+      path: '/vocabularies/{collection}/refresh',
+      async handler(request, h) {
+
+        const db = request.mongo.db;
+        const { collection } = request.params;
+
+        if (!vocabularyCollections.includes(collection)) {
+          return Boom.badRequest(`${collection} is not one of the configured vocabulary collections (${vocabularyCollections.join(', ')})`);
+        }
+
+        let vocabulary;
+        try {
+          vocabulary = await fetchNvsCollection(collection);
+        }
+        catch (err) {
+          console.log(`Vocabulary refresh of ${collection} failed:`, err.message);
+          return Boom.badGateway(`Could not fetch ${collection} from the NERC Vocabulary Server: ${err.message}`);
+        }
+
+        try {
+          const report = await applyVocabulary(db, vocabulary, 'nvs');
+          publishUpdate(report);
+          return h.response(report).code(200);
+        }
+        catch (err) {
+          return vocabularyError(err);
+        }
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: ['admin', 'write_event_templates']
+        },
+        validate: {
+          headers: authorizationHeader,
+          params: vocabularyParam
+        },
+        response: {
+          status: {
+            200: vocabularyUpdateReport
+          }
+        },
+        description: 'Refresh a cached vocabulary from the NERC Vocabulary Server',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong> or <strong>template_manager</strong></p>\
+          <p>Returns the terms added, newly deprecated and removed, and any event templates mapping values to deprecated or removed terms. \
+          If the fetch fails the cached copy is left unchanged.</p>',
+        tags: ['vocabularies','api']
+      }
+    });
+
+    server.route({
+      method: 'GET',
+      path: '/vocabularies/export',
+      async handler(request, h) {
+
+        const db = request.mongo.db;
+
+        try {
+          const bundle = await exportBundle(db);
+          const date = bundle.exported.slice(0, 10).replace(/-/g, '');
+
+          return h.response(bundle)
+            .header('Content-Disposition', `attachment; filename="sealog-vocabularies-${date}.json"`)
+            .code(200);
+        }
+        catch (err) {
+          console.log(err);
+          return Boom.serverUnavailable('database error');
+        }
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: ['admin', 'write_event_templates']
+        },
+        validate: {
+          headers: authorizationHeader
+        },
+        description: 'Download a bundle of all cached vocabularies',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong> or <strong>template_manager</strong></p>\
+          <p>The bundle can be loaded on another server, e.g. a ship without internet access, with POST /vocabularies/import.</p>',
+        tags: ['vocabularies','api']
+      }
+    });
+
+    server.route({
+      method: 'POST',
+      path: '/vocabularies/import',
+      async handler(request, h) {
+
+        const db = request.mongo.db;
+        const reports = [];
+
+        try {
+          for (const vocabulary of request.payload.vocabularies) {
+            const report = await applyVocabulary(db, vocabulary, 'import');
+            publishUpdate(report);
+            reports.push(report);
+          }
+
+          return h.response(reports).code(200);
+        }
+        catch (err) {
+          return vocabularyError(err);
+        }
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: ['admin', 'write_event_templates']
+        },
+        payload: {
+          maxBytes: 50 * 1024 * 1024
+        },
+        validate: {
+          headers: authorizationHeader,
+          payload: vocabularyBundle,
+          failAction: (request, h, err) => {
+
+            throw Boom.badRequest(err.message);
+          }
+        },
+        response: {
+          status: {
+            200: vocabularyImportResponse
+          }
+        },
+        description: 'Load a vocabulary bundle',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong> or <strong>template_manager</strong></p>\
+          <p>Takes a bundle from GET /vocabularies/export (gzip request bodies are accepted). \
+          Each vocabulary in it replaces the cached copy; returns one change report per vocabulary.</p>',
+        tags: ['vocabularies','api']
+      }
+    });
+
+    server.route({
+      method: 'DELETE',
+      path: '/vocabularies/{collection}',
+      async handler(request, h) {
+
+        const db = request.mongo.db;
+        const { collection } = request.params;
+
+        try {
+          const result = await db.collection(vocabulariesTable).deleteOne({ collection });
+
+          if (!result.deletedCount) {
+            return Boom.notFound('No vocabulary found for collection: ' + collection);
+          }
+
+          await db.collection(vocabularyTermsTable).deleteMany({ collection });
+          server.publish('/ws/status/updateVocabularies', { collection, deleted: true });
+
+          return h.response().code(204);
+        }
+        catch (err) {
+          console.log(err);
+          return Boom.serverUnavailable('database error');
+        }
+      },
+      config: {
+        auth: {
+          strategy: 'jwt',
+          scope: ['admin']
+        },
+        validate: {
+          headers: authorizationHeader,
+          params: vocabularyParam
+        },
+        response: {
+          status: {}
+        },
+        description: 'Delete a cached vocabulary',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>admin</strong></p>',
+        tags: ['vocabularies','api']
+      }
+    });
+  }
+};
