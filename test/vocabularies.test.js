@@ -8,6 +8,7 @@ const { init } = require('../lib/server');
 const Jwt = require('jsonwebtoken');
 const { ObjectId } = require('mongodb');
 const SECRET = require('../config/secret');
+const ServerSettings = require('../config/server_settings');
 const { usersTable, eventTemplatesTable, eventAuxDataTable } = require('../config/db_constants');
 const {
   applyVocabulary,
@@ -616,6 +617,190 @@ describe('Vocabularies API', () => {
 
       const res = await request('POST', '/vocabularies/import', adminJwt, bundle);
       expect(res.result[0]).to.include({ removed: [], retained: ['SDN:L22::NETT0028'] });
+    });
+  });
+
+  describe('URL sources', () => {
+    const originalHosts = ServerSettings.vocabularySourceHosts;
+
+    const localBundle = (terms = [{ id: 'ROV-ODYSSEY', prefLabel: 'ROV Odyssey' }]) => ({
+      format: 'sealog-vocabularies',
+      format_version: 1,
+      vocabularies: [
+        { collection: 'OTHER', title: 'Other', terms: [{ id: 'X', notation: 'SKQ:OTHER::X', prefLabel: 'X', deprecated: false }] },
+        {
+          collection: 'SKQEQ',
+          title: 'Sikuliaq equipment',
+          version: '',
+          source: 'local',
+          prefix: 'SKQ',
+          terms: terms.map((term) => ({ notation: `SKQ:SKQEQ::${term.id}`, uri: '', altLabel: '', definition: '', deprecated: false, replacedBy: [], broader: [], ...term }))
+        }
+      ]
+    });
+
+    const json = (body, status = 200) => () => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+    const redirect = (location) => () => new Response(null, { status: 302, headers: { location } });
+
+    const serve = (responses) => {
+
+      global.fetch = (url) => {
+
+        const make = responses[url.href || url];
+        return make ? Promise.resolve(make()) : Promise.reject(new Error(`unexpected fetch of ${url}`));
+      };
+    };
+
+    const addSource = (url, collection = 'SKQEQ', token = adminJwt) => request('POST', `/vocabularies/${collection}/source`, token, { url });
+
+    beforeEach(() => {
+      ServerSettings.vocabularySourceHosts = ['vocab.example.org', '*.example.net'];
+    });
+
+    afterEach(() => {
+      ServerSettings.vocabularySourceHosts = originalHosts;
+    });
+
+    it('pulls a vocabulary from a bundle and keeps its prefix', async () => {
+      serve({ 'https://vocab.example.org/skq.json': json(localBundle()) });
+
+      const res = await addSource('https://vocab.example.org/skq.json');
+
+      expect(res.statusCode).to.equal(200);
+      expect(res.result).to.include({ collection: 'SKQEQ', source: 'url', term_count: 1, added: ['SKQ:SKQEQ::ROV-ODYSSEY'] });
+
+      const list = await request('GET', '/vocabularies', watcherJwt);
+      expect(list.result.find((vocabulary) => vocabulary.collection === 'SKQEQ')).to.include({ source: 'url', source_url: 'https://vocab.example.org/skq.json', prefix: 'SKQ' });
+    });
+
+    it('pulls an NVS-style JSON-LD collection', async () => {
+      serve({ 'https://data.example.net/actions.jsonld': json(el1Doc) });
+
+      const res = await addSource('https://data.example.net/actions.jsonld', 'SKQACT');
+
+      expect(res.statusCode).to.equal(200);
+      expect(res.result).to.include({ collection: 'SKQACT', source: 'url', term_count: 3 });
+    });
+
+    it('accepts a gzipped bundle', async () => {
+      serve({ 'https://vocab.example.org/skq.json.gz': () => new Response(Zlib.gzipSync(JSON.stringify(localBundle()))) });
+
+      expect((await addSource('https://vocab.example.org/skq.json.gz')).result.term_count).to.equal(1);
+    });
+
+    it('fails when the bundle has no vocabulary with the code', async () => {
+      serve({ 'https://vocab.example.org/skq.json': json(localBundle()) });
+
+      const res = await addSource('https://vocab.example.org/skq.json', 'NOPE');
+
+      expect(res.statusCode).to.equal(502);
+      expect(res.result.message).to.contain('has no NOPE vocabulary (it has OTHER, SKQEQ)');
+    });
+
+    it('refreshes from the stored URL and keeps visibility', async () => {
+      serve({ 'https://vocab.example.org/skq.json': json(localBundle()) });
+      await addSource('https://vocab.example.org/skq.json');
+      await request('PUT', '/vocabularies/SKQEQ/visibility', adminJwt, { mode: 'show_only_listed', terms: ['ROV-ODYSSEY'] });
+
+      serve({ 'https://vocab.example.org/skq.json': json(localBundle([{ id: 'ROV-ODYSSEY', prefLabel: 'ROV Odyssey' }, { id: 'CTD2', prefLabel: 'Spare CTD' }])) });
+      const res = await request('POST', '/vocabularies/SKQEQ/refresh', templateManagerJwt);
+
+      expect(res.statusCode).to.equal(200);
+      expect(res.result).to.include({ source: 'url', added: ['SKQ:SKQEQ::CTD2'], term_count: 2 });
+      expect((await request('GET', '/vocabularies/SKQEQ/terms', watcherJwt)).result.map((term) => term.id)).to.equal(['ROV-ODYSSEY']);
+    });
+
+    it('keeps the cached copy when the source fails', async () => {
+      serve({ 'https://vocab.example.org/skq.json': json(localBundle()) });
+      await addSource('https://vocab.example.org/skq.json');
+
+      serve({ 'https://vocab.example.org/skq.json': json({ error: 'gone' }, 404) });
+      let res = await request('POST', '/vocabularies/SKQEQ/refresh', adminJwt);
+      expect(res.statusCode).to.equal(502);
+      expect(res.result.message).to.contain('HTTP 404');
+
+      serve({ 'https://vocab.example.org/skq.json': () => new Response('<html>not json</html>') });
+      res = await request('POST', '/vocabularies/SKQEQ/refresh', adminJwt);
+      expect(res.statusCode).to.equal(502);
+
+      expect(await db.collection(vocabularyTermsTable).countDocuments({ collection: 'SKQEQ' })).to.equal(1);
+    });
+
+    it('refuses term edits, pointing to the source URL', async () => {
+      serve({ 'https://vocab.example.org/skq.json': json(localBundle()) });
+      await addSource('https://vocab.example.org/skq.json');
+
+      const res = await request('POST', '/vocabularies/SKQEQ/terms', adminJwt, { id: 'NEW', prefLabel: 'New' });
+
+      expect(res.statusCode).to.equal(409);
+      expect(res.result.message).to.contain('is pulled from https://vocab.example.org/skq.json');
+    });
+
+    it('only fetches from allowed hosts', async () => {
+      serve({
+        'https://bucket.example.net/skq.json': json(localBundle()),
+        'https://vocab.example.org/moved.json': redirect('https://bucket.example.net/skq.json'),
+        'https://vocab.example.org/evil.json': redirect('http://169.254.169.254/latest/meta-data/')
+      });
+
+      expect((await addSource('https://bucket.example.net/skq.json')).statusCode).to.equal(200);
+      expect((await addSource('https://vocab.example.org/moved.json')).statusCode).to.equal(200);
+
+      let res = await addSource('https://vocab.example.org/evil.json');
+      expect(res.statusCode).to.equal(400);
+      expect(res.result.message).to.contain('169.254.169.254 is not in the vocabularySourceHosts setting');
+
+      expect((await addSource('https://internal.example.com/skq.json')).statusCode).to.equal(400);
+      expect((await addSource('ftp://vocab.example.org/skq.json')).statusCode).to.equal(400);
+
+      ServerSettings.vocabularySourceHosts = [];
+      res = await addSource('https://vocab.example.org/skq.json');
+      expect(res.statusCode).to.equal(400);
+      expect(res.result.message).to.contain('disabled');
+    });
+
+    it('refuses NVS collection codes and existing local vocabularies', async () => {
+      expect((await addSource('https://vocab.example.org/skq.json', 'L22')).statusCode).to.equal(400);
+
+      await request('POST', '/vocabularies', adminJwt, { collection: 'SKQEQ', title: 'Local' });
+      expect((await addSource('https://vocab.example.org/skq.json')).statusCode).to.equal(409);
+    });
+
+    it('is admin only', async () => {
+      expect((await addSource('https://vocab.example.org/skq.json', 'SKQEQ', templateManagerJwt)).statusCode).to.equal(403);
+    });
+
+    it('drops the source URL when the vocabulary is replaced by an import', async () => {
+      serve({ 'https://vocab.example.org/skq.json': json(localBundle()) });
+      await addSource('https://vocab.example.org/skq.json');
+
+      await request('POST', '/vocabularies/import', adminJwt, localBundle());
+
+      const record = await db.collection(vocabulariesTable).findOne({ collection: 'SKQEQ' });
+      expect(record.source).to.equal('local');
+      expect(record).to.not.include('source_url');
+    });
+  });
+
+  describe('export filter', () => {
+    const collections = async (query) => {
+
+      const res = await request('GET', `/vocabularies/export${query}`, adminJwt);
+      return res.statusCode === 200 ? res.result.vocabularies.map((vocabulary) => vocabulary.collection) : res.statusCode;
+    };
+
+    it('exports the named vocabularies only', async () => {
+      expect(await collections('')).to.equal(['EL1', 'L22']);
+      expect(await collections('?collection=L22')).to.equal(['L22']);
+      expect(await collections('?collection=L22&collection=EL1')).to.equal(['EL1', 'L22']);
+      expect(await collections('?collection=P01')).to.equal(404);
+    });
+
+    it('does not export source URLs', async () => {
+      await db.collection(vocabulariesTable).updateOne({ collection: 'L22' }, { $set: { source: 'url', source_url: 'https://vocab.example.org/l22.json' } });
+
+      const res = await request('GET', '/vocabularies/export?collection=L22', adminJwt);
+      expect(res.result.vocabularies[0]).to.not.include('source_url');
     });
   });
 
