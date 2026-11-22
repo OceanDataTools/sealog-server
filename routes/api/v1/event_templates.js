@@ -26,6 +26,26 @@ const _renameAndClearFields = (doc, admin = false) => {
   return doc;
 };
 
+// Drop vocabulary mappings for values an option no longer offers, so clients
+// that don't know about event_option_vocab can still edit option values.
+const pruneOptionVocab = (event_options) => {
+
+  for (const option of event_options) {
+    if (!option.event_option_vocab) {
+      continue;
+    }
+
+    const values = [...option.event_option_values, option.event_option_default_value];
+    option.event_option_vocab.terms = option.event_option_vocab.terms.filter((term) => values.includes(term.value));
+
+    if (!option.event_option_vocab.terms.length) {
+      delete option.event_option_vocab;
+    }
+  }
+
+  return event_options;
+};
+
 exports.plugin = {
   name: 'routes-api-event_templates',
   dependencies: ['hapi-mongodb', '@hapi/nes'],
@@ -174,6 +194,8 @@ exports.plugin = {
           event_template.event_options = [];
         }
 
+        pruneOptionVocab(event_template.event_options);
+
         if (typeof event_template.event_free_text_required === 'undefined') {
           event_template.event_free_text_required = false;
         }
@@ -246,6 +268,10 @@ exports.plugin = {
         }
         catch (err) {
           return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
+        }
+
+        if (request.payload.event_options) {
+          pruneOptionVocab(request.payload.event_options);
         }
 
         let event_template = {};
