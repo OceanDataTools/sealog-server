@@ -7,6 +7,8 @@ const eventTemplatesTable = 'event_templates';
 const eventsTable = 'events';
 const loweringsTable = 'lowerings';
 const usersTable = 'users';
+const vocabulariesTable = 'vocabularies';
+const vocabularyTermsTable = 'vocabulary_terms';
 
 module.exports = {
   sealogDB,
@@ -17,5 +19,7 @@ module.exports = {
   eventTemplatesTable,
   eventsTable,
   loweringsTable,
-  usersTable
+  usersTable,
+  vocabulariesTable,
+  vocabularyTermsTable
 };

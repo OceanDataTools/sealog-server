@@ -59,6 +59,15 @@ describe('DB index helper', () => {
     expect(indexes[0].name).to.equal('ts_-1');
   });
 
+  it('creates the index on a collection that does not exist yet', async () => {
+    await db.collection(testTable).drop();
+
+    expect(await ensureIndex(db, testTable, tsSpec)).to.be.true();
+
+    const indexes = await tsIndexes();
+    expect(indexes.map((index) => index.name)).to.equal(['ts_-1']);
+  });
+
   it('reuses a full index with another name and direction', async () => {
     await collection.createIndex({ ts: 1 }, { name: 'my_ts' });
 
