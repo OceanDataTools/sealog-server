@@ -450,11 +450,11 @@ describe('Event Templates API', () => {
     it('keeps a default that is still offered and clears one that is not', async () => {
       const res = await createTemplate([
         option({ event_option_default_value: 'OnBottom', event_option_vocab: { collection: 'EL1' } }),
-        option({ event_option_name: 'Gear', event_option_type: 'checkboxes', event_option_default_value: 'InWater;Start', event_option_vocab: { collection: 'EL1' } })
+        option({ event_option_name: 'Gear', event_option_type: 'checkboxes', event_option_default_value: 'InWater, Start, OnBottom', event_option_vocab: { collection: 'EL1' } })
       ]);
 
       let template = await getTemplate(res.result.insertedId);
-      expect(template.event_options.map((o) => o.event_option_default_value)).to.equal(['OnBottom', 'InWater']);
+      expect(template.event_options.map((o) => o.event_option_default_value)).to.equal(['OnBottom', 'InWater, OnBottom']);
 
       await db.collection(vocabularyTermsTable).updateOne({ collection: 'EL1', id: 'act7' }, { $set: { deprecated: true } });
       template = await getTemplate(res.result.insertedId);
