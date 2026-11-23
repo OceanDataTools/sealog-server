@@ -40,8 +40,12 @@ const {
   visibleTermsQuery,
   vocabulariesTable,
   vocabularyCollections,
-  vocabularyTermsTable
+  vocabularyTermsTable,
+  templatesUsing,
+  optionsListing
 } = require('../../../lib/vocabularies');
+
+const { publishTemplatesUsing } = require('../../../lib/template_vocab');
 
 const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -96,7 +100,7 @@ exports.plugin = {
 
       try {
         const report = await applyVocabulary(db, vocabulary, URL_SOURCE);
-        publishUpdate(report);
+        await publishUpdate(db, report);
         return h.response(report).code(200);
       }
       catch (err) {
@@ -104,9 +108,23 @@ exports.plugin = {
       }
     };
 
-    const publishUpdate = (report) => {
+    // Tell clients a vocabulary changed, and re-send the event templates
+    // whose option values come from it
+    const announce = async (db, update) => {
 
-      server.publish('/ws/status/updateVocabularies', {
+      server.publish('/ws/status/updateVocabularies', update);
+
+      try {
+        await publishTemplatesUsing(server, db, update.collection);
+      }
+      catch (err) {
+        console.log(`Could not publish the templates using ${update.collection}:`, err);
+      }
+    };
+
+    const publishUpdate = (db, report) => {
+
+      return announce(db, {
         collection: report.collection,
         version: report.version,
         source: report.source,
@@ -320,7 +338,7 @@ exports.plugin = {
 
         try {
           const report = await applyVocabulary(db, vocabulary, 'nvs');
-          publishUpdate(report);
+          await publishUpdate(db, report);
           return h.response(report).code(200);
         }
         catch (err) {
@@ -405,7 +423,7 @@ exports.plugin = {
           for (const vocabulary of request.payload.vocabularies) {
             // A local vocabulary moved by file stays editable on this server
             const report = await applyVocabulary(db, vocabulary, vocabulary.source === LOCAL_SOURCE ? LOCAL_SOURCE : 'import');
-            publishUpdate(report);
+            await publishUpdate(db, report);
             reports.push(report);
           }
 
@@ -494,7 +512,7 @@ exports.plugin = {
           }
 
           const visibility = await setVisibility(db, collection, request.payload);
-          server.publish('/ws/status/updateVocabularies', { collection, visibility_mode: visibility.mode });
+          await announce(db, { collection, visibility_mode: visibility.mode });
           return h.response(visibility).code(200);
         }
         catch (err) {
@@ -549,7 +567,7 @@ exports.plugin = {
           }
 
           const visibility = await setTermHidden(db, vocabulary, id, request.payload.hidden);
-          server.publish('/ws/status/updateVocabularies', { collection, visibility_mode: visibility.mode });
+          await announce(db, { collection, visibility_mode: visibility.mode });
           return h.response(visibility).code(200);
         }
         catch (err) {
@@ -639,7 +657,7 @@ exports.plugin = {
           }
 
           const term = await addLocalTerm(db, vocabulary, request.payload);
-          server.publish('/ws/status/updateVocabularies', { collection: vocabulary.collection, source: LOCAL_SOURCE });
+          await announce(db, { collection: vocabulary.collection, source: LOCAL_SOURCE });
           return h.response(term).code(201);
         }
         catch (err) {
@@ -692,7 +710,7 @@ exports.plugin = {
             return Boom.notFound(`No term found for ${collection}::${id}`);
           }
 
-          server.publish('/ws/status/updateVocabularies', { collection, source: LOCAL_SOURCE });
+          await announce(db, { collection, source: LOCAL_SOURCE });
           return h.response().code(204);
         }
         catch (err) {
@@ -743,8 +761,10 @@ exports.plugin = {
           }
 
           const action = await removeLocalTerm(db, vocabulary, term);
-          server.publish('/ws/status/updateVocabularies', { collection, source: LOCAL_SOURCE });
-          return h.response({ id, action }).code(200);
+          const affected_templates = optionsListing(await templatesUsing(db, collection), collection, [id]).map(({ template_id, event_name, event_option_name }) => ({ template_id, event_name, event_option_name }));
+
+          await announce(db, { collection, source: LOCAL_SOURCE });
+          return h.response({ id, action, affected_templates }).code(200);
         }
         catch (err) {
           return vocabularyError(err);
@@ -767,7 +787,8 @@ exports.plugin = {
         description: 'Delete a term from a local vocabulary',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong> or <strong>template_manager</strong></p>\
-          <p>A term recorded on events is marked deprecated instead (<strong>action: deprecated</strong>) so those events still resolve.</p>',
+          <p>A term recorded on events is marked deprecated instead (<strong>action: deprecated</strong>) so those events still resolve. \
+          Either way it drops out of event template options; <strong>affected_templates</strong> lists the options that listed it.</p>',
         tags: ['vocabularies','api']
       }
     });
@@ -830,6 +851,12 @@ exports.plugin = {
         const { collection } = request.params;
 
         try {
+          const templates = await templatesUsing(db, collection);
+          if (templates.length) {
+            const names = [...new Set(templates.map((template) => template.event_name))].join(', ');
+            return Boom.conflict(`${collection} is used by event templates: ${names}. Change their options first`);
+          }
+
           const result = await db.collection(vocabulariesTable).deleteOne({ collection });
 
           if (!result.deletedCount) {
@@ -860,7 +887,8 @@ exports.plugin = {
         },
         description: 'Delete a cached vocabulary',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
-          <p>Available to: <strong>admin</strong></p>',
+          <p>Available to: <strong>admin</strong></p>\
+          <p>Refused (409) while event template options take their values from it.</p>',
         tags: ['vocabularies','api']
       }
     });
