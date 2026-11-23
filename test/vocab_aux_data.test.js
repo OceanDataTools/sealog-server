@@ -9,6 +9,20 @@ const { ObjectId } = require('mongodb');
 const SECRET = require('../config/secret');
 const { usersTable, eventsTable, eventAuxDataTable, eventTemplatesTable } = require('../config/db_constants');
 const { syncVocabAuxData } = require('../lib/vocab_aux_data');
+const { vocabulariesTable, vocabularyTermsTable } = require('../lib/vocabularies');
+
+const term = (collection, id, prefLabel) => ({
+  collection, id, prefLabel, notation: `SDN:${collection}::${id}`, uri: '', altLabel: '', definition: '', deprecated: false, replacedBy: [], broader: []
+});
+
+const terms = [
+  term('L22', 'TOOL0058', 'SBE 911plus'),
+  term('L22', 'TOOL0035', 'SBE 25'),
+  term('EL1', 'act16', 'InWater'),
+  term('EL1', 'act7', 'OnBottom'),
+  term('L05', '30', 'Rosette'),
+  term('L05', '379', 'Altimeter')
+];
 
 describe('Vocabulary IDs as event aux_data', () => {
   let server;
@@ -39,33 +53,27 @@ describe('Vocabulary IDs as event aux_data', () => {
       {
         event_option_name: 'Instrument',
         event_option_type: 'static text',
-        event_option_default_value: 'SBE 911plus',
+        event_option_default_value: '',
         event_option_values: [],
         event_option_allow_freeform: false,
         event_option_required: false,
-        event_option_vocab: { collection: 'L22', terms: [{ value: 'SBE 911plus', notation: 'SDN:L22::TOOL0058' }] }
+        event_option_vocab: { collection: 'L22', terms: ['TOOL0058'] }
       },
       {
         event_option_name: 'Action',
         event_option_type: 'dropdown',
-        event_option_values: ['InWater', 'OnBottom'],
+        event_option_values: [],
         event_option_allow_freeform: true,
         event_option_required: true,
-        event_option_vocab: {
-          collection: 'EL1',
-          terms: [{ value: 'InWater', notation: 'SDN:EL1::act16' }, { value: 'OnBottom', notation: 'SDN:EL1::act7' }]
-        }
+        event_option_vocab: { collection: 'EL1' }
       },
       {
         event_option_name: 'Gear Used',
         event_option_type: 'checkboxes',
-        event_option_values: ['Rosette', 'Altimeter'],
+        event_option_values: [],
         event_option_allow_freeform: false,
         event_option_required: false,
-        event_option_vocab: {
-          collection: 'L05',
-          terms: [{ value: 'Rosette', notation: 'SDN:L05::30' }, { value: 'Altimeter', notation: 'SDN:L05::379' }]
-        }
+        event_option_vocab: { collection: 'L05', terms: ['30', '379'] }
       },
       {
         event_option_name: 'Notes',
@@ -107,6 +115,10 @@ describe('Vocabulary IDs as event aux_data', () => {
     await db.collection(eventsTable).deleteMany({});
     await db.collection(eventAuxDataTable).deleteMany({});
     await db.collection(eventTemplatesTable).deleteMany({});
+    await db.collection(vocabulariesTable).deleteMany({});
+    await db.collection(vocabularyTermsTable).deleteMany({});
+    await db.collection(vocabulariesTable).insertMany(['L22', 'EL1', 'L05'].map((collection) => ({ collection, title: collection, source: 'nvs' })));
+    await db.collection(vocabularyTermsTable).insertMany(terms.map((t) => ({ ...t })));
     await db.collection(usersTable).insertOne(adminUser);
     await db.collection(eventTemplatesTable).insertOne({ ...ctdTemplate });
   });
@@ -204,7 +216,7 @@ describe('Vocabulary IDs as event aux_data', () => {
   it('records nothing when templates with the same event_value disagree', async () => {
     const other = JSON.parse(JSON.stringify(ctdTemplate));
     other.event_name = 'CTD (other ship)';
-    other.event_options[0].event_option_vocab.terms[0].notation = 'SDN:L22::TOOL0035';
+    other.event_options[0].event_option_vocab.terms = ['TOOL0035'];
     await db.collection(eventTemplatesTable).insertOne(other);
 
     const res = await createEvent({ event_value: 'CTD' });
@@ -216,6 +228,28 @@ describe('Vocabulary IDs as event aux_data', () => {
     await db.collection(eventTemplatesTable).insertOne({ ...JSON.parse(JSON.stringify(ctdTemplate)), event_name: 'CTD copy' });
 
     const res = await createEvent({ event_value: 'CTD' });
+
+    expect(await entries(res.result.insertedId)).to.equal(['instrument=SDN:L22::TOOL0058']);
+  });
+
+  it('keeps the ID of an unchanged value whose term label changed', async () => {
+    const res = await createEvent({ event_value: 'CTD', event_options: [{ event_option_name: 'Action', event_option_value: 'InWater' }] });
+    const id = res.result.insertedId;
+
+    // A refresh renames the term; the event still says 'InWater'
+    await db.collection(vocabularyTermsTable).updateOne({ collection: 'EL1', id: 'act16' }, { $set: { prefLabel: 'In water' } });
+    await updateEvent(id, { event_free_text: 'edited' });
+    expect(await entries(id)).to.equal(['instrument=SDN:L22::TOOL0058', 'action=SDN:EL1::act16']);
+
+    // Changing the value drops the old ID
+    await updateEvent(id, { event_options: [{ event_option_name: 'Action', event_option_value: 'Something else' }] });
+    expect(await entries(id)).to.equal(['instrument=SDN:L22::TOOL0058']);
+  });
+
+  it('maps values against the vocabulary as it is now', async () => {
+    await db.collection(vocabulariesTable).updateOne({ collection: 'EL1' }, { $set: { visibility: { mode: 'hide_listed', terms: ['act7'] } } });
+
+    const res = await createEvent({ event_value: 'CTD', event_options: [{ event_option_name: 'Action', event_option_value: 'OnBottom' }] });
 
     expect(await entries(res.result.insertedId)).to.equal(['instrument=SDN:L22::TOOL0058']);
   });

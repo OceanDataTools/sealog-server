@@ -267,17 +267,10 @@ describe('Vocabularies API', () => {
         event_options: [{
           event_option_name: 'Action',
           event_option_type: 'dropdown',
-          event_option_values: ['OnBottom', 'Start', 'InWater'],
+          event_option_values: [],
           event_option_allow_freeform: false,
           event_option_required: true,
-          event_option_vocab: {
-            collection: 'EL1',
-            terms: [
-              { value: 'OnBottom', notation: 'SDN:EL1::act7' },
-              { value: 'Start', notation: 'SDN:EL1::act1' },
-              { value: 'InWater', notation: 'SDN:EL1::act16' }
-            ]
-          }
+          event_option_vocab: { collection: 'EL1', terms: ['act7', 'act1', 'act16'] }
         }]
       };
       const { insertedId } = await db.collection(eventTemplatesTable).insertOne(template);
@@ -395,6 +388,20 @@ describe('Vocabularies API', () => {
       expect(await db.collection(vocabulariesTable).findOne({ collection: 'L22' })).to.not.exist();
       expect(await db.collection(vocabularyTermsTable).countDocuments({ collection: 'L22' })).to.equal(0);
       expect(await db.collection(vocabularyTermsTable).countDocuments({ collection: 'EL1' })).to.equal(3);
+    });
+
+    it('refuses while event templates take values from it', async () => {
+      await db.collection(eventTemplatesTable).insertOne({
+        event_name: 'CTD cast',
+        event_value: 'CTD',
+        event_options: [{ event_option_name: 'Instrument', event_option_type: 'dropdown', event_option_values: [], event_option_vocab: { collection: 'L22' } }]
+      });
+
+      const res = await request('DELETE', '/vocabularies/L22', adminJwt);
+
+      expect(res.statusCode).to.equal(409);
+      expect(res.result.message).to.contain('CTD cast');
+      expect(await db.collection(vocabularyTermsTable).countDocuments({ collection: 'L22' })).to.equal(3);
     });
 
     it('returns 404 for a vocabulary that is not cached', async () => {
@@ -537,13 +544,31 @@ describe('Vocabularies API', () => {
       await db.collection(eventAuxDataTable).insertOne({ event_id: new ObjectId(), data_source: 'vocab', data_array: [{ data_name: 'instrument', data_value: 'SKQ:SKQEQ::ROV-ODYSSEY', data_uom: 'notation' }] });
 
       let res = await request('DELETE', '/vocabularies/SKQEQ/terms/CTD1', templateManagerJwt);
-      expect(res.result).to.equal({ id: 'CTD1', action: 'deleted' });
+      expect(res.result).to.equal({ id: 'CTD1', action: 'deleted', affected_templates: [] });
 
       res = await request('DELETE', '/vocabularies/SKQEQ/terms/ROV-ODYSSEY', templateManagerJwt);
-      expect(res.result).to.equal({ id: 'ROV-ODYSSEY', action: 'deprecated' });
+      expect(res.result).to.equal({ id: 'ROV-ODYSSEY', action: 'deprecated', affected_templates: [] });
 
       const remaining = await db.collection(vocabularyTermsTable).find({ collection: 'SKQEQ' }).toArray();
       expect(remaining.map((term) => [term.id, term.deprecated])).to.equal([['ROV-ODYSSEY', true]]);
+    });
+
+    it('reports the template options that listed a deleted term', async () => {
+      await createLocal();
+      await addTerm({ id: 'CTD1', prefLabel: 'CTD 1' });
+      await addTerm({ id: 'CTD2', prefLabel: 'CTD 2' });
+      const { insertedId } = await db.collection(eventTemplatesTable).insertOne({
+        event_name: 'CTD cast',
+        event_value: 'CTD',
+        event_options: [
+          { event_option_name: 'Instrument', event_option_type: 'dropdown', event_option_values: [], event_option_vocab: { collection: 'SKQEQ', terms: ['CTD1', 'CTD2'] } },
+          { event_option_name: 'Backup', event_option_type: 'dropdown', event_option_values: [], event_option_vocab: { collection: 'SKQEQ' } }
+        ]
+      });
+
+      const res = await request('DELETE', '/vocabularies/SKQEQ/terms/CTD1', templateManagerJwt);
+
+      expect(res.result.affected_templates).to.equal([{ template_id: insertedId.toString(), event_name: 'CTD cast', event_option_name: 'Instrument' }]);
     });
 
     it('refuses term edits on downloaded vocabularies', async () => {

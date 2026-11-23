@@ -970,6 +970,7 @@ exports.plugin = {
 
         const query = {};
         let time_change = false;
+        let previousEvent;
 
         try {
           query._id = new ObjectID(request.params.id);
@@ -985,6 +986,8 @@ exports.plugin = {
           if (!result) {
             return Boom.badRequest('No event record found for id: ' + request.params.id);
           }
+
+          previousEvent = result;
 
           if (request.payload.ts && result.ts.getTime() !== request.payload.ts.getTime()) {
             time_change = true;
@@ -1058,7 +1061,7 @@ exports.plugin = {
           // later update, so keep the vocabulary IDs in step on every update
           try {
             const diff = (new Date().getTime() - updatedEvent.ts.getTime()) / 1000;
-            await syncVocabAuxData(server, db, { ...updatedEvent, _id: query._id }, Math.abs(Math.round(diff)) < THRESHOLD || THRESHOLD === 0);
+            await syncVocabAuxData(server, db, { ...updatedEvent, _id: query._id }, Math.abs(Math.round(diff)) < THRESHOLD || THRESHOLD === 0, previousEvent);
           }
           catch (err) {
             console.log('Could not record vocabulary IDs:', err);
