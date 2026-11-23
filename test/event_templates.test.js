@@ -298,6 +298,26 @@ describe('Event Templates API', () => {
       expect(updated.event_name).to.equal('Updated Name');
     });
 
+    it('clears the button color back to the default with an empty string', async () => {
+      const patch = (event_button_color) => server.inject({
+        method: 'PATCH',
+        url: `/sealog-server/api/v1/event_templates/${normalTemplate._id}`,
+        headers: { Authorization: 'Bearer ' + adminJwt },
+        payload: { event_button_color }
+      });
+
+      expect((await patch('success')).statusCode).to.equal(204);
+      expect((await patch('')).statusCode).to.equal(204);
+
+      const res = await server.inject({
+        method: 'GET',
+        url: `/sealog-server/api/v1/event_templates/${normalTemplate._id}`,
+        headers: { Authorization: 'Bearer ' + adminJwt }
+      });
+      expect(res.statusCode).to.equal(200);
+      expect(res.result.event_button_color).to.equal('');
+    });
+
     it('returns 403 for event_logger', async () => {
       const res = await server.inject({
         method: 'PATCH',
