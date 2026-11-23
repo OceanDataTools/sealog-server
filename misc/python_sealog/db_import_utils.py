@@ -101,6 +101,7 @@ event_schema = {
                 "properties": {
                     "event_option_name": {"type": "string"},
                     "event_option_value": {"type": "string"},
+                    "event_option_notation": {"type": "string"},
                 },
                 "required": ["event_option_name", "event_option_value"]
             }

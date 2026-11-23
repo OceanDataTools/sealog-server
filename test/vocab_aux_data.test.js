@@ -282,4 +282,117 @@ describe('Vocabulary IDs as event aux_data', () => {
     await syncVocabAuxData(recorder, db, event, true);
     expect(published.pop()).to.equal('newEventAuxData:1');
   });
+
+  describe('event_option_notation', () => {
+    const getEvent = async (id, format = 'json') => {
+
+      const res = await server.inject({ method: 'GET', url: `/sealog-server/api/v1/events/${id}?format=${format}`, headers: { Authorization: adminJwt } });
+      expect(res.statusCode).to.equal(200);
+      return res.result;
+    };
+
+    const storedOptions = async (id) => (await db.collection(eventsTable).findOne({ _id: new ObjectId(id) })).event_options;
+
+    it('stores and returns the notations sent', async () => {
+      const res = await createEvent({
+        event_value: 'CTD',
+        event_options: [
+          { event_option_name: 'Action', event_option_value: 'InWater', event_option_notation: 'SDN:EL1::act16' },
+          { event_option_name: 'Notes', event_option_value: 'cast 3', event_option_notation: '' }
+        ]
+      });
+      expect(res.statusCode).to.equal(201);
+
+      // An empty notation means none
+      expect((await getEvent(res.result.insertedId)).event_options).to.equal([
+        { event_option_name: 'action', event_option_value: 'InWater', event_option_notation: 'SDN:EL1::act16' },
+        { event_option_name: 'notes', event_option_value: 'cast 3' }
+      ]);
+    });
+
+    it('records the notations sent, splitting checkboxes, and maps the other options from the template', async () => {
+      const res = await createEvent({
+        event_value: 'CTD',
+        event_options: [
+          { event_option_name: 'Action', event_option_value: 'InWater', event_option_notation: 'SDN:EL1::act16' },
+          { event_option_name: 'Gear Used', event_option_value: 'Rosette;Altimeter', event_option_notation: 'SDN:L05::30;SDN:L05::379' }
+        ]
+      });
+
+      // Instrument (static text) isn't sent, so it comes from the template
+      expect(await entries(res.result.insertedId)).to.equal([
+        'action=SDN:EL1::act16', 'gear_used=SDN:L05::30', 'gear_used=SDN:L05::379', 'instrument=SDN:L22::TOOL0058'
+      ]);
+    });
+
+    it('records the notation sent rather than the one the label maps to', async () => {
+      // The value was picked before the term was relabelled
+      const res = await createEvent({
+        event_value: 'CTD',
+        event_options: [{ event_option_name: 'Action', event_option_value: 'In water', event_option_notation: 'SDN:EL1::act16' }]
+      });
+
+      expect(await entries(res.result.insertedId)).to.equal(['action=SDN:EL1::act16', 'instrument=SDN:L22::TOOL0058']);
+    });
+
+    it('records the notations sent even when templates with the same event_value disagree', async () => {
+      const other = JSON.parse(JSON.stringify(ctdTemplate));
+      other.event_name = 'CTD (other ship)';
+      other.event_options[0].event_option_vocab.terms = ['TOOL0035'];
+      await db.collection(eventTemplatesTable).insertOne(other);
+
+      const res = await createEvent({
+        event_value: 'CTD',
+        event_options: [
+          { event_option_name: 'Instrument', event_option_value: 'SBE 25', event_option_notation: 'SDN:L22::TOOL0035' },
+          { event_option_name: 'Action', event_option_value: 'InWater', event_option_notation: 'SDN:EL1::act16' }
+        ]
+      });
+
+      expect(await entries(res.result.insertedId)).to.equal(['instrument=SDN:L22::TOOL0035', 'action=SDN:EL1::act16']);
+    });
+
+    it('keeps the notation of an unchanged value sent without one, and drops it when the value changes', async () => {
+      const res = await createEvent({
+        event_value: 'CTD',
+        event_options: [{ event_option_name: 'Action', event_option_value: 'InWater', event_option_notation: 'SDN:EL1::act16' }]
+      });
+      const id = res.result.insertedId;
+
+      // A client that doesn't know about notations sends the options back
+      await updateEvent(id, { event_options: [{ event_option_name: 'Action', event_option_value: 'InWater' }], event_free_text: 'edited' });
+      expect(await storedOptions(id)).to.equal([{ event_option_name: 'action', event_option_value: 'InWater', event_option_notation: 'SDN:EL1::act16' }]);
+
+      // A new value without a notation is mapped from the template
+      await updateEvent(id, { event_options: [{ event_option_name: 'Action', event_option_value: 'OnBottom' }] });
+      expect(await storedOptions(id)).to.equal([{ event_option_name: 'action', event_option_value: 'OnBottom' }]);
+      expect(await entries(id)).to.equal(['instrument=SDN:L22::TOOL0058', 'action=SDN:EL1::act7']);
+    });
+
+    it('removes the notation when an empty one is sent', async () => {
+      const res = await createEvent({
+        event_value: 'CTD',
+        event_options: [{ event_option_name: 'Action', event_option_value: 'InWater', event_option_notation: 'SDN:EL1::act16' }]
+      });
+      const id = res.result.insertedId;
+
+      await updateEvent(id, { event_options: [{ event_option_name: 'Action', event_option_value: 'InWater', event_option_notation: '' }] });
+      expect(await storedOptions(id)).to.equal([{ event_option_name: 'action', event_option_value: 'InWater' }]);
+    });
+
+    it('exports notations as CSV columns next to their values', async () => {
+      const res = await createEvent({
+        event_value: 'CTD',
+        event_options: [
+          { event_option_name: 'Action', event_option_value: 'InWater', event_option_notation: 'SDN:EL1::act16' },
+          { event_option_name: 'Notes', event_option_value: 'cast 3' }
+        ]
+      });
+
+      const [header, row] = (await getEvent(res.result.insertedId, 'csv')).trim().split('\n');
+      const columns = header.split(',').map((column) => column.replace(/"/g, ''));
+      expect(columns.slice(5, 8)).to.equal(['event_option.action', 'event_option.action.notation', 'event_option.notes']);
+      expect(row).to.contain('SDN:EL1::act16');
+    });
+  });
 });

@@ -461,6 +461,37 @@ describe('Event Templates API', () => {
       expect(template.event_options[0].event_option_default_value).to.equal('');
     });
 
+    it('returns the notation of each value in the same order', async () => {
+      const res = await createTemplate([
+        option({ event_option_vocab: { collection: 'L22' } }),
+        option({ event_option_name: 'Instrument', event_option_type: 'static text', event_option_vocab: { collection: 'L22', terms: ['TOOL0058'] } }),
+        option({ event_option_name: 'Notes', event_option_type: 'text', event_option_values: [] })
+      ]);
+
+      const [vocabOption, staticOption, plainOption] = (await getTemplate(res.result.insertedId)).event_options;
+      expect(vocabOption.event_option_values).to.equal(['SBE 25 CTD', 'SBE 911plus CTD', 'Twin (TOOL0100)', 'Twin (TOOL0101)']);
+      expect(vocabOption.event_option_notations).to.equal(['SDN:L22::TOOL0035', 'SDN:L22::TOOL0058', 'SDN:L22::TOOL0100', 'SDN:L22::TOOL0101']);
+      expect(staticOption.event_option_notations).to.equal(['SDN:L22::TOOL0058']);
+      expect(plainOption.event_option_notations).to.not.exist();
+    });
+
+    it('accepts a template sent back with its notations and does not store them', async () => {
+      const res = await createTemplate([option({ event_option_vocab: { collection: 'EL1' } })]);
+      const template = await getTemplate(res.result.insertedId);
+
+      const update = await server.inject({
+        method: 'PATCH',
+        url: `/sealog-server/api/v1/event_templates/${res.result.insertedId}`,
+        headers: { Authorization: 'Bearer ' + adminJwt },
+        payload: { event_options: template.event_options }
+      });
+      expect(update.statusCode).to.equal(204);
+
+      const stored = await db.collection(eventTemplatesTable).findOne({ _id: new ObjectId(res.result.insertedId) });
+      expect(stored.event_options[0].event_option_notations).to.not.exist();
+      expect((await getTemplate(res.result.insertedId)).event_options[0].event_option_notations).to.equal(['SDN:EL1::act16', 'SDN:EL1::act7']);
+    });
+
     it('fills in values in the template list too', async () => {
       await createTemplate([option({ event_option_vocab: { collection: 'EL1', terms: ['act7'] } })]);
 

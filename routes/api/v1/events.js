@@ -11,7 +11,7 @@ const {
   buildEventsQuery
 } = require('../../../lib/utils');
 
-const { syncVocabAuxData } = require('../../../lib/vocab_aux_data');
+const { prepareOptionNotations, syncVocabAuxData } = require('../../../lib/vocab_aux_data');
 
 // allowFutureEvents is read at request time (not destructured) so it can be toggled in tests
 const ServerSettings = require('../../../config/server_settings');
@@ -882,6 +882,8 @@ exports.plugin = {
             event_option.event_option_name = event_option.event_option_name.toLowerCase().replace(/\s+/g, '_');
             return event_option;
           });
+
+          prepareOptionNotations(event.event_options);
         }
 
         if (!event.event_free_text) {
@@ -955,7 +957,10 @@ exports.plugin = {
 
         description: 'Create a new event record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
-          <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
+          <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>\
+          <p>An option whose value comes from a vocabulary can include <strong>event_option_notation</strong>: \
+          the value\'s notation from the template\'s <strong>event_option_notations</strong>, joined with \';\' for \
+          checkboxes. It is recorded in the event\'s <strong>vocab</strong> aux_data.</p>',
         tags: ['events','api']
       }
     });
@@ -1028,6 +1033,10 @@ exports.plugin = {
               event.event_options.push(requestOption);
             }
           });
+
+          // The options sent replace the stored ones; keep the notations of
+          // unchanged values the client didn't send
+          prepareOptionNotations(event.event_options, previousEvent.event_options);
         }
 
         if (event.ts) {
@@ -1094,7 +1103,10 @@ exports.plugin = {
         },
         description: 'Update an event record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
-          <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
+          <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>\
+          <p>The <strong>event_options</strong> sent replace the stored ones. An option sent without \
+          <strong>event_option_notation</strong> keeps its stored notation if its value is unchanged; \
+          an empty notation removes it.</p>',
         tags: ['events','api']
       }
     });
