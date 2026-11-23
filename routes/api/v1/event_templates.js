@@ -93,7 +93,8 @@ exports.plugin = {
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>\
           <p>Options with an <strong>event_option_vocab</strong> get their <strong>event_option_values</strong> \
           from that vocabulary: the labels of its terms shown on this server (only the listed ones when it lists \
-          <strong>terms</strong>), without deprecated terms.</p>',
+          <strong>terms</strong>), without deprecated terms. Their <strong>event_option_notations</strong> list \
+          the vocabulary notation of each value, in the same order (for static text, of the default value).</p>',
         tags: ['event_templates','api']
       }
     });
