@@ -9,7 +9,7 @@ const Jwt = require('jsonwebtoken');
 const { ObjectId } = require('mongodb');
 const SECRET = require('../config/secret');
 const ServerSettings = require('../config/server_settings');
-const { usersTable, eventTemplatesTable, eventAuxDataTable } = require('../config/db_constants');
+const { usersTable, eventTemplatesTable, eventsTable } = require('../config/db_constants');
 const {
   applyVocabulary,
   loadSeedBundle,
@@ -119,7 +119,7 @@ describe('Vocabularies API', () => {
     await db.collection(eventTemplatesTable).deleteMany({});
     await db.collection(vocabulariesTable).deleteMany({});
     await db.collection(vocabularyTermsTable).deleteMany({});
-    await db.collection(eventAuxDataTable).deleteMany({ data_source: 'vocab' });
+    await db.collection(eventsTable).deleteMany({});
     await db.collection(usersTable).insertMany(users);
     await applyVocabulary(db, parseNvsCollection('EL1', el1Doc), 'nvs');
     await applyVocabulary(db, l22, 'import');
@@ -541,7 +541,7 @@ describe('Vocabularies API', () => {
       await createLocal();
       await addTerm({ id: 'CTD1', prefLabel: 'CTD 1' });
       await addTerm({ id: 'ROV-ODYSSEY', prefLabel: 'ROV Odyssey' });
-      await db.collection(eventAuxDataTable).insertOne({ event_id: new ObjectId(), data_source: 'vocab', data_array: [{ data_name: 'instrument', data_value: 'SKQ:SKQEQ::ROV-ODYSSEY', data_uom: 'notation' }] });
+      await db.collection(eventsTable).insertOne({ event_value: 'DIVE', event_options: [{ event_option_name: 'instrument', event_option_value: 'ROV Odyssey', event_option_notation: 'SKQ:SKQEQ::ROV-ODYSSEY' }] });
 
       let res = await request('DELETE', '/vocabularies/SKQEQ/terms/CTD1', templateManagerJwt);
       expect(res.result).to.equal({ id: 'CTD1', action: 'deleted', affected_templates: [] });
@@ -606,7 +606,7 @@ describe('Vocabularies API', () => {
   });
 
   describe('deprecate instead of delete', () => {
-    const recordOnEvent = (notation) => db.collection(eventAuxDataTable).insertOne({ event_id: new ObjectId(), data_source: 'vocab', data_array: [{ data_name: 'action', data_value: notation, data_uom: 'notation' }] });
+    const recordOnEvent = (notation) => db.collection(eventsTable).insertOne({ event_value: 'TEST', event_options: [{ event_option_name: 'action', event_option_value: 'x', event_option_notation: notation }] });
     const refreshWith = (doc) => {
 
       stubFetch({ status: 200, body: doc });
@@ -630,7 +630,16 @@ describe('Vocabularies API', () => {
       expect(await db.collection(vocabularyTermsTable).findOne({ collection: 'EL1', id: 'act1' })).to.include({ deprecated: false }).and.to.not.include('source_removed');
     });
 
+    it('finds terms among checkbox notations', async () => {
+      await recordOnEvent('SDN:EL1::act16;SDN:EL1::act1');
+
+      const res = await refreshWith(nvsDoc('2', [{ id: 'act16', label: 'InWater' }, { id: 'act7', label: 'OnBottom' }]));
+      expect(res.result).to.include({ removed: [], retained: ['SDN:EL1::act1'] });
+    });
+
     it('still deletes removed terms that no event uses', async () => {
+      // act16 starts with act1 but isn't it
+      await recordOnEvent('SDN:EL1::act16');
       const res = await refreshWith(nvsDoc('2', [{ id: 'act16', label: 'InWater' }, { id: 'act7', label: 'OnBottom' }]));
 
       expect(res.result).to.include({ removed: ['SDN:EL1::act1'], retained: [], term_count: 2 });

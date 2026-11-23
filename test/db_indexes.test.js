@@ -47,8 +47,8 @@ describe('DB index helper', () => {
   });
 
   it('defines the events and aux data indexes', () => {
-    expect(collectionIndexes[eventsTable]).to.equal([{ key: { ts: -1 } }]);
-    expect(collectionIndexes[eventAuxDataTable]).to.equal([{ key: { event_id: 1 } }, { key: { data_source: 1, 'data_array.data_value': 1 } }]);
+    expect(collectionIndexes[eventsTable]).to.equal([{ key: { ts: -1 } }, { key: { 'event_options.event_option_notation': 1 } }]);
+    expect(collectionIndexes[eventAuxDataTable]).to.equal([{ key: { event_id: 1 } }]);
   });
 
   it('creates the index when there is none', async () => {
