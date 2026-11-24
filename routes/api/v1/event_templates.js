@@ -15,6 +15,7 @@ const {
 } = require('../../../lib/validations');
 
 const { expandTemplates, prepareOptions } = require('../../../lib/template_vocab');
+const { prepareSequenceOptions } = require('../../../lib/sequences');
 
 const _renameAndClearFields = (doc, admin = false) => {
 
@@ -182,7 +183,7 @@ exports.plugin = {
         }
 
         try {
-          const error = await prepareOptions(db, event_template.event_options);
+          const error = await prepareOptions(db, event_template.event_options) || await prepareSequenceOptions(db, event_template.event_options);
           if (error) {
             return Boom.badRequest(error);
           }
@@ -249,7 +250,9 @@ exports.plugin = {
           <p>A dropdown, radio buttons, checkboxes or static text option can take its values from a vocabulary: \
           <strong>event_option_vocab: { collection: \'L22\', terms: [\'TOOL0058\', ...] }</strong>. \
           Leave out <strong>terms</strong> for every term shown on this server; static text lists exactly one term. \
-          The values are filled in when templates are returned; any sent for such an option are ignored.</p>',
+          The values are filled in when templates are returned; any sent for such an option are ignored.</p>\
+          <p>A <strong>sequence</strong> option takes an ID from a sequence (<strong>event_option_sequence</strong>: \
+          its name), filled in when events are saved.</p>',
         tags: ['event_templates','api']
       }
     });
@@ -273,7 +276,7 @@ exports.plugin = {
 
         if (request.payload.event_options) {
           try {
-            const error = await prepareOptions(db, request.payload.event_options);
+            const error = await prepareOptions(db, request.payload.event_options) || await prepareSequenceOptions(db, request.payload.event_options);
             if (error) {
               return Boom.badRequest(error);
             }
