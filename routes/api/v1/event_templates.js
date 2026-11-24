@@ -252,7 +252,9 @@ exports.plugin = {
           Leave out <strong>terms</strong> for every term shown on this server; static text lists exactly one term. \
           The values are filled in when templates are returned; any sent for such an option are ignored.</p>\
           <p>A <strong>sequence</strong> option takes an ID from a sequence (<strong>event_option_sequence</strong>: \
-          its name), filled in when events are saved.</p>',
+          its name), filled in when events are saved. With <strong>event_option_sequence_new_when</strong> \
+          (conditions, all of which must match: <strong>{ event_option_name, event_option_values }</strong>), it takes \
+          a new ID only when the event meets them, and otherwise reuses the current one.</p>',
         tags: ['event_templates','api']
       }
     });
