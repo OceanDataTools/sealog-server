@@ -404,6 +404,42 @@ describe('Vocabularies API', () => {
       expect(await db.collection(vocabularyTermsTable).countDocuments({ collection: 'L22' })).to.equal(3);
     });
 
+    it('keeps the terms recorded on events, deprecated, with the vocabulary', async () => {
+      const [used, ...unused] = await db.collection(vocabularyTermsTable).find({ collection: 'L22' }).sort({ id: 1 }).toArray();
+      const el1 = await db.collection(vocabularyTermsTable).findOne({ collection: 'EL1' });
+      // A checkbox option recording terms from two vocabularies
+      await db.collection(eventsTable).insertOne({ event_value: 'CTD', event_options: [{ event_option_name: 'gear', event_option_value: 'a;b', event_option_notation: `${el1.notation};${used.notation}` }] });
+
+      let res = await request('DELETE', '/vocabularies/L22', adminJwt);
+      expect(res.statusCode).to.equal(200);
+      expect(res.result).to.equal({ collection: 'L22', action: 'retained', retained: [used.notation] });
+
+      expect(await db.collection(vocabulariesTable).findOne({ collection: 'L22' })).to.include({ term_count: 1 });
+      expect(await db.collection(vocabularyTermsTable).findOne({ collection: 'L22', id: used.id })).to.include({ deprecated: true, source_removed: true });
+      expect(await db.collection(vocabularyTermsTable).countDocuments({ collection: 'L22', id: { $in: unused.map((term) => term.id) } })).to.equal(0);
+      expect((await request('GET', `/vocabularies/L22/terms/${used.id}`, watcherJwt)).statusCode).to.equal(200);
+
+      // Deleted once no event uses it
+      await db.collection(eventsTable).deleteMany({});
+      res = await request('DELETE', '/vocabularies/L22', adminJwt);
+      expect(res.statusCode).to.equal(204);
+      expect(await db.collection(vocabularyTermsTable).countDocuments({ collection: 'L22' })).to.equal(0);
+    });
+
+    it('keeps a local vocabulary\'s recorded terms deprecated, like a term delete', async () => {
+      await request('POST', '/vocabularies', templateManagerJwt, { collection: 'SKQEQ', title: 'Sikuliaq equipment', prefix: 'SKQ' });
+      await request('POST', '/vocabularies/SKQEQ/terms', templateManagerJwt, { id: 'ROV', prefLabel: 'ROV' });
+      await request('POST', '/vocabularies/SKQEQ/terms', templateManagerJwt, { id: 'CTD', prefLabel: 'CTD' });
+      await db.collection(eventsTable).insertOne({ event_value: 'DIVE', event_options: [{ event_option_name: 'platform', event_option_value: 'ROV', event_option_notation: 'SKQ:SKQEQ::ROV' }] });
+
+      const res = await request('DELETE', '/vocabularies/SKQEQ', adminJwt);
+
+      expect(res.result).to.equal({ collection: 'SKQEQ', action: 'retained', retained: ['SKQ:SKQEQ::ROV'] });
+      const kept = await db.collection(vocabularyTermsTable).find({ collection: 'SKQEQ' }).toArray();
+      expect(kept.map((term) => term.id)).to.equal(['ROV']);
+      expect(kept[0]).to.include({ deprecated: true }).and.to.not.include('source_removed');
+    });
+
     it('returns 404 for a vocabulary that is not cached', async () => {
       const res = await request('DELETE', '/vocabularies/P01', adminJwt);
       expect(res.statusCode).to.equal(404);

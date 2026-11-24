@@ -4,6 +4,7 @@ const {
   authorizationHeader,
   localTermCreatePayload,
   localTermDeleteResponse,
+  vocabularyDeleteResponse,
   localTermUpdatePayload,
   termVisibilityPayload,
   vocabulariesResponse,
@@ -34,6 +35,7 @@ const {
   isHidden,
   isLocal,
   removeLocalTerm,
+  removeVocabulary,
   setTermHidden,
   setVisibility,
   visibilityOf,
@@ -857,20 +859,22 @@ exports.plugin = {
             return Boom.conflict(`${collection} is used by event templates: ${names}. Change their options first`);
           }
 
-          const result = await db.collection(vocabulariesTable).deleteOne({ collection });
+          const retained = await removeVocabulary(db, collection);
 
-          if (!result.deletedCount) {
+          if (!retained) {
             return Boom.notFound('No vocabulary found for collection: ' + collection);
           }
 
-          await db.collection(vocabularyTermsTable).deleteMany({ collection });
-          server.publish('/ws/status/updateVocabularies', { collection, deleted: true });
+          if (retained.length) {
+            server.publish('/ws/status/updateVocabularies', { collection });
+            return { collection, action: 'retained', retained };
+          }
 
+          server.publish('/ws/status/updateVocabularies', { collection, deleted: true });
           return h.response().code(204);
         }
         catch (err) {
-          console.log(err);
-          return Boom.serverUnavailable('database error');
+          return vocabularyError(err);
         }
       },
       config: {
@@ -883,12 +887,17 @@ exports.plugin = {
           params: vocabularyParam
         },
         response: {
-          status: {}
+          status: {
+            200: vocabularyDeleteResponse
+          }
         },
         description: 'Delete a cached vocabulary',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong></p>\
-          <p>Refused (409) while event template options take their values from it.</p>',
+          <p>Refused (409) while event template options take their values from it.</p>\
+          <p>If events record any of its terms, those terms are kept, marked deprecated, with the vocabulary, \
+          so the events still resolve; the rest are deleted (200, <strong>action: retained</strong> with the kept notations). \
+          Otherwise the vocabulary is deleted (204).</p>',
         tags: ['vocabularies','api']
       }
     });
