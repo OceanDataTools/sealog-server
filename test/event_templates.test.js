@@ -529,11 +529,14 @@ describe('Event Templates API', () => {
     it('rejects unknown vocabularies and terms', async () => {
       let res = await createTemplate([option({ event_option_vocab: { collection: 'P01' } })]);
       expect(res.statusCode).to.equal(400);
-      expect(res.result.message).to.contain('P01');
+      expect(res.result.message).to.match(/takes its values from vocabulary P01, which isn't installed on this server$/);
 
       res = await createTemplate([option({ event_option_vocab: { collection: 'EL1', terms: ['act16', 'act99'] } })]);
       expect(res.statusCode).to.equal(400);
-      expect(res.result.message).to.contain('act99');
+      expect(res.result.message).to.match(/term act99 isn't in vocabulary EL1 on this server$/);
+
+      res = await createTemplate([option({ event_option_vocab: { collection: 'EL1', terms: ['act98', 'act99'] } })]);
+      expect(res.result.message).to.match(/terms act98, act99 aren't in vocabulary EL1 on this server$/);
     });
 
     it('rejects the old copy format, empty and repeated term lists', async () => {
