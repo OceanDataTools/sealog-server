@@ -11,7 +11,7 @@ const {
   buildEventsQuery
 } = require('../../../lib/utils');
 
-const { prepareOptionNotations } = require('../../../lib/event_notations');
+const { checkSentNotations, prepareOptionNotations } = require('../../../lib/event_notations');
 
 // allowFutureEvents is read at request time (not destructured) so it can be toggled in tests
 const ServerSettings = require('../../../config/server_settings');
@@ -883,6 +883,11 @@ exports.plugin = {
             return event_option;
           });
 
+          const notationError = await checkSentNotations(db, event.event_options);
+          if (notationError) {
+            return Boom.badRequest(notationError);
+          }
+
           await prepareOptionNotations(db, event.event_value, event.event_options);
         }
 
@@ -953,7 +958,8 @@ exports.plugin = {
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>\
           <p>An option whose value comes from a vocabulary can include <strong>event_option_notation</strong>: \
           the value\'s notation from the template\'s <strong>event_option_notations</strong>, joined with \';\' for \
-          checkboxes. It is recorded in the event\'s <strong>vocab</strong> aux_data.</p>',
+          checkboxes. Each must be a term on this server (400 otherwise). Options sent without one are mapped from \
+          the event\'s template(s).</p>',
         tags: ['events','api']
       }
     });
@@ -1027,6 +1033,11 @@ exports.plugin = {
             }
           });
 
+          const notationError = await checkSentNotations(db, event.event_options);
+          if (notationError) {
+            return Boom.badRequest(notationError);
+          }
+
           // The options sent replace the stored ones; keep the notations of
           // unchanged values the client didn't send and map the rest
           await prepareOptionNotations(db, event.event_value || previousEvent.event_value, event.event_options, previousEvent.event_options);
@@ -1088,8 +1099,9 @@ exports.plugin = {
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>\
           <p>The <strong>event_options</strong> sent replace the stored ones. An option sent without \
-          <strong>event_option_notation</strong> keeps its stored notation if its value is unchanged; \
-          an empty notation removes it.</p>',
+          <strong>event_option_notation</strong> keeps its stored notation if its value is unchanged, or is mapped \
+          from the event\'s template(s); an empty notation removes it. A notation sent must be a term on this \
+          server (400 otherwise).</p>',
         tags: ['events','api']
       }
     });
