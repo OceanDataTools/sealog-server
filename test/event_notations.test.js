@@ -241,6 +241,48 @@ describe('Vocabulary IDs on event options', () => {
   });
 
   describe('event_option_notation sent by the client', () => {
+    it('rejects a notation that is not a term on this server', async () => {
+      let res = await createEvent({ event_value: 'CTD', event_options: [{ event_option_name: 'Action', event_option_value: 'InWater', event_option_notation: 'SDN:EL1::act99' }] });
+      expect(res.statusCode).to.equal(400);
+      expect(res.result.message).to.equal('Option "action": SDN:EL1::act99 isn\'t a vocabulary term on this server');
+
+      // Each checkbox notation is checked, and the right prefix is needed
+      res = await createEvent({ event_value: 'CTD', event_options: [{ event_option_name: 'Gear Used', event_option_value: 'Rosette;Altimeter', event_option_notation: 'SDN:L05::30;XYZ:L05::379' }] });
+      expect(res.statusCode).to.equal(400);
+      expect(res.result.message).to.contain('XYZ:L05::379');
+
+      res = await createEvent({ event_value: 'CTD', event_options: [{ event_option_name: 'Notes', event_option_value: 'x', event_option_notation: 'not a notation' }] });
+      expect(res.statusCode).to.equal(400);
+    });
+
+    it('accepts hidden and deprecated terms', async () => {
+      await db.collection(vocabularyTermsTable).updateOne({ collection: 'EL1', id: 'act7' }, { $set: { deprecated: true } });
+      await db.collection(vocabulariesTable).updateOne({ collection: 'EL1' }, { $set: { visibility: { mode: 'hide_listed', terms: ['act16'] } } });
+
+      const res = await createEvent({
+        event_value: 'CTD',
+        event_options: [
+          { event_option_name: 'Action', event_option_value: 'InWater', event_option_notation: 'SDN:EL1::act16' },
+          { event_option_name: 'Gear Used', event_option_value: 'OnBottom', event_option_notation: 'SDN:EL1::act7' }
+        ]
+      });
+      expect(res.statusCode).to.equal(201);
+    });
+
+    it('checks notations sent in an update, but not kept or mapped ones', async () => {
+      const res = await createEvent({ event_value: 'CTD', event_options: [ctdOptions[1]] });
+      const id = res.result.insertedId;
+
+      // A stored notation whose term has since gone is kept for an unchanged value
+      await db.collection(vocabularyTermsTable).deleteOne({ collection: 'EL1', id: 'act16' });
+      expect((await updateEvent(id, { event_options: [ctdOptions[1]], event_free_text: 'edited' })).statusCode).to.equal(204);
+      expect(await notations(id)).to.equal(['action=SDN:EL1::act16']);
+
+      const bad = await updateEvent(id, { event_options: [{ event_option_name: 'Action', event_option_value: 'OnBottom', event_option_notation: 'SDN:EL1::act99' }] });
+      expect(bad.statusCode).to.equal(400);
+      expect(await notations(id)).to.equal(['action=SDN:EL1::act16']);
+    });
+
     it('stores and returns the notations sent; an empty one means none', async () => {
       const res = await createEvent({
         event_value: 'CTD',
