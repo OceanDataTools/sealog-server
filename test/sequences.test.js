@@ -286,6 +286,121 @@ describe('ID sequences', () => {
     });
   });
 
+  describe('reusing the current ID', () => {
+    const pick = (name, type, values) => ({ event_option_name: name, event_option_type: type, event_option_values: values, event_option_allow_freeform: false, event_option_required: false });
+    const castOption = (newWhen) => ({ ...pick('Cast ID', 'sequence', []), event_option_sequence: 'ctd_cast', event_option_default_value: '', event_option_sequence_new_when: newWhen });
+    const startsCast = [{ event_option_name: 'Process', event_option_values: ['deployment'] }, { event_option_name: 'Action', event_option_values: ['start'] }];
+    const ctdTemplate = (event_name, event_value, newWhen = startsCast) => ({
+      event_name, event_value, event_free_text_required: false, system_template: false, template_categories: [],
+      event_options: [castOption(newWhen), pick('Process', 'dropdown', ['deployment', 'recovery']), pick('Action', 'dropdown', ['start', 'bottle', 'end'])]
+    });
+
+    const at = (hour) => `2026-01-05T${String(hour).padStart(2, '0')}:00:00.000Z`;
+    const logCtd = async (hour, process, action, extra = {}) => {
+
+      const options = [{ event_option_name: 'Process', event_option_value: process }, { event_option_name: 'Action', event_option_value: action }];
+      return await request('POST', '/events', loggerJwt, { event_value: 'CTD', ts: at(hour), event_options: options, ...extra });
+    };
+
+    const castOf = async (res) => {
+
+      expect(res.statusCode).to.equal(201);
+      const event = await db.collection(eventsTable).findOne({ _id: new ObjectId(res.result.insertedId) });
+      return event.event_options.find((option) => option.event_option_name === 'cast_id').event_option_value;
+    };
+
+    beforeEach(async () => {
+      await db.collection(sequencesTable).insertOne({ name: 'ctd_cast', format: '{cruise_id}-C{n:03}', scope: 'cruise', start: 1, description: '' });
+      await db.collection(cruisesTable).insertOne({ cruise_id: 'NA124', start_ts: new Date('2026-02-01T00:00:00Z'), stop_ts: new Date('2026-02-28T00:00:00Z') });
+      expect((await request('POST', '/event_templates', adminJwt, ctdTemplate('CTD', 'CTD'))).statusCode).to.equal(201);
+    });
+
+    it('starts a cast on the matching event and reuses it until the next', async () => {
+      expect(await castOf(await logCtd(1, 'deployment', 'start'))).to.equal('NA123-C001');
+      expect(await castOf(await logCtd(2, 'deployment', 'bottle'))).to.equal('NA123-C001');
+      expect(await castOf(await logCtd(3, 'recovery', 'end'))).to.equal('NA123-C001');
+      expect(await castOf(await logCtd(5, 'deployment', 'start'))).to.equal('NA123-C002');
+      expect(await castOf(await logCtd(6, 'recovery', 'end'))).to.equal('NA123-C002');
+
+      // Back-dated: the cast in progress at its time
+      expect(await castOf(await logCtd(4, 'recovery', 'end'))).to.equal('NA123-C001');
+    });
+
+    it('reuses the cast across templates using the sequence', async () => {
+      await request('POST', '/event_templates', adminJwt, ctdTemplate('CTD bottle', 'CTD_BOTTLE', [{ event_option_name: 'Action', event_option_values: ['start'] }]));
+      await logCtd(1, 'deployment', 'start');
+
+      const res = await request('POST', '/events', loggerJwt, { event_value: 'CTD_BOTTLE', ts: at(2), event_options: [{ event_option_name: 'Action', event_option_value: 'bottle' }] });
+      expect(await castOf(res)).to.equal('NA123-C001');
+    });
+
+    it('rejects an event with no current ID to reuse, including from another cruise', async () => {
+      let res = await logCtd(1, 'deployment', 'bottle');
+      expect(res.statusCode).to.equal(400);
+      expect(res.result.message).to.equal('Option "cast_id": no current ctd_cast ID to reuse; it takes a new one when process is deployment and action is start');
+
+      await logCtd(2, 'deployment', 'start');
+      res = await request('POST', '/events', loggerJwt, { event_value: 'CTD', ts: '2026-02-02T00:00:00.000Z', event_options: [{ event_option_name: 'Process', event_option_value: 'recovery' }] });
+      expect(res.statusCode).to.equal(400);
+    });
+
+    it('matches checkbox conditions on any ticked value', async () => {
+      await db.collection(eventTemplatesTable).deleteMany({});
+      const template = ctdTemplate('CTD', 'CTD', [{ event_option_name: 'Gear', event_option_values: ['rosette'] }]);
+      template.event_options.push(pick('Gear', 'checkboxes', ['rosette', 'altimeter']));
+      await request('POST', '/event_templates', adminJwt, template);
+
+      const log = (hour, gear) => request('POST', '/events', loggerJwt, { event_value: 'CTD', ts: at(hour), event_options: [{ event_option_name: 'Gear', event_option_value: gear }] });
+      expect(await castOf(await log(1, 'altimeter;rosette'))).to.equal('NA123-C001');
+      expect(await castOf(await log(2, 'altimeter'))).to.equal('NA123-C001');
+      expect(await castOf(await log(3, 'rosette'))).to.equal('NA123-C002');
+    });
+
+    it('keeps an event\'s ID through edits', async () => {
+      await logCtd(1, 'deployment', 'start');
+      const bottle = (await logCtd(2, 'deployment', 'bottle')).result.insertedId;
+      await logCtd(3, 'deployment', 'start');
+
+      const res = await request('PATCH', `/events/${bottle}`, loggerJwt, { event_options: [{ event_option_name: 'Process', event_option_value: 'deployment' }, { event_option_name: 'Action', event_option_value: 'start' }] });
+      expect(res.statusCode).to.equal(204);
+      const event = await db.collection(eventsTable).findOne({ _id: new ObjectId(bottle) });
+      expect(event.event_options.find((option) => option.event_option_name === 'cast_id').event_option_value).to.equal('NA123-C001');
+    });
+
+    it('checks typed IDs for duplicates only when they start a cast', async () => {
+      await logCtd(1, 'deployment', 'start');
+      const typed = { event_option_name: 'Cast ID', event_option_value: 'NA123-C001' };
+
+      const reuse = await request('POST', '/events', loggerJwt, { event_value: 'CTD', ts: at(2), event_options: [typed, { event_option_name: 'Action', event_option_value: 'bottle' }] });
+      expect(reuse.statusCode).to.equal(201);
+
+      const start = await request('POST', '/events', loggerJwt, { event_value: 'CTD', ts: at(3), event_options: [typed, { event_option_name: 'Process', event_option_value: 'deployment' }, { event_option_name: 'Action', event_option_value: 'start' }] });
+      expect(start.statusCode).to.equal(409);
+    });
+
+    it('checks the conditions on templates', async () => {
+      const bad = ctdTemplate('Bad', 'BAD', [{ event_option_name: 'Depth', event_option_values: ['x'] }]);
+      let res = await request('POST', '/event_templates', adminJwt, bad);
+      expect(res.statusCode).to.equal(400);
+      expect(res.result.message).to.contain('names "Depth", which isn\'t another option of this template');
+
+      const wrongType = ctdTemplate('Bad', 'BAD');
+      wrongType.event_options[1].event_option_sequence_new_when = startsCast;
+      res = await request('POST', '/event_templates', adminJwt, wrongType);
+      expect(res.result.message).to.contain('only sequence options take event_option_sequence_new_when');
+    });
+
+    it('previews the current ID', async () => {
+      let res = await request('GET', `/sequences/ctd_cast/current?ts=${at(1)}`, loggerJwt);
+      expect(res.statusCode).to.equal(400);
+      expect(res.result.message).to.equal('no current ctd_cast ID to reuse');
+
+      await logCtd(1, 'deployment', 'start');
+      res = await request('GET', `/sequences/ctd_cast/current?ts=${at(2)}`, loggerJwt);
+      expect(res.result).to.equal({ id: 'NA123-C001' });
+    });
+  });
+
   describe('preview and counters', () => {
     it('previews the next ID without taking it', async () => {
       await logSample(inDive1);

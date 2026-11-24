@@ -17,7 +17,7 @@ const { assignSequenceIds } = require('../../../lib/sequences');
 // A Boom error for a sequence ID that couldn't be assigned
 const sequenceIdError = (err) => {
 
-  if (['NO_SCOPE', 'NO_SEQUENCE', 'CONFLICT', 'EXHAUSTED'].includes(err.code)) {
+  if (['NO_SCOPE', 'NO_SEQUENCE', 'CONFLICT', 'EXHAUSTED', 'NO_CURRENT'].includes(err.code)) {
     return Boom.badRequest(err.message);
   }
 

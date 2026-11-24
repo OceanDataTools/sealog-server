@@ -5,6 +5,7 @@ const {
   sequenceCounterPayload,
   sequenceCountersResponse,
   sequenceCreatePayload,
+  sequenceCurrentResponse,
   sequenceImportPayload,
   sequenceImportResponse,
   sequenceNextQuery,
@@ -20,6 +21,7 @@ const { ensureCollectionIndexes } = require('../../../lib/db_indexes');
 const {
   findSequence,
   parseFormat,
+  previewCurrentId,
   previewId,
   sequenceCountersTable,
   sequencesTable,
@@ -31,7 +33,7 @@ const RESERVED_NAMES = ['export', 'import'];
 
 const sequenceError = (err) => {
 
-  if (['BAD_FORMAT', 'NO_SCOPE'].includes(err.code)) {
+  if (['BAD_FORMAT', 'NO_SCOPE', 'NO_CURRENT'].includes(err.code)) {
     return Boom.badRequest(err.message);
   }
 
@@ -505,6 +507,50 @@ exports.plugin = {
           saved first gets it instead. <strong>prefix</strong> and <strong>suffix</strong> are the ID\'s text around \
           the number, to read the number of an ID typed by hand. 400 when the sequence needs a cruise or lowering \
           and none covers ts.</p>',
+        tags: ['sequences','api']
+      }
+    });
+
+    server.route({
+      method: 'GET',
+      path: '/sequences/{name}/current',
+      async handler(request) {
+
+        const db = request.mongo.db;
+        const { name } = request.params;
+
+        try {
+          const sequence = await findSequence(db, name);
+          if (!sequence) {
+            return Boom.notFound(`No sequence named ${name}`);
+          }
+
+          return await previewCurrentId(db, sequence, request.query.ts || new Date());
+        }
+        catch (err) {
+          return sequenceError(err);
+        }
+      },
+      config: {
+        auth: {
+          strategy: 'jwt'
+        },
+        validate: {
+          headers: authorizationHeader,
+          params: sequenceParam,
+          query: sequenceNextQuery
+        },
+        response: {
+          status: {
+            200: sequenceCurrentResponse
+          }
+        },
+        description: 'Preview the current ID of a sequence',
+        notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
+          <p>Available to: <strong>all users</strong></p>\
+          <p>The ID an event at <strong>ts</strong> (default now) whose sequence option doesn\'t take a new ID \
+          (its event_option_sequence_new_when conditions aren\'t met) would reuse: the ID on the most recent earlier \
+          event with that sequence, within the cruise or lowering covering ts. 400 when there\'s none.</p>',
         tags: ['sequences','api']
       }
     });
