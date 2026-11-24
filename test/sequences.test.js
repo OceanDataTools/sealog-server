@@ -291,7 +291,7 @@ describe('ID sequences', () => {
       await logSample(inDive1);
 
       let res = await request('GET', `/sequences/sample_id/next?ts=${inDive1}`, loggerJwt);
-      expect(res.result).to.equal({ id: 'J2-1-S002', n: 2, scope_key: 'J2-1' });
+      expect(res.result).to.equal({ id: 'J2-1-S002', n: 2, scope_key: 'J2-1', prefix: 'J2-1-S', suffix: '' });
       res = await request('GET', `/sequences/sample_id/next?ts=${inDive1}`, loggerJwt);
       expect(res.result.id).to.equal('J2-1-S002');
 

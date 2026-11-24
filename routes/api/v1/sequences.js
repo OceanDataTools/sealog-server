@@ -502,7 +502,9 @@ exports.plugin = {
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
           <p>Available to: <strong>all users</strong></p>\
           <p>The ID the next event at <strong>ts</strong> (default now) would get, without taking it: another event \
-          saved first gets it instead. 400 when the sequence needs a cruise or lowering and none covers ts.</p>',
+          saved first gets it instead. <strong>prefix</strong> and <strong>suffix</strong> are the ID\'s text around \
+          the number, to read the number of an ID typed by hand. 400 when the sequence needs a cruise or lowering \
+          and none covers ts.</p>',
         tags: ['sequences','api']
       }
     });
