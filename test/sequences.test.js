@@ -232,6 +232,28 @@ describe('ID sequences', () => {
       expect(await storedId(await logSample(inDive1))).to.equal('J2-1-S013');
     });
 
+    it('rejects a hand-typed ID another event already has', async () => {
+      const first = await logSample(inDive1);
+
+      const res = await createEvent({ ts: inDive1, event_options: [{ event_option_name: 'Sample ID', event_option_value: 'J2-1-S001' }] });
+      expect(res.statusCode).to.equal(409);
+      expect(res.result.message).to.equal('Option "sample_id": J2-1-S001 is already used by another event');
+
+      // An event keeps its own ID through edits, but can't take another's
+      const second = await logSample(inDive1);
+      expect((await updateEvent(first, { event_options: [{ event_option_name: 'Sample ID', event_option_value: 'J2-1-S001' }, { event_option_name: 'Notes', event_option_value: 'x' }] })).statusCode).to.equal(204);
+      expect((await updateEvent(second, { event_options: [{ event_option_name: 'Sample ID', event_option_value: 'J2-1-S001' }] })).statusCode).to.equal(409);
+      expect(await storedId(second)).to.equal('J2-1-S002');
+    });
+
+    it('skips numbers whose ID another event already has', async () => {
+      // Typed on an event in another lowering, so J2-1's counter doesn't move
+      await logSample(inDive2, [{ event_option_name: 'Sample ID', event_option_value: 'J2-1-S002' }]);
+
+      expect(await storedId(await logSample(inDive1))).to.equal('J2-1-S001');
+      expect(await storedId(await logSample(inDive1))).to.equal('J2-1-S003');
+    });
+
     it('rejects an event that needs an ID outside the sequence\'s scope', async () => {
       const res = await createEvent({ ts: onDeck, event_options: [] });
       expect(res.statusCode).to.equal(400);

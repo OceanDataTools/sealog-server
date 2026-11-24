@@ -17,8 +17,12 @@ const { assignSequenceIds } = require('../../../lib/sequences');
 // A Boom error for a sequence ID that couldn't be assigned
 const sequenceIdError = (err) => {
 
-  if (['NO_SCOPE', 'NO_SEQUENCE', 'CONFLICT'].includes(err.code)) {
+  if (['NO_SCOPE', 'NO_SEQUENCE', 'CONFLICT', 'EXHAUSTED'].includes(err.code)) {
     return Boom.badRequest(err.message);
+  }
+
+  if (err.code === 'DUPLICATE') {
+    return Boom.conflict(err.message);
   }
 
   console.log(err);
@@ -905,7 +909,7 @@ exports.plugin = {
           // Only when options are sent: a client creating the event before
           // sending its options shouldn't take a number
           try {
-            await assignSequenceIds(db, event.event_value, event.ts, event.event_options);
+            await assignSequenceIds(db, event.event_value, event.ts, event.event_options, null, event._id);
           }
           catch (err) {
             return sequenceIdError(err);
@@ -1065,7 +1069,7 @@ exports.plugin = {
 
           // Sequence options keep their stored IDs, including when ts changes
           try {
-            await assignSequenceIds(db, event.event_value || previousEvent.event_value, event.ts ? new Date(event.ts) : previousEvent.ts, event.event_options, previousEvent.event_options);
+            await assignSequenceIds(db, event.event_value || previousEvent.event_value, event.ts ? new Date(event.ts) : previousEvent.ts, event.event_options, previousEvent.event_options, previousEvent._id);
           }
           catch (err) {
             return sequenceIdError(err);
