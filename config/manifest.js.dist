@@ -57,6 +57,10 @@ const swagger_options = {
       description: 'the users api'
     },
     {
+      name: 'sequences',
+      description: 'the ID sequences api'
+    },
+    {
       name: 'vocabularies',
       description: 'the controlled vocabularies api'
     }
@@ -197,6 +201,11 @@ const manifest = {
         }
       },
       { plugin: './routes/api/v1/vocabularies', options: {},
+        routes: {
+          prefix: '/sealog-server/api/v1'
+        }
+      },
+      { plugin: './routes/api/v1/sequences', options: {},
         routes: {
           prefix: '/sealog-server/api/v1'
         }

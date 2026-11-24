@@ -12,6 +12,22 @@ const {
 } = require('../../../lib/utils');
 
 const { checkSentNotations, prepareOptionNotations } = require('../../../lib/event_notations');
+const { assignSequenceIds } = require('../../../lib/sequences');
+
+// A Boom error for a sequence ID that couldn't be assigned
+const sequenceIdError = (err) => {
+
+  if (['NO_SCOPE', 'NO_SEQUENCE', 'CONFLICT', 'EXHAUSTED'].includes(err.code)) {
+    return Boom.badRequest(err.message);
+  }
+
+  if (err.code === 'DUPLICATE') {
+    return Boom.conflict(err.message);
+  }
+
+  console.log(err);
+  return Boom.serverUnavailable('database error');
+};
 
 // allowFutureEvents is read at request time (not destructured) so it can be toggled in tests
 const ServerSettings = require('../../../config/server_settings');
@@ -889,6 +905,15 @@ exports.plugin = {
           }
 
           await prepareOptionNotations(db, event.event_value, event.event_options);
+
+          // Only when options are sent: a client creating the event before
+          // sending its options shouldn't take a number
+          try {
+            await assignSequenceIds(db, event.event_value, event.ts, event.event_options, null, event._id);
+          }
+          catch (err) {
+            return sequenceIdError(err);
+          }
         }
 
         if (!event.event_free_text) {
@@ -1041,6 +1066,14 @@ exports.plugin = {
           // The options sent replace the stored ones; keep the notations of
           // unchanged values the client didn't send and map the rest
           await prepareOptionNotations(db, event.event_value || previousEvent.event_value, event.event_options, previousEvent.event_options);
+
+          // Sequence options keep their stored IDs, including when ts changes
+          try {
+            await assignSequenceIds(db, event.event_value || previousEvent.event_value, event.ts ? new Date(event.ts) : previousEvent.ts, event.event_options, previousEvent.event_options, previousEvent._id);
+          }
+          catch (err) {
+            return sequenceIdError(err);
+          }
         }
 
         if (event.ts) {
