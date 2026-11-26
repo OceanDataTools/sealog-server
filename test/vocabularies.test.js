@@ -378,6 +378,18 @@ describe('Vocabularies API', () => {
       expect((await request('GET', '/vocabularies/export', loggerJwt)).statusCode).to.equal(403);
       expect((await request('POST', '/vocabularies/import', loggerJwt, {})).statusCode).to.equal(403);
     });
+
+    it('gives terms added to a local vocabulary imported without a prefix this server\'s prefix', async () => {
+      const res = await request('POST', '/vocabularies/import', adminJwt, {
+        format: 'sealog-vocabularies',
+        format_version: 1,
+        vocabularies: [{ collection: 'NOPRE', title: 'No prefix', source: 'local', terms: [{ id: 'A', notation: 'OLD:NOPRE::A', prefLabel: 'A', deprecated: false }] }]
+      });
+      expect(res.statusCode).to.equal(200);
+
+      const term = await request('POST', '/vocabularies/NOPRE/terms', templateManagerJwt, { id: 'ROV-1', prefLabel: 'ROV 1' });
+      expect(term.result.notation).to.equal(`${ServerSettings.localVocabularyPrefix || 'CV'}:NOPRE::ROV-1`);
+    });
   });
 
   describe('DELETE /vocabularies/{collection}', () => {
@@ -886,6 +898,19 @@ describe('Vocabularies API', () => {
 
       const ctd = await db.collection(vocabularyTermsTable).findOne({ collection: 'L22', id: 'TOOL0058' });
       expect(ctd.broader.some((notation) => notation.startsWith('SDN:L05::'))).to.be.true();
+    });
+
+    it('is loaded on start while the vocabularies collection is empty', async () => {
+      // As after a first start whose seed failed: the collection exists, empty
+      await db.collection(vocabulariesTable).deleteMany({});
+      await db.collection(vocabularyTermsTable).deleteMany({});
+      await server.stop();
+
+      server = await init();
+      db = server.mongo.db;
+
+      const collections = (await db.collection(vocabulariesTable).find({}).toArray()).map((vocabulary) => vocabulary.collection).sort();
+      expect(collections).to.equal(['EL1', 'EL2', 'L05', 'L06', 'L22']);
     });
   });
 });
