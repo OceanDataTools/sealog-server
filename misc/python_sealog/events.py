@@ -27,7 +27,8 @@ from misc.python_sealog.settings import API_SERVER_URL, HEADERS, EVENTS_API_PATH
 from misc.python_sealog._request import _request, _parse
 
 
-def _event_params(export_format, add_record_ids, event_filter, start_ts=None, stop_ts=None):
+def _event_params(export_format, add_record_ids, event_filter, start_ts=None, stop_ts=None,
+                  limit=None, offset=None, sort=None):
     '''Build the query params dict for event requests.'''
     event_filter = event_filter or []
     if not isinstance(event_filter, list):
@@ -41,6 +42,12 @@ def _event_params(export_format, add_record_ids, event_filter, start_ts=None, st
         params['startTS'] = start_ts
     if stop_ts is not None:
         params['stopTS'] = stop_ts
+    if limit is not None:
+        params['limit'] = limit
+    if offset is not None:
+        params['offset'] = offset
+    if sort is not None:
+        params['sort'] = sort
     return params
 
 
@@ -70,7 +77,8 @@ def get_events(export_format='json', add_record_ids=False, event_filter=None,
 
 
 def get_events_by_cruise(cruise_uid, export_format='json', add_record_ids=False,
-                         event_filter=None, api_server_url=API_SERVER_URL, headers=HEADERS):
+                         event_filter=None, limit=None, offset=None, sort=None,
+                         api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     Return event records for the given cruise_uid.  Returns the records as
     json objects by default.  Set export_format to 'csv' to return the records
@@ -78,7 +86,8 @@ def get_events_by_cruise(cruise_uid, export_format='json', add_record_ids=False,
     events.
     '''
     url = api_server_url + EVENTS_API_PATH + '/bycruise/' + cruise_uid
-    params = _event_params(export_format, add_record_ids, event_filter)
+    params = _event_params(export_format, add_record_ids, event_filter, limit=limit, offset=offset,
+                           sort=sort)
     return _parse(_request('GET', url, params=params, headers=headers),
                   export_format, collection=True)
 
@@ -103,3 +112,11 @@ def delete_event(event_uid, api_server_url=API_SERVER_URL, headers=HEADERS):
     '''
     url = api_server_url + EVENTS_API_PATH + '/' + event_uid
     _request('DELETE', url, headers=headers)
+
+
+def update_event(event_uid, payload, api_server_url=API_SERVER_URL, headers=HEADERS):
+    '''
+    Update the event record.
+    '''
+    url = api_server_url + EVENTS_API_PATH + '/' + event_uid
+    _request('PATCH', url, payload=payload, headers=headers)
