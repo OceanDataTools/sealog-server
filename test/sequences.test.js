@@ -267,6 +267,23 @@ describe('ID sequences', () => {
       expect(await storedId(await logSample(inDive1))).to.equal('J2-1-S001');
     });
 
+    it('gives no ID to an option hidden by its visibility rule', async () => {
+      await db.collection(eventTemplatesTable).deleteMany({});
+      const visible = template();
+      visible.event_options.push({ event_option_name: 'Kind', event_option_type: 'dropdown', event_option_values: ['water', 'rock'], event_option_allow_freeform: false, event_option_required: false });
+      visible.event_options[0].event_option_visibility = { show_hide: 'show if', event_option_name: 'Kind', event_option_values: ['water'] };
+      await db.collection(eventTemplatesTable).insertOne(visible);
+
+      const rock = await logSample(inDive1, [{ event_option_name: 'Kind', event_option_value: 'rock' }]);
+      expect(await storedId(rock)).to.be.null();
+      expect(await storedId(await logSample(inDive1, [{ event_option_name: 'Kind', event_option_value: 'water' }]))).to.equal('J2-1-S001');
+
+      // hide if
+      await db.collection(eventTemplatesTable).updateOne({ event_value: 'SAMPLE' }, { $set: { 'event_options.0.event_option_visibility.show_hide': 'hide if' } });
+      expect(await storedId(await logSample(inDive1, [{ event_option_name: 'Kind', event_option_value: 'water' }]))).to.be.null();
+      expect(await storedId(await logSample(inDive1, [{ event_option_name: 'Kind', event_option_value: 'rock' }]))).to.equal('J2-1-S002');
+    });
+
     it('rejects a hand-typed ID another event already has', async () => {
       const first = await logSample(inDive1);
 
