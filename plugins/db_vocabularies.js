@@ -22,16 +22,21 @@ exports.plugin = {
     console.log('Searching for Vocabularies Collection');
     const result = await db.listCollections({ name: vocabulariesTable }).toArray();
 
-    if (result.length) {
+    // Seeded while the collection is empty, not only when it's created, so a
+    // first start whose seed failed (or was cut short before any vocabulary
+    // was written) tries again
+    if (result.length && (await db.collection(vocabulariesTable).countDocuments({}, { limit: 1 }))) {
       console.log('Vocabularies Collection already exists... checking indexes.');
       ensureCollectionIndexesInBackground(db, vocabulariesTable);
       ensureCollectionIndexesInBackground(db, vocabularyTermsTable);
       return;
     }
 
-    console.log('Creating Vocabularies Collection');
+    console.log(result.length ? 'Vocabularies Collection is empty' : 'Creating Vocabularies Collection');
     try {
-      await db.createCollection(vocabulariesTable);
+      if (!result.length) {
+        await db.createCollection(vocabulariesTable);
+      }
 
       // Built before seeding: the seed upserts look terms up by collection/id
       await ensureCollectionIndexes(db, vocabulariesTable);

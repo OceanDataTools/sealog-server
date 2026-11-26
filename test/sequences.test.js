@@ -114,9 +114,9 @@ describe('ID sequences', () => {
 
   describe('definitions', () => {
     it('lets admins create sequences and anyone read them', async () => {
-      let res = await request('POST', '/sequences', adminJwt, { name: 'cast', format: 'CTD{n:02}', scope: 'cruise' });
+      let res = await request('POST', '/sequences', adminJwt, { name: 'cast', format: '{cruise_id}-CTD{n:02}', scope: 'cruise' });
       expect(res.statusCode).to.equal(201);
-      expect(res.result).to.equal({ name: 'cast', format: 'CTD{n:02}', scope: 'cruise', start: 1, description: '' });
+      expect(res.result).to.equal({ name: 'cast', format: '{cruise_id}-CTD{n:02}', scope: 'cruise', start: 1, description: '' });
 
       expect((await request('POST', '/sequences', loggerJwt, { name: 'x', format: '{n}', scope: 'global' })).statusCode).to.equal(403);
       expect((await request('POST', '/sequences', adminJwt, { name: 'cast', format: '{n}', scope: 'global' })).statusCode).to.equal(409);
@@ -128,13 +128,13 @@ describe('ID sequences', () => {
 
       res = await request('GET', '/sequences', loggerJwt);
       expect(res.result.map((sequence) => sequence.name)).to.equal(['cast', 'sample_id']);
-      expect((await request('GET', '/sequences/cast', loggerJwt)).result.format).to.equal('CTD{n:02}');
+      expect((await request('GET', '/sequences/cast', loggerJwt)).result.format).to.equal('{cruise_id}-CTD{n:02}');
     });
 
     it('changes the format after use, but not the scope', async () => {
       await logSample(inDive1);
 
-      let res = await request('PATCH', '/sequences/sample_id', adminJwt, { scope: 'cruise' });
+      let res = await request('PATCH', '/sequences/sample_id', adminJwt, { scope: 'cruise', format: '{cruise_id}-S{n:03}' });
       expect(res.statusCode).to.equal(409);
 
       res = await request('PATCH', '/sequences/sample_id', adminJwt, { format: '{lowering_id}_{n:04}' });
@@ -155,13 +155,33 @@ describe('ID sequences', () => {
       expect(await db.collection(sequenceCountersTable).countDocuments({ sequence: 'sample_id' })).to.equal(0);
     });
 
+    it('requires the scope\'s ID in a per-cruise or per-lowering format', async () => {
+      let res = await request('POST', '/sequences', adminJwt, { name: 'bare', format: 'S{n:03}', scope: 'lowering' });
+      expect(res.statusCode).to.equal(400);
+      expect(res.result.message).to.equal('A sequence numbered per lowering needs {lowering_id} in its format, or every lowering would issue the same IDs');
+
+      // Checked against the stored definition on updates
+      expect((await request('PATCH', '/sequences/sample_id', adminJwt, { format: 'S{n:03}' })).statusCode).to.equal(400);
+      expect((await request('POST', '/sequences/import', adminJwt, [{ name: 'bare', format: 'S{n}', scope: 'cruise' }])).statusCode).to.equal(400);
+      expect((await request('POST', '/sequences', adminJwt, { name: 'station', format: 'ST{n:03}', scope: 'global' })).statusCode).to.equal(201);
+    });
+
+    it('refuses an import that changes a used sequence\'s scope', async () => {
+      await logSample(inDive1);
+
+      const res = await request('POST', '/sequences/import', adminJwt, [{ name: 'cast', format: '{cruise_id}-C{n}', scope: 'cruise' }, { ...sampleId, scope: 'cruise', format: '{cruise_id}-S{n:03}' }]);
+      expect(res.statusCode).to.equal(409);
+      expect(await db.collection(sequencesTable).findOne({ name: 'sample_id' })).to.include({ scope: 'lowering' });
+      expect(await db.collection(sequencesTable).findOne({ name: 'cast' })).to.not.exist();
+    });
+
     it('exports and imports definitions without counters', async () => {
       await logSample(inDive1);
 
       const exported = (await request('GET', '/sequences/export', adminJwt)).result;
       expect(exported).to.equal([{ ...sampleId, start: 1, description: '' }]);
 
-      const res = await request('POST', '/sequences/import', adminJwt, [{ ...sampleId, start: 5 }, { name: 'cast', format: 'CTD{n}', scope: 'cruise' }]);
+      const res = await request('POST', '/sequences/import', adminJwt, [{ ...sampleId, start: 5 }, { name: 'cast', format: '{cruise_id}-C{n}', scope: 'cruise' }]);
       expect(res.result).to.equal({ created: ['cast'], updated: ['sample_id'] });
       expect((await request('GET', '/sequences/sample_id/counters', adminJwt)).result).to.equal([{ scope_key: 'J2-1', last: 1, next: 2 }]);
 
@@ -230,6 +250,21 @@ describe('ID sequences', () => {
       // A lower number doesn't move it back
       await logSample(inDive1, [{ event_option_name: 'Sample ID', event_option_value: 'J2-1-S003' }]);
       expect(await storedId(await logSample(inDive1))).to.equal('J2-1-S013');
+    });
+
+    it('doesn\'t move the counter for a typed number below the start', async () => {
+      await request('PATCH', '/sequences/sample_id', adminJwt, { start: 100 });
+      await logSample(inDive1, [{ event_option_name: 'Sample ID', event_option_value: 'J2-1-S005' }]);
+
+      expect(await storedId(await logSample(inDive1))).to.equal('J2-1-S100');
+    });
+
+    it('ignores a same-named option in a template that doesn\'t use the sequence', async () => {
+      await db.collection(eventTemplatesTable).insertOne({ ...template(), event_value: 'NOTE', event_options: [{ event_option_name: 'Sample ID', event_option_type: 'text', event_option_values: [], event_option_allow_freeform: false, event_option_required: false }] });
+      await createEvent({ event_value: 'NOTE', ts: inDive1, event_options: [{ event_option_name: 'Sample ID', event_option_value: 'J2-1-S001' }] });
+
+      // Not a duplicate, and not skipped
+      expect(await storedId(await logSample(inDive1))).to.equal('J2-1-S001');
     });
 
     it('rejects a hand-typed ID another event already has', async () => {
@@ -324,6 +359,14 @@ describe('ID sequences', () => {
 
       // Back-dated: the cast in progress at its time
       expect(await castOf(await logCtd(4, 'recovery', 'end'))).to.equal('NA123-C001');
+    });
+
+    it('reuses only IDs from templates using the sequence', async () => {
+      await db.collection(eventTemplatesTable).insertOne({ ...ctdTemplate('Note', 'NOTE'), event_options: [pick('Cast ID', 'text', [])] });
+      await logCtd(1, 'deployment', 'start');
+      await request('POST', '/events', loggerJwt, { event_value: 'NOTE', ts: at(2), event_options: [{ event_option_name: 'Cast ID', event_option_value: 'not a cast' }] });
+
+      expect(await castOf(await logCtd(3, 'deployment', 'bottle'))).to.equal('NA123-C001');
     });
 
     it('reuses the cast across templates using the sequence', async () => {

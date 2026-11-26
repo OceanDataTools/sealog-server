@@ -22,6 +22,7 @@ const {
   findSequence,
   parseFormat,
   previewCurrentId,
+  scopeFormatError,
   previewId,
   sequenceCountersTable,
   sequencesTable,
@@ -57,7 +58,26 @@ const checkDefinition = (definition) => {
     }
   }
 
+  // On updates, checked against the stored definition merged with the change
+  if (definition.format !== undefined && definition.scope !== undefined) {
+    const error = scopeFormatError(definition.format, definition.scope);
+    if (error) {
+      return Boom.badRequest(error);
+    }
+  }
+
   return null;
+};
+
+// The 409 for changing the scope of a sequence that has issued IDs (its
+// counters are kept per scope key), or null
+const scopeChangeError = async (db, sequence, scope) => {
+
+  if (!scope || scope === sequence.scope || !(await db.collection(sequenceCountersTable).countDocuments({ sequence: sequence.name }))) {
+    return null;
+  }
+
+  return Boom.conflict(`${sequence.name} has issued IDs, so its scope can't change; create a new sequence instead`);
 };
 
 exports.plugin = {
@@ -152,6 +172,15 @@ exports.plugin = {
 
         const report = { created: [], updated: [] };
         try {
+          // Checked for all before any is saved
+          for (const definition of request.payload) {
+            const existing = await findSequence(db, definition.name);
+            const error = existing && (await scopeChangeError(db, existing, definition.scope));
+            if (error) {
+              return error;
+            }
+          }
+
           for (const { name, ...fields } of request.payload) {
             const result = await db.collection(sequencesTable).updateOne({ name }, { $set: fields }, { upsert: true });
             (result.upsertedCount ? report.created : report.updated).push(name);
@@ -288,9 +317,14 @@ exports.plugin = {
             return Boom.notFound(`No sequence named ${name}`);
           }
 
-          // Counters are kept per scope key, so a used sequence keeps its scope
-          if (request.payload.scope && request.payload.scope !== sequence.scope && await db.collection(sequenceCountersTable).countDocuments({ sequence: name })) {
-            return Boom.conflict(`${name} has issued IDs, so its scope can't change; create a new sequence instead`);
+          const merged = checkDefinition({ ...sequence, ...request.payload, name: undefined });
+          if (merged) {
+            return merged;
+          }
+
+          const scopeError = await scopeChangeError(db, sequence, request.payload.scope);
+          if (scopeError) {
+            return scopeError;
           }
 
           await db.collection(sequencesTable).updateOne({ name }, { $set: request.payload });
