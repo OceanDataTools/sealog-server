@@ -19,13 +19,31 @@ const useAccessControl = process.env.SEALOG_SERVER_USE_ACCESS_CONTROL ? process.
 // Allow events to be submitted/updated with timestamps later than the current server time
 const allowFutureEvents = process.env.SEALOG_SERVER_ALLOW_FUTURE_EVENTS ? process.env.SEALOG_SERVER_ALLOW_FUTURE_EVENTS.toLowerCase() === 'true' : false;
 
+// NERC Vocabulary Server (NVS) collections the server caches and can refresh
+const vocabularyCollections = process.env.SEALOG_SERVER_VOCABULARY_COLLECTIONS ? process.env.SEALOG_SERVER_VOCABULARY_COLLECTIONS.split(',').map((collection) => collection.trim()).filter(Boolean) : ['EL1', 'EL2', 'L05', 'L06', 'L22'];
+
+// Base URL of the NVS collection API
+const nvsUrl = process.env.SEALOG_SERVER_NVS_URL || 'https://vocab.nerc.ac.uk/collection';
+
+// Authority prefix for terms in vocabularies created on this server, e.g.
+// CV:SKQEQ::ROV-ODYSSEY. Stored on each vocabulary when it's created.
+const localVocabularyPrefix = process.env.SEALOG_SERVER_LOCAL_VOCABULARY_PREFIX || 'CV';
+
+// Hosts the server may pull vocabularies from by URL (POST /vocabularies/{code}/source),
+// e.g. ['data.example.org', '*.s3.amazonaws.com']. Empty disables vocabulary sources.
+const vocabularySourceHosts = process.env.SEALOG_SERVER_VOCABULARY_SOURCE_HOSTS ? process.env.SEALOG_SERVER_VOCABULARY_SOURCE_HOSTS.split(',').map((host) => host.trim()).filter(Boolean) : [];
+
 module.exports = {
   allowFutureEvents,
   imagePath,
   cruisePath,
+  localVocabularyPrefix,
   disableRegisteringUsers,
   loweringPath,
+  nvsUrl,
   reCaptchaSecret,
   registeringUserRoles,
-  useAccessControl
+  useAccessControl,
+  vocabularyCollections,
+  vocabularySourceHosts
 };

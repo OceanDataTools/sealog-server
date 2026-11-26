@@ -11,6 +11,24 @@ const {
   buildEventsQuery
 } = require('../../../lib/utils');
 
+const { checkSentNotations, prepareOptionNotations } = require('../../../lib/event_notations');
+const { assignSequenceIds } = require('../../../lib/sequences');
+
+// A Boom error for a sequence ID that couldn't be assigned
+const sequenceIdError = (err) => {
+
+  if (['NO_SCOPE', 'NO_SEQUENCE', 'CONFLICT', 'EXHAUSTED', 'NO_CURRENT'].includes(err.code)) {
+    return Boom.badRequest(err.message);
+  }
+
+  if (err.code === 'DUPLICATE') {
+    return Boom.conflict(err.message);
+  }
+
+  console.log(err);
+  return Boom.serverUnavailable('database error');
+};
+
 // allowFutureEvents is read at request time (not destructured) so it can be toggled in tests
 const ServerSettings = require('../../../config/server_settings');
 
@@ -880,6 +898,22 @@ exports.plugin = {
             event_option.event_option_name = event_option.event_option_name.toLowerCase().replace(/\s+/g, '_');
             return event_option;
           });
+
+          const notationError = await checkSentNotations(db, event.event_options);
+          if (notationError) {
+            return Boom.badRequest(notationError);
+          }
+
+          await prepareOptionNotations(db, event.event_value, event.event_options);
+
+          // Only when options are sent: a client creating the event before
+          // sending its options shouldn't take a number
+          try {
+            await assignSequenceIds(db, event.event_value, event.ts, event.event_options, null, event._id);
+          }
+          catch (err) {
+            return sequenceIdError(err);
+          }
         }
 
         if (!event.event_free_text) {
@@ -913,7 +947,8 @@ exports.plugin = {
           _renameAndClearFields(event);
 
           const diff = (new Date().getTime() - event.ts.getTime()) / 1000;
-          if (publish && Math.abs(Math.round(diff)) < THRESHOLD || THRESHOLD === 0) {
+          const publishNew = publish && Math.abs(Math.round(diff)) < THRESHOLD || THRESHOLD === 0;
+          if (publishNew) {
             server.publish('/ws/status/newEvents', event);
           }
 
@@ -945,7 +980,11 @@ exports.plugin = {
 
         description: 'Create a new event record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
-          <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
+          <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>\
+          <p>An option whose value comes from a vocabulary can include <strong>event_option_notation</strong>: \
+          the value\'s notation from the template\'s <strong>event_option_notations</strong>, joined with \';\' for \
+          checkboxes. Each must be a term on this server (400 otherwise). Options sent without one are mapped from \
+          the event\'s template(s).</p>',
         tags: ['events','api']
       }
     });
@@ -960,6 +999,7 @@ exports.plugin = {
 
         const query = {};
         let time_change = false;
+        let previousEvent;
 
         try {
           query._id = new ObjectID(request.params.id);
@@ -975,6 +1015,8 @@ exports.plugin = {
           if (!result) {
             return Boom.badRequest('No event record found for id: ' + request.params.id);
           }
+
+          previousEvent = result;
 
           if (request.payload.ts && result.ts.getTime() !== request.payload.ts.getTime()) {
             time_change = true;
@@ -1015,6 +1057,23 @@ exports.plugin = {
               event.event_options.push(requestOption);
             }
           });
+
+          const notationError = await checkSentNotations(db, event.event_options);
+          if (notationError) {
+            return Boom.badRequest(notationError);
+          }
+
+          // The options sent replace the stored ones; keep the notations of
+          // unchanged values the client didn't send and map the rest
+          await prepareOptionNotations(db, event.event_value || previousEvent.event_value, event.event_options, previousEvent.event_options);
+
+          // Sequence options keep their stored IDs, including when ts changes
+          try {
+            await assignSequenceIds(db, event.event_value || previousEvent.event_value, event.ts ? new Date(event.ts) : previousEvent.ts, event.event_options, previousEvent.event_options, previousEvent._id);
+          }
+          catch (err) {
+            return sequenceIdError(err);
+          }
         }
 
         if (event.ts) {
@@ -1071,7 +1130,11 @@ exports.plugin = {
         },
         description: 'Update an event record',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
-          <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
+          <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>\
+          <p>The <strong>event_options</strong> sent replace the stored ones. An option sent without \
+          <strong>event_option_notation</strong> keeps its stored notation if its value is unchanged, or is mapped \
+          from the event\'s template(s); an empty notation removes it. A notation sent must be a term on this \
+          server (400 otherwise).</p>',
         tags: ['events','api']
       }
     });

@@ -55,6 +55,14 @@ const swagger_options = {
     {
       name: 'users',
       description: 'the users api'
+    },
+    {
+      name: 'sequences',
+      description: 'the ID sequences api'
+    },
+    {
+      name: 'vocabularies',
+      description: 'the controlled vocabularies api'
     }
   ],
   grouping: 'tags',
@@ -192,6 +200,16 @@ const manifest = {
           prefix: '/sealog-server/api/v1'
         }
       },
+      { plugin: './routes/api/v1/vocabularies', options: {},
+        routes: {
+          prefix: '/sealog-server/api/v1'
+        }
+      },
+      { plugin: './routes/api/v1/sequences', options: {},
+        routes: {
+          prefix: '/sealog-server/api/v1'
+        }
+      },
       { plugin: './routes/api/v1/external_calls', options: { clients },
         routes: {
           prefix: '/sealog-server/api/v1'
@@ -209,6 +227,7 @@ const manifest = {
       { plugin: './plugins/db_events', options: {} },
       { plugin: './plugins/db_lowerings', options: {} },
       { plugin: './plugins/db_users', options: {} },
+      { plugin: './plugins/db_vocabularies', options: {} },
       { plugin: 'hapi-pino',
         options: {
           logRequestComplete: env !== 'production',

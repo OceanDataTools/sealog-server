@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.5.0 (2026-11-26)
+
+### Features
+
+* Controlled vocabularies from the NERC Vocabulary Server (NVS). The server caches NVS collections (`EL1`, `EL2`, `L05`, `L06`, `L22` by default, loaded from a bundled seed on first start) and serves them under `/vocabularies`. Admins can refresh them from NVS, export and import bundles, pull vocabularies from allow-listed URLs, and create local vocabularies with editable terms. Each install can hide the terms it doesn't use (#154, #159, #160)
+* Event template options (dropdown, radio buttons, checkboxes, static text) can take their values from a vocabulary (`event_option_vocab`), optionally limited to listed terms. The values are filled in when templates are returned, so they follow the vocabulary. Templates that use a changed vocabulary are re-sent over the websocket (#153, #163, #164)
+* Events record each vocabulary-backed value's term ID in `event_option_notation`, filled in from the event's template when a client doesn't send it, and checked against the installed vocabularies when it does. The IDs are included in event exports, with an `event_option.<name>.notation` CSV column (#166, #169, #175)
+* Terms recorded on events are kept, marked deprecated, instead of being deleted by a refresh, an import, a local term deletion or a vocabulary deletion, so those events' IDs still resolve (#159, #171)
+* The bundled NVS vocabularies are loaded whenever the `vocabularies` collection is empty at startup, so a failed first load is retried (#186)
+* ID sequences (e.g. sample IDs). Admins define sequences under `/sequences`: a format combining `{cruise_id}`, `{lowering_id}`, UTC date parts, fixed text and a padded counter (`{n:03}`), numbered globally, per cruise or per lowering (per-cruise and per-lowering formats must include `{cruise_id}` or `{lowering_id}`). A `sequence` event template option gets the next ID when the event is saved, taken atomically so concurrent loggers never share one. Hand-typed IDs are kept: one already on another event is rejected (409), and one in the format moves the counter past it. Admins can see and set each counter's next number, preview the next ID, and export or import definitions (#177, #186)
+* Sequence options can reuse the current ID until conditions on other options are met (`event_option_sequence_new_when`). For example, a CTD cast ID is taken at deployment/start and carried by the cast's later events; a back-dated event gets the cast in progress at its time. `/sequences/{name}/current` previews the reused ID (#179)
+* Template errors name the missing vocabulary or terms, e.g. `Option "Taxon" takes its values from vocabulary P01, which isn't installed on this server` (#173)
+* `event_button_color` can be cleared back to the client's default with an empty string (#167)
+
+### Upgrade Notes
+
+* Refresh `config/manifest.js` from `config/manifest.js.dist` (or add its new `routes/api/v1/vocabularies`, `routes/api/v1/sequences` and `plugins/db_vocabularies` entries). Without them the vocabulary and sequence routes return `404`
+* New optional settings in `config/server_settings.js.dist` and `.env.dist`: `SEALOG_SERVER_VOCABULARY_COLLECTIONS`, `SEALOG_SERVER_NVS_URL`, `SEALOG_SERVER_LOCAL_VOCABULARY_PREFIX` (default `CV`) and `SEALOG_SERVER_VOCABULARY_SOURCE_HOSTS` (empty by default, which disables pulling vocabularies by URL). An existing `config/server_settings.js` without them uses the defaults
+* On first start the server creates the `vocabularies`, `vocabulary_terms`, `sequences` and `sequence_counters` collections and loads the bundled NVS vocabularies. It also adds indexes on `events` (`event_options.event_option_notation`, and `event_options.event_option_name` with `event_option_value`), built in the background on existing databases
+* API clients that send `event_option_notation` with events must send terms installed on the server, or the request is rejected (`400`)
+* The vocabulary and sequence screens need sealog-client-vessel 2.5.0. Older clients keep working
+
+### Fixes
+
+* CORIOLIX aux data inserter (`misc/`): live mode works on Python 3.14+, CORIOLIX outages no longer drop the websocket or abort backfills, and the gte/lte modify tests read the right keys. Adds `-k`/`--insecure` and a startup check that the CORIOLIX API is reachable (#143); the meteorological example config uses sensor `metsta146581` (#144)
+
+### Chores
+
+* Collection indexes are checked on every startup with a shared helper, not only when a collection is created (#152)
+* `npm run build-vocabulary-seed` rebuilds the bundled NVS vocabulary seed
+
 ## 2.4.9 (2026-10-27)
 
 ### Features

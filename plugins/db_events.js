@@ -2,6 +2,8 @@ const {
   eventsTable
 } = require('../config/db_constants');
 
+const { ensureCollectionIndexesInBackground } = require('../lib/db_indexes');
+
 exports.plugin = {
   name: 'db_populate_events',
   dependencies: ['hapi-mongodb'],
@@ -70,7 +72,8 @@ exports.plugin = {
 
     if (result.length) {
       if (!resetDB) {
-        console.log('Events Collection already exists... we\'re done here.');
+        console.log('Events Collection already exists... checking indexes.');
+        ensureCollectionIndexesInBackground(db, eventsTable);
         return;
       }
 
@@ -97,5 +100,7 @@ exports.plugin = {
       console.log('CREATE ERROR:', err.code);
       throw (err);
     }
+
+    ensureCollectionIndexesInBackground(db, eventsTable);
   }
 };

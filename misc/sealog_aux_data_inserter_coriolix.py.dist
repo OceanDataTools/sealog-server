@@ -23,7 +23,7 @@ AUTHOR:     Webb Pinner
 COMPANY:    OceanDataTools.org
 VERSION:    2.1
 CREATED:    2025-02-09
-REVISION:   2026-05-15
+REVISION:   2026-11-20
 
 LICENSE INFO:   This code is licensed under MIT license (see LICENSE.txt for details)
                 Copyright (C) OceanDataTools.org 2025
@@ -75,25 +75,25 @@ INLINE_CONFIG = '''
       round: 3
 - data_source: 'meteorologicalData'
   query_parameters:
-    - sensor_id: metsta146582
+    - sensor_id: metsta146581
       parameter: airtemperature_degreesc
-    - sensor_id: metsta146582
+    - sensor_id: metsta146581
       parameter: barometricpressure_bar
-    - sensor_id: metsta146582
+    - sensor_id: metsta146581
       parameter: relativehumidity_percent
   aux_record_lookup:
-    metsta146582__airtemperature_degreesc:
+    metsta146581__airtemperature_degreesc:
       name: 'air temp'
       uom: 'C'
       round: 2
-    metsta146582__barometricpressure_bar:
+    metsta146581__barometricpressure_bar:
       name: 'air pres'
       uom: 'mBar'
       round: 2
       modify:
         - operation:
           - multiply: 1000
-    metsta146582__relativehumidity_percent:
+    metsta146581__relativehumidity_percent:
       name: 'relHumidity'
       uom: '%'
       round: 1
@@ -296,6 +296,10 @@ if __name__ == '__main__':
     parser.add_argument('-e', '--events', help='list of event_ids to apply the CORIOLIX data')
     parser.add_argument('-c', '--cruise_id', help='cruise_id to fix aux_data for')
     parser.add_argument('-l', '--lowering_id', help='lowering_id to fix aux_data for')
+    parser.add_argument(
+        '-k', '--insecure', action='store_true',
+        help='skip SSL certificate verification for the CORIOLIX API (e.g. expired certificate)'
+    )
 
     parsed_args = parser.parse_args()
 
@@ -343,8 +347,19 @@ if __name__ == '__main__':
 
     # Create the Aux Data Record Builders
     aux_data_builder_list = [
-        SealogCORIOLIXAuxDataRecordBuilder(config) for config in AUX_DATA_CONFIGS
+        SealogCORIOLIXAuxDataRecordBuilder(config, verify_ssl=not parsed_args.insecure)
+        for config in AUX_DATA_CONFIGS
     ]
+
+    if not aux_data_builder_list:
+        logging.error("No aux data configurations found")
+        sys.exit(1)
+
+    # Verify the CORIOLIX API is reachable before doing anything else
+    if not aux_data_builder_list[0].check_connection():
+        sys.exit(1)
+
+    logging.info("Connected to CORIOLIX API at %s", aux_data_builder_list[0].url)
 
     if parsed_args.events:
         logging.debug("Processing list of event ids")
@@ -386,9 +401,7 @@ if __name__ == '__main__':
 
         try:
             logging.debug("Connecting to event websocket feed...")
-            asyncio.get_event_loop().run_until_complete(
-                insert_aux_data_from_ws(aux_data_builder_list, parsed_args.dry_run)
-            )
+            asyncio.run(insert_aux_data_from_ws(aux_data_builder_list, parsed_args.dry_run))
         except KeyboardInterrupt:
             logging.error('Keyboard Interrupted')
             try:

@@ -14,6 +14,9 @@ const {
   eventTemplateUpdatePayload
 } = require('../../../lib/validations');
 
+const { expandTemplates, prepareOptions } = require('../../../lib/template_vocab');
+const { prepareSequenceOptions } = require('../../../lib/sequences');
+
 const _renameAndClearFields = (doc, admin = false) => {
 
   //rename id
@@ -53,7 +56,7 @@ exports.plugin = {
         }
 
         try {
-          const results = await db.collection(eventTemplatesTable).find(query).sort(sort).skip(offset).limit(limit).toArray();
+          const results = await expandTemplates(db, await db.collection(eventTemplatesTable).find(query).sort(sort).skip(offset).limit(limit).toArray());
 
           if (results.length > 0) {
             results.forEach((result) => {
@@ -88,7 +91,11 @@ exports.plugin = {
         },
         description: 'Return the event templates based on query parameters',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
-          <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
+          <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>\
+          <p>Options with an <strong>event_option_vocab</strong> get their <strong>event_option_values</strong> \
+          from that vocabulary: the labels of its terms shown on this server (only the listed ones when it lists \
+          <strong>terms</strong>), without deprecated terms. Their <strong>event_option_notations</strong> list \
+          the vocabulary notation of each value, in the same order (for static text, of the default value).</p>',
         tags: ['event_templates','api']
       }
     });
@@ -121,6 +128,7 @@ exports.plugin = {
             return Boom.notFound('template only available to admin users');
           }
 
+          await expandTemplates(db, [result]);
           return h.response(_renameAndClearFields(result, request.auth.credentials.scope.some((role) => ['admin', 'write_event_templates'].includes(role)))).code(200);
         }
         catch (err) {
@@ -174,6 +182,17 @@ exports.plugin = {
           event_template.event_options = [];
         }
 
+        try {
+          const error = await prepareOptions(db, event_template.event_options) || await prepareSequenceOptions(db, event_template.event_options);
+          if (error) {
+            return Boom.badRequest(error);
+          }
+        }
+        catch (err) {
+          console.log(err);
+          return Boom.serverUnavailable('database error');
+        }
+
         if (typeof event_template.event_free_text_required === 'undefined') {
           event_template.event_free_text_required = false;
         }
@@ -194,6 +213,7 @@ exports.plugin = {
           const result = await db.collection(eventTemplatesTable).insertOne(event_template);
 
           event_template._id = result.insertedId;
+          await expandTemplates(db, [event_template]);
           _renameAndClearFields(event_template);
           server.publish('/ws/status/newEventTemplates', event_template);
 
@@ -226,7 +246,15 @@ exports.plugin = {
 
         description: 'Create a new event template',
         notes: '<p>Requires authorization via: <strong>JWT token</strong></p>\
-          <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>',
+          <p>Available to: <strong>admin</strong>, <strong>event_manager</strong> or <strong>event_logger</strong></p>\
+          <p>A dropdown, radio buttons, checkboxes or static text option can take its values from a vocabulary: \
+          <strong>event_option_vocab: { collection: \'L22\', terms: [\'TOOL0058\', ...] }</strong>. \
+          Leave out <strong>terms</strong> for every term shown on this server; static text lists exactly one term. \
+          The values are filled in when templates are returned; any sent for such an option are ignored.</p>\
+          <p>A <strong>sequence</strong> option takes an ID from a sequence (<strong>event_option_sequence</strong>: \
+          its name), filled in when events are saved. With <strong>event_option_sequence_new_when</strong> \
+          (conditions, all of which must match: <strong>{ event_option_name, event_option_values }</strong>), it takes \
+          a new ID only when the event meets them, and otherwise reuses the current one.</p>',
         tags: ['event_templates','api']
       }
     });
@@ -246,6 +274,19 @@ exports.plugin = {
         }
         catch (err) {
           return Boom.badRequest('id must be a single String of 12 bytes or a string of 24 hex characters');
+        }
+
+        if (request.payload.event_options) {
+          try {
+            const error = await prepareOptions(db, request.payload.event_options) || await prepareSequenceOptions(db, request.payload.event_options);
+            if (error) {
+              return Boom.badRequest(error);
+            }
+          }
+          catch (err) {
+            console.log(err);
+            return Boom.serverUnavailable('database error');
+          }
         }
 
         let event_template = {};
@@ -269,6 +310,7 @@ exports.plugin = {
 
         try {
           const result = await db.collection(eventTemplatesTable).findOneAndUpdate(query, { $set: event_template },{ returnDocument: 'after' });
+          await expandTemplates(db, [result]);
           server.publish('/ws/status/updateEventTemplates', _renameAndClearFields(result));
 
           return h.response().code(204);

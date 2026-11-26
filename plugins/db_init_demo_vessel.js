@@ -7,6 +7,7 @@ const {
 } = require('../config/db_constants');
 
 const { filePreProcessor } = require('../lib/utils');
+const { ensureCollectionIndexes } = require('../lib/db_indexes');
 
 exports.plugin = {
   name: 'db_init_demo_vehicle',
@@ -65,6 +66,7 @@ exports.plugin = {
 
       const init_data = filePreProcessor('./demo/FKt230303_eventOnlyExport.json', 'events');
       await collection.insertMany(init_data);
+      await ensureCollectionIndexes(db, eventsTable);
     }
     catch (err) {
       console.error('CREATE ERROR:', err.code);
@@ -90,11 +92,9 @@ exports.plugin = {
     try {
       const collection = await db.createCollection(eventAuxDataTable);
 
-      console.log('Creating index based on event_id field');
-      await collection.createIndex({ event_id: 1 });
-
       const init_data = filePreProcessor('./demo/FKt230303_auxDataExport.json', 'event_aux_data');
       await collection.insertMany(init_data);
+      await ensureCollectionIndexes(db, eventAuxDataTable);
     }
     catch (err) {
       console.error('CREATE ERROR:', err.code);
