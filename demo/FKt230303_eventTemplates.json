@@ -949,5 +949,225 @@
       "ctd"
     ],
     "id": "640b412b9fdf3e2dbea2cf24"
+  },
+  {
+    "event_name": "CTD Cast",
+    "event_value": "CTD",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Process",
+        "event_option_type": "dropdown",
+        "event_option_default_value": "",
+        "event_option_values": [],
+        "event_option_allow_freeform": false,
+        "event_option_required": true,
+        "event_option_vocab": {
+          "collection": "EL2",
+          "terms": [
+            "pro22",
+            "pro13",
+            "pro1",
+            "pro23",
+            "pro4"
+          ]
+        }
+      },
+      {
+        "event_option_name": "Action",
+        "event_option_type": "dropdown",
+        "event_option_default_value": "",
+        "event_option_values": [],
+        "event_option_allow_freeform": false,
+        "event_option_required": true,
+        "event_option_vocab": {
+          "collection": "EL1",
+          "terms": [
+            "act1",
+            "act16",
+            "act14",
+            "act13",
+            "act8",
+            "act15",
+            "act29",
+            "act28",
+            "act2",
+            "act23"
+          ]
+        }
+      },
+      {
+        "event_option_name": "Instrument",
+        "event_option_type": "static text",
+        "event_option_default_value": "",
+        "event_option_values": [],
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_vocab": {
+          "collection": "L22",
+          "terms": [
+            "TOOL1508"
+          ]
+        }
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "ctd",
+      "vocabulary"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "6b098d927269e58b9354fb2b"
+  },
+  {
+    "event_name": "XBT Drop",
+    "event_value": "XBT",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Probe",
+        "event_option_type": "radio buttons",
+        "event_option_default_value": "",
+        "event_option_values": [],
+        "event_option_allow_freeform": false,
+        "event_option_required": true,
+        "event_option_vocab": {
+          "collection": "L22",
+          "terms": [
+            "TOOL0262",
+            "TOOL0263",
+            "TOOL0715"
+          ]
+        }
+      },
+      {
+        "event_option_name": "Action",
+        "event_option_type": "radio buttons",
+        "event_option_default_value": "",
+        "event_option_values": [],
+        "event_option_allow_freeform": false,
+        "event_option_required": true,
+        "event_option_vocab": {
+          "collection": "EL1",
+          "terms": [
+            "act1",
+            "act2",
+            "act11"
+          ]
+        }
+      },
+      {
+        "event_option_name": "Filename",
+        "event_option_type": "text",
+        "event_option_allow_freeform": false,
+        "event_option_required": false,
+        "event_option_values": []
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "sound speed",
+      "vocabulary"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "6b098d927269e58b9354fb2c"
+  },
+  {
+    "event_name": "Sonar Operation",
+    "event_value": "SONAR",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Systems",
+        "event_option_type": "checkboxes",
+        "event_option_default_value": "",
+        "event_option_values": [],
+        "event_option_allow_freeform": false,
+        "event_option_required": true,
+        "event_option_vocab": {
+          "collection": "L22",
+          "terms": [
+            "TOOL1799",
+            "TOOL1601",
+            "TOOL1205"
+          ]
+        }
+      },
+      {
+        "event_option_name": "Action",
+        "event_option_type": "dropdown",
+        "event_option_default_value": "",
+        "event_option_values": [],
+        "event_option_allow_freeform": false,
+        "event_option_required": true,
+        "event_option_vocab": {
+          "collection": "EL1",
+          "terms": [
+            "act1",
+            "act3",
+            "act4",
+            "act2",
+            "act11"
+          ]
+        }
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "sonar",
+      "vocabulary"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "6b098d927269e58b9354fb2d"
+  },
+  {
+    "event_name": "Device Operation",
+    "event_value": "OPERATION",
+    "event_free_text_required": false,
+    "event_options": [
+      {
+        "event_option_name": "Device category",
+        "event_option_type": "dropdown",
+        "event_option_default_value": "",
+        "event_option_values": [],
+        "event_option_allow_freeform": false,
+        "event_option_required": true,
+        "event_option_vocab": {
+          "collection": "L05"
+        }
+      },
+      {
+        "event_option_name": "Process",
+        "event_option_type": "dropdown",
+        "event_option_default_value": "",
+        "event_option_values": [],
+        "event_option_allow_freeform": false,
+        "event_option_required": true,
+        "event_option_vocab": {
+          "collection": "EL2"
+        }
+      },
+      {
+        "event_option_name": "Action",
+        "event_option_type": "dropdown",
+        "event_option_default_value": "",
+        "event_option_values": [],
+        "event_option_allow_freeform": false,
+        "event_option_required": true,
+        "event_option_vocab": {
+          "collection": "EL1"
+        }
+      }
+    ],
+    "system_template": false,
+    "template_categories": [
+      "vocabulary"
+    ],
+    "disabled": false,
+    "admin_only": false,
+    "id": "6b098d927269e58b9354fb2e"
   }
 ]

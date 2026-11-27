@@ -17,6 +17,8 @@ const {
   vocabulariesTable,
   vocabularyTermsTable
 } = require('../lib/vocabularies');
+const { prepareOptions } = require('../lib/template_vocab');
+const DemoVesselTemplates = require('../demo/FKt230303_eventTemplates.json');
 
 // An NVS collection as JSON-LD (nvs profile), as returned by vocab.nerc.ac.uk
 const nvsDoc = (version, terms) => ({
@@ -898,6 +900,17 @@ describe('Vocabularies API', () => {
 
       const ctd = await db.collection(vocabularyTermsTable).findOne({ collection: 'L22', id: 'TOOL0058' });
       expect(ctd.broader.some((notation) => notation.startsWith('SDN:L05::'))).to.be.true();
+    });
+
+    it('has every term the vessel demo templates use', async () => {
+      await loadSeedBundle(db);
+
+      const templates = DemoVesselTemplates.filter((template) => template.event_options.some((option) => option.event_option_vocab));
+      expect(templates.length).to.be.above(0);
+
+      for (const template of templates) {
+        expect(await prepareOptions(db, structuredClone(template.event_options)), template.event_name).to.be.null();
+      }
     });
 
     it('is loaded on start while the vocabularies collection is empty', async () => {
