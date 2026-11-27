@@ -149,7 +149,13 @@
         "event_option_default_value": "CTD",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_vocab": {
+          "collection": "L05",
+          "terms": [
+            "130"
+          ]
+        }
       }
     ],
     "system_template": true,
@@ -308,15 +314,19 @@
       {
         "event_option_name": "Sensors",
         "event_option_type": "checkboxes",
-        "event_option_values": [
-          "SBE45",
-          "SBE38",
-          "FLUOR",
-          "PH",
-          "XMISS"
-        ],
+        "event_option_values": [],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_vocab": {
+          "collection": "L05",
+          "terms": [
+            "133",
+            "134",
+            "113",
+            "355",
+            "124"
+          ]
+        }
       }
     ],
     "system_template": true,
@@ -405,7 +415,13 @@
         "event_option_default_value": "CTD",
         "event_option_allow_freeform": false,
         "event_option_required": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_vocab": {
+          "collection": "L05",
+          "terms": [
+            "130"
+          ]
+        }
       }
     ],
     "system_template": false,
@@ -536,12 +552,16 @@
       {
         "event_option_name": "System",
         "event_option_type": "checkboxes",
-        "event_option_values": [
-          "EM124",
-          "EM712"
-        ],
+        "event_option_values": [],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_vocab": {
+          "collection": "L22",
+          "terms": [
+            "TOOL1799",
+            "TOOL1601"
+          ]
+        }
       },
       {
         "event_option_name": "Status",
@@ -567,17 +587,23 @@
     "event_options": [
       {
         "event_option_type": "checkboxes",
-        "event_option_values": [
-          "ADCP-OS75",
-          "ADCP-WH300",
-          "EK80",
-          "EM124",
-          "EM712",
-          "SBP29"
-        ],
+        "event_option_values": [],
         "event_option_name": "System",
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_vocab": {
+          "collection": "L22",
+          "terms": [
+            "TOOL0747",
+            "TOOL0362",
+            "TOOL0749",
+            "TOOL2346",
+            "TOOL1205",
+            "TOOL1799",
+            "TOOL1601",
+            "TOOL1825"
+          ]
+        }
       },
       {
         "event_option_name": "Status",
@@ -611,16 +637,22 @@
       {
         "event_option_name": "System",
         "event_option_type": "checkboxes",
-        "event_option_values": [
-          "ADCP-OS75",
-          "ADCP-WH300",
-          "EK80",
-          "EM124",
-          "EM712",
-          "SBP29"
-        ],
+        "event_option_values": [],
         "event_option_required": true,
-        "event_option_allow_freeform": false
+        "event_option_allow_freeform": false,
+        "event_option_vocab": {
+          "collection": "L22",
+          "terms": [
+            "TOOL0747",
+            "TOOL0362",
+            "TOOL0749",
+            "TOOL2346",
+            "TOOL1205",
+            "TOOL1799",
+            "TOOL1601",
+            "TOOL1825"
+          ]
+        }
       }
     ],
     "system_template": false,
@@ -681,12 +713,16 @@
       {
         "event_option_name": "System",
         "event_option_type": "checkboxes",
-        "event_option_values": [
-          "EM124",
-          "EM712"
-        ],
+        "event_option_values": [],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_vocab": {
+          "collection": "L22",
+          "terms": [
+            "TOOL1799",
+            "TOOL1601"
+          ]
+        }
       },
       {
         "event_option_name": "Status",
@@ -713,12 +749,16 @@
       {
         "event_option_name": "System",
         "event_option_type": "checkboxes",
-        "event_option_values": [
-          "EM124",
-          "EM712"
-        ],
+        "event_option_values": [],
         "event_option_allow_freeform": false,
-        "event_option_required": false
+        "event_option_required": false,
+        "event_option_vocab": {
+          "collection": "L22",
+          "terms": [
+            "TOOL1799",
+            "TOOL1601"
+          ]
+        }
       },
       {
         "event_option_name": "Status",
@@ -745,13 +785,17 @@
       {
         "event_option_name": "System",
         "event_option_type": "checkboxes",
-        "event_option_values": [
-          "EM124",
-          "EM712"
-        ],
+        "event_option_values": [],
         "event_option_allow_freeform": false,
         "event_option_required": true,
-        "event_option_default_value": "EM124,EM712"
+        "event_option_default_value": "Kongsberg EM 124 multibeam echosounder, Kongsberg EM 712 multibeam echosounder",
+        "event_option_vocab": {
+          "collection": "L22",
+          "terms": [
+            "TOOL1799",
+            "TOOL1601"
+          ]
+        }
       },
       {
         "event_option_name": "Status",
