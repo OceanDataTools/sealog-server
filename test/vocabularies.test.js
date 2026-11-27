@@ -19,6 +19,7 @@ const {
 } = require('../lib/vocabularies');
 const { prepareOptions } = require('../lib/template_vocab');
 const DemoVesselTemplates = require('../demo/FKt230303_eventTemplates.json');
+const DemoVesselEvents = require('../demo/FKt230303_eventOnlyExport.json');
 
 // An NVS collection as JSON-LD (nvs profile), as returned by vocab.nerc.ac.uk
 const nvsDoc = (version, terms) => ({
@@ -910,6 +911,21 @@ describe('Vocabularies API', () => {
 
       for (const template of templates) {
         expect(await prepareOptions(db, structuredClone(template.event_options)), template.event_name).to.be.null();
+      }
+    });
+
+    it('has every term the vessel demo events record, with its label', async () => {
+      await loadSeedBundle(db);
+
+      const options = DemoVesselEvents.flatMap((event) => event.event_options || []).filter((option) => option.event_option_notation);
+      expect(options.length).to.be.above(0);
+
+      for (const option of options) {
+        // Checkbox values and their notations are joined with ';'
+        const notations = option.event_option_notation.split(';');
+        const terms = await db.collection(vocabularyTermsTable).find({ notation: { $in: notations } }).toArray();
+        const labels = notations.map((notation) => (terms.find((term) => term.notation === notation) || {}).prefLabel);
+        expect(labels.join(';'), option.event_option_notation).to.equal(option.event_option_value);
       }
     });
 
