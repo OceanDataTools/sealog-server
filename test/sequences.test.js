@@ -9,6 +9,9 @@ const { ObjectId } = require('mongodb');
 const SECRET = require('../config/secret');
 const { usersTable, eventsTable, eventTemplatesTable, cruisesTable, loweringsTable } = require('../config/db_constants');
 const { formatId, parseFormat, parseId, sequenceCountersTable, sequencesTable } = require('../lib/sequences');
+const { loadSeedBundle } = require('../lib/vocabularies');
+const DemoSequences = require('../demo/demo_sequences.json');
+const DemoVesselTemplates = require('../demo/FKt230303_eventTemplates.json');
 
 describe('ID sequences', () => {
   let server;
@@ -458,6 +461,33 @@ describe('ID sequences', () => {
       await logCtd(1, 'deployment', 'start');
       res = await request('GET', `/sequences/ctd_cast/current?ts=${at(2)}`, loggerJwt);
       expect(res.result).to.equal({ id: 'NA123-C001' });
+    });
+  });
+
+  describe('vessel demo', () => {
+    it('numbers CTD casts with the demo sequence and CTD Cast template', async () => {
+      await loadSeedBundle(db);
+
+      for (const sequence of DemoSequences) {
+        expect((await request('POST', '/sequences', adminJwt, sequence)).statusCode).to.equal(201);
+      }
+
+      const { id, ...ctdCast } = DemoVesselTemplates.find((template) => template.event_name === 'CTD Cast');
+      expect((await request('POST', '/event_templates', adminJwt, ctdCast)).statusCode).to.equal(201);
+
+      const logCast = async (hour, process, action) => {
+
+        const options = [{ event_option_name: 'Process', event_option_value: process }, { event_option_name: 'Action', event_option_value: action }];
+        const res = await request('POST', '/events', loggerJwt, { event_value: 'CTD', ts: `2026-01-05T0${hour}:00:00.000Z`, event_options: options });
+        expect(res.statusCode).to.equal(201);
+        const event = await db.collection(eventsTable).findOne({ _id: new ObjectId(res.result.insertedId) });
+        return event.event_options.find((option) => option.event_option_name === 'cast_id').event_option_value;
+      };
+
+      expect(await logCast(1, 'Deployment', 'Start')).to.equal('NA123_CTD001_0105');
+      expect(await logCast(2, 'Profile', 'AtMaxDepth')).to.equal('NA123_CTD001_0105');
+      expect(await logCast(3, 'Recovery', 'OnBoard')).to.equal('NA123_CTD001_0105');
+      expect(await logCast(4, 'Deployment', 'Start')).to.equal('NA123_CTD002_0105');
     });
   });
 

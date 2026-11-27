@@ -8,6 +8,37 @@ const {
 
 const { filePreProcessor } = require('../lib/utils');
 const { ensureCollectionIndexes } = require('../lib/db_indexes');
+const { sequenceCountersTable, sequencesTable } = require('../lib/sequences');
+const DemoSequences = require('../demo/demo_sequences.json');
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// FKt230303 ended in 2023, and per-cruise sequences reject events outside a
+// cruise, so the demo also has a cruise in progress: 30 days from the start
+// of the day the database is reset
+const currentCruise = () => {
+
+  const start = new Date();
+  start.setUTCHours(0, 0, 0, 0);
+
+  return {
+    cruise_id: 'FKt-DEMO',
+    start_ts: start,
+    stop_ts: new Date(start.getTime() + (30 * DAY_MS) - 1000),
+    cruise_location: 'Demo',
+    cruise_tags: [],
+    cruise_hidden: false,
+    cruise_additional_meta: {
+      cruise_name: 'Sealog Demo Cruise',
+      cruise_vessel: 'R/V Falkor (too)',
+      cruise_pi: 'Demo PI',
+      cruise_departure_location: 'San Juan, PR',
+      cruise_arrival_location: 'San Juan, PR',
+      cruise_description: 'A cruise in progress for logging events in the demo. It restarts whenever the demo database is reset.',
+      cruise_files: []
+    }
+  };
+};
 
 exports.plugin = {
   name: 'db_init_demo_vehicle',
@@ -38,7 +69,7 @@ exports.plugin = {
     try {
       const collection = await db.createCollection(cruisesTable);
       const init_data = filePreProcessor('./demo/FKt230303_cruiseRecord.json', 'cruises');
-      await collection.insertMany(init_data);
+      await collection.insertMany([...init_data, currentCruise()]);
     }
     catch (err) {
       console.error('CREATE ERROR:', err.code);
@@ -121,6 +152,20 @@ exports.plugin = {
       const collection = await db.createCollection(eventTemplatesTable);
       const init_data = filePreProcessor('./demo/FKt230303_eventTemplates.json', 'event_templates');
       await collection.insertMany(init_data);
+    }
+    catch (err) {
+      console.error('CREATE ERROR:', err.code);
+      throw (err);
+    }
+
+
+    // Emptied rather than dropped: the sequences routes built their indexes
+    // when they registered
+    console.log('Resetting ID Sequences');
+    try {
+      await db.collection(sequenceCountersTable).deleteMany({});
+      await db.collection(sequencesTable).deleteMany({});
+      await db.collection(sequencesTable).insertMany(DemoSequences.map((sequence) => ({ ...sequence })));
     }
     catch (err) {
       console.error('CREATE ERROR:', err.code);
