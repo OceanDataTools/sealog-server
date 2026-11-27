@@ -464,6 +464,75 @@ describe('ID sequences', () => {
     });
   });
 
+  describe('placeholders in text options', () => {
+    const text = (name, defaultValue = '') => ({ event_option_name: name, event_option_type: 'text', event_option_values: [], event_option_default_value: defaultValue, event_option_allow_freeform: false, event_option_required: false });
+    const castTemplate = (event_value, options) => ({ event_name: event_value, event_value, event_free_text_required: false, system_template: false, template_categories: [], event_options: options });
+    const startsCast = [{ event_option_name: 'Action', event_option_values: ['start'] }];
+    const castOption = { event_option_name: 'Cast ID', event_option_type: 'sequence', event_option_sequence: 'ctd_cast', event_option_sequence_new_when: startsCast, event_option_values: [], event_option_default_value: '', event_option_allow_freeform: false, event_option_required: false };
+    const actionOption = { event_option_name: 'Action', event_option_type: 'dropdown', event_option_values: ['start', 'bottle'], event_option_allow_freeform: false, event_option_required: false };
+
+    const at = (hour) => `2026-01-05T${String(hour).padStart(2, '0')}:00:00.000Z`;
+    const log = async (event_value, hour, options) => {
+
+      const res = await request('POST', '/events', loggerJwt, { event_value, ts: at(hour), event_options: options });
+      expect(res.statusCode).to.equal(201);
+      const event = await db.collection(eventsTable).findOne({ _id: new ObjectId(res.result.insertedId) });
+      return Object.fromEntries(event.event_options.map((option) => [option.event_option_name, option.event_option_value]));
+    };
+
+    const filename = (value) => ({ event_option_name: 'Filename', event_option_value: value });
+    const action = (value) => ({ event_option_name: 'Action', event_option_value: value });
+
+    beforeEach(async () => {
+      await db.collection(sequencesTable).insertOne({ name: 'ctd_cast', format: '{cruise_id}-C{n:03}', scope: 'cruise', start: 1, description: '' });
+      expect((await request('POST', '/event_templates', adminJwt, castTemplate('CTD', [castOption, actionOption, text('Filename', '{seq:ctd_cast}.hex')]))).statusCode).to.equal(201);
+      expect((await request('POST', '/event_templates', adminJwt, castTemplate('CTD_FILE', [text('Filename', '{seq:ctd_cast}.hex'), text('Note')]))).statusCode).to.equal(201);
+    });
+
+    it('takes the ID the event\'s own sequence option is given', async () => {
+      expect(await log('CTD', 1, [action('start'), filename('{seq:ctd_cast}.hex')])).to.include({ cast_id: 'NA123-C001', filename: 'NA123-C001.hex' });
+      expect(await log('CTD', 2, [action('bottle'), filename('{seq:ctd_cast}.hex')])).to.include({ cast_id: 'NA123-C001', filename: 'NA123-C001.hex' });
+      expect(await log('CTD', 3, [action('start'), filename('{seq:ctd_cast}.hex')])).to.include({ cast_id: 'NA123-C002', filename: 'NA123-C002.hex' });
+    });
+
+    it('takes the current ID in a template without the sequence, with text either side', async () => {
+      await log('CTD', 1, [action('start')]);
+      expect(await log('CTD_FILE', 2, [filename('{seq:ctd_cast}.hex')])).to.include({ filename: 'NA123-C001.hex' });
+      expect(await log('CTD_FILE', 3, [filename('raw/{seq:ctd_cast}_{seq:ctd_cast}.hex')])).to.include({ filename: 'raw/NA123-C001_NA123-C001.hex' });
+
+      // The text-only template's events aren't IDs of the sequence
+      expect(await log('CTD', 4, [action('bottle')])).to.include({ cast_id: 'NA123-C001' });
+    });
+
+    it('leaves the option out when there\'s no ID, instead of rejecting the event', async () => {
+      const options = await log('CTD_FILE', 1, [filename('{seq:ctd_cast}.hex'), { event_option_name: 'Note', event_option_value: 'early' }]);
+      expect(options).to.equal({ note: 'early' });
+    });
+
+    it('keeps typed text, and placeholders in options that aren\'t text', async () => {
+      await log('CTD', 1, [action('start')]);
+      expect(await log('CTD_FILE', 2, [filename('cast1.hex')])).to.include({ filename: 'cast1.hex' });
+      expect(await log('OTHER', 3, [filename('{seq:ctd_cast}.hex')])).to.include({ filename: '{seq:ctd_cast}.hex' });
+    });
+
+    it('checks placeholders on templates', async () => {
+      let res = await request('POST', '/event_templates', adminJwt, castTemplate('BAD', [text('Filename', '{seq:nope}.hex')]));
+      expect(res.statusCode).to.equal(400);
+      expect(res.result.message).to.equal('Option "Filename": its default value names sequence nope, which doesn\'t exist on this server');
+
+      res = await request('POST', '/event_templates', adminJwt, castTemplate('BAD', [{ ...text('Label', '{seq:ctd_cast}'), event_option_type: 'static text' }]));
+      expect(res.statusCode).to.equal(400);
+      expect(res.result.message).to.contain('only text options can hold a sequence placeholder');
+    });
+
+    it('refuses to delete a sequence a text default refers to', async () => {
+      await db.collection(eventTemplatesTable).deleteMany({ event_value: 'CTD' });
+      const res = await request('DELETE', '/sequences/ctd_cast', adminJwt);
+      expect(res.statusCode).to.equal(409);
+      expect(res.result.message).to.contain('CTD_FILE');
+    });
+  });
+
   describe('vessel demo', () => {
     it('numbers CTD casts with the demo sequence and CTD Cast template', async () => {
       await loadSeedBundle(db);
@@ -488,6 +557,14 @@ describe('ID sequences', () => {
       expect(await logCast(2, 'Profile', 'AtMaxDepth')).to.equal('NA123_CTD001_0105');
       expect(await logCast(3, 'Recovery', 'OnBoard')).to.equal('NA123_CTD001_0105');
       expect(await logCast(4, 'Deployment', 'Start')).to.equal('NA123_CTD002_0105');
+
+      // CTD Operation's Filename defaults to the current cast's ID
+      const { id: operationId, ...ctdOperation } = DemoVesselTemplates.find((template) => template.event_name === 'CTD Operation');
+      expect((await request('POST', '/event_templates', adminJwt, ctdOperation)).statusCode).to.equal(201);
+      const filename = ctdOperation.event_options.find((option) => option.event_option_name === 'Filename').event_option_default_value;
+      const res = await request('POST', '/events', loggerJwt, { event_value: 'CTD', ts: '2026-01-05T05:00:00.000Z', event_options: [{ event_option_name: 'Filename', event_option_value: filename }] });
+      const event = await db.collection(eventsTable).findOne({ _id: new ObjectId(res.result.insertedId) });
+      expect(event.event_options).to.equal([{ event_option_name: 'filename', event_option_value: 'NA123_CTD002_0105.hex' }]);
     });
   });
 

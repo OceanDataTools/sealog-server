@@ -141,7 +141,8 @@
         "event_option_type": "text",
         "event_option_required": true,
         "event_option_allow_freeform": false,
-        "event_option_values": []
+        "event_option_values": [],
+        "event_option_default_value": "{seq:ctd_cast}.hex"
       },
       {
         "event_option_name": "System",
