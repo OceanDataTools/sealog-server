@@ -1,0 +1,9 @@
+[
+  {
+    "name": "ctd_cast",
+    "format": "{cruise_id}_CTD{n:03}_{mm}{dd}",
+    "scope": "cruise",
+    "start": 1,
+    "description": "CTD cast IDs, numbered per cruise"
+  }
+]

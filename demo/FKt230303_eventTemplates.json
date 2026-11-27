@@ -1009,6 +1009,29 @@
             "TOOL1508"
           ]
         }
+      },
+      {
+        "event_option_name": "Cast ID",
+        "event_option_type": "sequence",
+        "event_option_sequence": "ctd_cast",
+        "event_option_sequence_new_when": [
+          {
+            "event_option_name": "Process",
+            "event_option_values": [
+              "Deployment"
+            ]
+          },
+          {
+            "event_option_name": "Action",
+            "event_option_values": [
+              "Start"
+            ]
+          }
+        ],
+        "event_option_default_value": "",
+        "event_option_values": [],
+        "event_option_allow_freeform": false,
+        "event_option_required": false
       }
     ],
     "system_template": false,
