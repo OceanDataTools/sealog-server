@@ -522,7 +522,22 @@ describe('ID sequences', () => {
 
       res = await request('POST', '/event_templates', adminJwt, castTemplate('BAD', [{ ...text('Label', '{seq:ctd_cast}'), event_option_type: 'static text' }]));
       expect(res.statusCode).to.equal(400);
-      expect(res.result.message).to.contain('only text options can hold a sequence placeholder');
+      expect(res.result.message).to.contain('only text options can hold placeholders');
+    });
+
+    it('fills in the cruise and the event\'s date', async () => {
+      expect((await request('POST', '/event_templates', adminJwt, castTemplate('XBT', [text('Filename', '{cruise_id}_XBT_{yyyy}{mm}{dd}.edf')]))).statusCode).to.equal(201);
+      expect(await log('XBT', 1, [filename('{cruise_id}_XBT_{yyyy}{mm}{dd}.edf')])).to.include({ filename: 'NA123_XBT_20260105.edf' });
+      expect(await log('XBT', 2, [filename('{yy}-{doy}/{seq:ctd_cast}')])).to.equal({});
+      await log('CTD', 3, [action('start')]);
+      expect(await log('XBT', 4, [filename('{yy}-{doy}/{seq:ctd_cast}')])).to.include({ filename: '26-005/NA123-C001' });
+
+      // Back-dated or outside a cruise: the event's own time
+      const res = await request('POST', '/events', loggerJwt, { event_value: 'XBT', ts: '2025-12-31T23:00:00.000Z', event_options: [filename('{yyyy}{mm}{dd}.edf'), { event_option_name: 'Note', event_option_value: 'x' }] });
+      const event = await db.collection(eventsTable).findOne({ _id: new ObjectId(res.result.insertedId) });
+      expect(event.event_options.find((option) => option.event_option_name === 'filename').event_option_value).to.equal('20251231.edf');
+      const noCruise = await request('POST', '/events', loggerJwt, { event_value: 'XBT', ts: '2025-12-31T23:00:00.000Z', event_options: [filename('{cruise_id}.edf')] });
+      expect((await db.collection(eventsTable).findOne({ _id: new ObjectId(noCruise.result.insertedId) })).event_options).to.equal([]);
     });
 
     it('refuses to delete a sequence a text default refers to', async () => {
