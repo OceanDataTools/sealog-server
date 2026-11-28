@@ -5,7 +5,7 @@ jsonschema==4.26.0
 jsonschema-specifications==2025.9.1
 pylint==4.1.4
 pymongo==4.20.0
-python-dateutil==3.0.0
+python-dateutil==4.0.0
 pytz==2026.6
 PyYAML==6.0.3
 requests==2.34.2
