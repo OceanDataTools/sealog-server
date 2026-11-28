@@ -254,7 +254,10 @@ exports.plugin = {
           <p>A <strong>sequence</strong> option takes an ID from a sequence (<strong>event_option_sequence</strong>: \
           its name), filled in when events are saved. With <strong>event_option_sequence_new_when</strong> \
           (conditions, all of which must match: <strong>{ event_option_name, event_option_values }</strong>), it takes \
-          a new ID only when the event meets them, and otherwise reuses the current one.</p>',
+          a new ID only when the event meets them, and otherwise reuses the current one. With \
+          <strong>event_option_sequences</strong> (<strong>[{ sequence, when: [conditions] }]</strong>), it takes its ID \
+          from the first sequence whose conditions the event meets, else from <strong>event_option_sequence</strong> \
+          (optional then); when none applies, the event gets no ID for it.</p>',
         tags: ['event_templates','api']
       }
     });

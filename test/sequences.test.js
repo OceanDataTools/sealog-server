@@ -548,6 +548,116 @@ describe('ID sequences', () => {
     });
   });
 
+  describe('sequences picked by condition', () => {
+    const pick = (name, type, values, extra = {}) => ({ event_option_name: name, event_option_type: type, event_option_values: values, event_option_allow_freeform: false, event_option_required: false, ...extra });
+    const ofType = (sequence, type) => ({ sequence, when: [{ event_option_name: 'Type', event_option_values: [type] }] });
+    const castOption = (extra = {}) => pick('Cast ID', 'sequence', [], {
+      event_option_sequences: [ofType('ctd_cast', 'Profile'), ofType('ctd_towyo', 'Tow-Yo')],
+      event_option_sequence_new_when: [{ event_option_name: 'Action', event_option_values: ['start'] }],
+      ...extra
+    });
+    const ctdTemplate = (option = castOption(), others = []) => ({
+      event_name: 'Start CTD Cast', event_value: 'CTD', event_free_text_required: false, system_template: false, template_categories: [],
+      event_options: [pick('Type', 'radio buttons', ['Profile', 'Tow-Yo', 'Test']), option, pick('Action', 'dropdown', ['start', 'bottle']), ...others]
+    });
+
+    const at = (hour) => `2026-01-05T${String(hour).padStart(2, '0')}:00:00.000Z`;
+    const logCtd = (hour, type, action, extra = []) => {
+
+      const options = [{ event_option_name: 'Type', event_option_value: type }, { event_option_name: 'Action', event_option_value: action }, ...extra];
+      return request('POST', '/events', loggerJwt, { event_value: 'CTD', ts: at(hour), event_options: options });
+    };
+
+    const optionOf = async (res, name = 'cast_id') => {
+
+      expect(res.statusCode).to.equal(201);
+      const event = await db.collection(eventsTable).findOne({ _id: new ObjectId(res.result.insertedId) });
+      const option = event.event_options.find((item) => item.event_option_name === name);
+      return option ? option.event_option_value : null;
+    };
+
+    beforeEach(async () => {
+      await db.collection(sequencesTable).insertMany([
+        { name: 'ctd_cast', format: '{cruise_id}-C{n:03}', scope: 'cruise', start: 1, description: '' },
+        { name: 'ctd_towyo', format: '{cruise_id}-T{n:03}', scope: 'cruise', start: 1, description: '' },
+        { name: 'ctd_test', format: '{cruise_id}-X{n:03}', scope: 'cruise', start: 1, description: '' }
+      ]);
+    });
+
+    const addTemplate = async (template = ctdTemplate()) => {
+
+      const res = await request('POST', '/event_templates', adminJwt, template);
+      expect(res.statusCode).to.equal(201);
+    };
+
+    it('takes the ID from the sequence the event\'s values pick, each reusing its own current ID', async () => {
+      await addTemplate();
+      expect(await optionOf(await logCtd(1, 'Profile', 'start'))).to.equal('NA123-C001');
+      expect(await optionOf(await logCtd(2, 'Tow-Yo', 'start'))).to.equal('NA123-T001');
+
+      // The most recent cast is a tow-yo, but a profile reuses the profile's ID
+      expect(await optionOf(await logCtd(3, 'Profile', 'bottle'))).to.equal('NA123-C001');
+      expect(await optionOf(await logCtd(4, 'Tow-Yo', 'bottle'))).to.equal('NA123-T001');
+      expect(await optionOf(await logCtd(5, 'Profile', 'start'))).to.equal('NA123-C002');
+
+      const res = await request('GET', `/sequences/ctd_cast/current?ts=${at(6)}`, loggerJwt);
+      expect(res.result).to.equal({ id: 'NA123-C002' });
+      expect((await request('GET', `/sequences/ctd_towyo/current?ts=${at(6)}`, loggerJwt)).result).to.equal({ id: 'NA123-T001' });
+    });
+
+    it('checks typed IDs for duplicates within the picked sequence only', async () => {
+      await addTemplate();
+      const typed = { event_option_name: 'Cast ID', event_option_value: 'CAST-1' };
+      expect(await optionOf(await logCtd(1, 'Tow-Yo', 'start', [typed]))).to.equal('CAST-1');
+      expect(await optionOf(await logCtd(2, 'Profile', 'start', [typed]))).to.equal('CAST-1');
+      expect((await logCtd(3, 'Profile', 'start', [typed])).statusCode).to.equal(409);
+    });
+
+    it('falls back to event_option_sequence, or gives no ID when none applies', async () => {
+      await addTemplate();
+      expect(await optionOf(await logCtd(1, 'Test', 'start'))).to.equal(null);
+
+      await db.collection(eventTemplatesTable).deleteMany({});
+      await addTemplate(ctdTemplate(castOption({ event_option_sequence: 'ctd_test' })));
+      expect(await optionOf(await logCtd(2, 'Test', 'start'))).to.equal('NA123-X001');
+      expect(await optionOf(await logCtd(3, 'Profile', 'start'))).to.equal('NA123-C001');
+    });
+
+    it('fills a placeholder from the event\'s own ID only when it took it from that sequence', async () => {
+      await addTemplate(ctdTemplate(castOption(), [pick('Filename', 'text', [], { event_option_default_value: '{seq:ctd_cast}.hex' })]));
+      await logCtd(1, 'Profile', 'start');
+
+      const filename = { event_option_name: 'Filename', event_option_value: '{seq:ctd_cast}.hex' };
+      const towyo = await logCtd(2, 'Tow-Yo', 'start', [filename]);
+      expect(await optionOf(towyo)).to.equal('NA123-T001');
+      expect(await optionOf(towyo, 'filename')).to.equal('NA123-C001.hex');
+      expect(await optionOf(await logCtd(3, 'Profile', 'start', [filename]), 'filename')).to.equal('NA123-C002.hex');
+    });
+
+    it('checks the sequences and conditions on templates', async () => {
+      const check = async (option, message) => {
+
+        const res = await request('POST', '/event_templates', adminJwt, ctdTemplate(option));
+        expect(res.statusCode).to.equal(400);
+        expect(res.result.message).to.contain(message);
+      };
+
+      await check(castOption({ event_option_sequences: [ofType('nope', 'Profile')] }), 'sequence nope, which doesn\'t exist');
+      await check(castOption({ event_option_sequences: [{ sequence: 'ctd_cast', when: [{ event_option_name: 'Depth', event_option_values: ['x'] }] }] }),
+        'its condition for sequence ctd_cast names "Depth", which isn\'t another option');
+      await check(castOption({ event_option_sequences: [] }), 'needs an event_option_sequence or event_option_sequences');
+      await check(castOption({ event_option_sequences: [{ sequence: 'ctd_cast', when: [] }] }), 'must contain at least 1 items');
+      await check(pick('Cast ID', 'text', [], { event_option_sequences: [ofType('ctd_cast', 'Profile')] }), 'only sequence options take event_option_sequences');
+    });
+
+    it('refuses to delete a sequence picked by condition', async () => {
+      await addTemplate();
+      const res = await request('DELETE', '/sequences/ctd_towyo', adminJwt);
+      expect(res.statusCode).to.equal(409);
+      expect(res.result.message).to.contain('Start CTD Cast');
+    });
+  });
+
   describe('vessel demo', () => {
     it('numbers CTD casts with the demo sequence and CTD Cast template', async () => {
       await loadSeedBundle(db);
